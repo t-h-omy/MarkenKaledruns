@@ -116,14 +116,16 @@ function App() {
             >
               <div className="decision-text">{decision.text}</div>
               <div className="decision-effects">
-                {Object.entries(decision.effects).map(([stat, value]) => (
-                  <span 
-                    key={stat}
-                    className={`effect ${value! > 0 ? 'positive' : 'negative'}`}
-                  >
-                    {stat}: {value! > 0 ? '+' : ''}{value}
-                  </span>
-                ))}
+                {Object.entries(decision.effects)
+                  .filter(([, value]) => value !== undefined)
+                  .map(([stat, value]) => (
+                    <span 
+                      key={stat}
+                      className={`effect ${value > 0 ? 'positive' : 'negative'}`}
+                    >
+                      {stat}: {value > 0 ? '+' : ''}{value}
+                    </span>
+                  ))}
               </div>
             </button>
           ))}
