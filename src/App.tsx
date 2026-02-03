@@ -19,7 +19,7 @@ function App() {
   const recentLogs = gameState.log.slice(-8).reverse()
 
   // Check if current request is a crisis event
-  const isCrisis = currentRequest?.id.startsWith('EVT_CRISIS_')
+  const isCrisis = currentRequest?.id.startsWith('EVT_CRISIS_') ?? false
 
   // Format effects for display
   const formatEffects = (effects: Effect): Array<{ label: string; value: number; isPositive: boolean }> => {

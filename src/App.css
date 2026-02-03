@@ -216,12 +216,12 @@
 }
 
 .consequence.positive {
-  background: #10b98133;
+  background: rgba(16, 185, 129, 0.2);
   color: #4ade80;
 }
 
 .consequence.negative {
-  background: #ef444433;
+  background: rgba(239, 68, 68, 0.2);
   color: #f87171;
 }
 
@@ -305,12 +305,12 @@
 }
 
 .delta.positive {
-  background: #10b98133;
+  background: rgba(16, 185, 129, 0.2);
   color: #4ade80;
 }
 
 .delta.negative {
-  background: #ef444433;
+  background: rgba(239, 68, 68, 0.2);
   color: #f87171;
 }
 
