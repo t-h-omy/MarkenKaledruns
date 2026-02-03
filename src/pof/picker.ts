@@ -136,8 +136,7 @@ export function pickNextRequest(
     if (availableNeeds.length > 0) {
       return availableNeeds[rng.nextInt(availableNeeds.length)];
     }
-    // If all unfulfilled needs were last request, pick anyway (shouldn't happen with multiple needs)
-    return unfulfilledNeeds[rng.nextInt(unfulfilledNeeds.length)];
+    // If all unfulfilled needs were last request, fall through to random events
   }
 
   // Pick random event request (excluding last request)
