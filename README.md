@@ -24,7 +24,7 @@ A clean Progressive Web App (PWA) setup with React, TypeScript, and Vite, ready 
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/YOUR-USERNAME/MarkenKaledruns.git
+git clone https://github.com/<YOUR-USERNAME>/MarkenKaledruns.git
 cd MarkenKaledruns
 
 # 2. Install dependencies
@@ -183,12 +183,12 @@ For your own repository fork or deployment, you need to update the base path in 
 
 1. **`vite.config.ts`** - Line 30:
    ```typescript
-   base: '/MarkenKaledruns/',  // Change to '/YOUR-REPO-NAME/'
+   base: '/MarkenKaledruns/',  // Change to '/<YOUR-REPO-NAME>/'
    ```
 
 2. **`vite.config.ts`** - PWA manifest start_url (Line 15):
    ```typescript
-   start_url: '/MarkenKaledruns/',  // Change to '/YOUR-REPO-NAME/'
+   start_url: '/MarkenKaledruns/',  // Change to '/<YOUR-REPO-NAME>/'
    ```
 
 Replace `MarkenKaledruns` with your actual repository name. This ensures:
