@@ -12,6 +12,7 @@ export default defineConfig({
       manifest: {
         name: 'React PWA',
         short_name: 'ReactPWA',
+        start_url: '/MarkenKaledruns/',
         description: 'A Progressive Web App built with React, TypeScript, and Vite',
         theme_color: '#1a1a1a',
         background_color: '#1a1a1a',
