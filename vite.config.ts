@@ -10,9 +10,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['vite.svg'],
       manifest: {
-        name: 'Realm of Decisions',
-        short_name: 'RealmPOF',
-        description: 'A Proof-of-Fun prototype for a medieval strategy game',
+        name: 'React PWA',
+        short_name: 'ReactPWA',
+        description: 'A Progressive Web App built with React, TypeScript, and Vite',
         theme_color: '#1a1a1a',
         background_color: '#1a1a1a',
         display: 'standalone',
