@@ -2,6 +2,7 @@ import { useReducer } from 'react'
 import './App.css'
 import { gameReducer, initializeGame } from './pof/state'
 import { needRequests, eventRequests } from './pof/requests'
+import type { Effect } from './pof/models'
 
 function App() {
   const [gameState, dispatch] = useReducer(gameReducer, undefined, initializeGame)
@@ -16,6 +17,67 @@ function App() {
 
   // Get last 8 log entries
   const recentLogs = gameState.log.slice(-8).reverse()
+
+  // Check if current request is a crisis event
+  const isCrisis = currentRequest?.id.startsWith('EVT_CRISIS_')
+
+  // Format effects for display
+  const formatEffects = (effects: Effect): Array<{ label: string; value: number; isPositive: boolean }> => {
+    const formatted: Array<{ label: string; value: number; isPositive: boolean }> = []
+    
+    if (effects.gold !== undefined) {
+      formatted.push({ 
+        label: 'Gold', 
+        value: effects.gold, 
+        isPositive: effects.gold > 0 
+      })
+    }
+    if (effects.satisfaction !== undefined) {
+      formatted.push({ 
+        label: 'Satisfaction', 
+        value: effects.satisfaction, 
+        isPositive: effects.satisfaction > 0 
+      })
+    }
+    if (effects.health !== undefined) {
+      formatted.push({ 
+        label: 'Health', 
+        value: effects.health, 
+        isPositive: effects.health > 0 
+      })
+    }
+    if (effects.fireRisk !== undefined) {
+      formatted.push({ 
+        label: 'Fire Risk', 
+        value: effects.fireRisk, 
+        // For fire risk, lower is better
+        isPositive: effects.fireRisk < 0 
+      })
+    }
+    if (effects.farmers !== undefined) {
+      formatted.push({ 
+        label: 'Farmers', 
+        value: effects.farmers, 
+        isPositive: effects.farmers > 0 
+      })
+    }
+    if (effects.landForces !== undefined) {
+      formatted.push({ 
+        label: 'Land Forces', 
+        value: effects.landForces, 
+        isPositive: effects.landForces > 0 
+      })
+    }
+    
+    // Add need fulfillment indicators
+    if (effects.marketplace) formatted.push({ label: '✓ Marketplace', value: 0, isPositive: true })
+    if (effects.bread) formatted.push({ label: '✓ Bread', value: 0, isPositive: true })
+    if (effects.beer) formatted.push({ label: '✓ Beer', value: 0, isPositive: true })
+    if (effects.firewood) formatted.push({ label: '✓ Firewood', value: 0, isPositive: true })
+    if (effects.well) formatted.push({ label: '✓ Well', value: 0, isPositive: true })
+    
+    return formatted
+  }
 
   return (
     <div className="app">
@@ -79,21 +141,46 @@ function App() {
         </div>
 
         {/* Request Panel */}
-        <div className="panel request-panel">
+        <div className={`panel request-panel ${isCrisis ? 'crisis-panel' : ''}`}>
+          {isCrisis && (
+            <div className="crisis-banner">
+              ⚠️ CRISIS EVENT ⚠️
+            </div>
+          )}
           <h2>Decision Required</h2>
           {currentRequest ? (
             <>
               <p className="request-text">{currentRequest.text}</p>
               <div className="options-container">
-                {currentRequest.options.map((option, index) => (
-                  <button
-                    key={index}
-                    className="option-button"
-                    onClick={() => handleOptionClick(index)}
-                  >
-                    {option.text}
-                  </button>
-                ))}
+                {currentRequest.options.map((option, index) => {
+                  const effects = formatEffects(option.effects)
+                  return (
+                    <button
+                      key={index}
+                      className="option-button"
+                      onClick={() => handleOptionClick(index)}
+                    >
+                      <div className="option-text">{option.text}</div>
+                      {effects.length > 0 && (
+                        <div className="option-consequences">
+                          {effects.map((effect, i) => (
+                            <span 
+                              key={i} 
+                              className={`consequence ${effect.isPositive ? 'positive' : 'negative'}`}
+                            >
+                              {effect.value !== 0 && (
+                                <>
+                                  {effect.label}: {effect.value > 0 ? '+' : ''}{effect.value}
+                                </>
+                              )}
+                              {effect.value === 0 && effect.label}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </button>
+                  )
+                })}
               </div>
             </>
           ) : (
