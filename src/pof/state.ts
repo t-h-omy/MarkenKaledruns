@@ -3,8 +3,9 @@
  * Based on POF_SPEC.md specification.
  */
 
-import type { Stats, Needs, Request, Effect } from './models';
+import type { Stats, Needs, Effect } from './models';
 import { needRequests, eventRequests } from './requests';
+import { pickNextRequest } from './picker';
 
 /**
  * Log entry tracking state changes
@@ -131,66 +132,7 @@ function applyBaseline(stats: Stats): Stats {
   };
 }
 
-/**
- * Picks the next request based on selection rules from POF_SPEC.md
- */
-function pickNextRequest(stats: Stats, needs: Needs, lastRequestId: string): Request {
-  // Crisis requests if eligible
-  if (stats.satisfaction < 30) {
-    const crisisRequest = eventRequests.find((r) => r.id === 'EVT_CRISIS_UNREST');
-    if (crisisRequest && crisisRequest.id !== lastRequestId) return crisisRequest;
-  }
-  if (stats.health < 30) {
-    const crisisRequest = eventRequests.find((r) => r.id === 'EVT_CRISIS_DISEASE');
-    if (crisisRequest && crisisRequest.id !== lastRequestId) return crisisRequest;
-  }
-  if (stats.fireRisk > 70) {
-    const crisisRequest = eventRequests.find((r) => r.id === 'EVT_CRISIS_FIRE');
-    if (crisisRequest && crisisRequest.id !== lastRequestId) return crisisRequest;
-  }
 
-  // If any needs are unfulfilled, pick one randomly
-  const unfulfilledNeeds: Request[] = [];
-  if (!needs.marketplace) {
-    const req = needRequests.find((r) => r.id === 'NEED_MARKETPLACE');
-    if (req) unfulfilledNeeds.push(req);
-  }
-  if (!needs.bread) {
-    const req = needRequests.find((r) => r.id === 'NEED_BREAD');
-    if (req) unfulfilledNeeds.push(req);
-  }
-  if (!needs.beer) {
-    const req = needRequests.find((r) => r.id === 'NEED_BEER');
-    if (req) unfulfilledNeeds.push(req);
-  }
-  if (!needs.firewood) {
-    const req = needRequests.find((r) => r.id === 'NEED_FIREWOOD');
-    if (req) unfulfilledNeeds.push(req);
-  }
-  if (!needs.well) {
-    const req = needRequests.find((r) => r.id === 'NEED_WELL');
-    if (req) unfulfilledNeeds.push(req);
-  }
-
-  if (unfulfilledNeeds.length > 0) {
-    // Filter out last request if it's in the list
-    const availableNeeds = unfulfilledNeeds.filter((r) => r.id !== lastRequestId);
-    if (availableNeeds.length > 0) {
-      return availableNeeds[Math.floor(Math.random() * availableNeeds.length)];
-    }
-    // If all unfulfilled needs were last request, pick anyway (shouldn't happen with multiple needs)
-    return unfulfilledNeeds[Math.floor(Math.random() * unfulfilledNeeds.length)];
-  }
-
-  // Pick random event request (excluding last request)
-  const availableEvents = eventRequests.filter((r) => r.id !== lastRequestId);
-  if (availableEvents.length > 0) {
-    return availableEvents[Math.floor(Math.random() * availableEvents.length)];
-  }
-
-  // Fallback: pick any event (shouldn't happen with 25 events)
-  return eventRequests[Math.floor(Math.random() * eventRequests.length)];
-}
 
 /**
  * Creates a log entry with deltas
