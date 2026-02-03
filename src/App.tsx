@@ -1,11 +1,10 @@
 import { useReducer } from 'react'
 import './App.css'
 import { gameReducer, initializeGame } from './pof/state'
-import type { GameState } from './pof/state'
 import { needRequests, eventRequests } from './pof/requests'
 
 function App() {
-  const [gameState, dispatch] = useReducer(gameReducer, null as unknown as GameState, initializeGame)
+  const [gameState, dispatch] = useReducer(gameReducer, undefined, initializeGame)
 
   const currentRequest = [...needRequests, ...eventRequests].find(
     (r) => r.id === gameState.currentRequestId
@@ -109,8 +108,8 @@ function App() {
             {recentLogs.length === 0 ? (
               <p className="log-empty">No decisions yet</p>
             ) : (
-              recentLogs.map((entry, index) => (
-                <div key={`${entry.tick}-${index}`} className="log-entry">
+              recentLogs.map((entry) => (
+                <div key={entry.tick} className="log-entry">
                   <div className="log-header">
                     <span className="log-tick">Turn {entry.tick}</span>
                     <span className="log-option">{entry.optionText}</span>
