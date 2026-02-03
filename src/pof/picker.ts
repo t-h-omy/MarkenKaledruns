@@ -66,9 +66,9 @@ export function resetRandom(): void {
  * Picks the next request based on selection rules from POF_SPEC.md
  * 
  * Priority order:
- * 1. If fireRisk > 70 => pick event 13 (EVT_CRISIS_FIRE)
- * 2. Else if health < 30 => pick event 12 (EVT_CRISIS_DISEASE)
- * 3. Else if satisfaction < 30 => pick event 11 (EVT_CRISIS_UNREST)
+ * 1. If fireRisk > 70 => pick EVT_CRISIS_FIRE
+ * 2. Else if health < 30 => pick EVT_CRISIS_DISEASE
+ * 3. Else if satisfaction < 30 => pick EVT_CRISIS_UNREST
  * 4. Else if any need is false => pick randomly among unfulfilled need-requests
  * 5. Else pick a random event among all 25
  * 
@@ -114,25 +114,20 @@ export function pickNextRequest(
 
   // If any needs are unfulfilled, pick one randomly
   const unfulfilledNeeds: Request[] = [];
-  if (!actualNeeds.marketplace) {
-    const req = needRequests.find((r) => r.id === 'NEED_MARKETPLACE');
-    if (req) unfulfilledNeeds.push(req);
-  }
-  if (!actualNeeds.bread) {
-    const req = needRequests.find((r) => r.id === 'NEED_BREAD');
-    if (req) unfulfilledNeeds.push(req);
-  }
-  if (!actualNeeds.beer) {
-    const req = needRequests.find((r) => r.id === 'NEED_BEER');
-    if (req) unfulfilledNeeds.push(req);
-  }
-  if (!actualNeeds.firewood) {
-    const req = needRequests.find((r) => r.id === 'NEED_FIREWOOD');
-    if (req) unfulfilledNeeds.push(req);
-  }
-  if (!actualNeeds.well) {
-    const req = needRequests.find((r) => r.id === 'NEED_WELL');
-    if (req) unfulfilledNeeds.push(req);
+  const needKeys: Array<keyof Needs> = ['marketplace', 'bread', 'beer', 'firewood', 'well'];
+  const needIdMap: Record<keyof Needs, string> = {
+    marketplace: 'NEED_MARKETPLACE',
+    bread: 'NEED_BREAD',
+    beer: 'NEED_BEER',
+    firewood: 'NEED_FIREWOOD',
+    well: 'NEED_WELL',
+  };
+
+  for (const needKey of needKeys) {
+    if (!actualNeeds[needKey]) {
+      const req = needRequests.find((r) => r.id === needIdMap[needKey]);
+      if (req) unfulfilledNeeds.push(req);
+    }
   }
 
   if (unfulfilledNeeds.length > 0) {
