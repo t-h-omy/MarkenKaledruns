@@ -1,6 +1,7 @@
 # React + TypeScript + Vite PWA Starter
 
 A clean Progressive Web App (PWA) setup with React, TypeScript, and Vite, ready for implementing your Proof-of-Fun prototype from scratch.
+ 
 
 ## 🚀 Features
 
