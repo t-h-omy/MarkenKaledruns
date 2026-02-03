@@ -24,7 +24,7 @@ A clean Progressive Web App (PWA) setup with React, TypeScript, and Vite, ready 
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/t-h-omy/MarkenKaledruns.git
+git clone https://github.com/YOUR-USERNAME/MarkenKaledruns.git
 cd MarkenKaledruns
 
 # 2. Install dependencies
