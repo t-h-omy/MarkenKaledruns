@@ -118,6 +118,43 @@
   grid-row: 1;
 }
 
+.crisis-panel {
+  border: 3px solid #ff4444;
+  box-shadow: 0 0 20px rgba(255, 68, 68, 0.6);
+  animation: crisis-pulse 2s ease-in-out infinite;
+}
+
+@keyframes crisis-pulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(255, 68, 68, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(255, 68, 68, 0.8);
+  }
+}
+
+.crisis-banner {
+  background: linear-gradient(135deg, #ff4444 0%, #cc0000 100%);
+  color: #fff;
+  font-size: 1.3rem;
+  font-weight: bold;
+  text-align: center;
+  padding: 0.75rem;
+  border-radius: 6px;
+  margin: -0.75rem -0.75rem 0.75rem -0.75rem;
+  letter-spacing: 2px;
+  animation: crisis-banner-flash 1.5s ease-in-out infinite;
+}
+
+@keyframes crisis-banner-flash {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
 @media (orientation: portrait) or (min-width: 768px) {
   .request-panel {
     grid-column: 1;
@@ -152,6 +189,40 @@
   min-height: 3.5rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.option-text {
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+.option-consequences {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: normal;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.consequence {
+  padding: 0.2rem 0.5rem;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+.consequence.positive {
+  background: rgba(16, 185, 129, 0.2);
+  color: #4ade80;
+}
+
+.consequence.negative {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
 }
 
 .option-button:hover {
@@ -234,12 +305,12 @@
 }
 
 .delta.positive {
-  background: #10b98133;
+  background: rgba(16, 185, 129, 0.2);
   color: #4ade80;
 }
 
 .delta.negative {
-  background: #ef444433;
+  background: rgba(239, 68, 68, 0.2);
   color: #f87171;
 }
 
