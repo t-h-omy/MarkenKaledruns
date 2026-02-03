@@ -12,7 +12,7 @@ A clean Progressive Web App (PWA) setup with React, TypeScript, and Vite, ready 
 - 🎨 **ESLint** - Code quality and consistency
 - 🏗️ **GitHub Pages** - Auto-deployment workflow included
 
-## 📦 Getting Started
+## 📦 Getting Started!
 
 ```bash
 # Install dependencies
