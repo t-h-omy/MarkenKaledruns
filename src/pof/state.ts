@@ -54,7 +54,7 @@ export const initialState: GameState = {
     satisfaction: 60,
     health: 60,
     fireRisk: 20,
-    farmers: 50,
+    farmers: 20,
     landForces: 5,
   },
   needs: {
