@@ -1,73 +1,108 @@
-# React + TypeScript + Vite
+# Realm of Decisions - Proof of Fun
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A Proof-of-Fun prototype for a medieval strategy game about ruling a realm through difficult decisions.
 
-Currently, two official plugins are available:
+## 🎮 Game Concept
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Rule a growing medieval realm as a king through requests from advisors and your population. Each request forces you to choose between difficult trade-offs with visible, permanent consequences. The core fantasy is political leadership under pressure: **every decision solves one problem while creating another**.
 
-## React Compiler
+## 🎯 Purpose
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+This prototype exists to answer one question: **Is it fun to make repeated, meaningful decisions when all consequences are permanent and clearly visible?**
 
-## Expanding the ESLint configuration
+## ✨ Features
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- **One population**: Manage farmers and their needs
+- **Meaningful choices**: Each request has 1-2 options with clear trade-offs
+- **Permanent consequences**: All decisions permanently affect your realm
+- **Transparent systems**: All values visible, no hidden mechanics
+- **Baseline effects**: Automatic income, food production, and population growth/decline
+- **10 unique requests**: Different challenges requiring strategic thinking
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## 🎲 Game Mechanics
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Resources
+- **Farmers**: Your population (starts at 100)
+- **Gold**: Treasury for investments (starts at 500)
+- **Food**: Feed your population (starts at 200)
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Capacities
+- **Housing**: Shelter for farmers (starts at 25, need = farmers/4)
+- **Food Production**: Food generated per tick (starts at 15, need = farmers/10)
+
+### Every Tick
+1. You make a decision on the current request
+2. Effects apply immediately
+3. Baseline effects occur:
+   - +10 gold income
+   - Food changes by (production - need)
+   - Population grows (+1) if needs met, declines (-1) if not
+4. Next random request appears
+
+## 🚀 Running Locally
+
+```bash
+# Install dependencies
+npm install
+
+# Run development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
+
+# Lint code
+npm run lint
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 🌐 Deployment
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+The game is configured to deploy automatically to GitHub Pages when pushed to the main branch.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+**Live URL**: `https://t-h-omy.github.io/MarkenKaledruns/`
+
+### Setup GitHub Pages
+1. Go to repository Settings → Pages
+2. Set Source to "GitHub Actions"
+3. Push to main branch - deployment happens automatically
+
+## 📋 Specification
+
+All gameplay rules, mechanics, and balancing are documented in `POF_SPEC.md`. This file is the single source of truth for the implementation.
+
+## 🛠️ Tech Stack
+
+- **React 19**: UI framework
+- **TypeScript**: Type safety
+- **Vite**: Build tool and dev server
+- **PWA**: Progressive Web App with offline support
+- **GitHub Pages**: Hosting
+
+## 📁 Project Structure
+
 ```
+src/
+├── components/         # UI components
+│   ├── Game.tsx       # Main game container
+│   ├── StatsPanel.tsx # Display realm stats
+│   ├── RequestPanel.tsx # Show requests and options
+│   └── FeedbackPanel.tsx # Show decision results
+├── gameData.ts        # Request definitions
+├── gameLogic.ts       # Core game mechanics
+├── types.ts           # TypeScript types
+└── main.tsx           # App entry point
+```
+
+## 🎨 Design Philosophy
+
+- Decisions matter more than numbers
+- Fewer systems with strong interactions > many shallow systems
+- All values must be visible and understandable
+- Works equally well on desktop and mobile (landscape)
+
+## 📝 License
+
+This is a prototype project. All rights reserved.

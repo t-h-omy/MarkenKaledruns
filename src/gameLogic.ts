@@ -29,7 +29,7 @@ export function calculateNeeds(farmers: number): { housingNeed: number; foodNeed
 
 // Apply effects to game state
 export function applyEffects(state: GameState, effects: Effect[]): GameState {
-  let newState = { ...state };
+  const newState = { ...state };
   
   effects.forEach(effect => {
     const statKey = effect.stat as StatKey;
