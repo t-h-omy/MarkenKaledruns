@@ -122,8 +122,8 @@ function applyEffects(stats: Stats, needs: Needs, effects: Effect): { stats: Sta
  * - farmers += floor(health / 10)
  */
 function applyBaseline(stats: Stats): Stats {
-  const goldIncome = Math.floor(0.1 * (stats.farmers * (stats.satisfaction / 100)));
-  const farmerGrowth = Math.floor(stats.health / 10);
+  const goldIncome = Math.floor(0.05 * (stats.farmers * ((stats.satisfaction-30) / 100)));
+  const farmerGrowth = Math.floor((stats.health-30) / 20);
 
   return {
     ...stats,
