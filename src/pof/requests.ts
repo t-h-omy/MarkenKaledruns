@@ -39,7 +39,7 @@ export const needRequests: Request[] = [
       {
         text: 'SUPPORT BAKERY',
         effects: {
-          gold: -35,
+          gold: -40,
           bread: true,
         },
       },
@@ -59,7 +59,7 @@ export const needRequests: Request[] = [
       {
         text: 'ALLOW',
         effects: {
-          gold: -60,
+          gold: -70,
           beer: true,
         },
       },
@@ -79,7 +79,7 @@ export const needRequests: Request[] = [
       {
         text: 'ORGANIZE',
         effects: {
-          gold: -120,
+          gold: -200,
           firewood: true,
         },
       },
@@ -99,7 +99,7 @@ export const needRequests: Request[] = [
       {
         text: 'BUILD',
         effects: {
-          gold: -210,
+          gold: -300,
           well: true,
         },
       },
@@ -148,13 +148,14 @@ export const eventRequests: Request[] = [
     text: 'A small band of brigands has been spotted nearby. Do we drive them off by force or pay a "toll" to keep the peace?',
     options: [
       {
-        text: 'FIGHT',
+        text: 'FIGHT AND ROB',
         effects: {
           landForces: -3,
+          gold: 5
         },
       },
       {
-        text: 'DO NOT FIGHT',
+        text: 'PAY TOLL',
         effects: {
           gold: -10,
         },
@@ -164,7 +165,7 @@ export const eventRequests: Request[] = [
   {
     id: 'EVT_RAID_LARGE',
     title: 'The War Horns',
-    text: 'A massive raiding force is at the gates! Stand your ground and fight, or offer a heavy tribute to spare the village from destruction.',
+    text: 'A massive raiding force is at the gates! Stand your ground and fight, or the intruders will bring destruction to your village.',
     options: [
       {
         text: 'FIGHT',
@@ -199,7 +200,7 @@ export const eventRequests: Request[] = [
         text: 'REFUSE',
         effects: {
           landForces: -2,
-          satisfaction: -2,
+          satisfaction: -4,
         },
       },
     ],
@@ -400,7 +401,7 @@ export const eventRequests: Request[] = [
         text: 'BUILD',
         effects: {
           landForces: -1,
-          fireRisk: -8,
+          fireRisk: -6,
         },
       },
       {
@@ -418,7 +419,7 @@ export const eventRequests: Request[] = [
         text: 'HOLD',
         effects: {
           gold: -10,
-          satisfaction: 8,
+          satisfaction: 6,
         },
       },
       {
@@ -436,7 +437,7 @@ export const eventRequests: Request[] = [
         text: 'BUY',
         effects: {
           gold: -10,
-          health: 8,
+          health: 6,
         },
       },
       {
@@ -453,7 +454,7 @@ export const eventRequests: Request[] = [
       {
         text: 'TRAIN',
         effects: {
-          gold: -10,
+          gold: -15,
           landForces: 5,
         },
       },
@@ -472,7 +473,7 @@ export const eventRequests: Request[] = [
         text: 'ORGANIZE',
         effects: {
           gold: -10,
-          fireRisk: -8,
+          fireRisk: -6,
         },
       },
       {
@@ -572,13 +573,13 @@ export const eventRequests: Request[] = [
         text: 'COMPENSATE',
         effects: {
           gold: -15,
-          health: 5
+          health: 4
         },
       },
       {
         text: 'DO NOTHING',
         effects: {
-          satisfaction: -3,
+          satisfaction: -4,
           farmers: -3,
         },
       },
