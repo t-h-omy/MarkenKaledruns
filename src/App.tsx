@@ -1,8 +1,9 @@
 import { useReducer, useState } from 'react'
 import './App.css'
-import { gameReducer, initializeGame } from './pof/state'
+import { gameReducer, initializeGame, isNeedUnlocked, calculateCycleIndex, isNeedRequired } from './pof/state'
 import { needRequests, eventRequests } from './pof/requests'
-import type { Effect } from './pof/models'
+import type { Effect, Needs } from './pof/models'
+import { NEED_UNLOCK_THRESHOLDS } from './pof/models'
 
 function App() {
   const [gameState, dispatch] = useReducer(gameReducer, undefined, initializeGame)
@@ -24,6 +25,43 @@ function App() {
 
   // Check if gold is negative (bankruptcy warning)
   const showBankruptcyWarning = gameState.stats.gold < 0 && gameState.stats.gold > -50
+
+  // Get need display state (locked, fulfilled, or required)
+  const getNeedState = (needKey: keyof Needs) => {
+    const unlocked = isNeedUnlocked(needKey, gameState.stats.farmers)
+    
+    if (!unlocked) {
+      return {
+        status: 'locked' as const,
+        label: `Locked until ${NEED_UNLOCK_THRESHOLDS[needKey]} farmers`,
+      }
+    }
+    
+    const tracking = gameState.needsTracking[needKey]
+    const currentCycle = calculateCycleIndex(needKey, gameState.stats.farmers)
+    const required = isNeedRequired(needKey, gameState.stats.farmers, tracking.lastFulfilledCycleIndex)
+    
+    if (required) {
+      return {
+        status: 'required' as const,
+        label: `REQUIRED (Cycle ${currentCycle})`,
+      }
+    } else {
+      return {
+        status: 'fulfilled' as const,
+        label: `✓ Fulfilled (Cycle ${tracking.lastFulfilledCycleIndex})`,
+      }
+    }
+  }
+
+  // Need display names
+  const needDisplayNames: Record<keyof Needs, string> = {
+    marketplace: 'Marketplace',
+    bread: 'Bread',
+    beer: 'Beer',
+    firewood: 'Firewood',
+    well: 'Well',
+  }
 
   // Check if an option would cause invalid state (negative farmers or landForces)
   const isOptionDisabled = (effects: Effect): { disabled: boolean; reason?: string } => {
@@ -234,27 +272,24 @@ function App() {
           
           <div className="bottom-content">
             {bottomTab === 'needs' ? (
-              <div className="needs-compact">
-                <div className="need-compact">
-                  <span className="need-checkbox">{gameState.needs.marketplace ? '✓' : '☐'}</span>
-                  <span className="need-label">Market</span>
-                </div>
-                <div className="need-compact">
-                  <span className="need-checkbox">{gameState.needs.bread ? '✓' : '☐'}</span>
-                  <span className="need-label">Bread</span>
-                </div>
-                <div className="need-compact">
-                  <span className="need-checkbox">{gameState.needs.beer ? '✓' : '☐'}</span>
-                  <span className="need-label">Beer</span>
-                </div>
-                <div className="need-compact">
-                  <span className="need-checkbox">{gameState.needs.firewood ? '✓' : '☐'}</span>
-                  <span className="need-label">Wood</span>
-                </div>
-                <div className="need-compact">
-                  <span className="need-checkbox">{gameState.needs.well ? '✓' : '☐'}</span>
-                  <span className="need-label">Well</span>
-                </div>
+              <div className="needs-panel">
+                {gameState.newlyUnlockedNeed && (
+                  <div className="need-unlock-message">
+                    🎉 New need unlocked: {needDisplayNames[gameState.newlyUnlockedNeed]}!
+                  </div>
+                )}
+                {(['marketplace', 'bread', 'beer', 'firewood', 'well'] as Array<keyof Needs>).map((needKey) => {
+                  const state = getNeedState(needKey)
+                  return (
+                    <div 
+                      key={needKey} 
+                      className={`need-item need-${state.status}`}
+                    >
+                      <span className="need-name">{needDisplayNames[needKey]}</span>
+                      <span className="need-status">{state.label}</span>
+                    </div>
+                  )
+                })}
               </div>
             ) : (
               <div className="log-compact">

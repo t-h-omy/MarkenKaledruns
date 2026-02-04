@@ -4,8 +4,9 @@
  */
 
 import type { GameState } from './state';
-import type { Stats, Needs, Request } from './models';
+import type { Stats, Needs, Request, NeedsTracking } from './models';
 import { needRequests, eventRequests } from './requests';
+import { isNeedUnlocked, isNeedRequired, isNeedOnCooldown } from './state';
 
 /**
  * Deterministic random number generator using a simple LCG algorithm.
@@ -69,32 +70,33 @@ export function resetRandom(): void {
  * 1. If fireRisk > 70 => pick EVT_CRISIS_FIRE
  * 2. Else if health < 30 => pick EVT_CRISIS_DISEASE
  * 3. Else if satisfaction < 30 => pick EVT_CRISIS_UNREST
- * 4. Else if any need is false => pick randomly among unfulfilled need-requests
+ * 4. Else if any need is required (unlocked and unfulfilled for current cycle) => pick randomly among eligible need-requests
  * 5. Else pick a random event among all 25
  * 
  * Never repeats lastRequestId.
  */
 export function pickNextRequest(state: GameState): Request;
-export function pickNextRequest(stats: Stats, needs: Needs, lastRequestId: string): Request;
+export function pickNextRequest(stats: Stats, _needs: Needs, lastRequestId: string): Request;
 export function pickNextRequest(
   stateOrStats: GameState | Stats,
-  needs?: Needs,
+  _needs?: Needs,
   lastRequestId?: string
 ): Request {
   // Handle both function signatures
   let stats: Stats;
-  let actualNeeds: Needs;
   let actualLastRequestId: string;
+  let tick: number = 0;
+  let needsTracking: NeedsTracking | null = null;
 
   if ('tick' in stateOrStats) {
     // Called with GameState
     stats = stateOrStats.stats;
-    actualNeeds = stateOrStats.needs;
     actualLastRequestId = stateOrStats.lastRequestId;
+    tick = stateOrStats.tick;
+    needsTracking = stateOrStats.needsTracking;
   } else {
-    // Called with individual parameters
+    // Called with individual parameters (legacy support)
     stats = stateOrStats;
-    actualNeeds = needs!;
     actualLastRequestId = lastRequestId!;
   }
 
@@ -112,8 +114,8 @@ export function pickNextRequest(
     if (crisisRequest && crisisRequest.id !== actualLastRequestId) return crisisRequest;
   }
 
-  // If any needs are unfulfilled, pick one randomly
-  const unfulfilledNeeds: Request[] = [];
+  // Check for required needs using the new cycle-based system
+  const eligibleNeeds: Request[] = [];
   const needKeys: Array<keyof Needs> = ['marketplace', 'bread', 'beer', 'firewood', 'well'];
   const needIdMap: Record<keyof Needs, string> = {
     marketplace: 'NEED_MARKETPLACE',
@@ -124,19 +126,31 @@ export function pickNextRequest(
   };
 
   for (const needKey of needKeys) {
-    if (!actualNeeds[needKey]) {
+    // Check if need is unlocked
+    if (!isNeedUnlocked(needKey, stats.farmers)) {
+      continue; // Skip locked needs
+    }
+
+    // Check if need is on cooldown
+    if (needsTracking && isNeedOnCooldown(tick, needsTracking[needKey].nextEligibleTick)) {
+      continue; // Skip needs on cooldown
+    }
+
+    // Check if need is required for current cycle
+    const lastFulfilledCycleIndex = needsTracking ? needsTracking[needKey].lastFulfilledCycleIndex : 0;
+    if (isNeedRequired(needKey, stats.farmers, lastFulfilledCycleIndex)) {
       const req = needRequests.find((r) => r.id === needIdMap[needKey]);
-      if (req) unfulfilledNeeds.push(req);
+      if (req) eligibleNeeds.push(req);
     }
   }
 
-  if (unfulfilledNeeds.length > 0) {
+  if (eligibleNeeds.length > 0) {
     // Filter out last request if it's in the list
-    const availableNeeds = unfulfilledNeeds.filter((r) => r.id !== actualLastRequestId);
+    const availableNeeds = eligibleNeeds.filter((r) => r.id !== actualLastRequestId);
     if (availableNeeds.length > 0) {
       return availableNeeds[rng.nextInt(availableNeeds.length)];
     }
-    // If all unfulfilled needs were last request, fall through to random events
+    // If all eligible needs were last request, fall through to random events
   }
 
   // Pick random event request (excluding last request and crisis events)

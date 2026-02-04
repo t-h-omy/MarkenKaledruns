@@ -40,6 +40,43 @@ export interface Needs {
 }
 
 /**
+ * Tracking data for need progression system
+ */
+export interface NeedTracking {
+  /** Last cycle index when this need was fulfilled (0 if never fulfilled) */
+  lastFulfilledCycleIndex: number;
+  /** Next tick when this need becomes eligible again after being declined */
+  nextEligibleTick: number;
+}
+
+/**
+ * All need tracking data keyed by need name
+ */
+export interface NeedsTracking {
+  marketplace: NeedTracking;
+  bread: NeedTracking;
+  beer: NeedTracking;
+  firewood: NeedTracking;
+  well: NeedTracking;
+}
+
+/**
+ * Need unlock thresholds (farmers population required)
+ */
+export const NEED_UNLOCK_THRESHOLDS: Record<keyof Needs, number> = {
+  marketplace: 30,
+  bread: 60,
+  beer: 100,
+  firewood: 170,
+  well: 250,
+};
+
+/**
+ * Decline cooldown duration in ticks
+ */
+export const DECLINE_COOLDOWN_TICKS = 5;
+
+/**
  * Represents changes to game state (stats or needs).
  * Each property is optional and represents a delta or assignment.
  */
