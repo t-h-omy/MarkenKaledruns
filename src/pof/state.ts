@@ -343,6 +343,23 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       newLog.push(requestLogEntry);
     }
 
+    // Check for bankruptcy after option effects (before baseline)
+    // This prevents players from escaping bankruptcy via positive baseline income
+    if (stats.gold <= -50) {
+      return {
+        tick: state.tick + 1,
+        stats,
+        needs,
+        needsTracking,
+        newlyUnlockedNeed: null,
+        currentRequestId: state.currentRequestId,
+        lastRequestId: state.currentRequestId,
+        log: [...state.log, ...newLog],
+        gameOver: true,
+        gameOverReason: 'Bankruptcy! Your gold has reached -50.',
+      };
+    }
+
     // 2. Apply baseline rules and track separately
     const beforeBaseline = { ...stats };
     const farmersBefore = stats.farmers;
