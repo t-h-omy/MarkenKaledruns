@@ -19,7 +19,6 @@ export const needRequests: Request[] = [
       {
         text: 'BUILD',
         effects: {
-          satisfaction: 3,
           gold: -20,
           marketplace: true,
         },
@@ -40,8 +39,7 @@ export const needRequests: Request[] = [
       {
         text: 'SUPPORT BAKERY',
         effects: {
-          health: 5,
-          gold: -30,
+          gold: -35,
           bread: true,
         },
       },
@@ -61,15 +59,14 @@ export const needRequests: Request[] = [
       {
         text: 'ALLOW',
         effects: {
-          gold: -50,
-          satisfaction: 5,
+          gold: -60,
           beer: true,
         },
       },
       {
         text: 'FORBID',
         effects: {
-          satisfaction: -10,
+          satisfaction: -15,
         },
       },
     ],
@@ -82,14 +79,14 @@ export const needRequests: Request[] = [
       {
         text: 'ORGANIZE',
         effects: {
-          gold: -80,
+          gold: -120,
           firewood: true,
         },
       },
       {
         text: 'DO NOTHING',
         effects: {
-          fireRisk: 10,
+          fireRisk: 15,
         },
       },
     ],
@@ -102,15 +99,14 @@ export const needRequests: Request[] = [
       {
         text: 'BUILD',
         effects: {
-          gold: -120,
-          fireRisk: -10,
+          gold: -210,
           well: true,
         },
       },
       {
         text: 'DECLINE',
         effects: {
-          health: -10,
+          health: -15,
         },
       },
     ],
