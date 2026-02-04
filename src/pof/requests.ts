@@ -20,7 +20,7 @@ export const needRequests: Request[] = [
         text: 'BUILD',
         effects: {
           satisfaction: 3,
-          gold: -15,
+          gold: -20,
           marketplace: true,
         },
       },
@@ -40,8 +40,8 @@ export const needRequests: Request[] = [
       {
         text: 'SUPPORT BAKERY',
         effects: {
-          farmers: 15,
-          gold: -10,
+          farmers: 5,
+          gold: -30,
           bread: true,
         },
       },
@@ -61,14 +61,16 @@ export const needRequests: Request[] = [
       {
         text: 'ALLOW',
         effects: {
-          gold: -5,
+          gold: -40,
           beer: true,
           satisfaction: 5,
         },
       },
       {
         text: 'FORBID',
-        effects: {},
+        effects: {
+          satisfaction: -10,
+        },
       },
     ],
   },
@@ -80,15 +82,14 @@ export const needRequests: Request[] = [
       {
         text: 'ORGANIZE',
         effects: {
-          gold: -8,
+          gold: -50,
           firewood: true,
-          fireRisk: -5,
         },
       },
       {
         text: 'DO NOTHING',
         effects: {
-          fireRisk: 10,
+          fireRisk: 15,
         },
       },
     ],
@@ -96,20 +97,19 @@ export const needRequests: Request[] = [
   {
     id: 'NEED_WELL',
     title: 'Sanitary Standards',
-    text: 'To support a denser population safely, a central well is non-negotiable. Without this hygienic upgrade, the village\'s expansion will stagnate.',
+    text: "To support a denser population safely, a central well is non-negotiable. Without this hygienic upgrade, the village's expansion will stagnate.",
     options: [
       {
         text: 'BUILD',
         effects: {
-          gold: -12,
+          gold: -60,
           well: true,
-          health: 5,
         },
       },
       {
         text: 'DECLINE',
         effects: {
-          health: -5,
+          health: -15,
         },
       },
     ],
@@ -133,14 +133,15 @@ export const eventRequests: Request[] = [
         text: 'YES',
         effects: {
           landForces: 3,
-          farmers: -3,
-          satisfaction: -2,
+          farmers: -10,
+          gold: -6,
+          satisfaction: -3,
         },
       },
       {
         text: 'NO',
         effects: {
-          satisfaction: -3,
+          satisfaction: 3,
         },
       },
     ],
@@ -153,13 +154,13 @@ export const eventRequests: Request[] = [
       {
         text: 'FIGHT',
         effects: {
-          landForces: -2,
+          landForces: -3,
         },
       },
       {
         text: 'DO NOT FIGHT',
         effects: {
-          gold: -10,
+          gold: -15,
         },
       },
     ],
@@ -172,35 +173,36 @@ export const eventRequests: Request[] = [
       {
         text: 'FIGHT',
         effects: {
-          landForces: -4,
-          satisfaction: -5,
+          landForces: -8,
+          fireRisk: 15,
         },
       },
       {
         text: 'DO NOT FIGHT',
         effects: {
-          gold: -20,
+          gold: -30,
           satisfaction: -8,
+          farmers: -15,
         },
       },
     ],
   },
   {
     id: 'EVT_MILITIA_PAY',
-    title: 'Soldier\'s Due',
-    text: 'The militia\'s morale is slipping. They are demanding their seasonal wages to continue their service to the crown.',
+    title: "Soldier's Due",
+    text: "The militia's morale is slipping. They are demanding their seasonal wages to continue their service to the crown.",
     options: [
       {
         text: 'PAY',
         effects: {
           gold: -10,
-          satisfaction: 3,
         },
       },
       {
         text: 'REFUSE',
         effects: {
           landForces: -2,
+          satisfaction: -2,
         },
       },
     ],
@@ -213,14 +215,14 @@ export const eventRequests: Request[] = [
       {
         text: 'PATROL',
         effects: {
-          landForces: -1,
-          fireRisk: -2,
+          landForces: -2,
         },
       },
       {
         text: 'IGNORE',
         effects: {
-          satisfaction: -3,
+          satisfaction: -2,
+          farmers: -10,
         },
       },
     ],
@@ -233,7 +235,7 @@ export const eventRequests: Request[] = [
       {
         text: 'COMPENSATE',
         effects: {
-          gold: -8,
+          gold: -15,
         },
       },
       {
@@ -249,19 +251,21 @@ export const eventRequests: Request[] = [
   {
     id: 'EVT_NEW_FARMERS',
     title: 'Wandering Souls',
-    text: 'A group of travelers seeks land to till. They bring labor, but their makeshift camps pose a significant fire risk to the village.',
+    text: 'A group of sick travelers seeks land to till. They bring labor, but their makeshift camps pose a significant fire risk to the village.',
     options: [
       {
         text: 'ALLOW',
         effects: {
           farmers: 20,
-          fireRisk: 5,
+          fireRisk: 15,
+          health: -10,
         },
       },
       {
         text: 'DECLINE',
         effects: {
-          satisfaction: -5,
+          satisfaction: 2,
+          gold: -10,
         },
       },
     ],
@@ -274,7 +278,7 @@ export const eventRequests: Request[] = [
       {
         text: 'CONCEDE',
         effects: {
-          gold: -5,
+          gold: -15,
           satisfaction: 4,
         },
       },
@@ -289,7 +293,7 @@ export const eventRequests: Request[] = [
   {
     id: 'EVT_BIG_FAMILY',
     title: 'A Growing House',
-    text: 'A local family struggles to feed their many children. They\'ve come to you for a small charitable gift to get through the month.',
+    text: "A local family struggles to feed their many children. They've come to you for a small charitable gift to get through the month.",
     options: [
       {
         text: 'HELP',
@@ -301,7 +305,7 @@ export const eventRequests: Request[] = [
       {
         text: 'DECLINE',
         effects: {
-          satisfaction: -3,
+          satisfaction: -2,
         },
       },
     ],
@@ -314,14 +318,14 @@ export const eventRequests: Request[] = [
       {
         text: 'HIRE',
         effects: {
-          gold: -6,
-          farmers: 10,
+          gold: -12,
+          farmers: 5,
         },
       },
       {
         text: 'DO NOTHING',
         effects: {
-          health: -4,
+          health: -5,
         },
       },
     ],
@@ -331,19 +335,20 @@ export const eventRequests: Request[] = [
   {
     id: 'EVT_CRISIS_UNREST',
     title: 'Unrest Escalates',
-    text: 'Warning: Low Satisfaction! The people\'s anger has reached a breaking point. You must act now to appease the crowd or face a total revolt.',
+    text: "Warning: Low Satisfaction! The people's anger has reached a breaking point. You must act now to appease the crowd or face a total revolt.",
     options: [
       {
         text: 'CONCESSIONS',
         effects: {
-          gold: -10,
-          satisfaction: 8,
+          gold: -40,
+          satisfaction: 10,
         },
       },
       {
         text: 'CRACK DOWN',
         effects: {
           landForces: -2,
+          farmers: -20,
         },
       },
     ],
@@ -356,14 +361,14 @@ export const eventRequests: Request[] = [
       {
         text: 'HEALER',
         effects: {
-          gold: -10,
-          health: 8,
+          gold: -40,
+          health: 10,
         },
       },
       {
         text: 'IGNORE',
         effects: {
-          farmers: -10,
+          farmers: -25,
         },
       },
     ],
@@ -376,14 +381,15 @@ export const eventRequests: Request[] = [
       {
         text: 'PREPARE',
         effects: {
-          gold: -8,
+          gold: -40,
           fireRisk: -10,
         },
       },
       {
         text: 'DO NOTHING',
         effects: {
-          farmers: -10,
+          farmers: -15,
+          health: -5,
         },
       },
     ],
@@ -399,7 +405,7 @@ export const eventRequests: Request[] = [
         text: 'BUILD',
         effects: {
           gold: -10,
-          fireRisk: -10,
+          fireRisk: -5,
         },
       },
       {
@@ -411,13 +417,13 @@ export const eventRequests: Request[] = [
   {
     id: 'EVT_VILLAGE_FESTIVAL',
     title: 'Summer Solstice',
-    text: 'Morale is low. Organizing a grand festival with music and food would greatly strengthen the community\'s spirit.',
+    text: "Morale is low. Organizing a grand festival with music and food would greatly strengthen the community's spirit.",
     options: [
       {
         text: 'HOLD',
         effects: {
-          gold: -8,
-          satisfaction: 6,
+          gold: -10,
+          satisfaction: 4,
         },
       },
       {
@@ -434,8 +440,8 @@ export const eventRequests: Request[] = [
       {
         text: 'BUY',
         effects: {
-          gold: -6,
-          health: 6,
+          gold: -10,
+          health: 4,
         },
       },
       {
@@ -452,7 +458,7 @@ export const eventRequests: Request[] = [
       {
         text: 'TRAIN',
         effects: {
-          gold: -8,
+          gold: -12,
           landForces: 5,
         },
       },
@@ -470,8 +476,8 @@ export const eventRequests: Request[] = [
       {
         text: 'ORGANIZE',
         effects: {
-          gold: -5,
-          fireRisk: -5,
+          gold: -10,
+          fireRisk: -4,
         },
       },
       {
@@ -488,15 +494,15 @@ export const eventRequests: Request[] = [
       {
         text: 'LOWER taxes',
         effects: {
-          gold: -10,
-          satisfaction: 7,
+          gold: -15,
+          satisfaction: 4,
         },
       },
       {
         text: 'RAISE taxes',
         effects: {
           gold: 20,
-          satisfaction: -5,
+          satisfaction: -6,
         },
       },
     ],
@@ -506,18 +512,19 @@ export const eventRequests: Request[] = [
   {
     id: 'EVT_FOREST_FIRE',
     title: 'Smoke on the Horizon',
-    text: 'A nearby forest fire threatens the outskirts. If we don\'t send help to contain it, the winds may bring the disaster to our door.',
+    text: "A nearby forest fire threatens the outskirts. If we don't send help to contain it, the winds may bring the disaster to our door.",
     options: [
       {
         text: 'FIGHT',
         effects: {
-          gold: -8,
+          farmers: -5,
+          health: -5,
         },
       },
       {
         text: 'DO NOTHING',
         effects: {
-          fireRisk: 10,
+          fireRisk: 15,
         },
       },
     ],
@@ -530,13 +537,13 @@ export const eventRequests: Request[] = [
       {
         text: 'QUARANTINE',
         effects: {
-          satisfaction: -3,
+          satisfaction: -5,
         },
       },
       {
         text: 'IGNORE',
         effects: {
-          health: -8,
+          health: -10,
         },
       },
     ],
@@ -555,7 +562,7 @@ export const eventRequests: Request[] = [
       {
         text: 'DO NOTHING',
         effects: {
-          gold: -8,
+          gold: -15,
         },
       },
     ],
@@ -563,19 +570,20 @@ export const eventRequests: Request[] = [
   {
     id: 'EVT_BAD_HARVEST',
     title: 'The Blighted Crop',
-    text: 'An early frost has ruined the crops. The people are hungry—will the crown step in to provide compensation and food?',
+    text: 'An early frost has ruined the crops. The people are hungry — will the crown step in to provide compensation and food?',
     options: [
       {
         text: 'COMPENSATE',
         effects: {
-          gold: -10,
+          gold: -15,
         },
       },
       {
         text: 'DO NOTHING',
         effects: {
-          satisfaction: -6,
-          health: -4,
+          satisfaction: -5,
+          health: -5,
+          farmers: -10,
         },
       },
     ],
@@ -588,13 +596,14 @@ export const eventRequests: Request[] = [
       {
         text: 'REPLACE',
         effects: {
-          gold: -6,
+          gold: -10,
         },
       },
       {
         text: 'IGNORE',
         effects: {
-          fireRisk: 6,
+          fireRisk: 8,
+          health: -4,
         },
       },
     ],
@@ -607,13 +616,13 @@ export const eventRequests: Request[] = [
       {
         text: 'MEDIATE',
         effects: {
-          gold: -1,
+          gold: -10,
         },
       },
       {
         text: 'IGNORE',
         effects: {
-          farmers: -1,
+          farmers: -5,
         },
       },
     ],
