@@ -13,7 +13,8 @@ import type { Request } from './models';
 export const needRequests: Request[] = [
   {
     id: 'NEED_MARKETPLACE',
-    text: 'The villagers want a marketplace for trade.',
+    title: 'A Hub for Trade',
+    text: 'The settlement is growing, and door-to-door bartering is no longer sufficient. The citizens demand a central marketplace to unlock the next tier of prosperity.',
     options: [
       {
         text: 'BUILD',
@@ -33,7 +34,8 @@ export const needRequests: Request[] = [
   },
   {
     id: 'NEED_BREAD',
-    text: 'The bakery needs support to provide bread.',
+    title: 'Essential Sustenance',
+    text: 'A sophisticated village requires a stable food chain. The people are calling for an organized bakery to elevate their diet and support further growth.',
     options: [
       {
         text: 'SUPPORT BAKERY',
@@ -53,7 +55,8 @@ export const needRequests: Request[] = [
   },
   {
     id: 'NEED_BEER',
-    text: 'Villagers request permission to brew beer.',
+    title: 'Culture & Brewing',
+    text: 'As wealth increases, so does the desire for leisure. A local brewery is now required to maintain high satisfaction and reach the next level of social standing.',
     options: [
       {
         text: 'ALLOW',
@@ -71,7 +74,8 @@ export const needRequests: Request[] = [
   },
   {
     id: 'NEED_FIREWOOD',
-    text: 'The village needs an organized firewood supply.',
+    title: 'Structured Warmth',
+    text: 'Random foraging is too inefficient for a town of this size. The population demands a professional firewood supply as a baseline standard for their homes.',
     options: [
       {
         text: 'ORGANIZE',
@@ -91,7 +95,8 @@ export const needRequests: Request[] = [
   },
   {
     id: 'NEED_WELL',
-    text: 'A well would improve health conditions.',
+    title: 'Sanitary Standards',
+    text: 'To support a denser population safely, a central well is non-negotiable. Without this hygienic upgrade, the village\'s expansion will stagnate.',
     options: [
       {
         text: 'BUILD',
@@ -121,7 +126,8 @@ export const eventRequests: Request[] = [
   // A) Military & security (6 events)
   {
     id: 'EVT_RECRUIT_MILITIA',
-    text: 'Recruit militia to strengthen defenses?',
+    title: 'Call to Arms',
+    text: 'The borders feel thin. Should we recruit farmers into the militia to bolster defenses, even if the fields suffer from fewer hands?',
     options: [
       {
         text: 'YES',
@@ -141,7 +147,8 @@ export const eventRequests: Request[] = [
   },
   {
     id: 'EVT_RAID_SMALL',
-    text: 'A small raiding party approaches!',
+    title: 'Shadows in the Woods',
+    text: 'A small band of brigands has been spotted nearby. Do we drive them off by force or pay a "toll" to keep the peace?',
     options: [
       {
         text: 'FIGHT',
@@ -159,7 +166,8 @@ export const eventRequests: Request[] = [
   },
   {
     id: 'EVT_RAID_LARGE',
-    text: 'A large raiding force is at the gates!',
+    title: 'The War Horns',
+    text: 'A massive raiding force is at the gates! Stand your ground and fight, or offer a heavy tribute to spare the village from destruction.',
     options: [
       {
         text: 'FIGHT',
@@ -179,7 +187,8 @@ export const eventRequests: Request[] = [
   },
   {
     id: 'EVT_MILITIA_PAY',
-    text: 'The militia demands payment for their service.',
+    title: 'Soldier\'s Due',
+    text: 'The militia\'s morale is slipping. They are demanding their seasonal wages to continue their service to the crown.',
     options: [
       {
         text: 'PAY',
@@ -198,7 +207,8 @@ export const eventRequests: Request[] = [
   },
   {
     id: 'EVT_RESTLESS_NIGHT',
-    text: 'Strange noises disturb the village at night.',
+    title: 'Whispers in the Dark',
+    text: 'Strange noises have been reported near the storage huts. Send a patrol to investigate, or dismiss it as simple superstition?',
     options: [
       {
         text: 'PATROL',
@@ -217,7 +227,8 @@ export const eventRequests: Request[] = [
   },
   {
     id: 'EVT_VETERANS_LEAVE',
-    text: 'Veteran fighters are considering leaving.',
+    title: 'The Old Guard',
+    text: 'Your most experienced fighters are considering retirement. A small bonus might convince them to stay and train the new recruits.',
     options: [
       {
         text: 'COMPENSATE',
@@ -237,7 +248,8 @@ export const eventRequests: Request[] = [
   // B) Population & growth (4 events)
   {
     id: 'EVT_NEW_FARMERS',
-    text: 'New farmers want to settle in the village.',
+    title: 'Wandering Souls',
+    text: 'A group of travelers seeks land to till. They bring labor, but their makeshift camps pose a significant fire risk to the village.',
     options: [
       {
         text: 'ALLOW',
@@ -256,7 +268,8 @@ export const eventRequests: Request[] = [
   },
   {
     id: 'EVT_EMIGRATION',
-    text: 'Some families threaten to emigrate.',
+    title: 'The Long Goodbye',
+    text: 'Dissatisfied with current conditions, several families are packing their wagons. Will you offer concessions to keep them?',
     options: [
       {
         text: 'CONCEDE',
@@ -275,7 +288,8 @@ export const eventRequests: Request[] = [
   },
   {
     id: 'EVT_BIG_FAMILY',
-    text: 'A big family asks for financial help.',
+    title: 'A Growing House',
+    text: 'A local family struggles to feed their many children. They\'ve come to you for a small charitable gift to get through the month.',
     options: [
       {
         text: 'HELP',
@@ -294,7 +308,8 @@ export const eventRequests: Request[] = [
   },
   {
     id: 'EVT_HARVEST_HELPERS',
-    text: 'Harvest helpers are missing.',
+    title: 'The Golden Fields',
+    text: 'The crops are ripening all at once. Hiring seasonal helpers could save the harvest before the autumn rains arrive.',
     options: [
       {
         text: 'HIRE',
@@ -315,7 +330,8 @@ export const eventRequests: Request[] = [
   // C) Crisis events (3 events) - triggered by selection rules
   {
     id: 'EVT_CRISIS_UNREST',
-    text: 'Unrest escalates in the village!',
+    title: 'Unrest Escalates',
+    text: 'Warning: Low Satisfaction! The people\'s anger has reached a breaking point. You must act now to appease the crowd or face a total revolt.',
     options: [
       {
         text: 'CONCESSIONS',
@@ -334,7 +350,8 @@ export const eventRequests: Request[] = [
   },
   {
     id: 'EVT_CRISIS_DISEASE',
-    text: 'A disease wave threatens the village!',
+    title: 'The Pale Cough',
+    text: 'Warning: Low Health! Due to poor sanitary conditions, a sickness is spreading rapidly. We must fund a healer now before the population collapses.',
     options: [
       {
         text: 'HEALER',
@@ -353,7 +370,8 @@ export const eventRequests: Request[] = [
   },
   {
     id: 'EVT_CRISIS_FIRE',
-    text: 'Fire danger is acute in the village!',
+    title: 'The Ember Alert',
+    text: 'Warning: High Fire Risk! Neglect has made the village a tinderbox. A single spark could be fatal. We must implement emergency fire safety measures immediately.',
     options: [
       {
         text: 'PREPARE',
@@ -374,7 +392,8 @@ export const eventRequests: Request[] = [
   // D) Improve stats (6 events)
   {
     id: 'EVT_FIRE_WATCH',
-    text: 'Build a fire watch tower?',
+    title: 'The High Tower',
+    text: 'An architect proposes a watchtower to spot fires early. It is a wise investment in the long-term safety of the settlement.',
     options: [
       {
         text: 'BUILD',
@@ -391,7 +410,8 @@ export const eventRequests: Request[] = [
   },
   {
     id: 'EVT_VILLAGE_FESTIVAL',
-    text: 'Hold a village festival to boost morale?',
+    title: 'Summer Solstice',
+    text: 'Morale is low. Organizing a grand festival with music and food would greatly strengthen the community\'s spirit.',
     options: [
       {
         text: 'HOLD',
@@ -408,7 +428,8 @@ export const eventRequests: Request[] = [
   },
   {
     id: 'EVT_MEDICAL_HERBS',
-    text: 'A merchant offers medical herbs.',
+    title: 'The Traveling Apothecary',
+    text: 'A merchant offers a rare shipment of medicinal herbs. These could significantly boost the overall health of the village.',
     options: [
       {
         text: 'BUY',
@@ -425,7 +446,8 @@ export const eventRequests: Request[] = [
   },
   {
     id: 'EVT_TRAIN_MILITIA',
-    text: 'Train the militia for better defense?',
+    title: 'Drill Practice',
+    text: 'A retired captain offers to drill your troops. This would make your defense forces much more formidable for future raids.',
     options: [
       {
         text: 'TRAIN',
@@ -442,7 +464,8 @@ export const eventRequests: Request[] = [
   },
   {
     id: 'EVT_CLEAN_STORAGE',
-    text: 'Clean up the storage areas?',
+    title: 'Spring Cleaning',
+    text: 'The granaries are cluttered with old straw and debris. A deep clean would reduce the risk of accidental fires.',
     options: [
       {
         text: 'ORGANIZE',
@@ -459,7 +482,8 @@ export const eventRequests: Request[] = [
   },
   {
     id: 'EVT_TAX_REFORM',
-    text: 'Implement tax reform?',
+    title: 'The Royal Ledger',
+    text: 'Balancing the books: Do you lower taxes to win favor, or raise them to fill the treasury for upcoming hardships?',
     options: [
       {
         text: 'LOWER taxes',
@@ -481,7 +505,8 @@ export const eventRequests: Request[] = [
   // E) Worsen stats (6 events)
   {
     id: 'EVT_FOREST_FIRE',
-    text: 'A nearby forest fire threatens the village.',
+    title: 'Smoke on the Horizon',
+    text: 'A nearby forest fire threatens the outskirts. If we don\'t send help to contain it, the winds may bring the disaster to our door.',
     options: [
       {
         text: 'FIGHT',
@@ -499,7 +524,8 @@ export const eventRequests: Request[] = [
   },
   {
     id: 'EVT_PLAGUE',
-    text: 'Plague spreads from a nearby village.',
+    title: 'The Black Flag',
+    text: 'A plague is ravaging the next town over. Should we enforce a strict, unpopular quarantine or hope the winds of fate are kind?',
     options: [
       {
         text: 'QUARANTINE',
@@ -517,7 +543,8 @@ export const eventRequests: Request[] = [
   },
   {
     id: 'EVT_THEFTS',
-    text: 'Thefts are increasing in the village.',
+    title: 'Sticky Fingers',
+    text: 'Marketplace thefts are on the rise. More guards would stop the loss of gold, but they are needed elsewhere for defense.',
     options: [
       {
         text: 'MORE GUARDS',
@@ -535,7 +562,8 @@ export const eventRequests: Request[] = [
   },
   {
     id: 'EVT_BAD_HARVEST',
-    text: 'The harvest was poor this season.',
+    title: 'The Blighted Crop',
+    text: 'An early frost has ruined the crops. The people are hungry—will the crown step in to provide compensation and food?',
     options: [
       {
         text: 'COMPENSATE',
@@ -554,7 +582,8 @@ export const eventRequests: Request[] = [
   },
   {
     id: 'EVT_FIREWOOD_WET',
-    text: 'The firewood supply got wet.',
+    title: 'Damp Spirits',
+    text: 'The firewood supply got soaked in a storm. We must buy replacements immediately or face a cold and dangerous winter.',
     options: [
       {
         text: 'REPLACE',
@@ -572,7 +601,8 @@ export const eventRequests: Request[] = [
   },
   {
     id: 'EVT_FARMERS_QUARREL',
-    text: 'Farmers quarrel over land boundaries (comic relief).',
+    title: 'The Fence Dispute',
+    text: 'Two farmers are quarreling over a boundary line. A moment of your time could settle this before it turns into a local feud.',
     options: [
       {
         text: 'MEDIATE',

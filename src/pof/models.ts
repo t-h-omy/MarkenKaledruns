@@ -84,6 +84,8 @@ export interface Option {
 export interface Request {
   /** Unique stable identifier for this request */
   id: string;
+  /** The title of the request */
+  title: string;
   /** The text/description of the request */
   text: string;
   /** Array of options (max 2) the player can choose from */
