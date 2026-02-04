@@ -61,7 +61,7 @@ export const needRequests: Request[] = [
       {
         text: 'ALLOW',
         effects: {
-          gold: -40,
+          gold: -50,
           beer: true,
           satisfaction: 5,
         },
@@ -82,7 +82,7 @@ export const needRequests: Request[] = [
       {
         text: 'ORGANIZE',
         effects: {
-          gold: -50,
+          gold: -80,
           firewood: true,
         },
       },
@@ -102,7 +102,7 @@ export const needRequests: Request[] = [
       {
         text: 'BUILD',
         effects: {
-          gold: -60,
+          gold: -120,
           well: true,
         },
       },
@@ -135,7 +135,6 @@ export const eventRequests: Request[] = [
           landForces: 3,
           farmers: -10,
           gold: -6,
-          satisfaction: -3,
         },
       },
       {
@@ -160,7 +159,7 @@ export const eventRequests: Request[] = [
       {
         text: 'DO NOT FIGHT',
         effects: {
-          gold: -15,
+          gold: -10,
         },
       },
     ],
@@ -181,7 +180,7 @@ export const eventRequests: Request[] = [
         text: 'DO NOT FIGHT',
         effects: {
           gold: -30,
-          satisfaction: -8,
+          satisfaction: -5,
           farmers: -15,
         },
       },
@@ -221,7 +220,6 @@ export const eventRequests: Request[] = [
       {
         text: 'IGNORE',
         effects: {
-          satisfaction: -2,
           farmers: -10,
         },
       },
@@ -257,15 +255,14 @@ export const eventRequests: Request[] = [
         text: 'ALLOW',
         effects: {
           farmers: 20,
-          fireRisk: 15,
-          health: -10,
+          fireRisk: 10,
+          health: -8,
         },
       },
       {
         text: 'DECLINE',
         effects: {
-          satisfaction: 2,
-          gold: -10,
+          satisfaction: 4,
         },
       },
     ],
@@ -299,7 +296,7 @@ export const eventRequests: Request[] = [
         text: 'HELP',
         effects: {
           gold: -5,
-          satisfaction: 3,
+          satisfaction: 5,
         },
       },
       {
@@ -318,7 +315,7 @@ export const eventRequests: Request[] = [
       {
         text: 'HIRE',
         effects: {
-          gold: -12,
+          gold: -10,
           farmers: 5,
         },
       },
@@ -348,7 +345,7 @@ export const eventRequests: Request[] = [
         text: 'CRACK DOWN',
         effects: {
           landForces: -2,
-          farmers: -20,
+          farmers: -15,
         },
       },
     ],
@@ -368,7 +365,7 @@ export const eventRequests: Request[] = [
       {
         text: 'IGNORE',
         effects: {
-          farmers: -25,
+          farmers: -15,
         },
       },
     ],
@@ -417,13 +414,13 @@ export const eventRequests: Request[] = [
   {
     id: 'EVT_VILLAGE_FESTIVAL',
     title: 'Summer Solstice',
-    text: "Morale is low. Organizing a grand festival with music and food would greatly strengthen the community's spirit.",
+    text: "Organizing a grand festival with music and food would greatly strengthen the community's spirit.",
     options: [
       {
         text: 'HOLD',
         effects: {
           gold: -10,
-          satisfaction: 4,
+          satisfaction: 6,
         },
       },
       {
@@ -441,7 +438,7 @@ export const eventRequests: Request[] = [
         text: 'BUY',
         effects: {
           gold: -10,
-          health: 4,
+          health: 5,
         },
       },
       {
@@ -458,7 +455,7 @@ export const eventRequests: Request[] = [
       {
         text: 'TRAIN',
         effects: {
-          gold: -12,
+          gold: -10,
           landForces: 5,
         },
       },
@@ -477,7 +474,7 @@ export const eventRequests: Request[] = [
         text: 'ORGANIZE',
         effects: {
           gold: -10,
-          fireRisk: -4,
+          fireRisk: -8,
         },
       },
       {
@@ -495,13 +492,13 @@ export const eventRequests: Request[] = [
         text: 'LOWER taxes',
         effects: {
           gold: -15,
-          satisfaction: 4,
+          satisfaction: 6,
         },
       },
       {
         text: 'RAISE taxes',
         effects: {
-          gold: 20,
+          gold: 25,
           satisfaction: -6,
         },
       },
@@ -543,7 +540,7 @@ export const eventRequests: Request[] = [
       {
         text: 'IGNORE',
         effects: {
-          health: -10,
+          health: -8,
         },
       },
     ],
@@ -557,6 +554,7 @@ export const eventRequests: Request[] = [
         text: 'MORE GUARDS',
         effects: {
           landForces: -2,
+          satisfaction: 4,
         },
       },
       {
@@ -576,13 +574,13 @@ export const eventRequests: Request[] = [
         text: 'COMPENSATE',
         effects: {
           gold: -15,
+          health: 5
         },
       },
       {
         text: 'DO NOTHING',
         effects: {
-          satisfaction: -5,
-          health: -5,
+          satisfaction: -3,
           farmers: -10,
         },
       },
@@ -597,6 +595,7 @@ export const eventRequests: Request[] = [
         text: 'REPLACE',
         effects: {
           gold: -10,
+          satisfaction: 4
         },
       },
       {
