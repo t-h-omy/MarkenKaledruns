@@ -207,7 +207,7 @@ function App() {
                   <p className="log-empty">No decisions yet</p>
                 ) : (
                   recentLogs.map((entry, index) => (
-                    <div key={`${entry.tick}-${entry.source}-${index}`} className="log-entry">
+                    <div key={`${entry.tick}-${entry.source}-${entry.requestId}-${index}`} className="log-entry">
                       <div className="log-header">
                         <span className={`log-source log-source-${entry.source.toLowerCase().replace(' ', '-')}`}>
                           {entry.source}

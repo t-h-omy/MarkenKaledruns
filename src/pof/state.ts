@@ -244,7 +244,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         state.currentRequestId,
         '',
         'Population Growth',
-        { ...stats, farmers: beforeBaseline.farmers },
+        { ...beforeBaseline, gold: stats.gold },
         stats
       ));
     }
