@@ -139,12 +139,17 @@ export function pickNextRequest(
     // If all unfulfilled needs were last request, fall through to random events
   }
 
-  // Pick random event request (excluding last request)
-  const availableEvents = eventRequests.filter((r) => r.id !== actualLastRequestId);
+  // Pick random event request (excluding last request and crisis events)
+  // Crisis events should ONLY appear through the explicit conditions above
+  const crisisEventIds = ['EVT_CRISIS_FIRE', 'EVT_CRISIS_DISEASE', 'EVT_CRISIS_UNREST'];
+  const availableEvents = eventRequests.filter(
+    (r) => r.id !== actualLastRequestId && !crisisEventIds.includes(r.id)
+  );
   if (availableEvents.length > 0) {
     return availableEvents[rng.nextInt(availableEvents.length)];
   }
 
-  // Fallback: pick any event (shouldn't happen with 25 events)
-  return eventRequests[rng.nextInt(eventRequests.length)];
+  // Fallback: pick any non-crisis event (shouldn't happen with 25 events)
+  const nonCrisisEvents = eventRequests.filter((r) => !crisisEventIds.includes(r.id));
+  return nonCrisisEvents[rng.nextInt(nonCrisisEvents.length)];
 }

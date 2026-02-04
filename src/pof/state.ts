@@ -35,6 +35,8 @@ export interface GameState {
   currentRequestId: string;
   lastRequestId: string;
   log: LogEntry[];
+  gameOver: boolean;
+  gameOverReason?: string;
 }
 
 /**
@@ -68,6 +70,7 @@ export const initialState: GameState = {
   currentRequestId: '',
   lastRequestId: '',
   log: [],
+  gameOver: false,
 };
 
 /**
@@ -79,6 +82,7 @@ function clamp(value: number, min: number, max: number): number {
 
 /**
  * Clamps stats according to game rules
+ * Gold minimum is -50 (bankruptcy threshold)
  */
 function clampStats(stats: Stats): Stats {
   return {
@@ -86,7 +90,7 @@ function clampStats(stats: Stats): Stats {
     satisfaction: clamp(stats.satisfaction, 0, 100),
     health: clamp(stats.health, 0, 100),
     fireRisk: clamp(stats.fireRisk, 0, 100),
-    gold: Math.max(0, stats.gold),
+    gold: Math.max(-50, stats.gold),
     farmers: Math.max(0, stats.farmers),
     landForces: Math.max(0, stats.landForces),
   };
@@ -181,6 +185,11 @@ function createLogEntry(
  */
 export function gameReducer(state: GameState, action: GameAction): GameState {
   if (action.type === 'CHOOSE_OPTION') {
+    // Prevent actions when game is over
+    if (state.gameOver) {
+      return state;
+    }
+
     // Find the current request
     const currentRequest = [...needRequests, ...eventRequests].find(
       (r) => r.id === state.currentRequestId
@@ -249,10 +258,24 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       ));
     }
 
-    // 3. Pick next request
+    // 3. Check for game over condition
+    if (stats.gold <= -50) {
+      return {
+        tick: state.tick + 1,
+        stats,
+        needs,
+        currentRequestId: state.currentRequestId,
+        lastRequestId: state.currentRequestId,
+        log: [...state.log, ...newLog],
+        gameOver: true,
+        gameOverReason: 'Bankruptcy! Your gold has reached -50.',
+      };
+    }
+
+    // 4. Pick next request
     const nextRequest = pickNextRequest(stats, needs, state.currentRequestId);
 
-    // 4. Increment tick and update state
+    // 5. Increment tick and update state
     return {
       tick: state.tick + 1,
       stats,
@@ -260,6 +283,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       currentRequestId: nextRequest.id,
       lastRequestId: state.currentRequestId,
       log: [...state.log, ...newLog],
+      gameOver: false,
     };
   }
 
