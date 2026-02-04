@@ -211,7 +211,7 @@ export function detectNewlyUnlockedNeeds(
  */
 function applyBaseline(stats: Stats): Stats {
   const goldIncome = Math.floor(0.1 * (stats.farmers * ((stats.satisfaction-10) / 100)));
-  const farmerGrowth = Math.floor((stats.health-30) / 20);
+  const farmerGrowth = Math.floor((stats.health-25) / 20);
 
   return {
     ...stats,
