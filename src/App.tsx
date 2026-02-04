@@ -150,6 +150,7 @@ function App() {
           <h2>Decision Required</h2>
           {currentRequest ? (
             <>
+              <h3 className="request-title">{currentRequest.title}</h3>
               <p className="request-text">{currentRequest.text}</p>
               <div className="options-container">
                 {currentRequest.options.map((option, index) => {
