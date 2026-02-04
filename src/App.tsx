@@ -22,6 +22,26 @@ function App() {
   // Check if current request is a crisis event
   const isCrisis = currentRequest?.id.startsWith('EVT_CRISIS_') ?? false
 
+  // Check if gold is negative (bankruptcy warning)
+  const showBankruptcyWarning = gameState.stats.gold < 0 && gameState.stats.gold > -50
+
+  // Check if an option would cause invalid state (negative farmers or landForces)
+  const isOptionDisabled = (effects: Effect): { disabled: boolean; reason?: string } => {
+    if (effects.farmers !== undefined) {
+      const newFarmers = gameState.stats.farmers + effects.farmers
+      if (newFarmers < 0) {
+        return { disabled: true, reason: 'Not enough farmers' }
+      }
+    }
+    if (effects.landForces !== undefined) {
+      const newLandForces = gameState.stats.landForces + effects.landForces
+      if (newLandForces < 0) {
+        return { disabled: true, reason: 'Not enough land forces' }
+      }
+    }
+    return { disabled: false }
+  }
+
   // Format effects for display
   const formatEffects = (effects: Effect): Array<{ label: string; value: number; isPositive: boolean }> => {
     const formatted: Array<{ label: string; value: number; isPositive: boolean }> = []
@@ -111,54 +131,89 @@ function App() {
           </div>
         </div>
 
-        {/* Center Decision Panel */}
-        <div className={`panel request-panel ${isCrisis ? 'crisis-panel' : ''}`}>
-          {isCrisis && (
-            <div className="crisis-banner">
-              ⚠️ CRISIS EVENT ⚠️
+        {/* Bankruptcy Warning */}
+        {showBankruptcyWarning && !gameState.gameOver && (
+          <div className="bankruptcy-warning">
+            ⚠️ Bankruptcy imminent ⚠️
+          </div>
+        )}
+
+        {/* Game Over Screen */}
+        {gameState.gameOver ? (
+          <div className="panel game-over-panel">
+            <h2>Game Over</h2>
+            <p className="game-over-message">{gameState.gameOverReason}</p>
+            <p className="game-over-stats">Final Stats:</p>
+            <div className="game-over-stats-grid">
+              <div>💰 Gold: {gameState.stats.gold}</div>
+              <div>😊 Satisfaction: {gameState.stats.satisfaction}</div>
+              <div>❤️ Health: {gameState.stats.health}</div>
+              <div>🔥 Fire Risk: {gameState.stats.fireRisk}</div>
+              <div>👨‍🌾 Farmers: {gameState.stats.farmers}</div>
+              <div>⚔️ Land Forces: {gameState.stats.landForces}</div>
             </div>
-          )}
-          <h2>Decision Required</h2>
-          {currentRequest ? (
-            <>
-              <h3 className="request-title">{currentRequest.title}</h3>
-              <p className="request-text">{currentRequest.text}</p>
-              <div className="options-container">
-                {currentRequest.options.map((option, index) => {
-                  const effects = formatEffects(option.effects)
-                  return (
-                    <button
-                      key={index}
-                      className="option-button"
-                      onClick={() => handleOptionClick(index)}
-                    >
-                      <div className="option-text">{option.text}</div>
-                      {effects.length > 0 && (
-                        <div className="option-consequences">
-                          {effects.map((effect, i) => (
-                            <span 
-                              key={i} 
-                              className={`consequence ${effect.isPositive ? 'positive' : 'negative'}`}
-                            >
-                              {effect.value !== 0 && (
-                                <>
-                                  {effect.label}: {effect.value > 0 ? '+' : ''}{effect.value}
-                                </>
-                              )}
-                              {effect.value === 0 && effect.label}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </button>
-                  )
-                })}
+            <button 
+              className="restart-button" 
+              onClick={() => window.location.reload()}
+            >
+              Restart Game
+            </button>
+          </div>
+        ) : (
+          /* Center Decision Panel */
+          <div className={`panel request-panel ${isCrisis ? 'crisis-panel' : ''}`}>
+            {isCrisis && (
+              <div className="crisis-banner">
+                ⚠️ CRISIS EVENT ⚠️
               </div>
-            </>
-          ) : (
-            <p className="request-text">No request available</p>
-          )}
-        </div>
+            )}
+            <h2>Decision Required</h2>
+            {currentRequest ? (
+              <>
+                <h3 className="request-title">{currentRequest.title}</h3>
+                <p className="request-text">{currentRequest.text}</p>
+                <div className="options-container">
+                  {currentRequest.options.map((option, index) => {
+                    const effects = formatEffects(option.effects)
+                    const { disabled, reason } = isOptionDisabled(option.effects)
+                    return (
+                      <button
+                        key={index}
+                        className={`option-button ${disabled ? 'option-disabled' : ''}`}
+                        onClick={() => !disabled && handleOptionClick(index)}
+                        disabled={disabled}
+                      >
+                        <div className="option-text">{option.text}</div>
+                        {effects.length > 0 && (
+                          <div className="option-consequences">
+                            {effects.map((effect, i) => (
+                              <span 
+                                key={i} 
+                                className={`consequence ${effect.isPositive ? 'positive' : 'negative'}`}
+                              >
+                                {effect.value !== 0 && (
+                                  <>
+                                    {effect.label}: {effect.value > 0 ? '+' : ''}{effect.value}
+                                  </>
+                                )}
+                                {effect.value === 0 && effect.label}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        {disabled && reason && (
+                          <div className="option-disabled-reason">{reason}</div>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              </>
+            ) : (
+              <p className="request-text">No request available</p>
+            )}
+          </div>
+        )}
 
         {/* Bottom Bar with Toggle */}
         <div className="bottom-bar">
