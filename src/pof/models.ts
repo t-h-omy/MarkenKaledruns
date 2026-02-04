@@ -40,11 +40,11 @@ export interface Needs {
 }
 
 /**
- * Tracking data for need progression system
+ * Tracking data for need progression system with persistent building counts
  */
 export interface NeedTracking {
-  /** Last cycle index when this need was fulfilled (0 if never fulfilled) */
-  lastFulfilledCycleIndex: number;
+  /** Number of buildings built for this need (persistent, never decreases) */
+  buildingCount: number;
   /** Next tick when this need becomes eligible again after being declined */
   nextEligibleTick: number;
 }
@@ -61,14 +61,35 @@ export interface NeedsTracking {
 }
 
 /**
- * Need unlock thresholds (farmers population required)
+ * Need configuration including unlock thresholds and population scaling
+ */
+export interface NeedConfig {
+  /** Population required to unlock the first building */
+  unlockThreshold: number;
+  /** Population increase required for each additional building after the first */
+  populationPerBuilding: number;
+}
+
+/**
+ * Configuration for each need with unlock threshold and population scaling
+ */
+export const NEED_CONFIGS: Record<keyof Needs, NeedConfig> = {
+  marketplace: { unlockThreshold: 30, populationPerBuilding: 100 },
+  bread: { unlockThreshold: 60, populationPerBuilding: 120 },
+  beer: { unlockThreshold: 100, populationPerBuilding: 150 },
+  firewood: { unlockThreshold: 170, populationPerBuilding: 180 },
+  well: { unlockThreshold: 250, populationPerBuilding: 200 },
+};
+
+/**
+ * Need unlock thresholds (farmers population required) - for backward compatibility
  */
 export const NEED_UNLOCK_THRESHOLDS: Record<keyof Needs, number> = {
-  marketplace: 30,
-  bread: 60,
-  beer: 100,
-  firewood: 170,
-  well: 250,
+  marketplace: NEED_CONFIGS.marketplace.unlockThreshold,
+  bread: NEED_CONFIGS.bread.unlockThreshold,
+  beer: NEED_CONFIGS.beer.unlockThreshold,
+  firewood: NEED_CONFIGS.firewood.unlockThreshold,
+  well: NEED_CONFIGS.well.unlockThreshold,
 };
 
 /**

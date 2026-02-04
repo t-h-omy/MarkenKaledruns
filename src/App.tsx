@@ -1,6 +1,6 @@
 import { useReducer, useState } from 'react'
 import './App.css'
-import { gameReducer, initializeGame, isNeedUnlocked, calculateCycleIndex, isNeedRequired } from './pof/state'
+import { gameReducer, initializeGame, isNeedUnlocked, calculateRequiredBuildings, isNeedRequired } from './pof/state'
 import { needRequests, eventRequests } from './pof/requests'
 import type { Effect, Needs } from './pof/models'
 import { NEED_UNLOCK_THRESHOLDS } from './pof/models'
@@ -38,20 +38,19 @@ function App() {
     }
     
     const tracking = gameState.needsTracking[needKey]
-    const currentCycle = calculateCycleIndex(needKey, gameState.stats.farmers)
-    const required = isNeedRequired(needKey, gameState.stats.farmers, tracking.lastFulfilledCycleIndex)
+    const builtBuildings = tracking.buildingCount
+    const requiredBuildings = calculateRequiredBuildings(needKey, gameState.stats.farmers)
+    const required = isNeedRequired(needKey, gameState.stats.farmers, builtBuildings)
     
     if (required) {
       return {
         status: 'required' as const,
-        label: `REQUIRED (Cycle ${currentCycle})`,
+        label: `Built: ${builtBuildings} / Required: ${requiredBuildings}`,
       }
     } else {
-      // Show current cycle if never fulfilled (lastFulfilledCycleIndex === 0)
-      const displayCycle = tracking.lastFulfilledCycleIndex || currentCycle
       return {
         status: 'fulfilled' as const,
-        label: `✓ Fulfilled (Cycle ${displayCycle})`,
+        label: `Built: ${builtBuildings} / Required: ${requiredBuildings}`,
       }
     }
   }

@@ -137,8 +137,8 @@ export function pickNextRequest(
     }
 
     // Check if need is required for current cycle
-    const lastFulfilledCycleIndex = needsTracking ? needsTracking[needKey].lastFulfilledCycleIndex : 0;
-    if (isNeedRequired(needKey, stats.farmers, lastFulfilledCycleIndex)) {
+    const buildingCount = needsTracking ? needsTracking[needKey].buildingCount : 0;
+    if (isNeedRequired(needKey, stats.farmers, buildingCount)) {
       const req = needRequests.find((r) => r.id === needIdMap[needKey]);
       if (req) eligibleNeeds.push(req);
     }

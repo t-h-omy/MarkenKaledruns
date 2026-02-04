@@ -4,7 +4,7 @@
  */
 
 import type { Stats, Needs, Effect, NeedsTracking } from './models';
-import { DECLINE_COOLDOWN_TICKS, NEED_UNLOCK_THRESHOLDS } from './models';
+import { DECLINE_COOLDOWN_TICKS, NEED_UNLOCK_THRESHOLDS, NEED_CONFIGS } from './models';
 import { needRequests, eventRequests } from './requests';
 import { pickNextRequest } from './picker';
 
@@ -71,11 +71,11 @@ export const initialState: GameState = {
     well: false,
   },
   needsTracking: {
-    marketplace: { lastFulfilledCycleIndex: 0, nextEligibleTick: 0 },
-    bread: { lastFulfilledCycleIndex: 0, nextEligibleTick: 0 },
-    beer: { lastFulfilledCycleIndex: 0, nextEligibleTick: 0 },
-    firewood: { lastFulfilledCycleIndex: 0, nextEligibleTick: 0 },
-    well: { lastFulfilledCycleIndex: 0, nextEligibleTick: 0 },
+    marketplace: { buildingCount: 0, nextEligibleTick: 0 },
+    bread: { buildingCount: 0, nextEligibleTick: 0 },
+    beer: { buildingCount: 0, nextEligibleTick: 0 },
+    firewood: { buildingCount: 0, nextEligibleTick: 0 },
+    well: { buildingCount: 0, nextEligibleTick: 0 },
   },
   newlyUnlockedNeed: null,
   currentRequestId: '',
@@ -141,33 +141,31 @@ export function isNeedUnlocked(needKey: keyof Needs, farmers: number): boolean {
 }
 
 /**
- * Calculates the current cycle index for a need
- * Returns 0 if need is not unlocked yet
+ * Calculates the number of buildings required for a need based on population
+ * Formula:
+ * - If farmers < unlockThreshold: requiredBuildings = 0
+ * - Else: requiredBuildings = 1 + floor((farmers - unlockThreshold) / populationPerBuilding)
  */
-export function calculateCycleIndex(needKey: keyof Needs, farmers: number): number {
-  const unlockThreshold = NEED_UNLOCK_THRESHOLDS[needKey];
+export function calculateRequiredBuildings(needKey: keyof Needs, farmers: number): number {
+  const config = NEED_CONFIGS[needKey];
   
-  if (farmers < unlockThreshold) {
+  if (farmers < config.unlockThreshold) {
     return 0; // Not unlocked yet
   }
   
-  return Math.floor((farmers - unlockThreshold) / 100) + 1;
+  return 1 + Math.floor((farmers - config.unlockThreshold) / config.populationPerBuilding);
 }
 
 /**
- * Checks if a need is currently required (unfulfilled for current cycle)
+ * Checks if a need is currently required (more buildings needed)
  */
 export function isNeedRequired(
   needKey: keyof Needs,
   farmers: number,
-  lastFulfilledCycleIndex: number
+  buildingCount: number
 ): boolean {
-  if (!isNeedUnlocked(needKey, farmers)) {
-    return false; // Can't be required if not unlocked
-  }
-  
-  const currentCycleIndex = calculateCycleIndex(needKey, farmers);
-  return lastFulfilledCycleIndex < currentCycleIndex;
+  const requiredBuildings = calculateRequiredBuildings(needKey, farmers);
+  return buildingCount < requiredBuildings;
 }
 
 /**
@@ -315,11 +313,10 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const fulfillsNeed = option.effects[needKey] === true;
       
       if (fulfillsNeed) {
-        // Update cycle index when need is fulfilled
-        const currentCycleIndex = calculateCycleIndex(needKey, stats.farmers);
+        // Increment building count (persistent, never decreases)
         needsTracking[needKey] = {
           ...needsTracking[needKey],
-          lastFulfilledCycleIndex: currentCycleIndex,
+          buildingCount: needsTracking[needKey].buildingCount + 1,
         };
       } else {
         // Declined the need - set cooldown
