@@ -40,6 +40,34 @@ export interface Needs {
 }
 
 /**
+ * Unlock thresholds for each need (farmers population required)
+ */
+export const NEED_UNLOCK_THRESHOLDS = {
+  marketplace: 30,
+  bread: 60,
+  beer: 100,
+  firewood: 170,
+  well: 250,
+} as const;
+
+/**
+ * Tracking data for a single need's progression
+ */
+export interface NeedProgress {
+  /** Last cycle index when this need was fulfilled (0 means never fulfilled) */
+  lastFulfilledCycleIndex: number;
+  /** Tick number when this need becomes eligible again after decline (0 means eligible now) */
+  nextEligibleTick: number;
+}
+
+/**
+ * Tracks progression state for all needs
+ */
+export type NeedsProgress = {
+  [K in keyof Needs]: NeedProgress;
+};
+
+/**
  * Represents changes to game state (stats or needs).
  * Each property is optional and represents a delta or assignment.
  */

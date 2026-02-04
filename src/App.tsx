@@ -1,8 +1,9 @@
 import { useReducer, useState } from 'react'
 import './App.css'
-import { gameReducer, initializeGame } from './pof/state'
+import { gameReducer, initializeGame, calculateCycleIndex, isNeedRequired } from './pof/state'
 import { needRequests, eventRequests } from './pof/requests'
-import type { Effect } from './pof/models'
+import type { Effect, Needs } from './pof/models'
+import { NEED_UNLOCK_THRESHOLDS } from './pof/models'
 
 function App() {
   const [gameState, dispatch] = useReducer(gameReducer, undefined, initializeGame)
@@ -18,6 +19,36 @@ function App() {
 
   // Get last 3 log entries
   const recentLogs = gameState.log.slice(-3).reverse()
+
+  // Helper function to get need status
+  const getNeedStatus = (needKey: keyof Needs) => {
+    const unlockThreshold = NEED_UNLOCK_THRESHOLDS[needKey]
+    const currentCycle = calculateCycleIndex(gameState.stats.farmers, unlockThreshold)
+    
+    if (currentCycle === 0) {
+      // Locked
+      return {
+        state: 'locked' as const,
+        label: `Locked until ${unlockThreshold} farmers`,
+      }
+    }
+    
+    const isRequired = isNeedRequired(needKey, gameState.stats.farmers, gameState.needsProgress)
+    
+    if (isRequired) {
+      // Required
+      return {
+        state: 'required' as const,
+        label: `REQUIRED (Cycle ${currentCycle})`,
+      }
+    } else {
+      // Fulfilled
+      return {
+        state: 'fulfilled' as const,
+        label: `✓ Fulfilled (Cycle ${currentCycle})`,
+      }
+    }
+  }
 
   // Check if current request is a crisis event
   const isCrisis = currentRequest?.id.startsWith('EVT_CRISIS_') ?? false
@@ -138,6 +169,13 @@ function App() {
           </div>
         )}
 
+        {/* Newly Unlocked Need Notification */}
+        {gameState.newlyUnlockedNeed && !gameState.gameOver && (
+          <div className="need-unlock-notification">
+            🎉 New need unlocked: {gameState.newlyUnlockedNeed}!
+          </div>
+        )}
+
         {/* Game Over Screen */}
         {gameState.gameOver ? (
           <div className="panel game-over-panel">
@@ -234,27 +272,24 @@ function App() {
           
           <div className="bottom-content">
             {bottomTab === 'needs' ? (
-              <div className="needs-compact">
-                <div className="need-compact">
-                  <span className="need-checkbox">{gameState.needs.marketplace ? '✓' : '☐'}</span>
-                  <span className="need-label">Market</span>
-                </div>
-                <div className="need-compact">
-                  <span className="need-checkbox">{gameState.needs.bread ? '✓' : '☐'}</span>
-                  <span className="need-label">Bread</span>
-                </div>
-                <div className="need-compact">
-                  <span className="need-checkbox">{gameState.needs.beer ? '✓' : '☐'}</span>
-                  <span className="need-label">Beer</span>
-                </div>
-                <div className="need-compact">
-                  <span className="need-checkbox">{gameState.needs.firewood ? '✓' : '☐'}</span>
-                  <span className="need-label">Wood</span>
-                </div>
-                <div className="need-compact">
-                  <span className="need-checkbox">{gameState.needs.well ? '✓' : '☐'}</span>
-                  <span className="need-label">Well</span>
-                </div>
+              <div className="needs-panel-v2">
+                {(['marketplace', 'bread', 'beer', 'firewood', 'well'] as Array<keyof Needs>).map((needKey) => {
+                  const status = getNeedStatus(needKey)
+                  const needLabels: Record<keyof Needs, string> = {
+                    marketplace: 'Marketplace',
+                    bread: 'Bread',
+                    beer: 'Beer',
+                    firewood: 'Firewood',
+                    well: 'Well',
+                  }
+                  
+                  return (
+                    <div key={needKey} className={`need-item need-${status.state}`}>
+                      <div className="need-name">{needLabels[needKey]}</div>
+                      <div className="need-status">{status.label}</div>
+                    </div>
+                  )
+                })}
               </div>
             ) : (
               <div className="log-compact">

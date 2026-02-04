@@ -3,7 +3,8 @@
  * Based on POF_SPEC.md specification.
  */
 
-import type { Stats, Needs, Effect } from './models';
+import type { Stats, Needs, Effect, NeedsProgress } from './models';
+import { NEED_UNLOCK_THRESHOLDS } from './models';
 import { needRequests, eventRequests } from './requests';
 import { pickNextRequest } from './picker';
 
@@ -32,11 +33,14 @@ export interface GameState {
   tick: number;
   stats: Stats;
   needs: Needs;
+  needsProgress: NeedsProgress;
   currentRequestId: string;
   lastRequestId: string;
   log: LogEntry[];
   gameOver: boolean;
   gameOverReason?: string;
+  /** Message to show for newly unlocked needs (cleared after one tick) */
+  newlyUnlockedNeed?: string;
 }
 
 /**
@@ -66,6 +70,13 @@ export const initialState: GameState = {
     beer: false,
     firewood: false,
     well: false,
+  },
+  needsProgress: {
+    marketplace: { lastFulfilledCycleIndex: 0, nextEligibleTick: 0 },
+    bread: { lastFulfilledCycleIndex: 0, nextEligibleTick: 0 },
+    beer: { lastFulfilledCycleIndex: 0, nextEligibleTick: 0 },
+    firewood: { lastFulfilledCycleIndex: 0, nextEligibleTick: 0 },
+    well: { lastFulfilledCycleIndex: 0, nextEligibleTick: 0 },
   },
   currentRequestId: '',
   lastRequestId: '',
@@ -181,6 +192,55 @@ function createLogEntry(
 }
 
 /**
+ * Calculates the current cycle index for a need based on farmers population
+ * Returns 0 if the need is not yet unlocked
+ */
+export function calculateCycleIndex(farmers: number, unlockThreshold: number): number {
+  if (farmers < unlockThreshold) {
+    return 0; // Not unlocked yet
+  }
+  return Math.floor((farmers - unlockThreshold) / 100) + 1;
+}
+
+/**
+ * Checks if a need is currently required (unlocked but not fulfilled for current cycle)
+ */
+export function isNeedRequired(
+  needKey: keyof Needs,
+  farmers: number,
+  needProgress: NeedsProgress
+): boolean {
+  const unlockThreshold = NEED_UNLOCK_THRESHOLDS[needKey];
+  const currentCycle = calculateCycleIndex(farmers, unlockThreshold);
+  
+  if (currentCycle === 0) {
+    return false; // Not unlocked
+  }
+  
+  return needProgress[needKey].lastFulfilledCycleIndex < currentCycle;
+}
+
+/**
+ * Checks if a need is eligible to appear (required + not on cooldown)
+ */
+export function isNeedEligible(
+  needKey: keyof Needs,
+  farmers: number,
+  currentTick: number,
+  needProgress: NeedsProgress
+): boolean {
+  const progress = needProgress[needKey];
+  
+  // Check if on cooldown
+  if (progress.nextEligibleTick > currentTick) {
+    return false;
+  }
+  
+  // Check if required
+  return isNeedRequired(needKey, farmers, needProgress);
+}
+
+/**
  * Main reducer function for game state
  */
 export function gameReducer(state: GameState, action: GameAction): GameState {
@@ -208,11 +268,64 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     // Store stats before changes for log
     const beforeStats = { ...state.stats };
+    const beforeFarmers = state.stats.farmers;
     const newLog: LogEntry[] = [];
+
+    // Determine if this is a need request and which need
+    const isNeedRequest = currentRequest.id.startsWith('NEED_');
+    let fulfilledNeed: keyof Needs | null = null;
+    let declinedNeed: keyof Needs | null = null;
+    
+    if (isNeedRequest) {
+      // Map request ID to need key
+      const needIdToKey: Record<string, keyof Needs> = {
+        'NEED_MARKETPLACE': 'marketplace',
+        'NEED_BREAD': 'bread',
+        'NEED_BEER': 'beer',
+        'NEED_FIREWOOD': 'firewood',
+        'NEED_WELL': 'well',
+      };
+      const needKey = needIdToKey[currentRequest.id];
+      
+      if (needKey) {
+        // Check if this option fulfills the need (sets the need flag to true)
+        if (option.effects[needKey] === true) {
+          fulfilledNeed = needKey;
+        } else {
+          // This is a decline
+          declinedNeed = needKey;
+        }
+      }
+    }
 
     // 1. Apply option effects
     const { stats: statsAfterEffects, needs } = applyEffects(state.stats, state.needs, option.effects);
     let stats = clampStats(statsAfterEffects);
+
+    // Update needs progress tracking
+    let needsProgress = { ...state.needsProgress };
+    
+    if (fulfilledNeed) {
+      // Update the fulfilled cycle index
+      const unlockThreshold = NEED_UNLOCK_THRESHOLDS[fulfilledNeed];
+      const currentCycle = calculateCycleIndex(stats.farmers, unlockThreshold);
+      needsProgress = {
+        ...needsProgress,
+        [fulfilledNeed]: {
+          ...needsProgress[fulfilledNeed],
+          lastFulfilledCycleIndex: currentCycle,
+        },
+      };
+    } else if (declinedNeed) {
+      // Set cooldown for 5 ticks
+      needsProgress = {
+        ...needsProgress,
+        [declinedNeed]: {
+          ...needsProgress[declinedNeed],
+          nextEligibleTick: state.tick + 5,
+        },
+      };
+    }
 
     // Create log entry for request decision
     const requestLogEntry = createLogEntry(
@@ -231,6 +344,28 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     const beforeBaseline = { ...stats };
     stats = applyBaseline(stats);
     stats = clampStats(stats);
+
+    // Detect newly unlocked needs
+    let newlyUnlockedNeed: string | undefined = undefined;
+    const needKeys: Array<keyof Needs> = ['marketplace', 'bread', 'beer', 'firewood', 'well'];
+    const needLabels: Record<keyof Needs, string> = {
+      marketplace: 'Marketplace',
+      bread: 'Bread',
+      beer: 'Beer',
+      firewood: 'Firewood',
+      well: 'Well',
+    };
+    
+    for (const needKey of needKeys) {
+      const threshold = NEED_UNLOCK_THRESHOLDS[needKey];
+      const wasLocked = beforeFarmers < threshold;
+      const isNowUnlocked = stats.farmers >= threshold;
+      
+      if (wasLocked && isNowUnlocked) {
+        newlyUnlockedNeed = needLabels[needKey];
+        break; // Only show one at a time
+      }
+    }
 
     // Create separate log entries for tax income and population growth
     const goldIncome = stats.gold - beforeBaseline.gold;
@@ -264,6 +399,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         tick: state.tick + 1,
         stats,
         needs,
+        needsProgress,
         currentRequestId: state.currentRequestId,
         lastRequestId: state.currentRequestId,
         log: [...state.log, ...newLog],
@@ -272,18 +408,20 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       };
     }
 
-    // 4. Pick next request
-    const nextRequest = pickNextRequest(stats, needs, state.currentRequestId);
+    // 4. Pick next request (needs to be aware of needsProgress)
+    const nextRequest = pickNextRequest(state.tick + 1, stats, needs, needsProgress, state.currentRequestId);
 
     // 5. Increment tick and update state
     return {
       tick: state.tick + 1,
       stats,
       needs,
+      needsProgress,
       currentRequestId: nextRequest.id,
       lastRequestId: state.currentRequestId,
       log: [...state.log, ...newLog],
       gameOver: false,
+      newlyUnlockedNeed,
     };
   }
 
@@ -294,7 +432,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
  * Initialize the game with the first request
  */
 export function initializeGame(): GameState {
-  const firstRequest = pickNextRequest(initialState.stats, initialState.needs, '');
+  const firstRequest = pickNextRequest(0, initialState.stats, initialState.needs, initialState.needsProgress, '');
   return {
     ...initialState,
     currentRequestId: firstRequest.id,

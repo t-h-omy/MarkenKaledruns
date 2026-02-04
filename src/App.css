@@ -242,6 +242,32 @@
   }
 }
 
+/* Need unlock notification */
+.need-unlock-notification {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: bold;
+  text-align: center;
+  padding: 0.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.5);
+  animation: unlock-pulse 1.5s ease-in-out infinite;
+  flex-shrink: 0;
+  letter-spacing: 0.5px;
+}
+
+@keyframes unlock-pulse {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.5);
+  }
+  50% {
+    opacity: 0.95;
+    box-shadow: 0 2px 12px rgba(16, 185, 129, 0.7);
+  }
+}
+
 /* Game over panel */
 .game-over-panel {
   flex: 1;
@@ -381,6 +407,87 @@
 .need-label {
   color: #fff;
   font-weight: 500;
+}
+
+/* Needs Panel V2 - Population-scaled progression */
+.needs-panel-v2 {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem;
+}
+
+.need-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 0.8rem;
+  border-radius: 6px;
+  border-left: 4px solid;
+  background: #1a1a1a;
+  transition: all 0.2s;
+}
+
+.need-name {
+  font-weight: bold;
+  font-size: 0.95rem;
+}
+
+.need-status {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* Need states */
+.need-locked {
+  border-left-color: #555;
+  opacity: 0.5;
+}
+
+.need-locked .need-name {
+  color: #888;
+}
+
+.need-locked .need-status {
+  color: #777;
+  font-style: italic;
+}
+
+.need-fulfilled {
+  border-left-color: #10b981;
+}
+
+.need-fulfilled .need-name {
+  color: #fff;
+}
+
+.need-fulfilled .need-status {
+  color: #4ade80;
+}
+
+.need-required {
+  border-left-color: #fbbf24;
+  background: linear-gradient(90deg, rgba(251, 191, 36, 0.1) 0%, #1a1a1a 100%);
+  animation: need-required-pulse 2s ease-in-out infinite;
+}
+
+.need-required .need-name {
+  color: #fbbf24;
+}
+
+.need-required .need-status {
+  color: #fbbf24;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+}
+
+@keyframes need-required-pulse {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(251, 191, 36, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+  }
 }
 
 /* Log Compact */
