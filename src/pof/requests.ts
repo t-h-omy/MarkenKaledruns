@@ -40,7 +40,7 @@ export const needRequests: Request[] = [
       {
         text: 'SUPPORT BAKERY',
         effects: {
-          farmers: 5,
+          health: 5,
           gold: -30,
           bread: true,
         },
@@ -62,8 +62,8 @@ export const needRequests: Request[] = [
         text: 'ALLOW',
         effects: {
           gold: -50,
-          beer: true,
           satisfaction: 5,
+          beer: true,
         },
       },
       {
@@ -76,7 +76,7 @@ export const needRequests: Request[] = [
   },
   {
     id: 'NEED_FIREWOOD',
-    title: 'Structured Warmth',
+    title: 'Firewood',
     text: 'Random foraging is too inefficient for a town of this size. The population demands a professional firewood supply as a baseline standard for their homes.',
     options: [
       {
@@ -89,7 +89,7 @@ export const needRequests: Request[] = [
       {
         text: 'DO NOTHING',
         effects: {
-          fireRisk: 15,
+          fireRisk: 10,
         },
       },
     ],
@@ -103,13 +103,14 @@ export const needRequests: Request[] = [
         text: 'BUILD',
         effects: {
           gold: -120,
+          fireRisk: -10,
           well: true,
         },
       },
       {
         text: 'DECLINE',
         effects: {
-          health: -15,
+          health: -10,
         },
       },
     ],
@@ -132,9 +133,9 @@ export const eventRequests: Request[] = [
       {
         text: 'YES',
         effects: {
-          landForces: 3,
-          farmers: -10,
-          gold: -6,
+          landForces: 5,
+          farmers: -5,
+          gold: -5,
         },
       },
       {
@@ -220,7 +221,7 @@ export const eventRequests: Request[] = [
       {
         text: 'IGNORE',
         effects: {
-          farmers: -10,
+          farmers: -5,
         },
       },
     ],
@@ -282,7 +283,7 @@ export const eventRequests: Request[] = [
       {
         text: 'IGNORE',
         effects: {
-          farmers: -10,
+          farmers: -5,
         },
       },
     ],
@@ -338,14 +339,14 @@ export const eventRequests: Request[] = [
         text: 'CONCESSIONS',
         effects: {
           gold: -40,
-          satisfaction: 10,
+          satisfaction: 20,
         },
       },
       {
         text: 'CRACK DOWN',
         effects: {
           landForces: -2,
-          farmers: -15,
+          farmers: -10,
         },
       },
     ],
@@ -359,7 +360,7 @@ export const eventRequests: Request[] = [
         text: 'HEALER',
         effects: {
           gold: -40,
-          health: 10,
+          health: 20,
         },
       },
       {
@@ -379,13 +380,13 @@ export const eventRequests: Request[] = [
         text: 'PREPARE',
         effects: {
           gold: -40,
-          fireRisk: -10,
+          fireRisk: -20,
         },
       },
       {
         text: 'DO NOTHING',
         effects: {
-          farmers: -15,
+          farmers: -10,
           health: -5,
         },
       },
@@ -401,8 +402,8 @@ export const eventRequests: Request[] = [
       {
         text: 'BUILD',
         effects: {
-          gold: -10,
-          fireRisk: -5,
+          landForces: -1,
+          fireRisk: -8,
         },
       },
       {
@@ -420,7 +421,7 @@ export const eventRequests: Request[] = [
         text: 'HOLD',
         effects: {
           gold: -10,
-          satisfaction: 6,
+          satisfaction: 8,
         },
       },
       {
@@ -438,7 +439,7 @@ export const eventRequests: Request[] = [
         text: 'BUY',
         effects: {
           gold: -10,
-          health: 5,
+          health: 8,
         },
       },
       {
@@ -514,14 +515,14 @@ export const eventRequests: Request[] = [
       {
         text: 'FIGHT',
         effects: {
-          farmers: -5,
           health: -5,
+          farmers: -2,
         },
       },
       {
         text: 'DO NOTHING',
         effects: {
-          fireRisk: 15,
+          fireRisk: 10,
         },
       },
     ],
@@ -581,7 +582,7 @@ export const eventRequests: Request[] = [
         text: 'DO NOTHING',
         effects: {
           satisfaction: -3,
-          farmers: -10,
+          farmers: -3,
         },
       },
     ],
@@ -601,7 +602,7 @@ export const eventRequests: Request[] = [
       {
         text: 'IGNORE',
         effects: {
-          fireRisk: 8,
+          fireRisk: 6,
           health: -4,
         },
       },
@@ -621,7 +622,7 @@ export const eventRequests: Request[] = [
       {
         text: 'IGNORE',
         effects: {
-          farmers: -5,
+          farmers: -3,
         },
       },
     ],
