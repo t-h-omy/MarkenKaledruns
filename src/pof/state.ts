@@ -356,7 +356,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         lastRequestId: state.currentRequestId,
         log: [...state.log, ...newLog],
         gameOver: true,
-        gameOverReason: 'Bankruptcy! Your gold has reached -50.',
+        gameOverReason: 'Bankruptcy! Your gold has reached -50 or below.',
       };
     }
 
@@ -408,7 +408,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         lastRequestId: state.currentRequestId,
         log: [...state.log, ...newLog],
         gameOver: true,
-        gameOverReason: 'Bankruptcy! Your gold has reached -50.',
+        gameOverReason: 'Bankruptcy! Your gold has reached -50 or below.',
       };
     }
 
