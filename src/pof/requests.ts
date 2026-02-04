@@ -169,7 +169,7 @@ export const eventRequests: Request[] = [
       {
         text: 'FIGHT',
         effects: {
-          landForces: 8
+          landForces: 8,
           fireRisk: 12,
           gold: 20
         },
