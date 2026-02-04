@@ -169,8 +169,9 @@ export const eventRequests: Request[] = [
       {
         text: 'FIGHT',
         effects: {
-          landForces: 4 * (1+Math.floor(stats.farmers/100)),
-          fireRisk: 15,
+          landForces: 8
+          fireRisk: 12,
+          gold: 20
         },
       },
       {
@@ -178,7 +179,7 @@ export const eventRequests: Request[] = [
         effects: {
           gold: -30,
           satisfaction: -5,
-          farmers: -15,
+          farmers: -8,
         },
       },
     ],
