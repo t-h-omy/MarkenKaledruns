@@ -14,6 +14,7 @@ export interface LogEntry {
   tick: number;
   requestId: string;
   optionText: string;
+  source: 'Request Decision' | 'Tax Income' | 'Population Growth';
   deltas: {
     gold?: number;
     satisfaction?: number;
@@ -141,6 +142,7 @@ function createLogEntry(
   tick: number,
   requestId: string,
   optionText: string,
+  source: LogEntry['source'],
   beforeStats: Stats,
   afterStats: Stats
 ): LogEntry {
@@ -169,6 +171,7 @@ function createLogEntry(
     tick,
     requestId,
     optionText,
+    source,
     deltas,
   };
 }
@@ -196,40 +199,67 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     // Store stats before changes for log
     const beforeStats = { ...state.stats };
+    const newLog: LogEntry[] = [];
 
     // 1. Apply option effects
     const { stats: statsAfterEffects, needs } = applyEffects(state.stats, state.needs, option.effects);
-    let stats = statsAfterEffects;
+    let stats = clampStats(statsAfterEffects);
 
-    // 2. Clamp stats
-    stats = clampStats(stats);
-
-    // 3. Apply baseline rules
-    stats = applyBaseline(stats);
-
-    // 4. Clamp again
-    stats = clampStats(stats);
-
-    // 5. Pick next request
-    const nextRequest = pickNextRequest(stats, needs, state.currentRequestId);
-
-    // 6. Create log entry
-    const logEntry = createLogEntry(
+    // Create log entry for request decision
+    const requestLogEntry = createLogEntry(
       state.tick,
       state.currentRequestId,
       option.text,
+      'Request Decision',
       beforeStats,
       stats
     );
+    if (Object.keys(requestLogEntry.deltas).length > 0) {
+      newLog.push(requestLogEntry);
+    }
 
-    // 7. Increment tick and update state
+    // 2. Apply baseline rules and track separately
+    const beforeBaseline = { ...stats };
+    stats = applyBaseline(stats);
+    stats = clampStats(stats);
+
+    // Create separate log entries for tax income and population growth
+    const goldIncome = stats.gold - beforeBaseline.gold;
+    const farmerGrowth = stats.farmers - beforeBaseline.farmers;
+
+    if (goldIncome !== 0) {
+      newLog.push(createLogEntry(
+        state.tick,
+        state.currentRequestId,
+        '',
+        'Tax Income',
+        beforeBaseline,
+        { ...beforeBaseline, gold: stats.gold }
+      ));
+    }
+
+    if (farmerGrowth !== 0) {
+      newLog.push(createLogEntry(
+        state.tick,
+        state.currentRequestId,
+        '',
+        'Population Growth',
+        { ...beforeBaseline, gold: stats.gold },
+        stats
+      ));
+    }
+
+    // 3. Pick next request
+    const nextRequest = pickNextRequest(stats, needs, state.currentRequestId);
+
+    // 4. Increment tick and update state
     return {
       tick: state.tick + 1,
       stats,
       needs,
       currentRequestId: nextRequest.id,
       lastRequestId: state.currentRequestId,
-      log: [...state.log, logEntry],
+      log: [...state.log, ...newLog],
     };
   }
 
