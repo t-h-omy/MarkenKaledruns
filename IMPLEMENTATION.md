@@ -4,6 +4,47 @@ This document describes the implementation of gameplay rules and UI safeguards f
 
 ## Features Implemented
 
+### 4. Persistent Building Count System ✅
+
+**Requirements:**
+- Replace temporary cycle-based needs with persistent building counts
+- Buildings never decrease when population drops
+- Each need has configurable population scaling
+- Required buildings calculated: `requiredBuildings = 1 + floor((farmers - unlockThreshold) / populationPerBuilding)`
+- UI shows "Built: X / Required: Y" format
+
+**Implementation:**
+- Modified `NeedTracking` interface to use `buildingCount` instead of `lastFulfilledCycleIndex`
+- Added `NEED_CONFIGS` with per-need configuration:
+  - `marketplace`: unlocks at 30 farmers, +1 building per 100 farmers
+  - `bread`: unlocks at 60 farmers, +1 building per 120 farmers
+  - `beer`: unlocks at 100 farmers, +1 building per 150 farmers
+  - `firewood`: unlocks at 170 farmers, +1 building per 180 farmers
+  - `well`: unlocks at 250 farmers, +1 building per 200 farmers
+- Created `calculateRequiredBuildings()` function with proper formula
+- Updated need fulfillment to increment `buildingCount` (persistent, never decrements)
+- Modified `isNeedRequired()` to compare `buildingCount < requiredBuildings`
+- Updated UI to display building progress clearly
+
+**Behavior:**
+- When population grows and crosses thresholds, new buildings are required
+- When population drops, buildings remain built and requirements don't decrease
+- Needs only re-trigger when population growth makes `requiredBuildings > buildingCount`
+- Declining a need sets cooldown but doesn't affect building counts
+
+**Example Flow:**
+1. At 30 farmers: Marketplace unlocks (Built: 0 / Required: 1)
+2. Build marketplace: (Built: 1 / Required: 1) - Fulfilled ✓
+3. Population drops to 25: (Built: 1 / Required: 0) - Still fulfilled
+4. Population grows to 130: (Built: 1 / Required: 2) - Required again
+5. Build second marketplace: (Built: 2 / Required: 2) - Fulfilled ✓
+
+**Files Changed:**
+- `src/pof/models.ts`: Added `NEED_CONFIGS`, updated `NeedTracking` interface
+- `src/pof/state.ts`: Implemented `calculateRequiredBuildings()`, updated fulfillment logic
+- `src/pof/picker.ts`: Updated need eligibility check to use building counts
+- `src/App.tsx`: Changed UI to display "Built: X / Required: Y"
+
 ### 1. Gold Fail State ✅
 
 **Requirements:**
