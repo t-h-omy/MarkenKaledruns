@@ -47,9 +47,11 @@ function App() {
         label: `REQUIRED (Cycle ${currentCycle})`,
       }
     } else {
+      // Show current cycle if never fulfilled (lastFulfilledCycleIndex === 0)
+      const displayCycle = tracking.lastFulfilledCycleIndex || currentCycle
       return {
         status: 'fulfilled' as const,
-        label: `✓ Fulfilled (Cycle ${tracking.lastFulfilledCycleIndex})`,
+        label: `✓ Fulfilled (Cycle ${displayCycle})`,
       }
     }
   }
