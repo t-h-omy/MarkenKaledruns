@@ -88,6 +88,11 @@ function App() {
     // |delta| >= 15: strong impact
   }
 
+  // Check if a stat key should use fuzzy indicators
+  const isFuzzyStatKey = (key: string): boolean => {
+    return key === 'satisfaction' || key === 'health' || key === 'fireRisk'
+  }
+
   // Convert numeric delta to fuzzy indicator (for satisfaction, health, fireRisk)
   const getFuzzyIndicator = (delta: number): string => {
     const absDelta = Math.abs(delta)
@@ -259,7 +264,7 @@ function App() {
                                 key={i} 
                                 className={`consequence ${effect.isFuzzy ? 'fuzzy-indicator' : ''} ${effect.isPositive ? 'positive' : 'negative'}`}
                               >
-                                {effect.isFuzzy && effect.value && (
+                                {effect.isFuzzy && effect.value !== '' && (
                                   <>
                                     {effect.label}: {effect.value}
                                   </>
@@ -343,13 +348,12 @@ function App() {
                       </div>
                       <div className="log-deltas">
                         {Object.entries(entry.deltas).map(([key, value]) => {
-                          const isFuzzyKey = key === 'satisfaction' || key === 'health' || key === 'fireRisk'
-                          const displayValue = isFuzzyKey ? getFuzzyIndicator(value) : `${value > 0 ? '+' : ''}${value}`
+                          const displayValue = isFuzzyStatKey(key) ? getFuzzyIndicator(value) : `${value > 0 ? '+' : ''}${value}`
                           
                           return (
                             <span
                               key={key}
-                              className={`delta ${isFuzzyKey ? 'fuzzy-indicator' : ''} ${value > 0 ? 'positive' : 'negative'}`}
+                              className={`delta ${isFuzzyStatKey(key) ? 'fuzzy-indicator' : ''} ${value > 0 ? 'positive' : 'negative'}`}
                             >
                               {key}: {displayValue}
                             </span>
