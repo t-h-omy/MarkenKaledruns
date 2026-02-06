@@ -32,3 +32,4 @@ jobs:
         with:
           name: preview-dist
           path: ./dist
+          retention-days: 7
