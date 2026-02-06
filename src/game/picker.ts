@@ -153,12 +153,12 @@ export function pickNextRequest(
   const dueEvents = scheduledEvents.filter(event => event.targetTick <= tick);
   
   if (dueEvents.length > 0) {
-    // Sort by scheduledAtTick for FIFO ordering, then by targetTick
+    // Sort by scheduledAtTick for FIFO ordering (primary), then by targetTick (secondary)
     dueEvents.sort((a, b) => {
-      if (a.targetTick === b.targetTick) {
-        return a.scheduledAtTick - b.scheduledAtTick;
+      if (a.scheduledAtTick === b.scheduledAtTick) {
+        return a.targetTick - b.targetTick;
       }
-      return a.targetTick - b.targetTick;
+      return a.scheduledAtTick - b.scheduledAtTick;
     });
     
     // Return the first due event

@@ -93,7 +93,9 @@ To add formal unit tests, consider:
    state.currentRequestId = 'EVT_MYSTERIOUS_TRAVELER';
    const newState = gameReducer(state, { type: 'CHOOSE_OPTION', optionIndex: 0 });
    expect(newState.scheduledEvents.length).toBe(1);
+   // For WELCOME option: delay is 2-4 ticks, targetTick = currentTick + 1 + delay
    expect(newState.scheduledEvents[0].targetTick).toBeGreaterThanOrEqual(state.tick + 3);
+   expect(newState.scheduledEvents[0].targetTick).toBeLessThanOrEqual(state.tick + 5);
    ```
 
 3. **Test FIFO ordering**:
