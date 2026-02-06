@@ -670,6 +670,7 @@ export const eventRequests: Request[] = [
     id: 'EVT_TRAVELER_TEACHES',
     title: 'Ancient Wisdom',
     text: 'The traveler shares agricultural techniques from distant lands. Your farmers are eager to learn these new methods.',
+    canTriggerRandomly: false,
     options: [
       {
         text: 'ADOPT METHODS',
@@ -690,6 +691,7 @@ export const eventRequests: Request[] = [
     id: 'EVT_TRAVELER_BETRAYS',
     title: 'Betrayal in the Night',
     text: 'The traveler was a spy! They have stolen supplies and fled into the darkness.',
+    canTriggerRandomly: false,
     options: [
       {
         text: 'PURSUE',
@@ -711,6 +713,7 @@ export const eventRequests: Request[] = [
     id: 'EVT_TRAVELER_CURSE',
     title: 'The Curse',
     text: 'Strange misfortunes have befallen the village since turning away the traveler. Some whisper of a curse.',
+    canTriggerRandomly: false,
     options: [
       {
         text: 'SEEK HEALER',
@@ -732,6 +735,7 @@ export const eventRequests: Request[] = [
     id: 'EVT_TRAVELER_RETURNS',
     title: 'The Traveler Returns',
     text: 'The traveler returns with a merchant caravan, offering trade opportunities despite your previous rejection.',
+    canTriggerRandomly: false,
     options: [
       {
         text: 'TRADE',
