@@ -625,4 +625,127 @@ export const eventRequests: Request[] = [
       },
     ],
   },
+  // Test event with follow-ups to demonstrate branching event chains
+  {
+    id: 'EVT_MYSTERIOUS_TRAVELER',
+    title: 'The Mysterious Traveler',
+    text: 'A hooded traveler arrives at your gates, offering to share valuable knowledge in exchange for hospitality. Do you welcome them or send them away?',
+    options: [
+      {
+        text: 'WELCOME',
+        effects: {
+          gold: -5,
+          satisfaction: 2,
+        },
+      },
+      {
+        text: 'SEND AWAY',
+        effects: {
+          satisfaction: -2,
+        },
+      },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0, // WELCOME
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [
+          { requestId: 'EVT_TRAVELER_TEACHES', weight: 3 },
+          { requestId: 'EVT_TRAVELER_BETRAYS', weight: 1 },
+        ],
+      },
+      {
+        triggerOnOptionIndex: 1, // SEND AWAY
+        delayMinTicks: 3,
+        delayMaxTicks: 5,
+        candidates: [
+          { requestId: 'EVT_TRAVELER_CURSE', weight: 2 },
+          { requestId: 'EVT_TRAVELER_RETURNS', weight: 1 },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'EVT_TRAVELER_TEACHES',
+    title: 'Ancient Wisdom',
+    text: 'The traveler shares agricultural techniques from distant lands. Your farmers are eager to learn these new methods.',
+    options: [
+      {
+        text: 'ADOPT METHODS',
+        effects: {
+          farmers: 8,
+          health: 5,
+        },
+      },
+      {
+        text: 'STICK TO TRADITION',
+        effects: {
+          satisfaction: 3,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_TRAVELER_BETRAYS',
+    title: 'Betrayal in the Night',
+    text: 'The traveler was a spy! They have stolen supplies and fled into the darkness.',
+    options: [
+      {
+        text: 'PURSUE',
+        effects: {
+          gold: -15,
+          landForces: -2,
+        },
+      },
+      {
+        text: 'LET THEM GO',
+        effects: {
+          gold: -20,
+          satisfaction: -5,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_TRAVELER_CURSE',
+    title: 'The Curse',
+    text: 'Strange misfortunes have befallen the village since turning away the traveler. Some whisper of a curse.',
+    options: [
+      {
+        text: 'SEEK HEALER',
+        effects: {
+          gold: -15,
+          health: 3,
+        },
+      },
+      {
+        text: 'IGNORE SUPERSTITION',
+        effects: {
+          satisfaction: -3,
+          health: -2,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_TRAVELER_RETURNS',
+    title: 'The Traveler Returns',
+    text: 'The traveler returns with a merchant caravan, offering trade opportunities despite your previous rejection.',
+    options: [
+      {
+        text: 'TRADE',
+        effects: {
+          gold: 10,
+          satisfaction: 5,
+        },
+      },
+      {
+        text: 'REFUSE AGAIN',
+        effects: {
+          satisfaction: -1,
+        },
+      },
+    ],
+  },
 ];
