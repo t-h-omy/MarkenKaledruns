@@ -1,9 +1,9 @@
 import { useReducer, useState } from 'react'
 import './App.css'
-import { gameReducer, initializeGame, isNeedUnlocked, calculateRequiredBuildings, isNeedRequired } from './pof/state'
-import { needRequests, eventRequests } from './pof/requests'
-import type { Effect, Needs } from './pof/models'
-import { NEED_UNLOCK_THRESHOLDS } from './pof/models'
+import { gameReducer, initializeGame, isNeedUnlocked, calculateRequiredBuildings, isNeedRequired } from './game/state'
+import { needRequests, eventRequests } from './game/requests'
+import type { Effect, Needs } from './game/models'
+import { NEED_UNLOCK_THRESHOLDS } from './game/models'
 
 function App() {
   const [gameState, dispatch] = useReducer(gameReducer, undefined, initializeGame)
