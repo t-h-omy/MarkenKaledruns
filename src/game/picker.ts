@@ -64,14 +64,60 @@ export function resetRandom(): void {
 }
 
 /**
+ * Gets a random number from the global RNG (for internal use)
+ * @returns Random number between 0 (inclusive) and 1 (exclusive)
+ */
+export function getRandomValue(): number {
+  return rng.next();
+}
+
+/**
+ * Selects one candidate from an array using weighted random selection.
+ * The selection is deterministic when using a seeded RNG.
+ * 
+ * @param candidates Array of candidates with weights
+ * @returns Selected candidate, or null if no candidates or all weights are 0
+ */
+export function selectWeightedCandidate<T extends { weight: number }>(
+  candidates: T[]
+): T | null {
+  if (candidates.length === 0) {
+    return null;
+  }
+
+  // Calculate total weight
+  const totalWeight = candidates.reduce((sum, c) => sum + c.weight, 0);
+  
+  if (totalWeight <= 0) {
+    return null; // No valid weights
+  }
+
+  // Generate random value between 0 and totalWeight
+  const randomValue = rng.next() * totalWeight;
+
+  // Find the selected candidate
+  let accumulatedWeight = 0;
+  for (const candidate of candidates) {
+    accumulatedWeight += candidate.weight;
+    if (randomValue < accumulatedWeight) {
+      return candidate;
+    }
+  }
+
+  // Fallback to last candidate (shouldn't happen with proper floating point math)
+  return candidates[candidates.length - 1];
+}
+
+/**
  * Picks the next request based on selection rules from POF_SPEC.md
  * 
  * Priority order:
- * 1. If fireRisk > 70 => pick EVT_CRISIS_FIRE
- * 2. Else if health < 30 => pick EVT_CRISIS_DISEASE
- * 3. Else if satisfaction < 30 => pick EVT_CRISIS_UNREST
- * 4. Else if any need is required (unlocked and unfulfilled for current cycle) => pick randomly among eligible need-requests
- * 5. Else pick a random event among all 25
+ * 1. Check for scheduled events whose targetTick <= currentTick (FIFO order)
+ * 2. If fireRisk > 70 => pick EVT_CRISIS_FIRE
+ * 3. Else if health < 30 => pick EVT_CRISIS_DISEASE
+ * 4. Else if satisfaction < 30 => pick EVT_CRISIS_UNREST
+ * 5. Else if any need is required (unlocked and unfulfilled for current cycle) => pick randomly among eligible need-requests
+ * 6. Else pick a random event among all 25
  * 
  * Never repeats lastRequestId.
  */
@@ -87,6 +133,7 @@ export function pickNextRequest(
   let actualLastRequestId: string;
   let tick: number = 0;
   let needsTracking: NeedsTracking | null = null;
+  let scheduledEvents: Array<{ targetTick: number; requestId: string; scheduledAtTick: number }> = [];
 
   if ('tick' in stateOrStats) {
     // Called with GameState
@@ -94,10 +141,36 @@ export function pickNextRequest(
     actualLastRequestId = stateOrStats.lastRequestId;
     tick = stateOrStats.tick;
     needsTracking = stateOrStats.needsTracking;
+    scheduledEvents = stateOrStats.scheduledEvents || [];
   } else {
     // Called with individual parameters (legacy support)
     stats = stateOrStats;
     actualLastRequestId = lastRequestId!;
+  }
+
+  // Priority 1: Check for scheduled events
+  // Find all events due on or before current tick
+  const dueEvents = scheduledEvents.filter(event => event.targetTick <= tick);
+  
+  if (dueEvents.length > 0) {
+    // Sort by scheduledAtTick for FIFO ordering (primary), then by targetTick (secondary)
+    dueEvents.sort((a, b) => {
+      if (a.scheduledAtTick === b.scheduledAtTick) {
+        return a.targetTick - b.targetTick;
+      }
+      return a.scheduledAtTick - b.scheduledAtTick;
+    });
+    
+    // Return the first due event
+    const dueEvent = dueEvents[0];
+    const scheduledRequest = [...needRequests, ...eventRequests].find(
+      (r) => r.id === dueEvent.requestId
+    );
+    
+    if (scheduledRequest) {
+      return scheduledRequest;
+    }
+    // If request not found, fall through to normal logic
   }
 
   // Crisis requests by priority order
