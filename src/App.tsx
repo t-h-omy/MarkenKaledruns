@@ -81,60 +81,89 @@ function App() {
     return { disabled: false }
   }
 
+  // Configurable thresholds for effect tiers
+  const EFFECT_THRESHOLDS = {
+    small: 5,   // |delta| < 5: slight impact
+    medium: 15, // 5 <= |delta| < 15: medium impact
+    // |delta| >= 15: strong impact
+  }
+
+  // Convert numeric delta to fuzzy indicator (for satisfaction, health, fireRisk)
+  const getFuzzyIndicator = (delta: number): string => {
+    const absDelta = Math.abs(delta)
+    const isPositive = delta > 0
+    
+    if (absDelta === 0) return ''
+    
+    if (absDelta < EFFECT_THRESHOLDS.small) {
+      return isPositive ? '+' : '−'
+    } else if (absDelta < EFFECT_THRESHOLDS.medium) {
+      return isPositive ? '++' : '−−'
+    } else {
+      return isPositive ? '+++' : '−−−'
+    }
+  }
+
   // Format effects for display
-  const formatEffects = (effects: Effect): Array<{ label: string; value: number; isPositive: boolean }> => {
-    const formatted: Array<{ label: string; value: number; isPositive: boolean }> = []
+  const formatEffects = (effects: Effect): Array<{ label: string; value: number | string; isPositive: boolean; isFuzzy: boolean }> => {
+    const formatted: Array<{ label: string; value: number | string; isPositive: boolean; isFuzzy: boolean }> = []
     
     if (effects.gold !== undefined) {
       formatted.push({ 
         label: 'Gold', 
         value: effects.gold, 
-        isPositive: effects.gold > 0 
+        isPositive: effects.gold > 0,
+        isFuzzy: false
       })
     }
     if (effects.satisfaction !== undefined) {
       formatted.push({ 
         label: 'Satisfaction', 
-        value: effects.satisfaction, 
-        isPositive: effects.satisfaction > 0 
+        value: getFuzzyIndicator(effects.satisfaction), 
+        isPositive: effects.satisfaction > 0,
+        isFuzzy: true
       })
     }
     if (effects.health !== undefined) {
       formatted.push({ 
         label: 'Health', 
-        value: effects.health, 
-        isPositive: effects.health > 0 
+        value: getFuzzyIndicator(effects.health), 
+        isPositive: effects.health > 0,
+        isFuzzy: true
       })
     }
     if (effects.fireRisk !== undefined) {
       formatted.push({ 
         label: 'Fire Risk', 
-        value: effects.fireRisk, 
+        value: getFuzzyIndicator(effects.fireRisk), 
         // For fire risk, lower is better
-        isPositive: effects.fireRisk < 0 
+        isPositive: effects.fireRisk < 0,
+        isFuzzy: true
       })
     }
     if (effects.farmers !== undefined) {
       formatted.push({ 
         label: 'Farmers', 
         value: effects.farmers, 
-        isPositive: effects.farmers > 0 
+        isPositive: effects.farmers > 0,
+        isFuzzy: false
       })
     }
     if (effects.landForces !== undefined) {
       formatted.push({ 
         label: 'Land Forces', 
         value: effects.landForces, 
-        isPositive: effects.landForces > 0 
+        isPositive: effects.landForces > 0,
+        isFuzzy: false
       })
     }
     
     // Add need fulfillment indicators
-    if (effects.marketplace) formatted.push({ label: '✓ Marketplace', value: 0, isPositive: true })
-    if (effects.bread) formatted.push({ label: '✓ Bread', value: 0, isPositive: true })
-    if (effects.beer) formatted.push({ label: '✓ Beer', value: 0, isPositive: true })
-    if (effects.firewood) formatted.push({ label: '✓ Firewood', value: 0, isPositive: true })
-    if (effects.well) formatted.push({ label: '✓ Well', value: 0, isPositive: true })
+    if (effects.marketplace) formatted.push({ label: '✓ Marketplace', value: '', isPositive: true, isFuzzy: false })
+    if (effects.bread) formatted.push({ label: '✓ Bread', value: '', isPositive: true, isFuzzy: false })
+    if (effects.beer) formatted.push({ label: '✓ Beer', value: '', isPositive: true, isFuzzy: false })
+    if (effects.firewood) formatted.push({ label: '✓ Firewood', value: '', isPositive: true, isFuzzy: false })
+    if (effects.well) formatted.push({ label: '✓ Well', value: '', isPositive: true, isFuzzy: false })
     
     return formatted
   }
@@ -228,14 +257,19 @@ function App() {
                             {effects.map((effect, i) => (
                               <span 
                                 key={i} 
-                                className={`consequence ${effect.isPositive ? 'positive' : 'negative'}`}
+                                className={`consequence ${effect.isFuzzy ? 'fuzzy-indicator' : ''} ${effect.isPositive ? 'positive' : 'negative'}`}
                               >
-                                {effect.value !== 0 && (
+                                {effect.isFuzzy && effect.value && (
+                                  <>
+                                    {effect.label}: {effect.value}
+                                  </>
+                                )}
+                                {!effect.isFuzzy && typeof effect.value === 'number' && effect.value !== 0 && (
                                   <>
                                     {effect.label}: {effect.value > 0 ? '+' : ''}{effect.value}
                                   </>
                                 )}
-                                {effect.value === 0 && effect.label}
+                                {effect.value === '' && effect.label}
                               </span>
                             ))}
                           </div>
@@ -308,14 +342,19 @@ function App() {
                         )}
                       </div>
                       <div className="log-deltas">
-                        {Object.entries(entry.deltas).map(([key, value]) => (
-                          <span
-                            key={key}
-                            className={`delta ${value > 0 ? 'positive' : 'negative'}`}
-                          >
-                            {key}: {value > 0 ? '+' : ''}{value}
-                          </span>
-                        ))}
+                        {Object.entries(entry.deltas).map(([key, value]) => {
+                          const isFuzzyKey = key === 'satisfaction' || key === 'health' || key === 'fireRisk'
+                          const displayValue = isFuzzyKey ? getFuzzyIndicator(value) : `${value > 0 ? '+' : ''}${value}`
+                          
+                          return (
+                            <span
+                              key={key}
+                              className={`delta ${isFuzzyKey ? 'fuzzy-indicator' : ''} ${value > 0 ? 'positive' : 'negative'}`}
+                            >
+                              {key}: {displayValue}
+                            </span>
+                          )
+                        })}
                       </div>
                     </div>
                   ))

@@ -184,6 +184,24 @@
   color: #f87171;
 }
 
+/* Fuzzy indicator styling - stronger backgrounds for emotional impact */
+.consequence.fuzzy-indicator {
+  font-weight: bold;
+  padding: 0.25rem 0.5rem;
+  font-family: monospace;
+  letter-spacing: 0.05em;
+}
+
+.consequence.fuzzy-indicator.positive {
+  background: rgba(16, 185, 129, 0.4);
+  color: #fff;
+}
+
+.consequence.fuzzy-indicator.negative {
+  background: rgba(239, 68, 68, 0.4);
+  color: #fff;
+}
+
 .option-button:hover {
   background: linear-gradient(135deg, #646cff 0%, #4a4acf 100%);
   transform: translateY(-2px);
@@ -556,6 +574,23 @@
 .delta.negative {
   background: rgba(239, 68, 68, 0.2);
   color: #f87171;
+}
+
+/* Fuzzy indicator styling for log deltas */
+.delta.fuzzy-indicator {
+  font-family: monospace;
+  letter-spacing: 0.05em;
+  padding: 0.2rem 0.5rem;
+}
+
+.delta.fuzzy-indicator.positive {
+  background: rgba(16, 185, 129, 0.4);
+  color: #fff;
+}
+
+.delta.fuzzy-indicator.negative {
+  background: rgba(239, 68, 68, 0.4);
+  color: #fff;
 }
 
 /* Mobile landscape optimizations */
