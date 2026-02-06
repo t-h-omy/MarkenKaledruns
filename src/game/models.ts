@@ -127,6 +127,30 @@ export interface Effect {
 }
 
 /**
+ * Represents a weighted candidate for follow-up selection
+ */
+export interface WeightedCandidate {
+  /** Request ID to schedule as follow-up */
+  requestId: string;
+  /** Selection weight (higher = more likely) */
+  weight: number;
+}
+
+/**
+ * Represents a follow-up event definition
+ */
+export interface FollowUp {
+  /** Option index that triggers this follow-up (0 or 1) */
+  triggerOnOptionIndex: number;
+  /** Minimum ticks to wait before showing follow-up */
+  delayMinTicks: number;
+  /** Maximum ticks to wait before showing follow-up */
+  delayMaxTicks: number;
+  /** Array of weighted candidates to choose from */
+  candidates: WeightedCandidate[];
+}
+
+/**
  * Represents a player choice option in a request.
  */
 export interface Option {
@@ -148,4 +172,6 @@ export interface Request {
   text: string;
   /** Array of options (max 2) the player can choose from */
   options: Option[];
+  /** Optional follow-up events scheduled when specific options are chosen */
+  followUps?: FollowUp[];
 }

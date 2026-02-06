@@ -6,7 +6,7 @@
 import type { Stats, Needs, Effect, NeedsTracking } from './models';
 import { DECLINE_COOLDOWN_TICKS, NEED_UNLOCK_THRESHOLDS, NEED_CONFIGS } from './models';
 import { needRequests, eventRequests } from './requests';
-import { pickNextRequest } from './picker';
+import { pickNextRequest, selectWeightedCandidate, getRandomValue } from './picker';
 
 /**
  * Log entry tracking state changes
@@ -27,6 +27,18 @@ export interface LogEntry {
 }
 
 /**
+ * Scheduled event to be shown at a future tick
+ */
+export interface ScheduledEvent {
+  /** Tick when this event should be shown */
+  targetTick: number;
+  /** Request ID to show */
+  requestId: string;
+  /** Tick when this event was scheduled (for FIFO ordering) */
+  scheduledAtTick: number;
+}
+
+/**
  * Complete game state
  */
 export interface GameState {
@@ -40,6 +52,7 @@ export interface GameState {
   log: LogEntry[];
   gameOver: boolean;
   gameOverReason?: string;
+  scheduledEvents: ScheduledEvent[];
 }
 
 /**
@@ -82,6 +95,7 @@ export const initialState: GameState = {
   lastRequestId: '',
   log: [],
   gameOver: false,
+  scheduledEvents: [],
 };
 
 /**
@@ -262,6 +276,68 @@ function createLogEntry(
 }
 
 /**
+ * Schedules follow-up events based on the chosen option
+ * @returns Updated scheduled events array
+ */
+function scheduleFollowUps(
+  currentRequest: { id: string; followUps?: Array<{ triggerOnOptionIndex: number; delayMinTicks: number; delayMaxTicks: number; candidates: Array<{ requestId: string; weight: number }> }> },
+  optionIndex: number,
+  currentTick: number,
+  existingScheduledEvents: ScheduledEvent[]
+): ScheduledEvent[] {
+  const scheduledEvents = [...existingScheduledEvents];
+  
+  if (!currentRequest.followUps) {
+    return scheduledEvents;
+  }
+
+  // Find follow-ups triggered by this option
+  const triggeredFollowUps = currentRequest.followUps.filter(
+    fu => fu.triggerOnOptionIndex === optionIndex
+  );
+
+  for (const followUp of triggeredFollowUps) {
+    // Select one candidate using weighted random selection
+    const selectedCandidate = selectWeightedCandidate(followUp.candidates);
+    
+    if (selectedCandidate) {
+      // Calculate random delay within the specified range
+      const delayRange = followUp.delayMaxTicks - followUp.delayMinTicks;
+      const delay = followUp.delayMinTicks + Math.floor(getRandomValue() * (delayRange + 1));
+      
+      // Schedule the event
+      scheduledEvents.push({
+        targetTick: currentTick + 1 + delay,
+        requestId: selectedCandidate.requestId,
+        scheduledAtTick: currentTick,
+      });
+    }
+  }
+
+  return scheduledEvents;
+}
+
+/**
+ * Removes a scheduled event from the queue and returns updated array
+ */
+function removeScheduledEvent(
+  scheduledEvents: ScheduledEvent[],
+  requestId: string,
+  tick: number
+): ScheduledEvent[] {
+  // Find the first matching event that's due
+  const index = scheduledEvents.findIndex(
+    event => event.requestId === requestId && event.targetTick <= tick
+  );
+  
+  if (index >= 0) {
+    return [...scheduledEvents.slice(0, index), ...scheduledEvents.slice(index + 1)];
+  }
+  
+  return scheduledEvents;
+}
+
+/**
  * Main reducer function for game state
  */
 export function gameReducer(state: GameState, action: GameAction): GameState {
@@ -340,6 +416,17 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       newLog.push(requestLogEntry);
     }
 
+    // Schedule follow-up events if any are triggered by this option
+    let scheduledEvents = scheduleFollowUps(
+      currentRequest,
+      action.optionIndex,
+      state.tick,
+      state.scheduledEvents
+    );
+
+    // Remove the current request from scheduled events if it was scheduled
+    scheduledEvents = removeScheduledEvent(scheduledEvents, state.currentRequestId, state.tick);
+
     // Check for bankruptcy after option effects (before baseline)
     // This prevents players from escaping bankruptcy via positive baseline income
     if (stats.gold <= -50) {
@@ -354,6 +441,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         log: [...state.log, ...newLog],
         gameOver: true,
         gameOverReason: 'Bankruptcy! Your gold has reached -50 or below.',
+        scheduledEvents,
       };
     }
 
@@ -406,6 +494,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         log: [...state.log, ...newLog],
         gameOver: true,
         gameOverReason: 'Bankruptcy! Your gold has reached -50 or below.',
+        scheduledEvents,
       };
     }
 
@@ -420,6 +509,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       lastRequestId: state.currentRequestId,
       log: state.log,
       gameOver: false,
+      scheduledEvents,
     });
 
     // 5. Increment tick and update state
@@ -433,6 +523,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       lastRequestId: state.currentRequestId,
       log: [...state.log, ...newLog],
       gameOver: false,
+      scheduledEvents,
     };
   }
 
