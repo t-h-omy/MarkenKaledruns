@@ -1175,7 +1175,7 @@ export const eventRequests: Request[] = [
     chainId: 'BLACKGEAT',
     chainRole: 'end',
     title: 'The Hollow Peace',
-    text: 'Brimwulf accepts your final payment with a cold nod. Wulfham\'s riders turn back toward their own borders. Feldric watches them go: "We have bought peace, but sold our pride."',
+    text: 'Brimwulf accepted your last payment as final. Wulfham\'s riders turn back toward their own borders. Feldric watches them go: "We have bought peace, but sold our pride."',
     canTriggerRandomly: false,
     options: [
       { text: 'RECOVER', effects: { health: 5 } },
