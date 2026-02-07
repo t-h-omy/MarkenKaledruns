@@ -184,4 +184,6 @@ export interface Request {
   chainRestartCooldownTicks?: number;
   /** Maximum number of times this request can trigger across entire game run (undefined = unlimited) */
   maxTriggers?: number;
+  /** Array of unlock tokens required to show this event */
+  requires?: string[];
 }

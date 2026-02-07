@@ -6,7 +6,7 @@
 import type { GameState } from './state';
 import type { Stats, Needs, Request, NeedsTracking } from './models';
 import { needRequests, eventRequests } from './requests';
-import { isNeedUnlocked, isNeedRequired, isNeedOnCooldown } from './state';
+import { isNeedUnlocked, isNeedRequired, isNeedOnCooldown, meetsRequirements } from './state';
 
 /**
  * Deterministic random number generator using a simple LCG algorithm.
@@ -138,6 +138,7 @@ export function pickNextRequest(
   let scheduledEvents: Array<{ targetTick: number; requestId: string; scheduledAtTick: number }> = [];
   let chainStatus: Record<string, { active: boolean; completedTick?: number }> = {};
   let requestTriggerCounts: Record<string, number> = {};
+  let fullState: GameState | null = null;
 
   if ('tick' in stateOrStats) {
     // Called with GameState
@@ -148,6 +149,7 @@ export function pickNextRequest(
     scheduledEvents = stateOrStats.scheduledEvents || [];
     chainStatus = stateOrStats.chainStatus || {};
     requestTriggerCounts = stateOrStats.requestTriggerCounts || {};
+    fullState = stateOrStats;
   } else {
     // Called with individual parameters (legacy support)
     stats = stateOrStats;
@@ -201,25 +203,31 @@ export function pickNextRequest(
       return a.scheduledAtTick - b.scheduledAtTick;
     });
     
-    // Return the first due event that hasn't exceeded maxTriggers
-    // Note: Scheduled events bypass chain gating and cooldown
+    // Return the first due event that hasn't exceeded maxTriggers and meets requirements
+    // Note: Scheduled events bypass chain gating and cooldown but still need unlock tokens
     for (const dueEvent of dueEvents) {
       const scheduledRequest = [...needRequests, ...eventRequests].find(
         (r) => r.id === dueEvent.requestId
       );
       
       if (scheduledRequest) {
-        // Check only maxTriggers for scheduled events
+        // Check maxTriggers for scheduled events
         if (scheduledRequest.maxTriggers !== undefined) {
           const triggerCount = requestTriggerCounts[scheduledRequest.id] || 0;
           if (triggerCount >= scheduledRequest.maxTriggers) {
             continue; // Skip this scheduled event, try next
           }
         }
+        
+        // Check if requirements are met (if we have full state)
+        if (fullState && !meetsRequirements(fullState, scheduledRequest)) {
+          continue; // Skip this locked scheduled event, try next
+        }
+        
         return scheduledRequest;
       }
     }
-    // If all scheduled requests exceeded maxTriggers, fall through to normal logic
+    // If all scheduled requests exceeded maxTriggers or are locked, fall through to normal logic
   }
 
   // Crisis requests by priority order
@@ -279,20 +287,25 @@ export function pickNextRequest(
   // Crisis events should ONLY appear through the explicit conditions above
   // Also exclude events that cannot trigger randomly (follow-up-only events)
   // Also exclude events that have reached maxTriggers or are chain starts with gating/cooldown issues
+  // Also exclude events that don't meet unlock requirements
   const crisisEventIds = ['EVT_CRISIS_FIRE', 'EVT_CRISIS_DISEASE', 'EVT_CRISIS_UNREST'];
   const availableEvents = eventRequests.filter(
     (r) => r.id !== actualLastRequestId && 
            !crisisEventIds.includes(r.id) &&
            (r.canTriggerRandomly !== false) &&
-           isEligibleForRandomTrigger(r)
+           isEligibleForRandomTrigger(r) &&
+           (!fullState || meetsRequirements(fullState, r))
   );
   if (availableEvents.length > 0) {
     return availableEvents[rng.nextInt(availableEvents.length)];
   }
 
-  // Fallback: pick any non-crisis event that can trigger randomly (shouldn't happen with 25 events)
+  // Fallback: pick any non-crisis event that can trigger randomly and meets requirements (shouldn't happen with 25 events)
   const nonCrisisEvents = eventRequests.filter(
-    (r) => !crisisEventIds.includes(r.id) && (r.canTriggerRandomly !== false) && isEligibleForRandomTrigger(r)
+    (r) => !crisisEventIds.includes(r.id) && 
+           (r.canTriggerRandomly !== false) && 
+           isEligibleForRandomTrigger(r) &&
+           (!fullState || meetsRequirements(fullState, r))
   );
   return nonCrisisEvents[rng.nextInt(nonCrisisEvents.length)];
 }

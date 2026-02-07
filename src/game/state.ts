@@ -3,7 +3,7 @@
  * Based on POF_SPEC.md specification.
  */
 
-import type { Stats, Needs, Effect, NeedsTracking } from './models';
+import type { Stats, Needs, Effect, NeedsTracking, Request } from './models';
 import { DECLINE_COOLDOWN_TICKS, NEED_UNLOCK_THRESHOLDS, NEED_CONFIGS } from './models';
 import { needRequests, eventRequests } from './requests';
 import { pickNextRequest, selectWeightedCandidate, getRandomValue } from './picker';
@@ -57,6 +57,8 @@ export interface GameState {
   chainStatus: Record<string, { active: boolean; completedTick?: number }>;
   /** Track how many times each request has been triggered */
   requestTriggerCounts: Record<string, number>;
+  /** Track unlock tokens for event requirements */
+  unlocks: Record<string, true>;
 }
 
 /**
@@ -102,6 +104,7 @@ export const initialState: GameState = {
   scheduledEvents: [],
   chainStatus: {},
   requestTriggerCounts: {},
+  unlocks: {},
 };
 
 /**
@@ -220,6 +223,26 @@ export function detectNewlyUnlockedNeeds(
   }
   
   return null;
+}
+
+/**
+ * Checks if a specific unlock token is present in the game state
+ */
+export function hasUnlock(state: GameState, token: string): boolean {
+  return state.unlocks[token] === true;
+}
+
+/**
+ * Checks if all required unlock tokens for a request are present in the game state
+ */
+export function meetsRequirements(state: GameState, request: Request): boolean {
+  // If no requirements, the request is always available
+  if (!request.requires || request.requires.length === 0) {
+    return true;
+  }
+  
+  // All required tokens must be present
+  return request.requires.every(token => hasUnlock(state, token));
 }
 
 /**
@@ -468,6 +491,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         scheduledEvents,
         chainStatus,
         requestTriggerCounts,
+        unlocks: state.unlocks,
       };
     }
 
@@ -523,6 +547,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         scheduledEvents,
         chainStatus,
         requestTriggerCounts,
+        unlocks: state.unlocks,
       };
     }
 
@@ -540,6 +565,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       scheduledEvents,
       chainStatus,
       requestTriggerCounts,
+      unlocks: state.unlocks,
     });
 
     // 5. Increment tick and update state
@@ -556,6 +582,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       scheduledEvents,
       chainStatus,
       requestTriggerCounts,
+      unlocks: state.unlocks,
     };
   }
 
