@@ -1609,3 +1609,80 @@ export const eventRequests: Request[] = [
     ],
   },
 ];
+
+/**
+ * Validates all requests for common data quality issues.
+ * This function runs only in development mode.
+ * Throws errors if validation fails.
+ */
+export function validateRequests(): void {
+  const allRequests = [...needRequests, ...eventRequests];
+  const errors: string[] = [];
+
+  // Collect all request IDs
+  const requestIds = new Set<string>();
+  const duplicateIds: string[] = [];
+
+  for (const request of allRequests) {
+    // Check 1: Each request must have exactly 2 options
+    if (request.options.length !== 2) {
+      errors.push(
+        `Request "${request.id}" has ${request.options.length} options, expected exactly 2`
+      );
+    }
+
+    // Check 2: Request IDs must be unique
+    if (requestIds.has(request.id)) {
+      duplicateIds.push(request.id);
+    }
+    requestIds.add(request.id);
+
+    // Check 3: No empty title, text, or option labels
+    if (!request.title || request.title.trim() === '') {
+      errors.push(`Request "${request.id}" has empty title`);
+    }
+    if (!request.text || request.text.trim() === '') {
+      errors.push(`Request "${request.id}" has empty text`);
+    }
+
+    for (let i = 0; i < request.options.length; i++) {
+      const option = request.options[i];
+      if (!option.text || option.text.trim() === '') {
+        errors.push(
+          `Request "${request.id}" option ${i} has empty text`
+        );
+      }
+    }
+
+    // Note: FollowUp candidate ID validation happens after all IDs are collected
+  }
+
+  // Report duplicate IDs
+  if (duplicateIds.length > 0) {
+    errors.push(
+      `Duplicate request IDs found: ${duplicateIds.join(', ')}`
+    );
+  }
+
+  // Check 4: Validate followUp candidate IDs exist
+  for (const request of allRequests) {
+    if (request.followUps) {
+      for (const followUp of request.followUps) {
+        for (const candidate of followUp.candidates) {
+          if (!requestIds.has(candidate.requestId)) {
+            errors.push(
+              `Request "${request.id}" has followUp candidate with non-existent ID: "${candidate.requestId}"`
+            );
+          }
+        }
+      }
+    }
+  }
+
+  // Throw error if any validation failed
+  if (errors.length > 0) {
+    throw new Error(
+      `Request validation failed:\n${errors.map((e) => `  - ${e}`).join('\n')}`
+    );
+  }
+}
