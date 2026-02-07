@@ -36,6 +36,8 @@ export interface ScheduledEvent {
   requestId: string;
   /** Tick when this event was scheduled (for FIFO ordering) */
   scheduledAtTick: number;
+  /** Priority of the scheduled event (default: "normal") */
+  priority?: "info" | "normal";
 }
 
 /**

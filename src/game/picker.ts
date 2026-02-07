@@ -135,7 +135,7 @@ export function pickNextRequest(
   let actualLastRequestId: string;
   let tick: number = 0;
   let needsTracking: NeedsTracking | null = null;
-  let scheduledEvents: Array<{ targetTick: number; requestId: string; scheduledAtTick: number }> = [];
+  let scheduledEvents: Array<{ targetTick: number; requestId: string; scheduledAtTick: number; priority?: "info" | "normal" }> = [];
   let chainStatus: Record<string, { active: boolean; completedTick?: number }> = {};
   let requestTriggerCounts: Record<string, number> = {};
   let gameState: GameState | null = null;
@@ -203,38 +203,58 @@ export function pickNextRequest(
   const dueEvents = scheduledEvents.filter(event => event.targetTick <= tick);
   
   if (dueEvents.length > 0) {
-    // Sort by scheduledAtTick for FIFO ordering (primary), then by targetTick (secondary)
-    dueEvents.sort((a, b) => {
-      if (a.scheduledAtTick === b.scheduledAtTick) {
-        return a.targetTick - b.targetTick;
-      }
-      return a.scheduledAtTick - b.scheduledAtTick;
-    });
+    // Separate info and normal priority events
+    const infoEvents = dueEvents.filter(event => event.priority === "info");
+    const normalEvents = dueEvents.filter(event => event.priority !== "info");
     
-    // Return the first due event that hasn't exceeded maxTriggers and meets requirements
-    // Note: Scheduled events bypass chain gating and cooldown but still need unlock tokens
-    for (const dueEvent of dueEvents) {
-      const scheduledRequest = [...needRequests, ...eventRequests].find(
-        (r) => r.id === dueEvent.requestId
-      );
+    // Helper to process events in priority order
+    const processEvents = (events: typeof dueEvents) => {
+      // Sort by scheduledAtTick for FIFO ordering (primary), then by targetTick (secondary)
+      events.sort((a, b) => {
+        if (a.scheduledAtTick === b.scheduledAtTick) {
+          return a.targetTick - b.targetTick;
+        }
+        return a.scheduledAtTick - b.scheduledAtTick;
+      });
       
-      if (scheduledRequest) {
-        // Check maxTriggers for scheduled events
-        if (scheduledRequest.maxTriggers !== undefined) {
-          const triggerCount = requestTriggerCounts[scheduledRequest.id] || 0;
-          if (triggerCount >= scheduledRequest.maxTriggers) {
-            continue; // Skip this scheduled event, try next
+      // Return the first event that hasn't exceeded maxTriggers and meets requirements
+      for (const dueEvent of events) {
+        const scheduledRequest = [...needRequests, ...eventRequests].find(
+          (r) => r.id === dueEvent.requestId
+        );
+        
+        if (scheduledRequest) {
+          // Check maxTriggers for scheduled events
+          if (scheduledRequest.maxTriggers !== undefined) {
+            const triggerCount = requestTriggerCounts[scheduledRequest.id] || 0;
+            if (triggerCount >= scheduledRequest.maxTriggers) {
+              continue; // Skip this scheduled event, try next
+            }
           }
+          
+          // Check if requirements are met (if we have full state)
+          if (isLockedByRequirements(scheduledRequest)) {
+            continue; // Skip this locked scheduled event, try next
+          }
+          
+          return scheduledRequest;
         }
-        
-        // Check if requirements are met (if we have full state)
-        if (isLockedByRequirements(scheduledRequest)) {
-          continue; // Skip this locked scheduled event, try next
-        }
-        
-        return scheduledRequest;
       }
+      return null;
+    };
+    
+    // Priority 1a: Process info priority events first
+    if (infoEvents.length > 0) {
+      const infoRequest = processEvents(infoEvents);
+      if (infoRequest) return infoRequest;
     }
+    
+    // Priority 1b: Process normal priority events
+    if (normalEvents.length > 0) {
+      const normalRequest = processEvents(normalEvents);
+      if (normalRequest) return normalRequest;
+    }
+    
     // If all scheduled requests exceeded maxTriggers or are locked, fall through to normal logic
   }
 
