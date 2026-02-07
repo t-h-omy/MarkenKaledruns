@@ -1,7 +1,7 @@
 /**
  * Request data for the Proof-of-Fun game.
  * Based on POF_SPEC.md specification.
- * Contains 5 need-requests and 25 event-requests.
+ * Contains 5 need-requests and event-requests.
  */
 
 import type { Request } from './models';
@@ -746,6 +746,694 @@ export const eventRequests: Request[] = [
           satisfaction: -1,
         },
       },
+    ],
+  },
+
+  // =========================================================
+  // BLACKGEAT CHAIN - The Black March
+  // =========================================================
+  // CHAIN START
+  {
+    id: 'CHAIN_BLACKGEAT_START',
+    title: 'The Black March',
+    text: 'Brimwulf, envoy of the County of Wulfham, introduces himself: "The Sigilmark of Blackgeat is raising troops. Join forces with us - only together can we defeat them."',
+    options: [
+      { text: 'ALLY WITH WULFHAM', effects: {} },
+      { text: 'REFUSE', effects: {} },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 3,
+        delayMaxTicks: 5,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_PREP_FELDRIC', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 3,
+        delayMaxTicks: 5,
+        candidates: [
+          { requestId: 'CHAIN_BLACKGEAT_WULFHAM_FALLS', weight: 3 },
+          { requestId: 'CHAIN_BLACKGEAT_WULFHAM_TURNS', weight: 2 },
+        ],
+      },
+    ],
+  },
+
+  // ALLY PATH (WULFHAM)
+  {
+    id: 'CHAIN_BLACKGEAT_PREP_FELDRIC',
+    title: 'Feldric\'s Counsel',
+    text: 'Feldric your Marshal bows. "About Brimwulf\'s alliance request: if we accept, we need to ready our troops."',
+    options: [
+      { text: 'UPGRADE ARMS', effects: { gold: -10, landForces: 6 } },
+      { text: 'MARCH NOW', effects: {} },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 5,
+        delayMaxTicks: 10,
+        candidates: [
+          { requestId: 'CHAIN_BLACKGEAT_PREP_FELDRIC', weight: 2 },
+          { requestId: 'CHAIN_BLACKGEAT_BATTLE_GRAYFORD', weight: 1 },
+        ],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 1,
+        delayMaxTicks: 2,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_BATTLE_GRAYFORD', weight: 1 }],
+      },
+    ],
+  },
+
+  {
+    id: 'CHAIN_BLACKGEAT_BATTLE_GRAYFORD',
+    title: 'Battle at Aescweald',
+    text: 'Blackgeat\'s banners crest the ridge — the battle Brimwulf came to you for. Feldric\'s voice stays calm: "Hold. Then strike." Brimwulf\'s men lock shields beside yours.',
+    options: [
+      { text: 'HOLD THE LINE', effects: { landForces: -5, satisfaction: 2 } },
+      { text: 'RISKY CHARGE', effects: { landForces: -8, gold: 15 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 5,
+        delayMaxTicks: 10,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_AFTER_BATTLE_STATE', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 5,
+        delayMaxTicks: 10,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_AFTER_BATTLE_STATE', weight: 1 }],
+      },
+    ],
+  },
+
+  {
+    id: 'CHAIN_BLACKGEAT_AFTER_BATTLE_STATE',
+    title: 'Aescweald Aftermath',
+    text: 'This is the aftermath of the Aescweald battle. Blackgeat pulls back in good order. Brimwulf watches the wounded, already thinking about what Wulfham can demand next.',
+    options: [
+      { text: 'TEND THE WOUNDED', effects: { health: 4 } },
+      { text: 'FORTIFY THE BORDER', effects: { landForces: 5, gold: -10 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 5,
+        delayMaxTicks: 10,
+        candidates: [
+          { requestId: 'CHAIN_BLACKGEAT_WULFHAM_LOYAL', weight: 3 },
+          { requestId: 'CHAIN_BLACKGEAT_WULFHAM_EXTORT_1', weight: 2 },
+        ],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 5,
+        delayMaxTicks: 10,
+        candidates: [
+          { requestId: 'CHAIN_BLACKGEAT_WULFHAM_LOYAL', weight: 3 },
+          { requestId: 'CHAIN_BLACKGEAT_WULFHAM_EXTORT_1', weight: 2 },
+        ],
+      },
+    ],
+  },
+
+  {
+    id: 'CHAIN_BLACKGEAT_WULFHAM_LOYAL',
+    title: 'Good Allies',
+    text: 'Brimwulf returns after the Battle of Aescweald. "Wulfham remembers who stood with us. We will not forget." Feldric mutters, "Blackgeat will come back — count on it."',
+    options: [
+      { text: 'CONSOLIDATE', effects: { satisfaction: 5 } },
+      { text: 'PRESS THE ADVANTAGE', effects: { gold: 30 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 6,
+        delayMaxTicks: 10,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_HRYCGWULF_OFFER', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 4,
+        delayMaxTicks: 8,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_HRYCGWULF_OFFER', weight: 1 }],
+      },
+    ],
+  },
+
+  {
+    id: 'CHAIN_BLACKGEAT_HRYCGWULF_OFFER',
+    title: 'Hrycgwulf\'s Message',
+    text: 'Following the Aescweald battle, Hrycgwulf of Blackgeat arrives with a message. "You are capable. Pay a border tribute and we turn our army elsewhere." Feldric adds quietly, "This is their next move after Aescweald."',
+    options: [
+      { text: 'PAY ONCE', effects: { gold: -20, satisfaction: -1 } },
+      { text: 'REFUSE', effects: { satisfaction: 2 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 4,
+        delayMaxTicks: 7,
+        candidates: [
+          { requestId: 'CHAIN_BLACKGEAT_LOYAL_END', weight: 3 },
+          { requestId: 'CHAIN_BLACKGEAT_TRIBUTE_ESCALATE', weight: 1 },
+        ],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 4,
+        delayMaxTicks: 7,
+        candidates: [
+          { requestId: 'CHAIN_BLACKGEAT_LOYAL_END', weight: 1 },
+          { requestId: 'CHAIN_BLACKGEAT_TRIBUTE_ESCALATE', weight: 3 },
+        ],
+      },
+    ],
+  },
+
+  {
+    id: 'CHAIN_BLACKGEAT_TRIBUTE_ESCALATE',
+    title: 'The Second Demand',
+    text: 'This is the second demand after Hrycgwulf\'s first tribute request. Hrycgwulf stays polite. "Tribute is not punishment. It is safety." Feldric spits, "It\'s a leash."',
+    options: [
+      { text: 'PAY AGAIN', effects: { gold: -10, satisfaction: -2 } },
+      { text: 'PREPARE FOR WAR', effects: { landForces: 5, gold: -10 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 6,
+        delayMaxTicks: 10,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_LOYAL_END', weight: 2 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 3,
+        delayMaxTicks: 5,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_TRIBUTE_BATTLE', weight: 2 }],
+      },
+    ],
+  },
+
+  {
+    id: 'CHAIN_BLACKGEAT_LOYAL_END',
+    title: 'A Hard-Won Quiet',
+    text: 'After the tribute talks and threats, the border holds—for now. Brimwulf\'s riders patrol beside yours. Feldric\'s last words: "This quiet came from the Blackgeat situation. It won\'t stay quiet forever."',
+    options: [
+      { text: 'Tend to the wounded', effects: { health: 5 } },
+      { text: 'Speak to your people', effects: { satisfaction: 5 } },
+    ],
+  },
+
+  {
+    id: 'CHAIN_BLACKGEAT_TRIBUTE_BATTLE',
+    title: 'The Battle for Freedom',
+    text: 'Hrycgwulf grows impatient with your stalling. The Blackgeat banners appear on the horizon. Feldric draws his blade: "One last fight. For our freedom!"',
+    options: [
+      { text: 'DEFEND THE GATES', effects: { landForces: -2, satisfaction: 3 } },
+      { text: 'AMBUSH AND LOOT', effects: { landForces: -5, gold: 35 } },
+    ],
+  },
+
+  {
+    id: 'CHAIN_BLACKGEAT_WULFHAM_EXTORT_1',
+    title: 'The Bill Comes Due',
+    text: 'After the battle of Aescweald, Brimwulf\'s smile is thin. "Wulfham shed more blood than you. Compensation is expected." Feldric whispers, "This is the hook."',
+    options: [
+      { text: 'PAY', effects: { gold: -15 } },
+      { text: 'REFUSE', effects: {} },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 4,
+        delayMaxTicks: 6,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_WULFHAM_EXTORT_2', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 4,
+        delayMaxTicks: 6,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_WULFHAM_SHOWDOWN', weight: 1 }],
+      },
+    ],
+  },
+
+  {
+    id: 'CHAIN_BLACKGEAT_WULFHAM_EXTORT_2',
+    title: 'More, Always More',
+    text: 'Brimwulf returns again — this is the second payment demand since Aescweald. "The roads. The wagons. The widows. Pay again."',
+    options: [
+      { text: 'PAY', effects: { gold: -5 } },
+      { text: 'REFUSE', effects: {} },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 4,
+        delayMaxTicks: 6,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_WULFHAM_THREAT', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_WULFHAM_SHOWDOWN', weight: 1 }],
+      },
+    ],
+  },
+
+  {
+    id: 'CHAIN_BLACKGEAT_WULFHAM_THREAT',
+    title: 'The Threat',
+    text: 'Brimwulf stops pretending. "Coin, or Wulfham secures your lands permanently." Feldric says, "This started with Aescweald. Now it\'s extortion. Give me leave to prepare."',
+    options: [
+      { text: 'PREPARE (FELDRIC)', effects: { farmers: -5, landForces: 5 } },
+      { text: 'PAY TO DELAY', effects: { gold: -10 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 5,
+        delayMaxTicks: 8,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_WULFHAM_SHOWDOWN', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 10,
+        delayMaxTicks: 12,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_WULFHAM_SHOWDOWN', weight: 1 }],
+      },
+    ],
+  },
+
+  {
+    id: 'CHAIN_BLACKGEAT_WULFHAM_SHOWDOWN',
+    title: 'Showdown at the Border Stones',
+    text: 'Weeks after the battle of Aescweald, Feldric meets Brimwulf at the border stones. "One step further," Feldric says, "and we settle this in iron."',
+    options: [
+      { text: 'STAND FIRM', effects: { landForces: -8, gold: 30 } },
+      { text: 'BACK DOWN', effects: { gold: -15, farmers: -5 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 5,
+        delayMaxTicks: 7,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_EXTORT_END_BATTLE', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 5,
+        delayMaxTicks: 7,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_EXTORT_END_TRIBUTE', weight: 1 }],
+      },
+    ],
+  },
+
+  {
+    id: 'CHAIN_BLACKGEAT_EXTORT_END_BATTLE',
+    title: 'A Scar, Not a Grave',
+    text: 'Wulfham withdraws — you are victorious! Feldric\'s verdict: "You\'ll remember this every time an ally asks for \'help\'."',
+    options: [
+      { text: 'DEMAND GOLD', effects: { gold: 30, satisfaction: 1 } },
+      { text: 'DEMAND SWORDS', effects: { landForces: 5, satisfaction: 1 } },
+    ],
+  },
+
+  {
+    id: 'CHAIN_BLACKGEAT_EXTORT_END_TRIBUTE',
+    title: 'The Hollow Peace',
+    text: 'Brimwulf accepts your final payment with a cold nod. Wulfham\'s riders turn back toward their own borders. Feldric watches them go: "We have bought peace, but sold our pride."',
+    options: [
+      { text: 'RECOVER', effects: { health: 5 } },
+      { text: 'REPAIR', effects: { fireRisk: -5 } },
+    ],
+  },
+
+  // REFUSE PATH (WULFHAM FALLS OR TURNS)
+  {
+    id: 'CHAIN_BLACKGEAT_WULFHAM_FALLS',
+    title: 'Wulfham Overrun',
+    text: 'Because you refused Brimwulf\'s alliance request earlier, he returns in defeat. "Wulfham burns. Blackgeat\'s march turns toward you."',
+    options: [
+      { text: 'SEND LATE AID', effects: { gold: -5, landForces: -6 } },
+      { text: 'DO NOTHING', effects: {} },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 5,
+        delayMaxTicks: 10,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_WAR_PREP_FELDRIC', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 5,
+        delayMaxTicks: 10,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_HRYCGWULF_THREAT', weight: 1 }],
+      },
+    ],
+  },
+
+  {
+    id: 'CHAIN_BLACKGEAT_HRYCGWULF_THREAT',
+    title: 'The Blackgeat Envoy',
+    text: 'As consequence of Wulfham\'s defeat, Blackgeat\'s envoy Hrycgwulf arrives at your gates. "Submit, or be folded into Blackgeat." Feldric\'s hand rests on his sword.',
+    options: [
+      { text: 'BOW and PAY', effects: { gold: -15 } },
+      { text: 'RESIST and PREPARE', effects: {} },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 8,
+        delayMaxTicks: 8,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_TRIBUTE_1', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 5,
+        delayMaxTicks: 8,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_WAR_PREP_FELDRIC', weight: 1 }],
+      },
+    ],
+  },
+
+  {
+    id: 'CHAIN_BLACKGEAT_WULFHAM_TURNS',
+    title: 'Wulfham Turns',
+    text: 'After you refused Brimwulf earlier, news arrives: Wulfham has allied with Blackgeat and demand a tribute. Feldric says, "This is what refusal can create: two enemies instead of one."',
+    options: [
+      { text: 'RESIST and PREPARE', effects: {} },
+      { text: 'BOW and PAY', effects: { gold: -15 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 5,
+        delayMaxTicks: 8,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_WAR_PREP_FELDRIC', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 8,
+        delayMaxTicks: 8,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_TRIBUTE_1', weight: 1 }],
+      },
+    ],
+  },
+
+  // WAR PREPARATION AND BATTLES
+  {
+    id: 'CHAIN_BLACKGEAT_WAR_PREP_FELDRIC',
+    title: 'Feldric Prepares the Host',
+    text: 'Feldric your Marshall comes before you: "We need better preparation for the coming battle with Blackgeat."',
+    options: [
+      { text: 'RAISE THE HOST', effects: { landForces: 4, farmers: -4 } },
+      { text: 'MEET THEM NOW', effects: {} },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 5,
+        delayMaxTicks: 8,
+        candidates: [
+          { requestId: 'CHAIN_BLACKGEAT_WAR_PREP_FELDRIC', weight: 2 },
+          { requestId: 'CHAIN_BLACKGEAT_WAR_ROUND_1', weight: 1 },
+        ],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 1,
+        delayMaxTicks: 2,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_WAR_ROUND_1', weight: 1 }],
+      },
+    ],
+  },
+
+  {
+    id: 'CHAIN_BLACKGEAT_WAR_ROUND_1',
+    title: 'First Clash',
+    text: 'The Blackgeat war begins. Their vanguard probes your line. Feldric: "They test for weakness. Show none."',
+    options: [
+      { text: 'HOLD', effects: { landForces: -4 } },
+      { text: 'COUNTERSTRIKE', effects: { landForces: -6, gold: 10 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 5,
+        delayMaxTicks: 8,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_WAR_ROUND_2', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 5,
+        delayMaxTicks: 8,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_WAR_ROUND_2', weight: 1 }],
+      },
+    ],
+  },
+
+  {
+    id: 'CHAIN_BLACKGEAT_WAR_ROUND_2',
+    title: 'Smoke and Discipline',
+    text: 'During the second war round against Blackgeat, they set brushfires to blind you. Feldric snarls: "They want panic."',
+    options: [
+      { text: 'PROTECT THE VILLAGE', effects: { landForces: -5, fireRisk: -4, satisfaction: 1 } },
+      { text: 'PRESS THE LINE', effects: { landForces: -3, farmers: -4, fireRisk: 6 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 5,
+        delayMaxTicks: 8,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_WAR_ROUND_3', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 5,
+        delayMaxTicks: 8,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_WAR_ROUND_3', weight: 1 }],
+      },
+    ],
+  },
+
+  {
+    id: 'CHAIN_BLACKGEAT_WAR_ROUND_3',
+    title: 'The Breaking Point',
+    text: 'This is the final showdown: Hrycgwulf commits Blackgeat\'s main force. Feldric: "This is it."',
+    options: [
+      { text: 'ALL-IN STRIKE', effects: { landForces: -5, gold: 35, satisfaction: 5 } },
+      { text: 'WITHDRAW', effects: { satisfaction: -2, farmers: -5 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 5,
+        delayMaxTicks: 8,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_WAR_END_WIN', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 5,
+        delayMaxTicks: 8,
+        candidates: [
+          { requestId: 'CHAIN_BLACKGEAT_WAR_END_HELP', weight: 3 },
+          { requestId: 'CHAIN_BLACKGEAT_WAR_END_HARD', weight: 1 },
+        ],
+      },
+    ],
+  },
+
+  {
+    id: 'CHAIN_BLACKGEAT_WAR_END_WIN',
+    title: 'Blackgeat Recoils',
+    text: 'After three war rounds, Blackgeat pulls back and the war finally ends. Feldric wipes blood from his lip: "This is what resisting Blackgeat costs—and what it buys."',
+    options: [
+      { text: 'SELL THE LOOT', effects: { gold: 35, satisfaction: 2 } },
+      { text: 'KEEP THE LOOT', effects: { landForces: 5, satisfaction: 2 } },
+    ],
+  },
+
+  {
+    id: 'CHAIN_BLACKGEAT_WAR_END_HELP',
+    title: 'Help from a Free Barony',
+    text: 'As the Blackgeat war drags on, riders from a neighboring free barony arrive at dusk: "We won\'t watch you fall."',
+    options: [
+      { text: 'ACCEPT HELP', effects: { landForces: 3 } },
+      { text: 'ACCEPT AND PAY', effects: { gold: -10, landForces: 6 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_WAR_END_STABLE', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_WAR_END_STABLE', weight: 1 }],
+      },
+    ],
+  },
+
+  {
+    id: 'CHAIN_BLACKGEAT_WAR_END_HARD',
+    title: 'A Bitter Retreat',
+    text: 'The Blackgeat war ends badly. You live, but they loot the village. Feldric\'s eyes are stone: "A bitter retreat! What should we do now?"',
+    options: [
+      { text: 'REBUILD ARMY', effects: { gold: -30, landForces: 5 } },
+      { text: 'CARE FOR YOUR PEOPLE', effects: { gold: -30, health: 5 } },
+    ],
+  },
+
+  {
+    id: 'CHAIN_BLACKGEAT_WAR_END_STABLE',
+    title: 'A Line Held',
+    text: 'A fierce last battle against Blackgeat ends well with the barony\'s help. Feldric nods once: "Next time Blackgeat comes, we\'ll be ready sooner."',
+    options: [
+      { text: 'PURSUE THE FLEEING', effects: { landForces: -5, gold: 30 } },
+      { text: 'HOLD A FEAST', effects: { health: 4, satisfaction: 3 } },
+    ],
+  },
+
+  // TRIBUTE PATH
+  {
+    id: 'CHAIN_BLACKGEAT_TRIBUTE_1',
+    title: 'Tribute I',
+    text: 'This tribute demand comes from Hrycgwulf\'s earlier ultimatum. His messenger waits: "The first payment." Feldric murmurs: "This is how Blackgeat turns a threat into routine."',
+    options: [
+      { text: 'PAY', effects: { gold: -10, satisfaction: -1 } },
+      { text: 'REFUSE AND ARM', effects: {} },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 8,
+        delayMaxTicks: 8,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_TRIBUTE_2', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_WAR_PREP_FELDRIC', weight: 1 }],
+      },
+    ],
+  },
+
+  {
+    id: 'CHAIN_BLACKGEAT_TRIBUTE_2',
+    title: 'Tribute II',
+    text: 'The second tribute demand from Blackgeat arrives. Hrycgwulf repeats the terms, less polite this time.',
+    options: [
+      { text: 'PAY', effects: { gold: -10, satisfaction: -1 } },
+      { text: 'REFUSE AND ARM', effects: {} },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 8,
+        delayMaxTicks: 8,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_TRIBUTE_3', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_WAR_PREP_FELDRIC', weight: 1 }],
+      },
+    ],
+  },
+
+  {
+    id: 'CHAIN_BLACKGEAT_TRIBUTE_3',
+    title: 'Tribute III',
+    text: 'Hrycgwuld comes back with another tribute demand. The people notice the wagons leaving your gates and start whispering about submission.',
+    options: [
+      { text: 'PAY', effects: { gold: -10, satisfaction: -2 } },
+      { text: 'REFUSE AND ARM', effects: {} },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 8,
+        delayMaxTicks: 8,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_TRIBUTE_4', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_WAR_PREP_FELDRIC', weight: 1 }],
+      },
+    ],
+  },
+
+  {
+    id: 'CHAIN_BLACKGEAT_TRIBUTE_4',
+    title: 'Tribute IV',
+    text: 'Blackgeat\'s next tribute demand arrives with Hrycgwulf\'s personal seal. Feldric says, "They\'re making sure you remember who\'s in charge."',
+    options: [
+      { text: 'PAY', effects: { gold: -10, satisfaction: -2 } },
+      { text: 'REFUSE AND ARM', effects: {} },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 8,
+        delayMaxTicks: 8,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_TRIBUTE_5', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_WAR_PREP_FELDRIC', weight: 1 }],
+      },
+    ],
+  },
+
+  {
+    id: 'CHAIN_BLACKGEAT_TRIBUTE_5',
+    title: 'Tribute V',
+    text: 'Another routine tribute demand from Blackgeat. Feldric says, "Paying five times teaches them you\'ll pay a sixth."',
+    options: [
+      { text: 'PAY', effects: { gold: -10, satisfaction: -1 } },
+      { text: 'REFUSE AND ARM', effects: {} },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_TRIBUTE_END', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_WAR_PREP_FELDRIC', weight: 1 }],
+      },
+    ],
+  },
+
+  {
+    id: 'CHAIN_BLACKGEAT_TRIBUTE_END',
+    title: 'A Bought Breath',
+    text: 'Hrycgwulf visits you one last time: "You paid for safety. Now you shall have peace". Feldric: "This peace seems temporary. For next time, we will prepare."',
+    options: [
+      { text: 'CELEBRATE PEACE', effects: { health: 4, satisfaction: 4 } },
+      { text: 'START PREPARING', effects: { gold: -10, landForces: 6 } },
     ],
   },
 ];
