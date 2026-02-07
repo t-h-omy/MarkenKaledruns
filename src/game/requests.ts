@@ -761,6 +761,9 @@ export const eventRequests: Request[] = [
     id: 'CHAIN_BLACKGEAT_START',
     title: 'The Black March',
     text: 'Brimwulf, envoy of the County of Wulfham, introduces himself: "The Sigilmark of Blackgeat is raising troops. Join forces with us - only together can we defeat them."',
+    chainId: 'BLACKGEAT',
+    chainRole: 'start',
+    chainRestartCooldownTicks: 100,
     options: [
       { text: 'ALLY WITH WULFHAM', effects: {} },
       { text: 'REFUSE', effects: {} },
@@ -787,6 +790,8 @@ export const eventRequests: Request[] = [
   // ALLY PATH (WULFHAM)
   {
     id: 'CHAIN_BLACKGEAT_PREP_FELDRIC',
+    chainId: 'BLACKGEAT',
+    chainRole: 'member',
     title: 'Feldric\'s Counsel',
     text: 'Feldric your Marshal bows. "About Brimwulf\'s alliance request: if we accept, we need to ready our troops."',
     canTriggerRandomly: false,
@@ -815,6 +820,8 @@ export const eventRequests: Request[] = [
 
   {
     id: 'CHAIN_BLACKGEAT_BATTLE_GRAYFORD',
+    chainId: 'BLACKGEAT',
+    chainRole: 'member',
     title: 'Battle at Aescweald',
     text: 'Blackgeat\'s banners crest the ridge — the battle Brimwulf came to you for. Feldric\'s voice stays calm: "Hold. Then strike." Brimwulf\'s men lock shields beside yours.',
     canTriggerRandomly: false,
@@ -840,6 +847,8 @@ export const eventRequests: Request[] = [
 
   {
     id: 'CHAIN_BLACKGEAT_AFTER_BATTLE_STATE',
+    chainId: 'BLACKGEAT',
+    chainRole: 'member',
     title: 'Aescweald Aftermath',
     text: 'This is the aftermath of the Aescweald battle. Blackgeat pulls back in good order. Brimwulf watches the wounded, already thinking about what Wulfham can demand next.',
     canTriggerRandomly: false,
@@ -871,6 +880,8 @@ export const eventRequests: Request[] = [
 
   {
     id: 'CHAIN_BLACKGEAT_WULFHAM_LOYAL',
+    chainId: 'BLACKGEAT',
+    chainRole: 'member',
     title: 'Good Allies',
     text: 'Brimwulf returns after the Battle of Aescweald. "Wulfham remembers who stood with us. We will not forget." Feldric mutters, "Blackgeat will come back — count on it."',
     canTriggerRandomly: false,
@@ -896,6 +907,8 @@ export const eventRequests: Request[] = [
 
   {
     id: 'CHAIN_BLACKGEAT_HRYCGWULF_OFFER',
+    chainId: 'BLACKGEAT',
+    chainRole: 'member',
     title: 'Hrycgwulf\'s Message',
     text: 'Following the Aescweald battle, Hrycgwulf of Blackgeat arrives with a message. "You are capable. Pay a border tribute and we turn our army elsewhere." Feldric adds quietly, "This is their next move after Aescweald."',
     canTriggerRandomly: false,
@@ -927,6 +940,8 @@ export const eventRequests: Request[] = [
 
   {
     id: 'CHAIN_BLACKGEAT_TRIBUTE_ESCALATE',
+    chainId: 'BLACKGEAT',
+    chainRole: 'member',
     title: 'The Second Demand',
     text: 'This is the second demand after Hrycgwulf\'s first tribute request. Hrycgwulf stays polite. "Tribute is not punishment. It is safety." Feldric spits, "It\'s a leash."',
     canTriggerRandomly: false,
@@ -952,6 +967,8 @@ export const eventRequests: Request[] = [
 
   {
     id: 'CHAIN_BLACKGEAT_LOYAL_END',
+    chainId: 'BLACKGEAT',
+    chainRole: 'end',
     title: 'A Hard-Won Quiet',
     text: 'After the tribute talks and threats, the border holds—for now. Brimwulf\'s riders patrol beside yours. Feldric\'s last words: "This quiet came from the Blackgeat situation. It won\'t stay quiet forever."',
     canTriggerRandomly: false,
@@ -963,6 +980,8 @@ export const eventRequests: Request[] = [
 
   {
     id: 'CHAIN_BLACKGEAT_TRIBUTE_BATTLE',
+    chainId: 'BLACKGEAT',
+    chainRole: 'member',
     title: 'The Battle for Freedom',
     text: 'Hrycgwulf grows impatient with your stalling. The Blackgeat banners appear on the horizon. Feldric draws his blade: "One last fight. For our freedom!"',
     canTriggerRandomly: false,
@@ -974,6 +993,8 @@ export const eventRequests: Request[] = [
 
   {
     id: 'CHAIN_BLACKGEAT_WULFHAM_EXTORT_1',
+    chainId: 'BLACKGEAT',
+    chainRole: 'member',
     title: 'The Bill Comes Due',
     text: 'After the battle of Aescweald, Brimwulf\'s smile is thin. "Wulfham shed more blood than you. Compensation is expected." Feldric whispers, "This is the hook."',
     canTriggerRandomly: false,
@@ -999,6 +1020,8 @@ export const eventRequests: Request[] = [
 
   {
     id: 'CHAIN_BLACKGEAT_WULFHAM_EXTORT_2',
+    chainId: 'BLACKGEAT',
+    chainRole: 'member',
     title: 'More, Always More',
     text: 'Brimwulf returns again — this is the second payment demand since Aescweald. "The roads. The wagons. The widows. Pay again."',
     canTriggerRandomly: false,
@@ -1024,6 +1047,8 @@ export const eventRequests: Request[] = [
 
   {
     id: 'CHAIN_BLACKGEAT_WULFHAM_THREAT',
+    chainId: 'BLACKGEAT',
+    chainRole: 'member',
     title: 'The Threat',
     text: 'Brimwulf stops pretending. "Coin, or Wulfham secures your lands permanently." Feldric says, "This started with Aescweald. Now it\'s extortion. Give me leave to prepare."',
     canTriggerRandomly: false,
@@ -1049,6 +1074,8 @@ export const eventRequests: Request[] = [
 
   {
     id: 'CHAIN_BLACKGEAT_WULFHAM_SHOWDOWN',
+    chainId: 'BLACKGEAT',
+    chainRole: 'member',
     title: 'Showdown at the Border Stones',
     text: 'Weeks after the battle of Aescweald, Feldric meets Brimwulf at the border stones. "One step further," Feldric says, "and we settle this in iron."',
     canTriggerRandomly: false,
@@ -1074,6 +1101,8 @@ export const eventRequests: Request[] = [
 
   {
     id: 'CHAIN_BLACKGEAT_EXTORT_END_BATTLE',
+    chainId: 'BLACKGEAT',
+    chainRole: 'end',
     title: 'A Scar, Not a Grave',
     text: 'Wulfham withdraws — you are victorious! Feldric\'s verdict: "You\'ll remember this every time an ally asks for \'help\'."',
     canTriggerRandomly: false,
@@ -1085,6 +1114,8 @@ export const eventRequests: Request[] = [
 
   {
     id: 'CHAIN_BLACKGEAT_EXTORT_END_TRIBUTE',
+    chainId: 'BLACKGEAT',
+    chainRole: 'end',
     title: 'The Hollow Peace',
     text: 'Brimwulf accepts your final payment with a cold nod. Wulfham\'s riders turn back toward their own borders. Feldric watches them go: "We have bought peace, but sold our pride."',
     canTriggerRandomly: false,
@@ -1097,6 +1128,8 @@ export const eventRequests: Request[] = [
   // REFUSE PATH (WULFHAM FALLS OR TURNS)
   {
     id: 'CHAIN_BLACKGEAT_WULFHAM_FALLS',
+    chainId: 'BLACKGEAT',
+    chainRole: 'member',
     title: 'Wulfham Overrun',
     text: 'Because you refused Brimwulf\'s alliance request earlier, he returns in defeat. "Wulfham burns. Blackgeat\'s march turns toward you."',
     canTriggerRandomly: false,
@@ -1122,6 +1155,8 @@ export const eventRequests: Request[] = [
 
   {
     id: 'CHAIN_BLACKGEAT_HRYCGWULF_THREAT',
+    chainId: 'BLACKGEAT',
+    chainRole: 'member',
     title: 'The Blackgeat Envoy',
     text: 'As consequence of Wulfham\'s defeat, Blackgeat\'s envoy Hrycgwulf arrives at your gates. "Submit, or be folded into Blackgeat." Feldric\'s hand rests on his sword.',
     canTriggerRandomly: false,
@@ -1147,6 +1182,8 @@ export const eventRequests: Request[] = [
 
   {
     id: 'CHAIN_BLACKGEAT_WULFHAM_TURNS',
+    chainId: 'BLACKGEAT',
+    chainRole: 'member',
     title: 'Wulfham Turns',
     text: 'After you refused Brimwulf earlier, news arrives: Wulfham has allied with Blackgeat and demand a tribute. Feldric says, "This is what refusal can create: two enemies instead of one."',
     canTriggerRandomly: false,
@@ -1173,6 +1210,8 @@ export const eventRequests: Request[] = [
   // WAR PREPARATION AND BATTLES
   {
     id: 'CHAIN_BLACKGEAT_WAR_PREP_FELDRIC',
+    chainId: 'BLACKGEAT',
+    chainRole: 'member',
     title: 'Feldric Prepares the Host',
     text: 'Feldric your Marshall comes before you: "We need better preparation for the coming battle with Blackgeat."',
     canTriggerRandomly: false,
@@ -1201,6 +1240,8 @@ export const eventRequests: Request[] = [
 
   {
     id: 'CHAIN_BLACKGEAT_WAR_ROUND_1',
+    chainId: 'BLACKGEAT',
+    chainRole: 'member',
     title: 'First Clash',
     text: 'The Blackgeat war begins. Their vanguard probes your line. Feldric: "They test for weakness. Show none."',
     canTriggerRandomly: false,
@@ -1226,6 +1267,8 @@ export const eventRequests: Request[] = [
 
   {
     id: 'CHAIN_BLACKGEAT_WAR_ROUND_2',
+    chainId: 'BLACKGEAT',
+    chainRole: 'member',
     title: 'Smoke and Discipline',
     text: 'During the second war round against Blackgeat, they set brushfires to blind you. Feldric snarls: "They want panic."',
     canTriggerRandomly: false,
@@ -1251,6 +1294,8 @@ export const eventRequests: Request[] = [
 
   {
     id: 'CHAIN_BLACKGEAT_WAR_ROUND_3',
+    chainId: 'BLACKGEAT',
+    chainRole: 'member',
     title: 'The Breaking Point',
     text: 'This is the final showdown: Hrycgwulf commits Blackgeat\'s main force. Feldric: "This is it."',
     canTriggerRandomly: false,
@@ -1279,6 +1324,8 @@ export const eventRequests: Request[] = [
 
   {
     id: 'CHAIN_BLACKGEAT_WAR_END_WIN',
+    chainId: 'BLACKGEAT',
+    chainRole: 'end',
     title: 'Blackgeat Recoils',
     text: 'After three war rounds, Blackgeat pulls back and the war finally ends. Feldric wipes blood from his lip: "This is what resisting Blackgeat costs—and what it buys."',
     canTriggerRandomly: false,
@@ -1290,6 +1337,8 @@ export const eventRequests: Request[] = [
 
   {
     id: 'CHAIN_BLACKGEAT_WAR_END_HELP',
+    chainId: 'BLACKGEAT',
+    chainRole: 'member',
     title: 'Help from a Free Barony',
     text: 'As the Blackgeat war drags on, riders from a neighboring free barony arrive at dusk: "We won\'t watch you fall."',
     canTriggerRandomly: false,
@@ -1315,6 +1364,8 @@ export const eventRequests: Request[] = [
 
   {
     id: 'CHAIN_BLACKGEAT_WAR_END_HARD',
+    chainId: 'BLACKGEAT',
+    chainRole: 'end',
     title: 'A Bitter Retreat',
     text: 'The Blackgeat war ends badly. You live, but they loot the village. Feldric\'s eyes are stone: "A bitter retreat! What should we do now?"',
     canTriggerRandomly: false,
@@ -1326,6 +1377,8 @@ export const eventRequests: Request[] = [
 
   {
     id: 'CHAIN_BLACKGEAT_WAR_END_STABLE',
+    chainId: 'BLACKGEAT',
+    chainRole: 'end',
     title: 'A Line Held',
     text: 'A fierce last battle against Blackgeat ends well with the barony\'s help. Feldric nods once: "Next time Blackgeat comes, we\'ll be ready sooner."',
     canTriggerRandomly: false,
@@ -1338,6 +1391,8 @@ export const eventRequests: Request[] = [
   // TRIBUTE PATH
   {
     id: 'CHAIN_BLACKGEAT_TRIBUTE_1',
+    chainId: 'BLACKGEAT',
+    chainRole: 'member',
     title: 'Tribute I',
     text: 'This tribute demand comes from Hrycgwulf\'s earlier ultimatum. His messenger waits: "The first payment." Feldric murmurs: "This is how Blackgeat turns a threat into routine."',
     canTriggerRandomly: false,
@@ -1363,6 +1418,8 @@ export const eventRequests: Request[] = [
 
   {
     id: 'CHAIN_BLACKGEAT_TRIBUTE_2',
+    chainId: 'BLACKGEAT',
+    chainRole: 'member',
     title: 'Tribute II',
     text: 'The second tribute demand from Blackgeat arrives. Hrycgwulf repeats the terms, less polite this time.',
     canTriggerRandomly: false,
@@ -1388,6 +1445,8 @@ export const eventRequests: Request[] = [
 
   {
     id: 'CHAIN_BLACKGEAT_TRIBUTE_3',
+    chainId: 'BLACKGEAT',
+    chainRole: 'member',
     title: 'Tribute III',
     text: 'Hrycgwulf comes back with another tribute demand. The people notice the wagons leaving your gates and start whispering about submission.',
     canTriggerRandomly: false,
@@ -1413,6 +1472,8 @@ export const eventRequests: Request[] = [
 
   {
     id: 'CHAIN_BLACKGEAT_TRIBUTE_4',
+    chainId: 'BLACKGEAT',
+    chainRole: 'member',
     title: 'Tribute IV',
     text: 'Blackgeat\'s next tribute demand arrives with Hrycgwulf\'s personal seal. Feldric says, "They\'re making sure you remember who\'s in charge."',
     canTriggerRandomly: false,
@@ -1438,6 +1499,8 @@ export const eventRequests: Request[] = [
 
   {
     id: 'CHAIN_BLACKGEAT_TRIBUTE_5',
+    chainId: 'BLACKGEAT',
+    chainRole: 'member',
     title: 'Tribute V',
     text: 'Another routine tribute demand from Blackgeat. Feldric says, "Paying five times teaches them you\'ll pay a sixth."',
     canTriggerRandomly: false,
@@ -1463,6 +1526,8 @@ export const eventRequests: Request[] = [
 
   {
     id: 'CHAIN_BLACKGEAT_TRIBUTE_END',
+    chainId: 'BLACKGEAT',
+    chainRole: 'end',
     title: 'A Bought Breath',
     text: 'Hrycgwulf visits you one last time: "You paid for safety. Now you shall have peace". Feldric: "This peace seems temporary. For next time, we will prepare."',
     canTriggerRandomly: false,

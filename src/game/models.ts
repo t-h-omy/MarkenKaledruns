@@ -176,4 +176,12 @@ export interface Request {
   followUps?: FollowUp[];
   /** Whether this event can be selected randomly (default: true). Set to false for events that should only appear as follow-ups. */
   canTriggerRandomly?: boolean;
+  /** Identifies which chain the request belongs to (e.g., "BLACKGEAT") */
+  chainId?: string;
+  /** Explicitly marks the role of this request in a chain */
+  chainRole?: 'start' | 'member' | 'end';
+  /** Cooldown in ticks before chain can start randomly again after completion (only meaningful on start or end) */
+  chainRestartCooldownTicks?: number;
+  /** Maximum number of times this request can trigger across entire game run (undefined = unlimited) */
+  maxTriggers?: number;
 }

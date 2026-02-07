@@ -53,6 +53,10 @@ export interface GameState {
   gameOver: boolean;
   gameOverReason?: string;
   scheduledEvents: ScheduledEvent[];
+  /** Track chain status: active means chain has started but not completed */
+  chainStatus: Record<string, { active: boolean; completedTick?: number }>;
+  /** Track how many times each request has been triggered */
+  requestTriggerCounts: Record<string, number>;
 }
 
 /**
@@ -96,6 +100,8 @@ export const initialState: GameState = {
   log: [],
   gameOver: false,
   scheduledEvents: [],
+  chainStatus: {},
+  requestTriggerCounts: {},
 };
 
 /**
@@ -374,6 +380,24 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     // Track need fulfillment and cooldowns
     const needsTracking = { ...state.needsTracking };
     
+    // Track chain state and request trigger counts
+    const chainStatus = { ...state.chainStatus };
+    const requestTriggerCounts = { ...state.requestTriggerCounts };
+    
+    // Increment trigger count for current request
+    requestTriggerCounts[state.currentRequestId] = (requestTriggerCounts[state.currentRequestId] || 0) + 1;
+    
+    // Update chain status based on chainRole
+    if (currentRequest.chainId && currentRequest.chainRole) {
+      if (currentRequest.chainRole === 'start') {
+        // Mark chain as active when started
+        chainStatus[currentRequest.chainId] = { active: true };
+      } else if (currentRequest.chainRole === 'end') {
+        // Mark chain as completed (inactive) when ended
+        chainStatus[currentRequest.chainId] = { active: false, completedTick: state.tick };
+      }
+    }
+    
     // Determine which need this request relates to (if any)
     const needIdMap: Record<string, keyof Needs> = {
       'NEED_MARKETPLACE': 'marketplace',
@@ -442,6 +466,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         gameOver: true,
         gameOverReason: 'Bankruptcy! Your gold has reached -50 or below.',
         scheduledEvents,
+        chainStatus,
+        requestTriggerCounts,
       };
     }
 
@@ -495,6 +521,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         gameOver: true,
         gameOverReason: 'Bankruptcy! Your gold has reached -50 or below.',
         scheduledEvents,
+        chainStatus,
+        requestTriggerCounts,
       };
     }
 
@@ -510,6 +538,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       log: state.log,
       gameOver: false,
       scheduledEvents,
+      chainStatus,
+      requestTriggerCounts,
     });
 
     // 5. Increment tick and update state
@@ -524,6 +554,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       log: [...state.log, ...newLog],
       gameOver: false,
       scheduledEvents,
+      chainStatus,
+      requestTriggerCounts,
     };
   }
 

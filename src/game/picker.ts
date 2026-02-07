@@ -120,6 +120,8 @@ export function selectWeightedCandidate<T extends { weight: number }>(
  * 6. Else pick a random event among all 25
  * 
  * Never repeats lastRequestId.
+ * Filters out events that have reached maxTriggers.
+ * Filters out chain starts if chain is active or on cooldown (unless scheduled as follow-up).
  */
 export function pickNextRequest(state: GameState): Request;
 export function pickNextRequest(stats: Stats, _needs: Needs, lastRequestId: string): Request;
@@ -134,6 +136,8 @@ export function pickNextRequest(
   let tick: number = 0;
   let needsTracking: NeedsTracking | null = null;
   let scheduledEvents: Array<{ targetTick: number; requestId: string; scheduledAtTick: number }> = [];
+  let chainStatus: Record<string, { active: boolean; completedTick?: number }> = {};
+  let requestTriggerCounts: Record<string, number> = {};
 
   if ('tick' in stateOrStats) {
     // Called with GameState
@@ -142,11 +146,47 @@ export function pickNextRequest(
     tick = stateOrStats.tick;
     needsTracking = stateOrStats.needsTracking;
     scheduledEvents = stateOrStats.scheduledEvents || [];
+    chainStatus = stateOrStats.chainStatus || {};
+    requestTriggerCounts = stateOrStats.requestTriggerCounts || {};
   } else {
     // Called with individual parameters (legacy support)
     stats = stateOrStats;
     actualLastRequestId = lastRequestId!;
   }
+
+  /**
+   * Helper function to check if a request can be triggered randomly
+   * Checks maxTriggers limit and chain start gating/cooldown
+   */
+  const isEligibleForRandomTrigger = (request: Request): boolean => {
+    // Check maxTriggers limit
+    if (request.maxTriggers !== undefined) {
+      const triggerCount = requestTriggerCounts[request.id] || 0;
+      if (triggerCount >= request.maxTriggers) {
+        return false; // Already triggered max times
+      }
+    }
+
+    // Check chain start gating and cooldown
+    if (request.chainId && request.chainRole === 'start') {
+      const status = chainStatus[request.chainId];
+      
+      // Check if chain is currently active
+      if (status && status.active) {
+        return false; // Chain already started, not completed yet
+      }
+      
+      // Check cooldown after completion
+      if (status && !status.active && status.completedTick !== undefined && request.chainRestartCooldownTicks !== undefined) {
+        const ticksSinceCompletion = tick - status.completedTick;
+        if (ticksSinceCompletion < request.chainRestartCooldownTicks) {
+          return false; // Still on cooldown
+        }
+      }
+    }
+
+    return true;
+  };
 
   // Priority 1: Check for scheduled events
   // Find all events due on or before current tick
@@ -161,16 +201,25 @@ export function pickNextRequest(
       return a.scheduledAtTick - b.scheduledAtTick;
     });
     
-    // Return the first due event
-    const dueEvent = dueEvents[0];
-    const scheduledRequest = [...needRequests, ...eventRequests].find(
-      (r) => r.id === dueEvent.requestId
-    );
-    
-    if (scheduledRequest) {
-      return scheduledRequest;
+    // Return the first due event that hasn't exceeded maxTriggers
+    // Note: Scheduled events bypass chain gating and cooldown
+    for (const dueEvent of dueEvents) {
+      const scheduledRequest = [...needRequests, ...eventRequests].find(
+        (r) => r.id === dueEvent.requestId
+      );
+      
+      if (scheduledRequest) {
+        // Check only maxTriggers for scheduled events
+        if (scheduledRequest.maxTriggers !== undefined) {
+          const triggerCount = requestTriggerCounts[scheduledRequest.id] || 0;
+          if (triggerCount >= scheduledRequest.maxTriggers) {
+            continue; // Skip this scheduled event, try next
+          }
+        }
+        return scheduledRequest;
+      }
     }
-    // If request not found, fall through to normal logic
+    // If all scheduled requests exceeded maxTriggers, fall through to normal logic
   }
 
   // Crisis requests by priority order
@@ -229,11 +278,13 @@ export function pickNextRequest(
   // Pick random event request (excluding last request and crisis events)
   // Crisis events should ONLY appear through the explicit conditions above
   // Also exclude events that cannot trigger randomly (follow-up-only events)
+  // Also exclude events that have reached maxTriggers or are chain starts with gating/cooldown issues
   const crisisEventIds = ['EVT_CRISIS_FIRE', 'EVT_CRISIS_DISEASE', 'EVT_CRISIS_UNREST'];
   const availableEvents = eventRequests.filter(
     (r) => r.id !== actualLastRequestId && 
            !crisisEventIds.includes(r.id) &&
-           (r.canTriggerRandomly !== false)
+           (r.canTriggerRandomly !== false) &&
+           isEligibleForRandomTrigger(r)
   );
   if (availableEvents.length > 0) {
     return availableEvents[rng.nextInt(availableEvents.length)];
@@ -241,7 +292,7 @@ export function pickNextRequest(
 
   // Fallback: pick any non-crisis event that can trigger randomly (shouldn't happen with 25 events)
   const nonCrisisEvents = eventRequests.filter(
-    (r) => !crisisEventIds.includes(r.id) && (r.canTriggerRandomly !== false)
+    (r) => !crisisEventIds.includes(r.id) && (r.canTriggerRandomly !== false) && isEligibleForRandomTrigger(r)
   );
   return nonCrisisEvents[rng.nextInt(nonCrisisEvents.length)];
 }
