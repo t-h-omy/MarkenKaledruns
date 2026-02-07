@@ -1645,11 +1645,11 @@ export function validateRequests(): void {
       errors.push(`Request "${request.id}" has empty text`);
     }
 
-    for (let i = 0; i < request.options.length; i++) {
-      const option = request.options[i];
+    for (let optionIndex = 0; optionIndex < request.options.length; optionIndex++) {
+      const option = request.options[optionIndex];
       if (!option.text || option.text.trim() === '') {
         errors.push(
-          `Request "${request.id}" option ${i} has empty text`
+          `Request "${request.id}" option ${optionIndex} has empty text`
         );
       }
     }
