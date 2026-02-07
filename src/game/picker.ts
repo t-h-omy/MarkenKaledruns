@@ -205,7 +205,7 @@ export function pickNextRequest(
   if (dueEvents.length > 0) {
     // Separate info and normal priority events
     const infoEvents = dueEvents.filter(event => event.priority === "info");
-    const normalEvents = dueEvents.filter(event => event.priority !== "info");
+    const normalEvents = dueEvents.filter(event => event.priority === "normal" || event.priority === undefined);
     
     // Helper to process events in priority order
     const processEvents = (events: typeof dueEvents) => {
