@@ -1,7 +1,7 @@
 /**
  * Request data for the Proof-of-Fun game.
  * Based on POF_SPEC.md specification.
- * Contains 5 need-requests and event-requests.
+ * Contains 5 need-requests and 69 event-requests (25 base + 44 Blackgeat chain).
  */
 
 import type { Request } from './models';
@@ -945,8 +945,8 @@ export const eventRequests: Request[] = [
     title: 'A Hard-Won Quiet',
     text: 'After the tribute talks and threats, the border holds—for now. Brimwulf\'s riders patrol beside yours. Feldric\'s last words: "This quiet came from the Blackgeat situation. It won\'t stay quiet forever."',
     options: [
-      { text: 'Tend to the wounded', effects: { health: 5 } },
-      { text: 'Speak to your people', effects: { satisfaction: 5 } },
+      { text: 'TEND TO THE WOUNDED', effects: { health: 5 } },
+      { text: 'SPEAK TO YOUR PEOPLE', effects: { satisfaction: 5 } },
     ],
   },
 
@@ -1358,7 +1358,7 @@ export const eventRequests: Request[] = [
   {
     id: 'CHAIN_BLACKGEAT_TRIBUTE_3',
     title: 'Tribute III',
-    text: 'Hrycgwuld comes back with another tribute demand. The people notice the wagons leaving your gates and start whispering about submission.',
+    text: 'Hrycgwulf comes back with another tribute demand. The people notice the wagons leaving your gates and start whispering about submission.',
     options: [
       { text: 'PAY', effects: { gold: -10, satisfaction: -2 } },
       { text: 'REFUSE AND ARM', effects: {} },
