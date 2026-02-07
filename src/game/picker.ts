@@ -138,7 +138,7 @@ export function pickNextRequest(
   let scheduledEvents: Array<{ targetTick: number; requestId: string; scheduledAtTick: number }> = [];
   let chainStatus: Record<string, { active: boolean; completedTick?: number }> = {};
   let requestTriggerCounts: Record<string, number> = {};
-  let fullState: GameState | null = null;
+  let gameState: GameState | null = null;
 
   if ('tick' in stateOrStats) {
     // Called with GameState
@@ -149,7 +149,7 @@ export function pickNextRequest(
     scheduledEvents = stateOrStats.scheduledEvents || [];
     chainStatus = stateOrStats.chainStatus || {};
     requestTriggerCounts = stateOrStats.requestTriggerCounts || {};
-    fullState = stateOrStats;
+    gameState = stateOrStats;
   } else {
     // Called with individual parameters (legacy support)
     stats = stateOrStats;
@@ -190,6 +190,14 @@ export function pickNextRequest(
     return true;
   };
 
+  /**
+   * Helper function to check if a request is locked by unlock requirements
+   * Returns true if the request should be filtered out (i.e., is locked)
+   */
+  const isLockedByRequirements = (request: Request): boolean => {
+    return gameState !== null && !meetsRequirements(gameState, request);
+  };
+
   // Priority 1: Check for scheduled events
   // Find all events due on or before current tick
   const dueEvents = scheduledEvents.filter(event => event.targetTick <= tick);
@@ -220,7 +228,7 @@ export function pickNextRequest(
         }
         
         // Check if requirements are met (if we have full state)
-        if (fullState && !meetsRequirements(fullState, scheduledRequest)) {
+        if (isLockedByRequirements(scheduledRequest)) {
           continue; // Skip this locked scheduled event, try next
         }
         
@@ -294,7 +302,7 @@ export function pickNextRequest(
            !crisisEventIds.includes(r.id) &&
            (r.canTriggerRandomly !== false) &&
            isEligibleForRandomTrigger(r) &&
-           (!fullState || meetsRequirements(fullState, r))
+           !isLockedByRequirements(r)
   );
   if (availableEvents.length > 0) {
     return availableEvents[rng.nextInt(availableEvents.length)];
@@ -305,7 +313,7 @@ export function pickNextRequest(
     (r) => !crisisEventIds.includes(r.id) && 
            (r.canTriggerRandomly !== false) && 
            isEligibleForRandomTrigger(r) &&
-           (!fullState || meetsRequirements(fullState, r))
+           !isLockedByRequirements(r)
   );
   return nonCrisisEvents[rng.nextInt(nonCrisisEvents.length)];
 }
