@@ -977,17 +977,75 @@ export const eventRequests: Request[] = [
       { text: 'SPEAK TO YOUR PEOPLE', effects: { satisfaction: 5 } },
     ],
   },
-
+  
   {
     id: 'CHAIN_BLACKGEAT_TRIBUTE_BATTLE',
     chainId: 'BLACKGEAT',
     chainRole: 'member',
     title: 'The Battle for Freedom',
-    text: 'Hrycgwulf grows impatient with your stalling. The Blackgeat banners appear on the horizon. Feldric draws his blade: "One last fight. For our freedom!"',
+    text: 'Hrycgwulf grows impatient with your stalling. The Blackgeat banners appear on the horizon. Feldric draws his blade: "What shall we do, Mylord?"',
     canTriggerRandomly: false,
     options: [
-      { text: 'DEFEND THE GATES', effects: { landForces: -2, satisfaction: 3 } },
-      { text: 'AMBUSH AND LOOT', effects: { landForces: -5, gold: 35 } },
+      { 
+        text: 'STAND YOUR GROUND', 
+        effects: { landForces: -10 } 
+      },
+      { 
+        text: 'RETREAT', 
+        effects: {  } 
+      },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0, // STAND YOUR GROUND -> Celebration
+        delayMinTicks: 1,
+        delayMaxTicks: 1,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_FREEDOM_CELEBRATION', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1, // RETREAT -> Shared Recovery
+        delayMinTicks: 1,
+        delayMaxTicks: 1,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_UNIVERSAL_RECOVERY', weight: 1 }],
+      },
+    ],
+  },
+
+  {
+    id: 'CHAIN_BLACKGEAT_FREEDOM_CELEBRATION',
+    chainId: 'BLACKGEAT',
+    chainRole: 'end',
+    title: 'Echoes of Liberty',
+    text: 'The Sigilmark Blackgeat has retreated! Against all odds, you held the line. Feldric raises a toast: "The land is ours once more, and our gold stays in our pockets. We are truly free."',
+    canTriggerRandomly: false,
+    options: [
+      { 
+        text: 'HOLD A GRAND FEAST', 
+        effects: { satisfaction: 8, health: 6 } 
+      },
+      { 
+        text: 'REBUILD THE BORDER', 
+        effects: { gold: -10, landForces: 10, fireRisk: -10 } 
+      },
+    ],
+  },
+
+  {
+    id: 'CHAIN_BLACKGEAT_UNIVERSAL_RECOVERY',
+    chainId: 'BLACKGEAT',
+    chainRole: 'end',
+    title: 'Picking Up the Pieces',
+    text: 'The shadow of Blackgeat finally recedes, leaving behind a weary but resilient village. The conflict is lost, but it is over now. It is time to look toward the future.',
+    canTriggerRandomly: false,
+    options: [
+      { 
+        text: 'FOCUS ON RECOVERY', 
+        effects: { health: 4, satisfaction: 3 } 
+      },
+      { 
+        text: 'SALVAGE THE RUINS', 
+        effects: { gold: 15, fireRisk: -5 } 
+      },
     ],
   },
 
@@ -1367,11 +1425,25 @@ export const eventRequests: Request[] = [
     chainId: 'BLACKGEAT',
     chainRole: 'end',
     title: 'A Bitter Retreat',
-    text: 'The Blackgeat war ends badly. You live, but they loot the village. Feldric\'s eyes are stone: "A bitter retreat! What should we do now?"',
+    text: 'The Blackgeat war ends badly. You live, but they loot the village. Feldric\'s eyes are stone: "A bitter defeat! What should we do now?"',
     canTriggerRandomly: false,
     options: [
-      { text: 'REBUILD ARMY', effects: { gold: -30, landForces: 5 } },
-      { text: 'CARE FOR YOUR PEOPLE', effects: { gold: -30, health: 5 } },
+      { text: 'SAFE TREASURY', effects: { gold: -15, farmers: -12 } },
+      { text: 'SAFE YOUR PEOPLE ', effects: { gold: -35, farmers: -4 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_UNIVERSAL_RECOVERY', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [{ requestId: 'CHAIN_BLACKGEAT_UNIVERSAL_RECOVERY', weight: 1 }],
+      },
     ],
   },
 
