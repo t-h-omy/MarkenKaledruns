@@ -246,6 +246,31 @@ export function meetsRequirements(state: GameState, request: Request): boolean {
 }
 
 /**
+ * Synchronizes need-based unlock tokens with the current needs state.
+ * Sets tokens for fulfilled needs, removes tokens for unfulfilled needs.
+ * Currently syncs: "need:marketplace" and "need:beer"
+ */
+export function syncNeedUnlockTokens(needs: Needs, unlocks: Record<string, true>): Record<string, true> {
+  const newUnlocks = { ...unlocks };
+  
+  // Sync marketplace need token
+  if (needs.marketplace) {
+    newUnlocks['need:marketplace'] = true;
+  } else {
+    delete newUnlocks['need:marketplace'];
+  }
+  
+  // Sync beer need token
+  if (needs.beer) {
+    newUnlocks['need:beer'] = true;
+  } else {
+    delete newUnlocks['need:beer'];
+  }
+  
+  return newUnlocks;
+}
+
+/**
  * Applies baseline rules according to POF_SPEC.md:
  * - gold += floor(0.1 * (farmers * (satisfaction / 100)))
  * - farmers += floor(health / 10)
@@ -400,6 +425,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     const { stats: statsAfterEffects, needs } = applyEffects(state.stats, state.needs, option.effects);
     let stats = clampStats(statsAfterEffects);
 
+    // Sync need-based unlock tokens with current needs state
+    let unlocks = syncNeedUnlockTokens(needs, state.unlocks);
+
     // Track need fulfillment and cooldowns
     const needsTracking = { ...state.needsTracking };
     
@@ -491,7 +519,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         scheduledEvents,
         chainStatus,
         requestTriggerCounts,
-        unlocks: state.unlocks,
+        unlocks,
       };
     }
 
@@ -547,7 +575,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         scheduledEvents,
         chainStatus,
         requestTriggerCounts,
-        unlocks: state.unlocks,
+        unlocks,
       };
     }
 
@@ -565,7 +593,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       scheduledEvents,
       chainStatus,
       requestTriggerCounts,
-      unlocks: state.unlocks,
+      unlocks,
     });
 
     // 5. Increment tick and update state
@@ -582,7 +610,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       scheduledEvents,
       chainStatus,
       requestTriggerCounts,
-      unlocks: state.unlocks,
+      unlocks,
     };
   }
 
