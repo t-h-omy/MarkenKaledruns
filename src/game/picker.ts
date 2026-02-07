@@ -156,8 +156,9 @@ export function pickNextRequest(
 
   /**
    * Helper function to check if a request can be triggered randomly
+   * Checks maxTriggers limit and chain start gating/cooldown
    */
-  const canTriggerRandomly = (request: Request): boolean => {
+  const isEligibleForRandomTrigger = (request: Request): boolean => {
     // Check maxTriggers limit
     if (request.maxTriggers !== undefined) {
       const triggerCount = requestTriggerCounts[request.id] || 0;
@@ -283,7 +284,7 @@ export function pickNextRequest(
     (r) => r.id !== actualLastRequestId && 
            !crisisEventIds.includes(r.id) &&
            (r.canTriggerRandomly !== false) &&
-           canTriggerRandomly(r)
+           isEligibleForRandomTrigger(r)
   );
   if (availableEvents.length > 0) {
     return availableEvents[rng.nextInt(availableEvents.length)];
@@ -291,7 +292,7 @@ export function pickNextRequest(
 
   // Fallback: pick any non-crisis event that can trigger randomly (shouldn't happen with 25 events)
   const nonCrisisEvents = eventRequests.filter(
-    (r) => !crisisEventIds.includes(r.id) && (r.canTriggerRandomly !== false) && canTriggerRandomly(r)
+    (r) => !crisisEventIds.includes(r.id) && (r.canTriggerRandomly !== false) && isEligibleForRandomTrigger(r)
   );
   return nonCrisisEvents[rng.nextInt(nonCrisisEvents.length)];
 }
