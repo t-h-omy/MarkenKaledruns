@@ -228,15 +228,20 @@ export function pickNextRequest(
 
   // Pick random event request (excluding last request and crisis events)
   // Crisis events should ONLY appear through the explicit conditions above
+  // Also exclude events that cannot trigger randomly (follow-up-only events)
   const crisisEventIds = ['EVT_CRISIS_FIRE', 'EVT_CRISIS_DISEASE', 'EVT_CRISIS_UNREST'];
   const availableEvents = eventRequests.filter(
-    (r) => r.id !== actualLastRequestId && !crisisEventIds.includes(r.id)
+    (r) => r.id !== actualLastRequestId && 
+           !crisisEventIds.includes(r.id) &&
+           (r.canTriggerRandomly !== false)
   );
   if (availableEvents.length > 0) {
     return availableEvents[rng.nextInt(availableEvents.length)];
   }
 
-  // Fallback: pick any non-crisis event (shouldn't happen with 25 events)
-  const nonCrisisEvents = eventRequests.filter((r) => !crisisEventIds.includes(r.id));
+  // Fallback: pick any non-crisis event that can trigger randomly (shouldn't happen with 25 events)
+  const nonCrisisEvents = eventRequests.filter(
+    (r) => !crisisEventIds.includes(r.id) && (r.canTriggerRandomly !== false)
+  );
   return nonCrisisEvents[rng.nextInt(nonCrisisEvents.length)];
 }

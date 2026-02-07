@@ -174,4 +174,6 @@ export interface Request {
   options: Option[];
   /** Optional follow-up events scheduled when specific options are chosen */
   followUps?: FollowUp[];
+  /** Whether this event can be selected randomly (default: true). Set to false for events that should only appear as follow-ups. */
+  canTriggerRandomly?: boolean;
 }
