@@ -335,5 +335,28 @@ export function pickNextRequest(
            isEligibleForRandomTrigger(r) &&
            !isLockedByRequirements(r)
   );
+  
+  if (nonCrisisEvents.length === 0) {
+    // Emergency fallback: if all eligible events are filtered out by the strict criteria above
+    // This should never happen in normal gameplay, but provides a safety net
+    console.warn('[pickNextRequest] No eligible events found with strict filters. Using emergency fallback.');
+    
+    // Try to find ANY non-crisis event (ignoring canTriggerRandomly, maxTriggers, and requirements)
+    const anyNonCrisis = eventRequests.filter(r => !crisisEventIds.includes(r.id));
+    if (anyNonCrisis.length > 0) {
+      console.warn('[pickNextRequest] Returning non-crisis event from emergency fallback:', anyNonCrisis.map(r => r.id));
+      return anyNonCrisis[rng.nextInt(anyNonCrisis.length)];
+    }
+    
+    // Absolute last resort: return any event (even crisis events)
+    if (eventRequests.length > 0) {
+      console.warn('[pickNextRequest] No non-crisis events available. Returning any event from emergency fallback.');
+      return eventRequests[rng.nextInt(eventRequests.length)];
+    }
+    
+    // Should never happen - throw error if no events exist at all
+    throw new Error('No event requests available in the game');
+  }
+  
   return nonCrisisEvents[rng.nextInt(nonCrisisEvents.length)];
 }
