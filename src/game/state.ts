@@ -39,6 +39,8 @@ export interface LogEntry {
     farmers?: number;
     landForces?: number;
   };
+  /** Applied changes from modifiers or need effects */
+  appliedChanges?: AppliedChange[];
 }
 
 /**
@@ -376,7 +378,8 @@ function createLogEntry(
   optionText: string,
   source: LogEntry['source'],
   beforeStats: Stats,
-  afterStats: Stats
+  afterStats: Stats,
+  appliedChanges?: AppliedChange[]
 ): LogEntry {
   const deltas: LogEntry['deltas'] = {};
 
@@ -405,6 +408,7 @@ function createLogEntry(
     optionText,
     source,
     deltas,
+    appliedChanges,
   };
 }
 
@@ -582,13 +586,19 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     // Create log entry for request decision
+    // Filter appliedChanges to only include need modifiers (not base effects)
+    const needModifierChanges = appliedChanges.filter(change => 
+      change.source.startsWith('need:')
+    );
+    
     const requestLogEntry = createLogEntry(
       state.tick,
       state.currentRequestId,
       option.text,
       'Request Decision',
       beforeStats,
-      stats
+      stats,
+      needModifierChanges.length > 0 ? needModifierChanges : undefined
     );
     if (Object.keys(requestLogEntry.deltas).length > 0) {
       newLog.push(requestLogEntry);
@@ -697,16 +707,22 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       
       // Log the bread need effect if it actually increased farmers
       if (stats.farmers > beforeBread.farmers) {
+        const breadChange: AppliedChange = {
+          stat: 'farmers',
+          amount: 1,
+          source: 'need:bread',
+          note: 'Bread supply boosted population growth',
+        };
+        
         newLog.push(createLogEntry(
           state.tick,
           state.currentRequestId,
           '',
-          'Population Growth', // Using same source type for consistency
+          'Population Growth',
           beforeBread,
-          stats
+          stats,
+          [breadChange] // Include the bread effect as an applied change
         ));
-        // Note: We could enhance LogEntry to support a note field in the future
-        // For now, the delta in Population Growth logs will show the +1 from bread
       }
     }
 

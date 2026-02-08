@@ -360,6 +360,43 @@ function App() {
                           )
                         })}
                       </div>
+                      {/* Display need modifier effects */}
+                      {entry.appliedChanges && entry.appliedChanges.length > 0 && (
+                        <div className="log-modifiers">
+                          {entry.appliedChanges.map((change, changeIndex) => {
+                            // Map source to icon and label
+                            const needIcons: Record<string, string> = {
+                              'need:firewood': '🪵',
+                              'need:well': '💧',
+                              'need:bread': '🍞',
+                            };
+                            const needLabels: Record<string, string> = {
+                              'need:firewood': 'Firewood',
+                              'need:well': 'Well',
+                              'need:bread': 'Bread',
+                            };
+                            
+                            const icon = needIcons[change.source] || '✨';
+                            const label = needLabels[change.source] || change.source;
+                            const displayValue = isFuzzyStatKey(change.stat) 
+                              ? getFuzzyIndicator(change.amount) 
+                              : `${change.amount > 0 ? '+' : ''}${change.amount}`;
+                            
+                            return (
+                              <div key={changeIndex} className="modifier-effect">
+                                <span className="modifier-icon">{icon}</span>
+                                <span className="modifier-label">{label}:</span>
+                                <span className={`modifier-value ${change.amount > 0 ? 'positive' : 'negative'}`}>
+                                  {change.stat}: {displayValue}
+                                </span>
+                                {change.note && (
+                                  <span className="modifier-note" title={change.note}>ℹ️</span>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   ))
                 )}

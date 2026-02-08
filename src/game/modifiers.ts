@@ -8,8 +8,7 @@
  * Gating Strategy: base delta is used for farmers/landForces >= 0 checks
  */
 
-import type { GameState, AppliedChange, ModifierHook } from './state';
-import type { Effect } from './models';
+import type { AppliedChange, ModifierHook } from './state';
 
 /**
  * Firewood modifier: When an event would increase fireRisk, there's a 25% chance
@@ -19,7 +18,7 @@ import type { Effect } from './models';
  * - Firewood need is fulfilled (needs.firewood === true)
  * - fireRisk delta > 0 (actual increase)
  */
-export const firewoodModifier: ModifierHook = (state, request, optionIndex, baseDelta, changes) => {
+export const firewoodModifier: ModifierHook = (state, _request, _optionIndex, baseDelta, _changes) => {
   const delta = { ...baseDelta };
   const extraChanges: AppliedChange[] = [];
   
@@ -60,7 +59,7 @@ export const firewoodModifier: ModifierHook = (state, request, optionIndex, base
  * - Well need is fulfilled (needs.well === true)
  * - health delta > 0 (actual increase)
  */
-export const wellModifier: ModifierHook = (state, request, optionIndex, baseDelta, changes) => {
+export const wellModifier: ModifierHook = (state, _request, _optionIndex, baseDelta, _changes) => {
   const delta = { ...baseDelta };
   const extraChanges: AppliedChange[] = [];
   
