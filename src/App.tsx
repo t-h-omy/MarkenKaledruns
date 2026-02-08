@@ -1,7 +1,7 @@
 import { useReducer, useState } from 'react'
 import './App.css'
 import { gameReducer, initializeGame, isNeedUnlocked, calculateRequiredBuildings, isNeedRequired } from './game/state'
-import { needRequests, eventRequests } from './game/requests'
+import { needRequests, infoRequests, eventRequests } from './game/requests'
 import type { Effect, Needs } from './game/models'
 import { NEED_UNLOCK_THRESHOLDS } from './game/models'
 
@@ -9,7 +9,7 @@ function App() {
   const [gameState, dispatch] = useReducer(gameReducer, undefined, initializeGame)
   const [bottomTab, setBottomTab] = useState<'needs' | 'log'>('needs')
 
-  const currentRequest = [...needRequests, ...eventRequests].find(
+  const currentRequest = [...needRequests, ...infoRequests, ...eventRequests].find(
     (r) => r.id === gameState.currentRequestId
   )
 
