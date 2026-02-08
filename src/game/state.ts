@@ -7,6 +7,7 @@ import type { Stats, Needs, Effect, NeedsTracking, Request } from './models';
 import { DECLINE_COOLDOWN_TICKS, NEED_UNLOCK_THRESHOLDS, NEED_CONFIGS, NEED_INFO_REQUEST_MAP } from './models';
 import { needRequests, infoRequests, eventRequests } from './requests';
 import { pickNextRequest, selectWeightedCandidate, getRandomValue } from './picker';
+import { needModifiers } from './modifiers';
 
 /**
  * Represents a single applied change to a stat
@@ -500,7 +501,15 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     const newLog: LogEntry[] = [];
 
     // 1. Apply option effects using the new pipeline
-    const { stats: statsFromPipeline, needs, appliedChanges } = applyOptionWithModifiers(state, currentRequest, action.optionIndex);
+    // Use need modifiers for event requests (not for need or info requests)
+    const isEventRequest = eventRequests.some(r => r.id === state.currentRequestId);
+    const modifiersToUse = isEventRequest ? needModifiers : [];
+    const { stats: statsFromPipeline, needs, appliedChanges } = applyOptionWithModifiers(
+      state, 
+      currentRequest, 
+      action.optionIndex,
+      modifiersToUse
+    );
     let stats = statsFromPipeline;
 
     // Sync need-based unlock tokens with current needs state
