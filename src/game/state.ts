@@ -9,6 +9,20 @@ import { needRequests, infoRequests, eventRequests } from './requests';
 import { pickNextRequest, selectWeightedCandidate, getRandomValue } from './picker';
 
 /**
+ * Represents a single applied change to a stat
+ */
+export interface AppliedChange {
+  /** The stat that was changed (e.g., 'gold', 'satisfaction', etc.) */
+  stat: string;
+  /** The amount of change (can be positive or negative) */
+  amount: number;
+  /** The source of this change (e.g., 'base', 'modifier:marketplace', etc.) */
+  source: string;
+  /** Optional note explaining this change */
+  note?: string;
+}
+
+/**
  * Log entry tracking state changes
  */
 export interface LogEntry {
@@ -155,6 +169,68 @@ function applyEffects(stats: Stats, needs: Needs, effects: Effect): { stats: Sta
   if (effects.well !== undefined) newNeeds.well = effects.well;
 
   return { stats: newStats, needs: newNeeds };
+}
+
+/**
+ * Type for modifier hook function
+ * Modifiers can inspect and alter the delta, add extra changes, or add notes
+ */
+export type ModifierHook = (
+  state: GameState,
+  request: Request,
+  optionIndex: number,
+  baseDelta: Effect,
+  changes: AppliedChange[]
+) => { delta: Effect; extraChanges: AppliedChange[] };
+
+/**
+ * Applies an option's effects with modifier hooks
+ * This is the main entry point for effect application with the modification pipeline
+ * 
+ * @param state Current game state
+ * @param request The request being responded to
+ * @param optionIndex The chosen option index
+ * @param modifiers Array of modifier hooks to run (currently empty, for future use)
+ * @returns Object with updated stats, needs, and list of all applied changes
+ */
+export function applyOptionWithModifiers(
+  state: GameState,
+  request: Request,
+  optionIndex: number,
+  modifiers: ModifierHook[] = []
+): { stats: Stats; needs: Needs; appliedChanges: AppliedChange[] } {
+  const option = request.options[optionIndex];
+  
+  // 1. Compute base delta from option
+  let delta = { ...option.effects };
+  const appliedChanges: AppliedChange[] = [];
+  
+  // 2. Run modifier hooks (currently empty)
+  for (const modifier of modifiers) {
+    const result = modifier(state, request, optionIndex, delta, appliedChanges);
+    delta = result.delta;
+    appliedChanges.push(...result.extraChanges);
+  }
+  
+  // 3. Apply final delta to stats
+  const { stats: statsAfterEffects, needs } = applyEffects(state.stats, state.needs, delta);
+  
+  // Record base changes from the delta
+  const statKeys: Array<keyof Stats> = ['gold', 'satisfaction', 'health', 'fireRisk', 'farmers', 'landForces'];
+  for (const key of statKeys) {
+    if (delta[key] !== undefined && delta[key] !== 0) {
+      appliedChanges.push({
+        stat: key,
+        amount: delta[key]!,
+        source: 'base',
+      });
+    }
+  }
+  
+  // 4. Apply clamping
+  const stats = clampStats(statsAfterEffects);
+  
+  return { stats, needs, appliedChanges };
 }
 
 /**
@@ -423,9 +499,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     const beforeStats = { ...state.stats };
     const newLog: LogEntry[] = [];
 
-    // 1. Apply option effects
-    const { stats: statsAfterEffects, needs } = applyEffects(state.stats, state.needs, option.effects);
-    let stats = clampStats(statsAfterEffects);
+    // 1. Apply option effects using the new pipeline
+    const { stats: statsFromPipeline, needs, appliedChanges } = applyOptionWithModifiers(state, currentRequest, action.optionIndex);
+    let stats = statsFromPipeline;
 
     // Sync need-based unlock tokens with current needs state
     let unlocks = syncNeedUnlockTokens(needs, state.unlocks);
