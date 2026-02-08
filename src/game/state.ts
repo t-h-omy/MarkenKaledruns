@@ -523,12 +523,22 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     // If a need was fulfilled this tick, schedule the corresponding info request
     if (needFulfilledThisTick && needFulfilledKey) {
       const infoRequestId = NEED_INFO_REQUEST_MAP[needFulfilledKey];
-      scheduledEvents.push({
-        targetTick: state.tick + 1,
-        requestId: infoRequestId,
-        scheduledAtTick: state.tick,
-        priority: "info",
-      });
+      
+      // Only schedule if info request ID exists and isn't already scheduled for next tick
+      if (infoRequestId) {
+        const alreadyScheduled = scheduledEvents.some(
+          event => event.requestId === infoRequestId && event.targetTick === state.tick + 1
+        );
+        
+        if (!alreadyScheduled) {
+          scheduledEvents.push({
+            targetTick: state.tick + 1,
+            requestId: infoRequestId,
+            scheduledAtTick: state.tick,
+            priority: "info",
+          });
+        }
+      }
     }
 
     // Check for bankruptcy after option effects (before baseline)
