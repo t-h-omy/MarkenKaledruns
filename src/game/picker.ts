@@ -335,5 +335,19 @@ export function pickNextRequest(
            isEligibleForRandomTrigger(r) &&
            !isLockedByRequirements(r)
   );
+  
+  if (nonCrisisEvents.length === 0) {
+    // Emergency fallback: if all events are filtered out, pick any non-crisis event
+    // This should never happen but prevents returning undefined
+    const emergencyFallback = eventRequests.filter(
+      (r) => !crisisEventIds.includes(r.id)
+    );
+    if (emergencyFallback.length > 0) {
+      return emergencyFallback[rng.nextInt(emergencyFallback.length)];
+    }
+    // Absolute last resort: pick the first event request
+    return eventRequests[0];
+  }
+  
   return nonCrisisEvents[rng.nextInt(nonCrisisEvents.length)];
 }
