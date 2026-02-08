@@ -114,6 +114,95 @@ export const needRequests: Request[] = [
 ];
 
 /**
+ * Info/System Requests (5)
+ * These requests explain newly fulfilled needs and are triggered automatically
+ * when a need is fulfilled for the first time (buildingCount === 1).
+ * They have priority "info" and appear with 100% certainty on the tick after fulfillment.
+ */
+export const infoRequests: Request[] = [
+  {
+    id: 'INFO_NEED_MARKETPLACE',
+    title: 'Marketplace Established',
+    text: 'Your marketplace is now operational. As long as this need stays fulfilled, the "Market Day" event can occur, bringing new trading opportunities to your village.',
+    canTriggerRandomly: false,
+    options: [
+      {
+        text: 'Understood.',
+        effects: {},
+      },
+      {
+        text: 'Continue.',
+        effects: {},
+      },
+    ],
+  },
+  {
+    id: 'INFO_NEED_BREAD',
+    title: 'Bread Production Active',
+    text: 'Your bakery is now producing bread. Each tick, there is a 10% chance to gain +1 additional farmer growth, supporting population expansion.',
+    canTriggerRandomly: false,
+    options: [
+      {
+        text: 'Understood.',
+        effects: {},
+      },
+      {
+        text: 'Continue.',
+        effects: {},
+      },
+    ],
+  },
+  {
+    id: 'INFO_NEED_BEER',
+    title: 'Brewery Operational',
+    text: 'Beer production has begun. The "Feierabend in der Kneipe" event is now unlocked, providing satisfaction-related benefits for your villagers.',
+    canTriggerRandomly: false,
+    options: [
+      {
+        text: 'Understood.',
+        effects: {},
+      },
+      {
+        text: 'Continue.',
+        effects: {},
+      },
+    ],
+  },
+  {
+    id: 'INFO_NEED_FIREWOOD',
+    title: 'Firewood Supply Organized',
+    text: 'Professional firewood supply is now active. When an event increases fire risk, there is a 25% chance the increase is reduced by half, protecting your village.',
+    canTriggerRandomly: false,
+    options: [
+      {
+        text: 'Understood.',
+        effects: {},
+      },
+      {
+        text: 'Continue.',
+        effects: {},
+      },
+    ],
+  },
+  {
+    id: 'INFO_NEED_WELL',
+    title: 'Central Well Constructed',
+    text: 'Your well is now operational. When an event grants health, there is a 50% chance to gain +1 additional health, improving overall village wellbeing.',
+    canTriggerRandomly: false,
+    options: [
+      {
+        text: 'Understood.',
+        effects: {},
+      },
+      {
+        text: 'Continue.',
+        effects: {},
+      },
+    ],
+  },
+];
+
+/**
  * Event-Requests (25)
  * These are random events that occur during gameplay.
  * Organized by category: Military & security, Population & growth,
@@ -1608,6 +1697,50 @@ export const eventRequests: Request[] = [
       { text: 'START PREPARING', effects: { gold: -10, landForces: 6 } },
     ],
   },
+
+  {
+    id: 'EVENT_MARKET_DAY',
+    title: 'Market Day',
+    text: 'The marketplace is bustling with traders from distant lands. Will you focus on steady profits or take a riskier approach for greater gains?',
+    requires: ['need:marketplace'],
+    options: [
+      {
+        text: 'STEADY TRADE',
+        effects: {
+          gold: 8,
+        },
+      },
+      {
+        text: 'RISKY DEALS',
+        effects: {
+          gold: 15,
+          satisfaction: -1,
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'EVENT_TAVERN_AFTER_WORK',
+    title: 'Feierabend in der Kneipe',
+    text: 'After a long day of labor, the villagers gather at the tavern. Should you subsidize their drinks to boost morale, or let them enjoy at their own expense?',
+    requires: ['need:beer'],
+    options: [
+      {
+        text: 'LET THEM PAY',
+        effects: {
+          satisfaction: 6,
+        },
+      },
+      {
+        text: 'SUBSIDIZE DRINKS',
+        effects: {
+          satisfaction: 10,
+          gold: -5,
+        },
+      },
+    ],
+  },
 ];
 
 /**
@@ -1616,7 +1749,7 @@ export const eventRequests: Request[] = [
  * Throws errors if validation fails.
  */
 export function validateRequests(): void {
-  const allRequests = [...needRequests, ...eventRequests];
+  const allRequests = [...needRequests, ...infoRequests, ...eventRequests];
   const errors: string[] = [];
 
   // Collect all request IDs

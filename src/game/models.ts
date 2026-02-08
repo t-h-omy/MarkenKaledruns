@@ -98,6 +98,18 @@ export const NEED_UNLOCK_THRESHOLDS: Record<keyof Needs, number> = {
 export const DECLINE_COOLDOWN_TICKS = 5;
 
 /**
+ * Mapping from need ID to corresponding info request ID
+ * Info requests are scheduled when a need is fulfilled for the first time
+ */
+export const NEED_INFO_REQUEST_MAP: Record<keyof Needs, string> = {
+  marketplace: 'INFO_NEED_MARKETPLACE',
+  bread: 'INFO_NEED_BREAD',
+  beer: 'INFO_NEED_BEER',
+  firewood: 'INFO_NEED_FIREWOOD',
+  well: 'INFO_NEED_WELL',
+};
+
+/**
  * Represents changes to game state (stats or needs).
  * Each property is optional and represents a delta or assignment.
  */
@@ -184,4 +196,6 @@ export interface Request {
   chainRestartCooldownTicks?: number;
   /** Maximum number of times this request can trigger across entire game run (undefined = unlimited) */
   maxTriggers?: number;
+  /** Array of unlock tokens required to show this event */
+  requires?: string[];
 }

@@ -3,10 +3,25 @@
  * Based on POF_SPEC.md specification.
  */
 
-import type { Stats, Needs, Effect, NeedsTracking } from './models';
-import { DECLINE_COOLDOWN_TICKS, NEED_UNLOCK_THRESHOLDS, NEED_CONFIGS } from './models';
-import { needRequests, eventRequests } from './requests';
+import type { Stats, Needs, Effect, NeedsTracking, Request } from './models';
+import { DECLINE_COOLDOWN_TICKS, NEED_UNLOCK_THRESHOLDS, NEED_CONFIGS, NEED_INFO_REQUEST_MAP } from './models';
+import { needRequests, infoRequests, eventRequests } from './requests';
 import { pickNextRequest, selectWeightedCandidate, getRandomValue } from './picker';
+import { needModifiers } from './modifiers';
+
+/**
+ * Represents a single applied change to a stat
+ */
+export interface AppliedChange {
+  /** The stat that was changed (e.g., 'gold', 'satisfaction', etc.) */
+  stat: string;
+  /** The amount of change (can be positive or negative) */
+  amount: number;
+  /** The source of this change (e.g., 'base', 'modifier:marketplace', etc.) */
+  source: string;
+  /** Optional note explaining this change */
+  note?: string;
+}
 
 /**
  * Log entry tracking state changes
@@ -24,6 +39,8 @@ export interface LogEntry {
     farmers?: number;
     landForces?: number;
   };
+  /** Applied changes from modifiers or need effects */
+  appliedChanges?: AppliedChange[];
 }
 
 /**
@@ -36,6 +53,8 @@ export interface ScheduledEvent {
   requestId: string;
   /** Tick when this event was scheduled (for FIFO ordering) */
   scheduledAtTick: number;
+  /** Priority of the scheduled event (default: "normal") */
+  priority?: "info" | "normal";
 }
 
 /**
@@ -57,6 +76,8 @@ export interface GameState {
   chainStatus: Record<string, { active: boolean; completedTick?: number }>;
   /** Track how many times each request has been triggered */
   requestTriggerCounts: Record<string, number>;
+  /** Track unlock tokens for event requirements */
+  unlocks: Record<string, true>;
 }
 
 /**
@@ -102,6 +123,7 @@ export const initialState: GameState = {
   scheduledEvents: [],
   chainStatus: {},
   requestTriggerCounts: {},
+  unlocks: {},
 };
 
 /**
@@ -150,6 +172,68 @@ function applyEffects(stats: Stats, needs: Needs, effects: Effect): { stats: Sta
   if (effects.well !== undefined) newNeeds.well = effects.well;
 
   return { stats: newStats, needs: newNeeds };
+}
+
+/**
+ * Type for modifier hook function
+ * Modifiers can inspect and alter the delta, add extra changes, or add notes
+ */
+export type ModifierHook = (
+  state: GameState,
+  request: Request,
+  optionIndex: number,
+  baseDelta: Effect,
+  changes: AppliedChange[]
+) => { delta: Effect; extraChanges: AppliedChange[] };
+
+/**
+ * Applies an option's effects with modifier hooks
+ * This is the main entry point for effect application with the modification pipeline
+ * 
+ * @param state Current game state
+ * @param request The request being responded to
+ * @param optionIndex The chosen option index
+ * @param modifiers Array of modifier hooks to run (currently empty, for future use)
+ * @returns Object with updated stats, needs, and list of all applied changes
+ */
+export function applyOptionWithModifiers(
+  state: GameState,
+  request: Request,
+  optionIndex: number,
+  modifiers: ModifierHook[] = []
+): { stats: Stats; needs: Needs; appliedChanges: AppliedChange[] } {
+  const option = request.options[optionIndex];
+  
+  // 1. Compute base delta from option
+  let delta = { ...option.effects };
+  const appliedChanges: AppliedChange[] = [];
+  
+  // 2. Run modifier hooks (currently empty)
+  for (const modifier of modifiers) {
+    const result = modifier(state, request, optionIndex, delta, appliedChanges);
+    delta = result.delta;
+    appliedChanges.push(...result.extraChanges);
+  }
+  
+  // 3. Apply final delta to stats
+  const { stats: statsAfterEffects, needs } = applyEffects(state.stats, state.needs, delta);
+  
+  // Record base changes from the delta
+  const statKeys: Array<keyof Stats> = ['gold', 'satisfaction', 'health', 'fireRisk', 'farmers', 'landForces'];
+  for (const key of statKeys) {
+    if (delta[key] !== undefined && delta[key] !== 0) {
+      appliedChanges.push({
+        stat: key,
+        amount: delta[key]!,
+        source: 'base',
+      });
+    }
+  }
+  
+  // 4. Apply clamping
+  const stats = clampStats(statsAfterEffects);
+  
+  return { stats, needs, appliedChanges };
 }
 
 /**
@@ -223,6 +307,51 @@ export function detectNewlyUnlockedNeeds(
 }
 
 /**
+ * Checks if a specific unlock token is present in the game state
+ */
+export function hasUnlock(state: GameState, token: string): boolean {
+  return state.unlocks[token] === true;
+}
+
+/**
+ * Checks if all required unlock tokens for a request are present in the game state
+ */
+export function meetsRequirements(state: GameState, request: Request): boolean {
+  // If no requirements, the request is always available
+  if (!request.requires || request.requires.length === 0) {
+    return true;
+  }
+  
+  // All required tokens must be present
+  return request.requires.every(token => hasUnlock(state, token));
+}
+
+/**
+ * Synchronizes need-based unlock tokens with the current needs state.
+ * Sets tokens for fulfilled needs, removes tokens for unfulfilled needs.
+ * Currently syncs: "need:marketplace" and "need:beer"
+ */
+export function syncNeedUnlockTokens(needs: Needs, unlocks: Record<string, true>): Record<string, true> {
+  const newUnlocks = { ...unlocks };
+  
+  // Sync marketplace need token
+  if (needs.marketplace) {
+    newUnlocks['need:marketplace'] = true;
+  } else {
+    delete newUnlocks['need:marketplace'];
+  }
+  
+  // Sync beer need token
+  if (needs.beer) {
+    newUnlocks['need:beer'] = true;
+  } else {
+    delete newUnlocks['need:beer'];
+  }
+  
+  return newUnlocks;
+}
+
+/**
  * Applies baseline rules according to POF_SPEC.md:
  * - gold += floor(0.1 * (farmers * (satisfaction / 100)))
  * - farmers += floor(health / 10)
@@ -249,7 +378,8 @@ function createLogEntry(
   optionText: string,
   source: LogEntry['source'],
   beforeStats: Stats,
-  afterStats: Stats
+  afterStats: Stats,
+  appliedChanges?: AppliedChange[]
 ): LogEntry {
   const deltas: LogEntry['deltas'] = {};
 
@@ -278,6 +408,7 @@ function createLogEntry(
     optionText,
     source,
     deltas,
+    appliedChanges,
   };
 }
 
@@ -354,7 +485,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     // Find the current request
-    const currentRequest = [...needRequests, ...eventRequests].find(
+    const currentRequest = [...needRequests, ...infoRequests, ...eventRequests].find(
       (r) => r.id === state.currentRequestId
     );
 
@@ -373,9 +504,20 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     const beforeStats = { ...state.stats };
     const newLog: LogEntry[] = [];
 
-    // 1. Apply option effects
-    const { stats: statsAfterEffects, needs } = applyEffects(state.stats, state.needs, option.effects);
-    let stats = clampStats(statsAfterEffects);
+    // 1. Apply option effects using the new pipeline
+    // Use need modifiers for event requests (not for need or info requests)
+    const isEventRequest = eventRequests.some(r => r.id === state.currentRequestId);
+    const modifiersToUse = isEventRequest ? needModifiers : [];
+    const { stats: statsFromPipeline, needs, appliedChanges } = applyOptionWithModifiers(
+      state, 
+      currentRequest, 
+      action.optionIndex,
+      modifiersToUse
+    );
+    let stats = statsFromPipeline;
+
+    // Sync need-based unlock tokens with current needs state
+    let unlocks = syncNeedUnlockTokens(needs, state.unlocks);
 
     // Track need fulfillment and cooldowns
     const needsTracking = { ...state.needsTracking };
@@ -408,16 +550,32 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     };
     
     const needKey = needIdMap[state.currentRequestId];
+    let needFulfilledThisTick = false;
+    let needFulfilledKey: keyof Needs | null = null;
+    
     if (needKey) {
       // Check if this option fulfills the need
       const fulfillsNeed = option.effects[needKey] === true;
       
       if (fulfillsNeed) {
+        // Calculate required buildings before incrementing
+        const oldBuildingCount = needsTracking[needKey].buildingCount;
+        const requiredBuildings = calculateRequiredBuildings(needKey, stats.farmers);
+        const wasFulfilled = oldBuildingCount >= requiredBuildings;
+        
         // Increment building count (persistent, never decreases)
+        const newBuildingCount = oldBuildingCount + 1;
         needsTracking[needKey] = {
           ...needsTracking[needKey],
-          buildingCount: needsTracking[needKey].buildingCount + 1,
+          buildingCount: newBuildingCount,
         };
+        
+        // Detect rising edge: was not fulfilled, now is fulfilled
+        const isFulfilled = newBuildingCount >= requiredBuildings;
+        if (!wasFulfilled && isFulfilled) {
+          needFulfilledThisTick = true;
+          needFulfilledKey = needKey;
+        }
       } else {
         // Declined the need - set cooldown
         needsTracking[needKey] = {
@@ -428,13 +586,19 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     // Create log entry for request decision
+    // Filter appliedChanges to only include need modifiers (not base effects)
+    const needModifierChanges = appliedChanges.filter(change => 
+      change.source.startsWith('need:')
+    );
+    
     const requestLogEntry = createLogEntry(
       state.tick,
       state.currentRequestId,
       option.text,
       'Request Decision',
       beforeStats,
-      stats
+      stats,
+      needModifierChanges.length > 0 ? needModifierChanges : undefined
     );
     if (Object.keys(requestLogEntry.deltas).length > 0) {
       newLog.push(requestLogEntry);
@@ -450,6 +614,33 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     // Remove the current request from scheduled events if it was scheduled
     scheduledEvents = removeScheduledEvent(scheduledEvents, state.currentRequestId, state.tick);
+    
+    // If a need was fulfilled this tick, schedule the corresponding info request
+    // Only schedule on FIRST fulfillment (buildingCount === 1)
+    if (needFulfilledThisTick && needFulfilledKey) {
+      const newBuildingCount = needsTracking[needFulfilledKey].buildingCount;
+      
+      // Only schedule info request for first fulfillment
+      if (newBuildingCount === 1) {
+        const infoRequestId = NEED_INFO_REQUEST_MAP[needFulfilledKey];
+        
+        // Only schedule if info request ID exists and isn't already scheduled for next tick
+        if (infoRequestId) {
+          const alreadyScheduled = scheduledEvents.some(
+            event => event.requestId === infoRequestId && event.targetTick === state.tick + 1
+          );
+          
+          if (!alreadyScheduled) {
+            scheduledEvents.push({
+              targetTick: state.tick + 1,
+              requestId: infoRequestId,
+              scheduledAtTick: state.tick,
+              priority: "info",
+            });
+          }
+        }
+      }
+    }
 
     // Check for bankruptcy after option effects (before baseline)
     // This prevents players from escaping bankruptcy via positive baseline income
@@ -468,6 +659,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         scheduledEvents,
         chainStatus,
         requestTriggerCounts,
+        unlocks,
       };
     }
 
@@ -507,6 +699,33 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       ));
     }
 
+    // 2b. Apply bread need effect (10% chance for +1 farmer growth)
+    if (needs.bread && Math.random() < 0.10) {
+      const beforeBread = { ...stats };
+      stats.farmers += 1;
+      stats = clampStats(stats);
+      
+      // Log the bread need effect if it actually increased farmers
+      if (stats.farmers > beforeBread.farmers) {
+        const breadChange: AppliedChange = {
+          stat: 'farmers',
+          amount: 1,
+          source: 'need:bread',
+          note: 'Bread supply boosted population growth',
+        };
+        
+        newLog.push(createLogEntry(
+          state.tick,
+          state.currentRequestId,
+          '',
+          'Population Growth',
+          beforeBread,
+          stats,
+          [breadChange] // Include the bread effect as an applied change
+        ));
+      }
+    }
+
     // 3. Check for game over condition
     if (stats.gold <= -50) {
       return {
@@ -523,6 +742,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         scheduledEvents,
         chainStatus,
         requestTriggerCounts,
+        unlocks,
       };
     }
 
@@ -540,6 +760,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       scheduledEvents,
       chainStatus,
       requestTriggerCounts,
+      unlocks,
     });
 
     // 5. Increment tick and update state
@@ -556,6 +777,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       scheduledEvents,
       chainStatus,
       requestTriggerCounts,
+      unlocks,
     };
   }
 

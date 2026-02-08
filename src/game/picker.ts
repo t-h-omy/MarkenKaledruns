@@ -5,8 +5,8 @@
 
 import type { GameState } from './state';
 import type { Stats, Needs, Request, NeedsTracking } from './models';
-import { needRequests, eventRequests } from './requests';
-import { isNeedUnlocked, isNeedRequired, isNeedOnCooldown } from './state';
+import { needRequests, infoRequests, eventRequests } from './requests';
+import { isNeedUnlocked, isNeedRequired, isNeedOnCooldown, meetsRequirements } from './state';
 
 /**
  * Deterministic random number generator using a simple LCG algorithm.
@@ -135,9 +135,10 @@ export function pickNextRequest(
   let actualLastRequestId: string;
   let tick: number = 0;
   let needsTracking: NeedsTracking | null = null;
-  let scheduledEvents: Array<{ targetTick: number; requestId: string; scheduledAtTick: number }> = [];
+  let scheduledEvents: Array<{ targetTick: number; requestId: string; scheduledAtTick: number; priority?: "info" | "normal" }> = [];
   let chainStatus: Record<string, { active: boolean; completedTick?: number }> = {};
   let requestTriggerCounts: Record<string, number> = {};
+  let gameState: GameState | null = null;
 
   if ('tick' in stateOrStats) {
     // Called with GameState
@@ -148,6 +149,7 @@ export function pickNextRequest(
     scheduledEvents = stateOrStats.scheduledEvents || [];
     chainStatus = stateOrStats.chainStatus || {};
     requestTriggerCounts = stateOrStats.requestTriggerCounts || {};
+    gameState = stateOrStats;
   } else {
     // Called with individual parameters (legacy support)
     stats = stateOrStats;
@@ -188,38 +190,72 @@ export function pickNextRequest(
     return true;
   };
 
+  /**
+   * Helper function to check if a request is locked by unlock requirements
+   * Returns true if the request should be filtered out (i.e., is locked)
+   */
+  const isLockedByRequirements = (request: Request): boolean => {
+    return gameState !== null && !meetsRequirements(gameState, request);
+  };
+
   // Priority 1: Check for scheduled events
   // Find all events due on or before current tick
   const dueEvents = scheduledEvents.filter(event => event.targetTick <= tick);
   
   if (dueEvents.length > 0) {
-    // Sort by scheduledAtTick for FIFO ordering (primary), then by targetTick (secondary)
-    dueEvents.sort((a, b) => {
-      if (a.scheduledAtTick === b.scheduledAtTick) {
-        return a.targetTick - b.targetTick;
-      }
-      return a.scheduledAtTick - b.scheduledAtTick;
-    });
+    // Separate info and normal priority events
+    const infoEvents = dueEvents.filter(event => event.priority === "info");
+    const normalEvents = dueEvents.filter(event => event.priority === "normal" || event.priority === undefined);
     
-    // Return the first due event that hasn't exceeded maxTriggers
-    // Note: Scheduled events bypass chain gating and cooldown
-    for (const dueEvent of dueEvents) {
-      const scheduledRequest = [...needRequests, ...eventRequests].find(
-        (r) => r.id === dueEvent.requestId
-      );
-      
-      if (scheduledRequest) {
-        // Check only maxTriggers for scheduled events
-        if (scheduledRequest.maxTriggers !== undefined) {
-          const triggerCount = requestTriggerCounts[scheduledRequest.id] || 0;
-          if (triggerCount >= scheduledRequest.maxTriggers) {
-            continue; // Skip this scheduled event, try next
-          }
+    // Helper to process events in priority order
+    const processEvents = (events: typeof dueEvents) => {
+      // Sort by scheduledAtTick for FIFO ordering (primary), then by targetTick (secondary)
+      events.sort((a, b) => {
+        if (a.scheduledAtTick === b.scheduledAtTick) {
+          return a.targetTick - b.targetTick;
         }
-        return scheduledRequest;
+        return a.scheduledAtTick - b.scheduledAtTick;
+      });
+      
+      // Return the first event that hasn't exceeded maxTriggers and meets requirements
+      for (const dueEvent of events) {
+        const scheduledRequest = [...needRequests, ...infoRequests, ...eventRequests].find(
+          (r) => r.id === dueEvent.requestId
+        );
+        
+        if (scheduledRequest) {
+          // Check maxTriggers for scheduled events
+          if (scheduledRequest.maxTriggers !== undefined) {
+            const triggerCount = requestTriggerCounts[scheduledRequest.id] || 0;
+            if (triggerCount >= scheduledRequest.maxTriggers) {
+              continue; // Skip this scheduled event, try next
+            }
+          }
+          
+          // Check if requirements are met (if we have full state)
+          if (isLockedByRequirements(scheduledRequest)) {
+            continue; // Skip this locked scheduled event, try next
+          }
+          
+          return scheduledRequest;
+        }
       }
+      return null;
+    };
+    
+    // Priority 1a: Process info priority events first
+    if (infoEvents.length > 0) {
+      const infoRequest = processEvents(infoEvents);
+      if (infoRequest) return infoRequest;
     }
-    // If all scheduled requests exceeded maxTriggers, fall through to normal logic
+    
+    // Priority 1b: Process normal priority events
+    if (normalEvents.length > 0) {
+      const normalRequest = processEvents(normalEvents);
+      if (normalRequest) return normalRequest;
+    }
+    
+    // If all scheduled requests exceeded maxTriggers or are locked, fall through to normal logic
   }
 
   // Crisis requests by priority order
@@ -279,20 +315,25 @@ export function pickNextRequest(
   // Crisis events should ONLY appear through the explicit conditions above
   // Also exclude events that cannot trigger randomly (follow-up-only events)
   // Also exclude events that have reached maxTriggers or are chain starts with gating/cooldown issues
+  // Also exclude events that don't meet unlock requirements
   const crisisEventIds = ['EVT_CRISIS_FIRE', 'EVT_CRISIS_DISEASE', 'EVT_CRISIS_UNREST'];
   const availableEvents = eventRequests.filter(
     (r) => r.id !== actualLastRequestId && 
            !crisisEventIds.includes(r.id) &&
            (r.canTriggerRandomly !== false) &&
-           isEligibleForRandomTrigger(r)
+           isEligibleForRandomTrigger(r) &&
+           !isLockedByRequirements(r)
   );
   if (availableEvents.length > 0) {
     return availableEvents[rng.nextInt(availableEvents.length)];
   }
 
-  // Fallback: pick any non-crisis event that can trigger randomly (shouldn't happen with 25 events)
+  // Fallback: pick any non-crisis event that can trigger randomly and meets requirements (shouldn't happen with 25 events)
   const nonCrisisEvents = eventRequests.filter(
-    (r) => !crisisEventIds.includes(r.id) && (r.canTriggerRandomly !== false) && isEligibleForRandomTrigger(r)
+    (r) => !crisisEventIds.includes(r.id) && 
+           (r.canTriggerRandomly !== false) && 
+           isEligibleForRandomTrigger(r) &&
+           !isLockedByRequirements(r)
   );
   return nonCrisisEvents[rng.nextInt(nonCrisisEvents.length)];
 }
