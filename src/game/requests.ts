@@ -1697,6 +1697,50 @@ export const eventRequests: Request[] = [
       { text: 'START PREPARING', effects: { gold: -10, landForces: 6 } },
     ],
   },
+
+  {
+    id: 'EVENT_MARKET_DAY',
+    title: 'Market Day',
+    text: 'The marketplace is bustling with traders from distant lands. Will you focus on steady profits or take a riskier approach for greater gains?',
+    requires: ['need:marketplace'],
+    options: [
+      {
+        text: 'STEADY TRADE',
+        effects: {
+          gold: 8,
+        },
+      },
+      {
+        text: 'RISKY DEALS',
+        effects: {
+          gold: 15,
+          satisfaction: -1,
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'EVENT_TAVERN_AFTER_WORK',
+    title: 'Feierabend in der Kneipe',
+    text: 'After a long day of labor, the villagers gather at the tavern. Should you subsidize their drinks to boost morale, or let them enjoy at their own expense?',
+    requires: ['need:beer'],
+    options: [
+      {
+        text: 'LET THEM PAY',
+        effects: {
+          satisfaction: 6,
+        },
+      },
+      {
+        text: 'SUBSIDIZE DRINKS',
+        effects: {
+          satisfaction: 10,
+          gold: -5,
+        },
+      },
+    ],
+  },
 ];
 
 /**
