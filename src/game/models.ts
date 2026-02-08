@@ -99,14 +99,14 @@ export const DECLINE_COOLDOWN_TICKS = 5;
 
 /**
  * Mapping from need ID to corresponding info request ID
- * Info requests are scheduled when a need is fulfilled
+ * Info requests are scheduled when a need is fulfilled for the first time
  */
 export const NEED_INFO_REQUEST_MAP: Record<keyof Needs, string> = {
-  marketplace: 'INFO_MARKETPLACE_BUILT',
-  bread: 'INFO_BREAD_BUILT',
-  beer: 'INFO_BEER_BUILT',
-  firewood: 'INFO_FIREWOOD_BUILT',
-  well: 'INFO_WELL_BUILT',
+  marketplace: 'INFO_NEED_MARKETPLACE',
+  bread: 'INFO_NEED_BREAD',
+  beer: 'INFO_NEED_BEER',
+  firewood: 'INFO_NEED_FIREWOOD',
+  well: 'INFO_NEED_WELL',
 };
 
 /**

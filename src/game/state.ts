@@ -5,7 +5,7 @@
 
 import type { Stats, Needs, Effect, NeedsTracking, Request } from './models';
 import { DECLINE_COOLDOWN_TICKS, NEED_UNLOCK_THRESHOLDS, NEED_CONFIGS, NEED_INFO_REQUEST_MAP } from './models';
-import { needRequests, eventRequests } from './requests';
+import { needRequests, infoRequests, eventRequests } from './requests';
 import { pickNextRequest, selectWeightedCandidate, getRandomValue } from './picker';
 
 /**
@@ -404,7 +404,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     // Find the current request
-    const currentRequest = [...needRequests, ...eventRequests].find(
+    const currentRequest = [...needRequests, ...infoRequests, ...eventRequests].find(
       (r) => r.id === state.currentRequestId
     );
 
@@ -521,22 +521,28 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     scheduledEvents = removeScheduledEvent(scheduledEvents, state.currentRequestId, state.tick);
     
     // If a need was fulfilled this tick, schedule the corresponding info request
+    // Only schedule on FIRST fulfillment (buildingCount === 1)
     if (needFulfilledThisTick && needFulfilledKey) {
-      const infoRequestId = NEED_INFO_REQUEST_MAP[needFulfilledKey];
+      const newBuildingCount = needsTracking[needFulfilledKey].buildingCount;
       
-      // Only schedule if info request ID exists and isn't already scheduled for next tick
-      if (infoRequestId) {
-        const alreadyScheduled = scheduledEvents.some(
-          event => event.requestId === infoRequestId && event.targetTick === state.tick + 1
-        );
+      // Only schedule info request for first fulfillment
+      if (newBuildingCount === 1) {
+        const infoRequestId = NEED_INFO_REQUEST_MAP[needFulfilledKey];
         
-        if (!alreadyScheduled) {
-          scheduledEvents.push({
-            targetTick: state.tick + 1,
-            requestId: infoRequestId,
-            scheduledAtTick: state.tick,
-            priority: "info",
-          });
+        // Only schedule if info request ID exists and isn't already scheduled for next tick
+        if (infoRequestId) {
+          const alreadyScheduled = scheduledEvents.some(
+            event => event.requestId === infoRequestId && event.targetTick === state.tick + 1
+          );
+          
+          if (!alreadyScheduled) {
+            scheduledEvents.push({
+              targetTick: state.tick + 1,
+              requestId: infoRequestId,
+              scheduledAtTick: state.tick,
+              priority: "info",
+            });
+          }
         }
       }
     }

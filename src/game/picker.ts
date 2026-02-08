@@ -5,7 +5,7 @@
 
 import type { GameState } from './state';
 import type { Stats, Needs, Request, NeedsTracking } from './models';
-import { needRequests, eventRequests } from './requests';
+import { needRequests, infoRequests, eventRequests } from './requests';
 import { isNeedUnlocked, isNeedRequired, isNeedOnCooldown, meetsRequirements } from './state';
 
 /**
@@ -219,7 +219,7 @@ export function pickNextRequest(
       
       // Return the first event that hasn't exceeded maxTriggers and meets requirements
       for (const dueEvent of events) {
-        const scheduledRequest = [...needRequests, ...eventRequests].find(
+        const scheduledRequest = [...needRequests, ...infoRequests, ...eventRequests].find(
           (r) => r.id === dueEvent.requestId
         );
         
