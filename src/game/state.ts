@@ -689,6 +689,27 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       ));
     }
 
+    // 2b. Apply bread need effect (10% chance for +1 farmer growth)
+    if (needs.bread && Math.random() < 0.10) {
+      const beforeBread = { ...stats };
+      stats.farmers += 1;
+      stats = clampStats(stats);
+      
+      // Log the bread need effect if it actually increased farmers
+      if (stats.farmers > beforeBread.farmers) {
+        newLog.push(createLogEntry(
+          state.tick,
+          state.currentRequestId,
+          '',
+          'Population Growth', // Using same source type for consistency
+          beforeBread,
+          stats
+        ));
+        // Note: We could enhance LogEntry to support a note field in the future
+        // For now, the delta in Population Growth logs will show the +1 from bread
+      }
+    }
+
     // 3. Check for game over condition
     if (stats.gold <= -50) {
       return {
