@@ -4,7 +4,7 @@
  */
 
 import type { Stats, Needs, Effect, NeedsTracking, Request } from './models';
-import { DECLINE_COOLDOWN_TICKS, NEED_UNLOCK_THRESHOLDS, NEED_CONFIGS } from './models';
+import { DECLINE_COOLDOWN_TICKS, NEED_UNLOCK_THRESHOLDS, NEED_CONFIGS, NEED_INFO_REQUEST_MAP } from './models';
 import { needRequests, eventRequests } from './requests';
 import { pickNextRequest, selectWeightedCandidate, getRandomValue } from './picker';
 
@@ -461,16 +461,32 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     };
     
     const needKey = needIdMap[state.currentRequestId];
+    let needFulfilledThisTick = false;
+    let needFulfilledKey: keyof Needs | null = null;
+    
     if (needKey) {
       // Check if this option fulfills the need
       const fulfillsNeed = option.effects[needKey] === true;
       
       if (fulfillsNeed) {
+        // Calculate required buildings before incrementing
+        const oldBuildingCount = needsTracking[needKey].buildingCount;
+        const requiredBuildings = calculateRequiredBuildings(needKey, stats.farmers);
+        const wasFulfilled = oldBuildingCount >= requiredBuildings;
+        
         // Increment building count (persistent, never decreases)
+        const newBuildingCount = oldBuildingCount + 1;
         needsTracking[needKey] = {
           ...needsTracking[needKey],
-          buildingCount: needsTracking[needKey].buildingCount + 1,
+          buildingCount: newBuildingCount,
         };
+        
+        // Detect rising edge: was not fulfilled, now is fulfilled
+        const isFulfilled = newBuildingCount >= requiredBuildings;
+        if (!wasFulfilled && isFulfilled) {
+          needFulfilledThisTick = true;
+          needFulfilledKey = needKey;
+        }
       } else {
         // Declined the need - set cooldown
         needsTracking[needKey] = {
@@ -503,6 +519,17 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     // Remove the current request from scheduled events if it was scheduled
     scheduledEvents = removeScheduledEvent(scheduledEvents, state.currentRequestId, state.tick);
+    
+    // If a need was fulfilled this tick, schedule the corresponding info request
+    if (needFulfilledThisTick && needFulfilledKey) {
+      const infoRequestId = NEED_INFO_REQUEST_MAP[needFulfilledKey];
+      scheduledEvents.push({
+        targetTick: state.tick + 1,
+        requestId: infoRequestId,
+        scheduledAtTick: state.tick,
+        priority: "info",
+      });
+    }
 
     // Check for bankruptcy after option effects (before baseline)
     // This prevents players from escaping bankruptcy via positive baseline income

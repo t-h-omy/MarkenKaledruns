@@ -98,6 +98,18 @@ export const NEED_UNLOCK_THRESHOLDS: Record<keyof Needs, number> = {
 export const DECLINE_COOLDOWN_TICKS = 5;
 
 /**
+ * Mapping from need ID to corresponding info request ID
+ * Info requests are scheduled when a need is fulfilled
+ */
+export const NEED_INFO_REQUEST_MAP: Record<keyof Needs, string> = {
+  marketplace: 'INFO_MARKETPLACE_BUILT',
+  bread: 'INFO_BREAD_BUILT',
+  beer: 'INFO_BEER_BUILT',
+  firewood: 'INFO_FIREWOOD_BUILT',
+  well: 'INFO_WELL_BUILT',
+};
+
+/**
  * Represents changes to game state (stats or needs).
  * Each property is optional and represents a delta or assignment.
  */
