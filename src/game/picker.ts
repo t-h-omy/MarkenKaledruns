@@ -337,16 +337,22 @@ export function pickNextRequest(
   );
   
   if (nonCrisisEvents.length === 0) {
-    // Emergency fallback: if all events are filtered out, pick any non-crisis event
-    // This should never happen but prevents returning undefined
-    const emergencyFallback = eventRequests.filter(
-      (r) => !crisisEventIds.includes(r.id)
-    );
-    if (emergencyFallback.length > 0) {
-      return emergencyFallback[rng.nextInt(emergencyFallback.length)];
+    // Emergency fallback: if all eligible events are filtered out by the strict criteria above
+    // This should never happen in normal gameplay, but provides a safety net
+    
+    // Try to find ANY non-crisis event (ignoring canTriggerRandomly, maxTriggers, and requirements)
+    const anyNonCrisis = eventRequests.filter(r => !crisisEventIds.includes(r.id));
+    if (anyNonCrisis.length > 0) {
+      return anyNonCrisis[rng.nextInt(anyNonCrisis.length)];
     }
-    // Absolute last resort: pick the first event request
-    return eventRequests[0];
+    
+    // Absolute last resort: return any event (even crisis events)
+    if (eventRequests.length > 0) {
+      return eventRequests[rng.nextInt(eventRequests.length)];
+    }
+    
+    // Should never happen - throw error if no events exist at all
+    throw new Error('No event requests available in the game');
   }
   
   return nonCrisisEvents[rng.nextInt(nonCrisisEvents.length)];
