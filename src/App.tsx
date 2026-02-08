@@ -64,6 +64,15 @@ function App() {
     well: 'Well',
   }
 
+  // Need effect descriptions
+  const needEffectDescriptions: Record<keyof Needs, string> = {
+    marketplace: 'Unlocks event "Market Day"',
+    bread: '10% chance per tick for +1 farmer growth',
+    beer: 'Unlocks event "Feierabend in der Kneipe"',
+    firewood: '25% chance to halve fireRisk increases from events',
+    well: '50% chance to gain +1 extra health when an event grants health',
+  }
+
   // Check if an option would cause invalid state (negative farmers or landForces)
   const isOptionDisabled = (effects: Effect): { disabled: boolean; reason?: string } => {
     if (effects.farmers !== undefined) {
@@ -325,8 +334,11 @@ function App() {
                       key={needKey} 
                       className={`need-item need-${state.status}`}
                     >
-                      <span className="need-name">{needDisplayNames[needKey]}</span>
-                      <span className="need-status">{state.label}</span>
+                      <div className="need-header">
+                        <span className="need-name">{needDisplayNames[needKey]}</span>
+                        <span className="need-status">{state.label}</span>
+                      </div>
+                      <div className="need-effect">Effect: {needEffectDescriptions[needKey]}</div>
                     </div>
                   )
                 })}
