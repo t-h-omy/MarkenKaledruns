@@ -258,7 +258,60 @@ export function pickNextRequest(
     // If all scheduled requests exceeded maxTriggers or are locked, fall through to normal logic
   }
 
-  // Crisis requests by priority order
+  // Priority 2: Check for due combats and apply "crisis before combat start" rule
+  // Find all combats that are due (dueTick <= current tick)
+  const dueCombats = (gameState && gameState.scheduledCombats) 
+    ? gameState.scheduledCombats.filter(combat => combat.dueTick <= tick)
+    : [];
+  
+  if (dueCombats.length > 0) {
+    // Helper to check if any crisis is currently eligible
+    const getEligibleCrisis = (): Request | null => {
+      if (stats.fireRisk > 70) {
+        const crisisRequest = eventRequests.find((r) => r.id === 'EVT_CRISIS_FIRE');
+        if (crisisRequest && crisisRequest.id !== actualLastRequestId) return crisisRequest;
+      }
+      if (stats.health < 30) {
+        const crisisRequest = eventRequests.find((r) => r.id === 'EVT_CRISIS_DISEASE');
+        if (crisisRequest && crisisRequest.id !== actualLastRequestId) return crisisRequest;
+      }
+      if (stats.satisfaction < 30) {
+        const crisisRequest = eventRequests.find((r) => r.id === 'EVT_CRISIS_UNREST');
+        if (crisisRequest && crisisRequest.id !== actualLastRequestId) return crisisRequest;
+      }
+      return null;
+    };
+    
+    // Crisis takes priority over combat start
+    const eligibleCrisis = getEligibleCrisis();
+    if (eligibleCrisis) {
+      return eligibleCrisis;
+    }
+    
+    // No crisis eligible: return synthetic combat start request
+    // Sort by scheduledAtTick for FIFO ordering (earliest scheduled combat first)
+    dueCombats.sort((a, b) => a.scheduledAtTick - b.scheduledAtTick);
+    const firstDueCombat = dueCombats[0];
+    
+    // Create synthetic request for combat start
+    // This synthetic request will be handled by state.ts to activate the combat
+    const combatStartRequest: Request = {
+      id: `COMBAT_START::${firstDueCombat.combatId}`,
+      title: 'Combat Begins',
+      text: `Your forces are ready. The battle is about to begin!`,
+      options: [
+        {
+          text: 'Begin combat',
+          effects: {}, // No immediate effects; state.ts will handle combat activation
+        },
+      ],
+      advancesTick: false, // Combat start is tickless, combat resolution advances ticks
+    };
+    
+    return combatStartRequest;
+  }
+
+  // Crisis requests by priority order (when no combat is due)
   if (stats.fireRisk > 70) {
     const crisisRequest = eventRequests.find((r) => r.id === 'EVT_CRISIS_FIRE');
     if (crisisRequest && crisisRequest.id !== actualLastRequestId) return crisisRequest;

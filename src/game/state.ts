@@ -543,7 +543,56 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return state;
     }
 
-    // Find the current request
+    // Check if this is a synthetic COMBAT_START request
+    const isCombatStart = state.currentRequestId.startsWith('COMBAT_START::');
+    
+    if (isCombatStart) {
+      // Extract combat ID from synthetic request ID
+      const combatId = state.currentRequestId.replace('COMBAT_START::', '');
+      
+      // Find the scheduled combat
+      const scheduledCombat = state.scheduledCombats.find(c => c.combatId === combatId);
+      
+      if (!scheduledCombat) {
+        console.error('Scheduled combat not found for combat start:', combatId);
+        return state;
+      }
+      
+      // Move scheduled combat to active combat
+      const activeCombat: ActiveCombat = {
+        combatId: scheduledCombat.combatId,
+        originRequestId: scheduledCombat.originRequestId,
+        enemyRemaining: scheduledCombat.enemyForces,
+        committedRemaining: scheduledCombat.committedForces,
+        round: 0,
+        onWin: scheduledCombat.onWin,
+        onLose: scheduledCombat.onLose,
+        followUpsOnWin: scheduledCombat.followUpsOnWin,
+        followUpsOnLose: scheduledCombat.followUpsOnLose,
+      };
+      
+      // Remove from scheduled combats
+      const updatedScheduledCombats = state.scheduledCombats.filter(c => c.combatId !== combatId);
+      
+      // Pick next request with the same tick (combat start is tickless)
+      const nextRequest = pickNextRequest({
+        ...state,
+        tick: state.tick,
+        activeCombat,
+        scheduledCombats: updatedScheduledCombats,
+      });
+      
+      // Return updated state with active combat
+      return {
+        ...state,
+        currentRequestId: nextRequest.id,
+        lastRequestId: state.currentRequestId,
+        activeCombat,
+        scheduledCombats: updatedScheduledCombats,
+      };
+    }
+    
+    // Find the current request (non-synthetic)
     const currentRequest = [...needRequests, ...infoRequests, ...eventRequests].find(
       (r) => r.id === state.currentRequestId
     );
