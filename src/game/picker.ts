@@ -301,7 +301,7 @@ export function pickNextRequest(
     const combatStartRequest: Request = {
       id: `COMBAT_START::${firstDueCombat.combatId}`,
       title: 'Combat Begins',
-      text: `Your forces are ready. The battle is about to begin!`,
+      text: 'Your forces are ready. The battle is about to begin!',
       options: [
         {
           text: 'Begin combat',
