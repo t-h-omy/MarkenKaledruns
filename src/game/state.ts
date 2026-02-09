@@ -591,6 +591,53 @@ function scheduleCombatReport(
 }
 
 /**
+ * Validates and logs force accounting for development/debugging
+ * This helps catch issues with multiple parallel combats
+ */
+function validateForceAccounting(
+  state: GameState,
+  context: string,
+  expectedChange?: { landForces?: number; reserved?: number }
+): void {
+  // Calculate reserved forces in scheduled combats
+  const reservedInScheduled = state.scheduledCombats.reduce(
+    (sum, combat) => sum + combat.committedForces,
+    0
+  );
+  
+  // Calculate reserved forces in active combat
+  const reservedInActive = state.activeCombat ? state.activeCombat.committedRemaining : 0;
+  
+  // Total forces = available + reserved
+  const totalForces = state.stats.landForces + reservedInScheduled + reservedInActive;
+  
+  // Log force accounting details
+  console.log(`[Force Accounting] ${context}:`, {
+    available: state.stats.landForces,
+    reservedInScheduled,
+    reservedInActive,
+    totalForces,
+    scheduledCombatsCount: state.scheduledCombats.length,
+    hasActiveCombat: !!state.activeCombat,
+    expectedChange,
+  });
+  
+  // Assertion: landForces should never be negative
+  if (state.stats.landForces < 0) {
+    console.error(`[Force Accounting ERROR] Negative landForces detected at ${context}:`, state.stats.landForces);
+  }
+  
+  // Warning: total forces shouldn't decrease without explanation
+  if (expectedChange && expectedChange.landForces !== undefined) {
+    const expectedTotal = totalForces - expectedChange.landForces;
+    // Allow some tolerance for rounding
+    if (Math.abs(expectedTotal - totalForces) > 0.1 && expectedChange.landForces !== 0) {
+      console.warn(`[Force Accounting] Unexpected total force change at ${context}. Expected: ${expectedTotal}, Got: ${totalForces}`);
+    }
+  }
+}
+
+/**
  * Main reducer function for game state
  */
 export function gameReducer(state: GameState, action: GameAction): GameState {
@@ -607,6 +654,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       // Extract combat ID from synthetic request ID
       const combatId = state.currentRequestId.replace('COMBAT_START::', '');
       
+      // Validate force accounting before combat start
+      validateForceAccounting(state, `Before Combat Start (${combatId})`);
+      
       // Find the scheduled combat
       const scheduledCombat = state.scheduledCombats.find(c => c.combatId === combatId);
       
@@ -614,6 +664,13 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         console.error('Combat start failed: scheduled combat not found for ID:', combatId, '. Maintaining current state.');
         return state;
       }
+      
+      console.log(`[Combat Start] Starting combat ${combatId}:`, {
+        committedForces: scheduledCombat.committedForces,
+        enemyForces: scheduledCombat.enemyForces,
+        dueTick: scheduledCombat.dueTick,
+        scheduledAtTick: scheduledCombat.scheduledAtTick,
+      });
       
       // Move scheduled combat to active combat
       const activeCombat: ActiveCombat = {
@@ -630,8 +687,13 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         followUpsOnLose: scheduledCombat.followUpsOnLose,
       };
       
-      // Remove from scheduled combats
+      // Remove from scheduled combats - this is critical for proper force accounting
       const updatedScheduledCombats = state.scheduledCombats.filter(c => c.combatId !== combatId);
+      
+      // Verify the combat was removed (assertion)
+      if (updatedScheduledCombats.length !== state.scheduledCombats.length - 1) {
+        console.error(`[Combat Start ERROR] Failed to remove scheduled combat ${combatId}. Before: ${state.scheduledCombats.length}, After: ${updatedScheduledCombats.length}`);
+      }
       
       // Pick next request with the same tick (combat start is tickless)
       const nextRequest = pickNextRequest({
@@ -641,14 +703,18 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         scheduledCombats: updatedScheduledCombats,
       });
       
-      // Return updated state with active combat
-      return {
+      const newState = {
         ...state,
         currentRequestId: nextRequest.id,
         lastRequestId: state.currentRequestId,
         activeCombat,
         scheduledCombats: updatedScheduledCombats,
       };
+      
+      // Validate force accounting after combat start
+      validateForceAccounting(newState, `After Combat Start (${combatId})`);
+      
+      return newState;
     }
     
     // Check if this is a synthetic COMBAT_REPORT request
@@ -688,6 +754,11 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       // Option B (index 1) = Withdraw = immediate lose
       if (action.optionIndex === 1) {
         // Withdraw = lose
+        console.log(`[Combat Withdraw] Combat ${combat.combatId}:`, {
+          committedForces: combat.committedRemaining,
+          forfeitedForces: combat.committedRemaining,
+        });
+        
         const statsBefore = { ...state.stats };
         let stats = { ...state.stats };
         let needs = { ...state.needs };
@@ -740,7 +811,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           scheduledEvents,
         });
         
-        return {
+        const newState = {
           ...state,
           tick: state.tick, // Same tick - combat is tickless
           stats,
@@ -750,6 +821,11 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           activeCombat: undefined,
           scheduledEvents,
         };
+        
+        // Validate force accounting after withdrawal
+        validateForceAccounting(newState, `After Combat Withdraw (${combat.combatId})`);
+        
+        return newState;
       }
       
       // Option A (index 0) = Fight = resolve one combat round
@@ -815,7 +891,16 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         
         if (playerWon) {
           // Return surviving forces to player
-          stats.landForces += newCommittedRemaining;
+          const survivorsReturned = newCommittedRemaining;
+          stats.landForces += survivorsReturned;
+          
+          console.log(`[Combat End - WIN] Combat ${combat.combatId}:`, {
+            survivorsReturned,
+            initialCommittedForces: combat.initialCommittedForces,
+            playerLosses: combat.initialCommittedForces - survivorsReturned,
+            enemyLosses: combat.initialEnemyForces,
+            newLandForces: stats.landForces,
+          });
           
           // Apply win effects if any
           if (combat.onWin) {
@@ -841,6 +926,12 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           }
         } else {
           // Player lost - no forces returned
+          console.log(`[Combat End - LOSE] Combat ${combat.combatId}:`, {
+            survivorsReturned: 0,
+            initialCommittedForces: combat.initialCommittedForces,
+            playerLosses: combat.initialCommittedForces,
+            enemyLosses: combat.initialEnemyForces - newEnemyRemaining,
+          });
           
           // Apply lose effects if any
           if (combat.onLose) {
@@ -889,7 +980,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           scheduledEvents,
         });
         
-        return {
+        const newState = {
           ...state,
           tick: state.tick, // Same tick - combat is tickless
           stats,
@@ -899,6 +990,11 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           activeCombat: undefined,
           scheduledEvents,
         };
+        
+        // Validate force accounting after combat end
+        validateForceAccounting(newState, `After Combat End (${combat.combatId})`);
+        
+        return newState;
       } else {
         // Combat continues - update active combat state
         const updatedCombat: ActiveCombat = {
