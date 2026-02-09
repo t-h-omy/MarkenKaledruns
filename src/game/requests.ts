@@ -240,6 +240,19 @@ export const eventRequests: Request[] = [
     id: 'EVT_RAID_SMALL',
     title: 'Shadows in the Woods',
     text: 'A small band of brigands has been spotted nearby. Do we drive them off by force or pay a "toll" to keep the peace?',
+    combat: {
+      enemyForces: 8,
+      prepDelayMinTicks: 1,
+      prepDelayMaxTicks: 3,
+      onWin: {
+        gold: 15,
+        satisfaction: 5,
+      },
+      onLose: {
+        gold: -20,
+        farmers: -5,
+      },
+    },
     options: [
       {
         text: 'FIGHT AND ROB',

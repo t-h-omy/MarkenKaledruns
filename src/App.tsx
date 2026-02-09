@@ -1,4 +1,4 @@
-import { useReducer, useState } from 'react'
+import { useReducer, useState, useEffect } from 'react'
 import './App.css'
 import { gameReducer, initializeGame, isNeedUnlocked, calculateRequiredBuildings, isNeedRequired } from './game/state'
 import { needRequests, infoRequests, eventRequests } from './game/requests'
@@ -17,11 +17,17 @@ function App() {
   const maxForces = gameState.stats.landForces
   const [combatCommit, setCombatCommit] = useState(Math.min(5, maxForces))
 
-  // Update combatCommit when maxForces changes
-  const effectiveMaxForces = Math.max(1, maxForces)
-  if (combatCommit > effectiveMaxForces) {
-    setCombatCommit(effectiveMaxForces)
-  }
+  // Update combatCommit when maxForces changes or when a new request appears
+  useEffect(() => {
+    const effectiveMax = Math.max(1, maxForces)
+    const defaultCommit = Math.min(5, effectiveMax)
+    if (combatCommit > effectiveMax) {
+      setCombatCommit(effectiveMax)
+    } else if (currentRequest?.combat && combatCommit === 0) {
+      // Reset to default when a new combat request appears
+      setCombatCommit(defaultCommit)
+    }
+  }, [maxForces, currentRequest?.id, currentRequest?.combat, combatCommit])
 
   const handleOptionClick = (optionIndex: number) => {
     // If combat request and Option A (index 0), pass combatCommit
