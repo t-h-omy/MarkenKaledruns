@@ -95,6 +95,10 @@ export interface ActiveCombat {
   enemyRemaining: number;
   /** Remaining committed player forces */
   committedRemaining: number;
+  /** Initial enemy forces (for loss calculation) */
+  initialEnemyForces: number;
+  /** Initial committed player forces (for loss calculation) */
+  initialCommittedForces: number;
   /** Current round number */
   round: number;
   /** Results from the last combat round */
@@ -534,6 +538,59 @@ function removeScheduledEvent(
 }
 
 /**
+ * Schedules a combat report info request to appear immediately
+ * @param combat The active combat that just ended
+ * @param outcome The combat outcome: 'win', 'lose', or 'withdraw'
+ * @param statsBefore Stats before applying effects
+ * @param statsAfter Stats after applying effects
+ * @param currentTick Current game tick
+ * @param scheduledEvents Existing scheduled events
+ * @returns Updated scheduled events array with combat report added
+ */
+function scheduleCombatReport(
+  combat: ActiveCombat,
+  outcome: 'win' | 'lose' | 'withdraw',
+  statsBefore: Stats,
+  statsAfter: Stats,
+  currentTick: number,
+  scheduledEvents: ScheduledEvent[]
+): ScheduledEvent[] {
+  const updatedScheduledEvents = [...scheduledEvents];
+  
+  // Calculate total losses
+  const playerLosses = combat.initialCommittedForces - combat.committedRemaining;
+  const enemyLosses = combat.initialEnemyForces - combat.enemyRemaining;
+  
+  // Store outcome and losses in the combat report ID for retrieval
+  const reportData = {
+    outcome,
+    playerLosses,
+    enemyLosses,
+    statDeltas: {
+      gold: statsAfter.gold - statsBefore.gold,
+      satisfaction: statsAfter.satisfaction - statsBefore.satisfaction,
+      health: statsAfter.health - statsBefore.health,
+      fireRisk: statsAfter.fireRisk - statsBefore.fireRisk,
+      farmers: statsAfter.farmers - statsBefore.farmers,
+      landForces: statsAfter.landForces - statsBefore.landForces,
+    },
+  };
+  
+  // Encode data as JSON in the combat report ID
+  const reportId = `COMBAT_REPORT::${combat.combatId}::${encodeURIComponent(JSON.stringify(reportData))}`;
+  
+  // Schedule immediately with info priority
+  updatedScheduledEvents.push({
+    targetTick: currentTick,
+    requestId: reportId,
+    scheduledAtTick: currentTick,
+    priority: 'info',
+  });
+  
+  return updatedScheduledEvents;
+}
+
+/**
  * Main reducer function for game state
  */
 export function gameReducer(state: GameState, action: GameAction): GameState {
@@ -564,6 +621,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         originRequestId: scheduledCombat.originRequestId,
         enemyRemaining: scheduledCombat.enemyForces,
         committedRemaining: scheduledCombat.committedForces,
+        initialEnemyForces: scheduledCombat.enemyForces,
+        initialCommittedForces: scheduledCombat.committedForces,
         round: 0,
         onWin: scheduledCombat.onWin,
         onLose: scheduledCombat.onLose,
@@ -592,6 +651,25 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       };
     }
     
+    // Check if this is a synthetic COMBAT_REPORT request
+    const isCombatReport = state.currentRequestId.startsWith('COMBAT_REPORT::');
+    
+    if (isCombatReport) {
+      // Combat report is a tickless info request - both options just acknowledge
+      // Pick next request with the same tick (tickless)
+      const nextRequest = pickNextRequest({
+        ...state,
+        tick: state.tick,
+      });
+      
+      return {
+        ...state,
+        tick: state.tick, // Same tick - combat report is tickless
+        currentRequestId: nextRequest.id,
+        lastRequestId: state.currentRequestId,
+      };
+    }
+    
     // Check if this is a synthetic COMBAT_ROUND request
     const isCombatRound = state.currentRequestId.startsWith('COMBAT_ROUND::');
     
@@ -610,9 +688,10 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       // Option B (index 1) = Withdraw = immediate lose
       if (action.optionIndex === 1) {
         // Withdraw = lose
+        const statsBefore = { ...state.stats };
         let stats = { ...state.stats };
         let needs = { ...state.needs };
-        const scheduledEvents = [...state.scheduledEvents];
+        let scheduledEvents = [...state.scheduledEvents];
         
         // Apply lose effects if any
         if (combat.onLose) {
@@ -639,6 +718,16 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             }
           }
         }
+        
+        // Schedule combat report
+        scheduledEvents = scheduleCombatReport(
+          combat,
+          'withdraw',
+          statsBefore,
+          stats,
+          state.tick,
+          scheduledEvents
+        );
         
         // Clear active combat
         // Pick next request (tickless)
@@ -712,9 +801,17 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       
       if (combatEnded) {
         // Combat is over - apply win/lose effects
+        const statsBefore = { ...state.stats };
         let stats = { ...state.stats };
         let needs = { ...state.needs };
-        const scheduledEvents = [...state.scheduledEvents];
+        let scheduledEvents = [...state.scheduledEvents];
+        
+        // Update combat state with final force counts for report
+        const updatedCombat: ActiveCombat = {
+          ...combat,
+          committedRemaining: newCommittedRemaining,
+          enemyRemaining: newEnemyRemaining,
+        };
         
         if (playerWon) {
           // Return surviving forces to player
@@ -771,6 +868,16 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         
         // Clamp stats
         stats = clampStats(stats);
+        
+        // Schedule combat report
+        scheduledEvents = scheduleCombatReport(
+          updatedCombat,
+          playerWon ? 'win' : 'lose',
+          statsBefore,
+          stats,
+          state.tick,
+          scheduledEvents
+        );
         
         // Clear active combat and pick next request (tickless)
         const nextRequest = pickNextRequest({

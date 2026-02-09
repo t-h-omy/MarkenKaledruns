@@ -253,6 +253,72 @@ export function pickNextRequest(
       
       // Return the first event that hasn't exceeded maxTriggers and meets requirements
       for (const dueEvent of events) {
+        // Check if this is a synthetic COMBAT_REPORT request
+        if (dueEvent.requestId.startsWith('COMBAT_REPORT::')) {
+          // Extract report data from the request ID
+          const parts = dueEvent.requestId.split('::');
+          const reportDataStr = parts[2] ? decodeURIComponent(parts[2]) : '{}';
+          const reportData = JSON.parse(reportDataStr);
+          
+          // Build outcome text
+          let outcomeText = '';
+          if (reportData.outcome === 'win') {
+            outcomeText = 'Sieg!';
+          } else if (reportData.outcome === 'withdraw') {
+            outcomeText = 'Rückzug';
+          } else {
+            outcomeText = 'Niederlage';
+          }
+          
+          // Build losses text
+          const lossesText = `Verluste: Du ${reportData.playerLosses}, Gegner ${reportData.enemyLosses}`;
+          
+          // Build consequences text
+          const consequences: string[] = [];
+          if (reportData.statDeltas.gold !== 0) {
+            consequences.push(`Gold: ${reportData.statDeltas.gold > 0 ? '+' : ''}${reportData.statDeltas.gold}`);
+          }
+          if (reportData.statDeltas.satisfaction !== 0) {
+            consequences.push(`Zufriedenheit: ${reportData.statDeltas.satisfaction > 0 ? '+' : ''}${reportData.statDeltas.satisfaction}`);
+          }
+          if (reportData.statDeltas.health !== 0) {
+            consequences.push(`Gesundheit: ${reportData.statDeltas.health > 0 ? '+' : ''}${reportData.statDeltas.health}`);
+          }
+          if (reportData.statDeltas.fireRisk !== 0) {
+            consequences.push(`Brandrisiko: ${reportData.statDeltas.fireRisk > 0 ? '+' : ''}${reportData.statDeltas.fireRisk}`);
+          }
+          if (reportData.statDeltas.farmers !== 0) {
+            consequences.push(`Bauern: ${reportData.statDeltas.farmers > 0 ? '+' : ''}${reportData.statDeltas.farmers}`);
+          }
+          if (reportData.statDeltas.landForces !== 0) {
+            consequences.push(`Landstreitkräfte: ${reportData.statDeltas.landForces > 0 ? '+' : ''}${reportData.statDeltas.landForces}`);
+          }
+          
+          const consequencesText = consequences.length > 0 
+            ? `\n\nFolgen:\n${consequences.join('\n')}`
+            : '';
+          
+          // Create synthetic combat report request
+          const combatReportRequest: Request = {
+            id: dueEvent.requestId,
+            title: 'Kampfbericht',
+            text: `${outcomeText}\n\n${lossesText}${consequencesText}`,
+            options: [
+              {
+                text: 'Verstanden',
+                effects: {},
+              },
+              {
+                text: 'Weiter',
+                effects: {},
+              },
+            ],
+            advancesTick: false, // Combat report is tickless
+          };
+          
+          return combatReportRequest;
+        }
+        
         const scheduledRequest = [...needRequests, ...infoRequests, ...eventRequests].find(
           (r) => r.id === dueEvent.requestId
         );
