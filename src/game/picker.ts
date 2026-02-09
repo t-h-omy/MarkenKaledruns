@@ -258,6 +258,26 @@ export function pickNextRequest(
     // If all scheduled requests exceeded maxTriggers or are locked, fall through to normal logic
   }
 
+  /**
+   * Helper function to check if any crisis event is currently eligible
+   * Crisis events are prioritized in this order: Fire > Disease > Unrest
+   */
+  const getEligibleCrisis = (): Request | null => {
+    if (stats.fireRisk > 70) {
+      const crisisRequest = eventRequests.find((r) => r.id === 'EVT_CRISIS_FIRE');
+      if (crisisRequest && crisisRequest.id !== actualLastRequestId) return crisisRequest;
+    }
+    if (stats.health < 30) {
+      const crisisRequest = eventRequests.find((r) => r.id === 'EVT_CRISIS_DISEASE');
+      if (crisisRequest && crisisRequest.id !== actualLastRequestId) return crisisRequest;
+    }
+    if (stats.satisfaction < 30) {
+      const crisisRequest = eventRequests.find((r) => r.id === 'EVT_CRISIS_UNREST');
+      if (crisisRequest && crisisRequest.id !== actualLastRequestId) return crisisRequest;
+    }
+    return null;
+  };
+
   // Priority 2: Check for due combats and apply "crisis before combat start" rule
   // Find all combats that are due (dueTick <= current tick)
   const dueCombats = (gameState && gameState.scheduledCombats) 
@@ -265,23 +285,6 @@ export function pickNextRequest(
     : [];
   
   if (dueCombats.length > 0) {
-    // Helper to check if any crisis is currently eligible
-    const getEligibleCrisis = (): Request | null => {
-      if (stats.fireRisk > 70) {
-        const crisisRequest = eventRequests.find((r) => r.id === 'EVT_CRISIS_FIRE');
-        if (crisisRequest && crisisRequest.id !== actualLastRequestId) return crisisRequest;
-      }
-      if (stats.health < 30) {
-        const crisisRequest = eventRequests.find((r) => r.id === 'EVT_CRISIS_DISEASE');
-        if (crisisRequest && crisisRequest.id !== actualLastRequestId) return crisisRequest;
-      }
-      if (stats.satisfaction < 30) {
-        const crisisRequest = eventRequests.find((r) => r.id === 'EVT_CRISIS_UNREST');
-        if (crisisRequest && crisisRequest.id !== actualLastRequestId) return crisisRequest;
-      }
-      return null;
-    };
-    
     // Crisis takes priority over combat start
     const eligibleCrisis = getEligibleCrisis();
     if (eligibleCrisis) {
@@ -311,18 +314,10 @@ export function pickNextRequest(
     return combatStartRequest;
   }
 
-  // Crisis requests by priority order (when no combat is due)
-  if (stats.fireRisk > 70) {
-    const crisisRequest = eventRequests.find((r) => r.id === 'EVT_CRISIS_FIRE');
-    if (crisisRequest && crisisRequest.id !== actualLastRequestId) return crisisRequest;
-  }
-  if (stats.health < 30) {
-    const crisisRequest = eventRequests.find((r) => r.id === 'EVT_CRISIS_DISEASE');
-    if (crisisRequest && crisisRequest.id !== actualLastRequestId) return crisisRequest;
-  }
-  if (stats.satisfaction < 30) {
-    const crisisRequest = eventRequests.find((r) => r.id === 'EVT_CRISIS_UNREST');
-    if (crisisRequest && crisisRequest.id !== actualLastRequestId) return crisisRequest;
+  // Priority 3: Crisis requests by priority order (when no combat is due)
+  const crisisRequest = getEligibleCrisis();
+  if (crisisRequest) {
+    return crisisRequest;
   }
 
   // Check for required needs using the new cycle-based system

@@ -554,7 +554,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const scheduledCombat = state.scheduledCombats.find(c => c.combatId === combatId);
       
       if (!scheduledCombat) {
-        console.error('Scheduled combat not found for combat start:', combatId);
+        console.error('Combat start failed: scheduled combat not found for ID:', combatId, '. Returning to previous state.');
         return state;
       }
       
