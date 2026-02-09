@@ -258,8 +258,17 @@ export function pickNextRequest(
           try {
             // Extract report data from the request ID
             const parts = dueEvent.requestId.split('::');
-            const reportDataStr = parts[2] ? decodeURIComponent(parts[2]) : '{}';
+            if (!parts[2]) {
+              throw new Error('Missing report data in combat report ID');
+            }
+            
+            const reportDataStr = decodeURIComponent(parts[2]);
             const reportData = JSON.parse(reportDataStr);
+            
+            // Validate report data structure
+            if (!reportData.outcome || !reportData.statDeltas) {
+              throw new Error('Invalid report data structure');
+            }
             
             // Build outcome text
             let outcomeText = '';
@@ -285,12 +294,10 @@ export function pickNextRequest(
             };
             
             const consequences: string[] = [];
-            if (reportData.statDeltas) {
-              for (const [key, label] of Object.entries(statLabels)) {
-                const delta = reportData.statDeltas[key];
-                if (delta !== undefined && delta !== 0) {
-                  consequences.push(`${label}: ${delta > 0 ? '+' : ''}${delta}`);
-                }
+            for (const [key, label] of Object.entries(statLabels)) {
+              const delta = reportData.statDeltas[key];
+              if (delta !== undefined && delta !== 0) {
+                consequences.push(`${label}: ${delta > 0 ? '+' : ''}${delta}`);
               }
             }
             
