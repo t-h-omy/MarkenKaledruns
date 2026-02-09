@@ -1493,11 +1493,11 @@ export function getCurrentRequest(state: GameState): Request | null {
   if (state.currentRequestId.startsWith('COMBAT_START::')) {
     return {
       id: state.currentRequestId,
-      title: 'Combat Begins',
-      text: 'Your forces are ready. The battle is about to begin!',
+      title: 'Kampf beginnt',
+      text: 'Deine Streitkräfte sind bereit. Die Schlacht steht bevor!',
       options: [
         {
-          text: 'Begin combat',
+          text: 'Kampf beginnen',
           effects: {},
         },
       ],
