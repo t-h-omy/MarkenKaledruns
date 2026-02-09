@@ -1451,6 +1451,154 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 }
 
 /**
+ * Get the current request from the game state.
+ * Handles both regular requests and synthetic requests (combat, combat reports).
+ */
+export function getCurrentRequest(state: GameState): Request | null {
+  // Check if this is a synthetic combat round request
+  if (state.currentRequestId.startsWith('COMBAT_ROUND::')) {
+    if (!state.activeCombat) {
+      return null;
+    }
+    
+    const combat = state.activeCombat;
+    const roundNumber = combat.round + 1;
+    
+    // Build text with current forces and last round results
+    let text = `Du: ${combat.committedRemaining} | Gegner: ${combat.enemyRemaining}`;
+    
+    if (combat.lastRound) {
+      text += `\n\nLetzte Runde: Du hast ${combat.lastRound.playerLosses} verloren, Gegner hat ${combat.lastRound.enemyLosses} verloren`;
+    }
+    
+    return {
+      id: state.currentRequestId,
+      title: `Kampf – Runde ${roundNumber}`,
+      text,
+      options: [
+        {
+          text: 'Weiterkämpfen',
+          effects: {},
+        },
+        {
+          text: 'Zurückziehen',
+          effects: {},
+        },
+      ],
+      advancesTick: false,
+    };
+  }
+  
+  // Check if this is a synthetic combat start request
+  if (state.currentRequestId.startsWith('COMBAT_START::')) {
+    return {
+      id: state.currentRequestId,
+      title: 'Combat Begins',
+      text: 'Your forces are ready. The battle is about to begin!',
+      options: [
+        {
+          text: 'Begin combat',
+          effects: {},
+        },
+      ],
+      advancesTick: false,
+    };
+  }
+  
+  // Check if this is a synthetic combat report request
+  if (state.currentRequestId.startsWith('COMBAT_REPORT::')) {
+    try {
+      const parts = state.currentRequestId.split('::');
+      if (!parts[2]) {
+        throw new Error('Missing report data');
+      }
+      
+      const reportDataStr = decodeURIComponent(parts[2]);
+      const reportData = JSON.parse(reportDataStr);
+      
+      if (!reportData.outcome || !reportData.statDeltas) {
+        throw new Error('Invalid report data');
+      }
+      
+      // Build outcome text
+      let outcomeText = '';
+      if (reportData.outcome === 'win') {
+        outcomeText = 'Sieg!';
+      } else if (reportData.outcome === 'withdraw') {
+        outcomeText = 'Rückzug';
+      } else {
+        outcomeText = 'Niederlage';
+      }
+      
+      // Build losses text
+      const lossesText = `Verluste: Du ${reportData.playerLosses || 0}, Gegner ${reportData.enemyLosses || 0}`;
+      
+      // Build consequences text
+      const statLabels: Record<string, string> = {
+        gold: 'Gold',
+        satisfaction: 'Zufriedenheit',
+        health: 'Gesundheit',
+        fireRisk: 'Brandrisiko',
+        farmers: 'Bauern',
+        landForces: 'Landstreitkräfte',
+      };
+      
+      const consequences: string[] = [];
+      for (const [key, label] of Object.entries(statLabels)) {
+        const delta = reportData.statDeltas[key];
+        if (delta !== undefined && delta !== 0) {
+          consequences.push(`${label}: ${delta > 0 ? '+' : ''}${delta}`);
+        }
+      }
+      
+      const consequencesText = consequences.length > 0 
+        ? `\n\nFolgen:\n${consequences.join('\n')}`
+        : '';
+      
+      return {
+        id: state.currentRequestId,
+        title: 'Kampfbericht',
+        text: `${outcomeText}\n\n${lossesText}${consequencesText}`,
+        options: [
+          {
+            text: 'Verstanden',
+            effects: {},
+          },
+          {
+            text: 'Weiter',
+            effects: {},
+          },
+        ],
+        advancesTick: false,
+      };
+    } catch (error) {
+      console.error('Failed to parse combat report:', error);
+      return {
+        id: state.currentRequestId,
+        title: 'Kampfbericht',
+        text: 'Der Kampf ist beendet.',
+        options: [
+          {
+            text: 'Verstanden',
+            effects: {},
+          },
+          {
+            text: 'Weiter',
+            effects: {},
+          },
+        ],
+        advancesTick: false,
+      };
+    }
+  }
+  
+  // Regular request - look it up in the arrays
+  return [...needRequests, ...infoRequests, ...eventRequests].find(
+    (r) => r.id === state.currentRequestId
+  ) || null;
+}
+
+/**
  * Initialize the game with the first request
  */
 export function initializeGame(): GameState {
