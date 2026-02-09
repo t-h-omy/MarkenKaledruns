@@ -30,7 +30,7 @@ export interface LogEntry {
   tick: number;
   requestId: string;
   optionText: string;
-  source: 'Request Decision' | 'Tax Income' | 'Population Growth';
+  source: 'Request Decision' | 'Tax Income' | 'Population Growth' | 'Combat Commit';
   deltas: {
     gold?: number;
     satisfaction?: number;
@@ -563,17 +563,79 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     const beforeStats = { ...state.stats };
     const newLog: LogEntry[] = [];
 
-    // 1. Apply option effects using the new pipeline
-    // Use need modifiers for event requests (not for need or info requests)
-    const isEventRequest = eventRequests.some(r => r.id === state.currentRequestId);
-    const modifiersToUse = isEventRequest ? needModifiers : [];
-    const { stats: statsFromPipeline, needs, appliedChanges } = applyOptionWithModifiers(
-      state, 
-      currentRequest, 
-      action.optionIndex,
-      modifiersToUse
-    );
-    let stats = statsFromPipeline;
+    // Handle combat commit for Option A (fight) when combat exists
+    const scheduledCombats = [...state.scheduledCombats];
+    let stats = { ...state.stats };
+    let needs = { ...state.needs };
+    let appliedChanges: AppliedChange[] = [];
+    
+    if (currentRequest.combat && action.optionIndex === 0) {
+      // Option A = fight for combat requests
+      const combatCommit = action.combatCommit;
+      
+      // Validate combatCommit
+      if (!combatCommit || combatCommit < 1 || combatCommit > state.stats.landForces) {
+        console.error('Invalid combatCommit:', combatCommit, 'Available forces:', state.stats.landForces);
+        return state; // Invalid commit, abort
+      }
+      
+      // Immediately reserve forces by subtracting from available landForces
+      stats.landForces = state.stats.landForces - combatCommit;
+      
+      // Calculate random delay for combat start
+      const { prepDelayMinTicks, prepDelayMaxTicks } = currentRequest.combat;
+      const delayRange = prepDelayMaxTicks - prepDelayMinTicks;
+      const delay = prepDelayMinTicks + Math.floor(getRandomValue() * (delayRange + 1));
+      const dueTick = state.tick + delay;
+      
+      // Generate unique combat ID
+      const combatId = `${currentRequest.id}-${state.tick}-${Date.now()}`;
+      
+      // Create scheduled combat entry
+      const newScheduledCombat = {
+        combatId,
+        originRequestId: currentRequest.id,
+        dueTick,
+        scheduledAtTick: state.tick,
+        enemyForces: currentRequest.combat.enemyForces,
+        committedForces: combatCommit,
+        onWin: currentRequest.combat.onWin,
+        onLose: currentRequest.combat.onLose,
+        followUpsOnWin: currentRequest.combat.followUpsOnWin,
+        followUpsOnLose: currentRequest.combat.followUpsOnLose,
+      };
+      
+      scheduledCombats.push(newScheduledCombat);
+      
+      // Add log entry for combat commitment
+      newLog.push({
+        tick: state.tick,
+        requestId: currentRequest.id,
+        optionText: option.text,
+        source: 'Combat Commit',
+        deltas: {
+          landForces: -combatCommit,
+        },
+      });
+      
+      // For combat commits, we don't apply the normal option effects
+      // The combat resolution will apply onWin or onLose effects later
+      needs = state.needs;
+    } else {
+      // Normal path: Apply option effects using the pipeline
+      // Use need modifiers for event requests (not for need or info requests)
+      const isEventRequest = eventRequests.some(r => r.id === state.currentRequestId);
+      const modifiersToUse = isEventRequest ? needModifiers : [];
+      const result = applyOptionWithModifiers(
+        state, 
+        currentRequest, 
+        action.optionIndex,
+        modifiersToUse
+      );
+      stats = result.stats;
+      needs = result.needs;
+      appliedChanges = result.appliedChanges;
+    }
 
     // Sync need-based unlock tokens with current needs state
     const unlocks = syncNeedUnlockTokens(needs, state.unlocks);
@@ -644,23 +706,25 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       }
     }
 
-    // Create log entry for request decision
-    // Filter appliedChanges to only include need modifiers (not base effects)
-    const needModifierChanges = appliedChanges.filter(change => 
-      change.source.startsWith('need:')
-    );
-    
-    const requestLogEntry = createLogEntry(
-      state.tick,
-      state.currentRequestId,
-      option.text,
-      'Request Decision',
-      beforeStats,
-      stats,
-      needModifierChanges.length > 0 ? needModifierChanges : undefined
-    );
-    if (Object.keys(requestLogEntry.deltas).length > 0) {
-      newLog.push(requestLogEntry);
+    // Create log entry for request decision (skip for combat commits as they have their own log)
+    if (!(currentRequest.combat && action.optionIndex === 0)) {
+      // Filter appliedChanges to only include need modifiers (not base effects)
+      const needModifierChanges = appliedChanges.filter(change => 
+        change.source.startsWith('need:')
+      );
+      
+      const requestLogEntry = createLogEntry(
+        state.tick,
+        state.currentRequestId,
+        option.text,
+        'Request Decision',
+        beforeStats,
+        stats,
+        needModifierChanges.length > 0 ? needModifierChanges : undefined
+      );
+      if (Object.keys(requestLogEntry.deltas).length > 0) {
+        newLog.push(requestLogEntry);
+      }
     }
 
     // Schedule follow-up events if any are triggered by this option
@@ -719,7 +783,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         chainStatus,
         requestTriggerCounts,
         unlocks,
-        scheduledCombats: state.scheduledCombats,
+        scheduledCombats,
       };
     }
 
@@ -741,7 +805,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         chainStatus,
         requestTriggerCounts,
         unlocks,
-        scheduledCombats: state.scheduledCombats,
+        scheduledCombats,
       });
 
       // Return state with same tick, updated stats/needs/unlocks/log, new request
@@ -759,7 +823,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         chainStatus,
         requestTriggerCounts,
         unlocks,
-        scheduledCombats: state.scheduledCombats,
+        scheduledCombats,
       };
     }
 
@@ -844,7 +908,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         chainStatus,
         requestTriggerCounts,
         unlocks,
-        scheduledCombats: state.scheduledCombats,
+        scheduledCombats,
       };
     }
 
@@ -863,7 +927,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       chainStatus,
       requestTriggerCounts,
       unlocks,
-      scheduledCombats: state.scheduledCombats,
+      scheduledCombats,
     });
 
     // 5. Increment tick and update state
@@ -881,7 +945,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       chainStatus,
       requestTriggerCounts,
       unlocks,
-      scheduledCombats: state.scheduledCombats,
+      scheduledCombats,
     };
   }
 
