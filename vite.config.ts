@@ -2,6 +2,10 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
+// Read version from package.json
+import { readFileSync } from 'fs'
+const packageJson = JSON.parse(readFileSync('./package.json', 'utf-8'))
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
@@ -28,4 +32,7 @@ export default defineConfig({
     })
   ],
   base: '/MarkenKaledruns/',
+  define: {
+    'import.meta.env.VITE_APP_VERSION': JSON.stringify(packageJson.version)
+  }
 })

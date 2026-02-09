@@ -840,3 +840,26 @@
     max-height: 10rem;
   }
 }
+
+/* Version footer */
+.version-footer {
+  position: fixed;
+  bottom: 0.5rem;
+  right: 0.5rem;
+  font-size: 0.75rem;
+  color: #666;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-family: monospace;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+@media (max-width: 768px) {
+  .version-footer {
+    bottom: 0.25rem;
+    right: 0.25rem;
+    font-size: 0.7rem;
+  }
+}
