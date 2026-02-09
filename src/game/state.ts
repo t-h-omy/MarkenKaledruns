@@ -667,8 +667,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       // Combat resolution logic:
       // 1. M = min(committedRemaining, enemyRemaining)
       // 2. Each side has M forces in direct combat, extras distributed evenly
-      // 3. Each force rolls 1d6, take max per side in each match
-      // 4. Compare max rolls; loser loses 1 force; tie = no loss
+      // 3. Each match: one force from each side rolls 1d6
+      // 4. Compare rolls; loser loses 1 force; tie = no loss
       
       const M = Math.min(combat.committedRemaining, combat.enemyRemaining);
       let playerLosses = 0;

@@ -161,7 +161,7 @@ export function pickNextRequest(
       let text = `Du: ${combat.committedRemaining} | Gegner: ${combat.enemyRemaining}`;
       
       if (combat.lastRound) {
-        text += `\n\nLetzte Runde: Du verlierst ${combat.lastRound.playerLosses}, Gegner verliert ${combat.lastRound.enemyLosses}`;
+        text += `\n\nLetzte Runde: Du hast ${combat.lastRound.playerLosses} verloren, Gegner hat ${combat.lastRound.enemyLosses} verloren`;
       }
       
       // Create synthetic combat round request
