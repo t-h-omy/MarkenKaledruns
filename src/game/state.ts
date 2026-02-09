@@ -632,7 +632,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
               const delayRange = followUp.delayMaxTicks - followUp.delayMinTicks;
               const delay = followUp.delayMinTicks + Math.floor(getRandomValue() * (delayRange + 1));
               scheduledEvents.push({
-                targetTick: state.tick + 1 + delay,
+                targetTick: state.tick + delay,
                 requestId: selectedCandidate.requestId,
                 scheduledAtTick: state.tick,
               });
@@ -689,8 +689,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       }
       
       // Update combat state
-      const newCommittedRemaining = combat.committedRemaining - playerLosses;
-      const newEnemyRemaining = combat.enemyRemaining - enemyLosses;
+      const newCommittedRemaining = Math.max(0, combat.committedRemaining - playerLosses);
+      const newEnemyRemaining = Math.max(0, combat.enemyRemaining - enemyLosses);
       
       // Check for combat end conditions
       let combatEnded = false;
@@ -735,7 +735,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
                 const delayRange = followUp.delayMaxTicks - followUp.delayMinTicks;
                 const delay = followUp.delayMinTicks + Math.floor(getRandomValue() * (delayRange + 1));
                 scheduledEvents.push({
-                  targetTick: state.tick + 1 + delay,
+                  targetTick: state.tick + delay,
                   requestId: selectedCandidate.requestId,
                   scheduledAtTick: state.tick,
                 });
@@ -760,7 +760,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
                 const delayRange = followUp.delayMaxTicks - followUp.delayMinTicks;
                 const delay = followUp.delayMinTicks + Math.floor(getRandomValue() * (delayRange + 1));
                 scheduledEvents.push({
-                  targetTick: state.tick + 1 + delay,
+                  targetTick: state.tick + delay,
                   requestId: selectedCandidate.requestId,
                   scheduledAtTick: state.tick,
                 });
