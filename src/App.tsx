@@ -213,11 +213,6 @@ function App() {
           </div>
         </div>
 
-         {/* Debug: Tick Counter */}
-         <div style={{ position: 'fixed', top: '10px', right: '10px', backgroundColor: 'rgba(0,0,0,0.5)', color: '#0f0', padding: '8px 12px', borderRadius: '4px', fontFamily: 'monospace', fontSize: '12px', zIndex: 1000 }}>
-           Tick: {gameState.tick}
-         </div>
-
         {/* Bankruptcy Warning */}
         {showBankruptcyWarning && !gameState.gameOver && (
           <div className="bankruptcy-warning">
