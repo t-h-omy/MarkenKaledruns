@@ -3,7 +3,7 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches:
-      - main
+      - '**'  # Trigger on push to all branches
 
 permissions:
   contents: read
@@ -11,8 +11,8 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
-  cancel-in-progress: false
+  group: pages
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -32,6 +32,8 @@ jobs:
       
       - name: Build
         run: npm run build
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
       
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

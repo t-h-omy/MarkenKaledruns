@@ -2,6 +2,25 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
+// Read version from package.json
+import { readFileSync } from 'fs'
+const packageJson = JSON.parse(readFileSync('./package.json', 'utf-8'))
+
+// Derive base path from GitHub repository name
+// In GitHub Actions: process.env.GITHUB_REPOSITORY = "owner/repo"
+// For local dev, fallback to hardcoded repo name
+const getBasePath = () => {
+  const repo = process.env.GITHUB_REPOSITORY
+  if (repo) {
+    const repoName = repo.split('/')[1]
+    return `/${repoName}/`
+  }
+  // Fallback for local development
+  return '/MarkenKaledruns/'
+}
+
+const basePath = getBasePath()
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
@@ -12,7 +31,7 @@ export default defineConfig({
       manifest: {
         name: 'React PWA',
         short_name: 'ReactPWA',
-        start_url: '/MarkenKaledruns/',
+        start_url: basePath,
         description: 'A Progressive Web App built with React, TypeScript, and Vite',
         theme_color: '#1a1a1a',
         background_color: '#1a1a1a',
@@ -27,5 +46,8 @@ export default defineConfig({
       }
     })
   ],
-  base: '/MarkenKaledruns/',
+  base: basePath,
+  define: {
+    'import.meta.env.VITE_APP_VERSION': JSON.stringify(packageJson.version)
+  }
 })

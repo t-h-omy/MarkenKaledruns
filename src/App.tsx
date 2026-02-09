@@ -461,6 +461,11 @@ function App() {
             )}
           </div>
         </div>
+        
+        {/* Version display */}
+        <div className="version-footer">
+          v{import.meta.env.VITE_APP_VERSION || '1.0.0'}
+        </div>
       </div>
     </div>
   )

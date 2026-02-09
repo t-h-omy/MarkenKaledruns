@@ -290,11 +290,11 @@ export const eventRequests: Request[] = [
         effects: {},
       },
       {
-        text: 'DO NOT FIGHT',
+        text: 'SURRENDER',
         effects: {
-          gold: -30,
-          satisfaction: -5,
-          farmers: -8,
+          gold: -25,
+          satisfaction: -4,
+          farmers: -3,
         },
       },
     ],
@@ -968,7 +968,7 @@ export const eventRequests: Request[] = [
     },
     options: [
       { text: 'HOLD THE LINE', effects: {} },
-      { text: 'RISKY CHARGE', effects: { landForces: -8, gold: 15 } },
+      { text: 'RETREAT NOW', effects: { satisfaction: -2 } },
     ],
   },
 
@@ -1139,8 +1139,11 @@ export const eventRequests: Request[] = [
         effects: {} 
       },
       { 
-        text: 'RETREAT', 
-        effects: {} 
+        text: 'PAY TRIBUTE', 
+        effects: { 
+          gold: -25,
+          satisfaction: -5
+        } 
       },
     ],
   },
