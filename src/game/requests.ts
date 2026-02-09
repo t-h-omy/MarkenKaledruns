@@ -1140,10 +1140,7 @@ export const eventRequests: Request[] = [
       },
       { 
         text: 'RETREAT', 
-        effects: {
-          satisfaction: -5,
-          gold: -15,
-        } 
+        effects: {} 
       },
     ],
   },
