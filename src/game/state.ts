@@ -95,6 +95,10 @@ export interface ActiveCombat {
   enemyRemaining: number;
   /** Remaining committed player forces */
   committedRemaining: number;
+  /** Initial enemy forces (for loss calculation) */
+  initialEnemyForces: number;
+  /** Initial committed player forces (for loss calculation) */
+  initialCommittedForces: number;
   /** Current round number */
   round: number;
   /** Results from the last combat round */
@@ -534,6 +538,122 @@ function removeScheduledEvent(
 }
 
 /**
+ * Schedules a combat report info request to appear immediately
+ * @param combat The active combat that just ended
+ * @param outcome The combat outcome: 'win', 'lose', or 'withdraw'
+ * @param statsBefore Stats before applying effects
+ * @param statsAfter Stats after applying effects
+ * @param currentTick Current game tick
+ * @param scheduledEvents Existing scheduled events
+ * @returns Updated scheduled events array with combat report added
+ */
+function scheduleCombatReport(
+  combat: ActiveCombat,
+  outcome: 'win' | 'lose' | 'withdraw',
+  statsBefore: Stats,
+  statsAfter: Stats,
+  currentTick: number,
+  scheduledEvents: ScheduledEvent[]
+): ScheduledEvent[] {
+  const updatedScheduledEvents = [...scheduledEvents];
+  
+  // Calculate total losses
+  const playerLosses = combat.initialCommittedForces - combat.committedRemaining;
+  const enemyLosses = combat.initialEnemyForces - combat.enemyRemaining;
+  
+  // Store outcome and losses in the combat report ID for retrieval
+  const reportData = {
+    outcome,
+    playerLosses,
+    enemyLosses,
+    statDeltas: {
+      gold: statsAfter.gold - statsBefore.gold,
+      satisfaction: statsAfter.satisfaction - statsBefore.satisfaction,
+      health: statsAfter.health - statsBefore.health,
+      fireRisk: statsAfter.fireRisk - statsBefore.fireRisk,
+      farmers: statsAfter.farmers - statsBefore.farmers,
+      landForces: statsAfter.landForces - statsBefore.landForces,
+    },
+  };
+  
+  // Encode data as JSON in the combat report ID
+  const reportId = `COMBAT_REPORT::${combat.combatId}::${encodeURIComponent(JSON.stringify(reportData))}`;
+  
+  // Schedule immediately with info priority
+  updatedScheduledEvents.push({
+    targetTick: currentTick,
+    requestId: reportId,
+    scheduledAtTick: currentTick,
+    priority: 'info',
+  });
+  
+  return updatedScheduledEvents;
+}
+
+/**
+ * Validates and logs force accounting for development/debugging
+ * This helps catch issues with multiple parallel combats
+ */
+function validateForceAccounting(
+  state: GameState,
+  context: string,
+  previousState?: GameState
+): void {
+  // Calculate reserved forces in scheduled combats
+  const reservedInScheduled = state.scheduledCombats.reduce(
+    (sum, combat) => sum + combat.committedForces,
+    0
+  );
+  
+  // Calculate reserved forces in active combat
+  const reservedInActive = state.activeCombat ? state.activeCombat.committedRemaining : 0;
+  
+  // Total forces = available + reserved
+  const totalForces = state.stats.landForces + reservedInScheduled + reservedInActive;
+  
+  // Calculate previous total if provided
+  let previousTotal: number | undefined;
+  if (previousState) {
+    const prevReservedInScheduled = previousState.scheduledCombats.reduce(
+      (sum, combat) => sum + combat.committedForces,
+      0
+    );
+    const prevReservedInActive = previousState.activeCombat ? previousState.activeCombat.committedRemaining : 0;
+    previousTotal = previousState.stats.landForces + prevReservedInScheduled + prevReservedInActive;
+  }
+  
+  // Log force accounting details
+  console.log(`[Force Accounting] ${context}:`, {
+    available: state.stats.landForces,
+    reservedInScheduled,
+    reservedInActive,
+    totalForces,
+    previousTotal,
+    delta: previousTotal !== undefined ? totalForces - previousTotal : 'N/A',
+    scheduledCombatsCount: state.scheduledCombats.length,
+    hasActiveCombat: !!state.activeCombat,
+  });
+  
+  // Assertion: landForces should never be negative
+  if (state.stats.landForces < 0) {
+    const errorMsg = `[Force Accounting ERROR] Negative landForces detected at ${context}: ${state.stats.landForces}`;
+    console.error(errorMsg);
+    // Log stack trace for debugging
+    console.trace('Negative landForces stack trace:');
+  }
+  
+  // Warning: total forces shouldn't change without explanation
+  if (previousTotal !== undefined && Math.abs(totalForces - previousTotal) > 0.1) {
+    const delta = totalForces - previousTotal;
+    // Only warn if forces increased (shouldn't happen) or decreased unexpectedly
+    // Combat losses are expected, so we only warn on increases
+    if (delta > 0) {
+      console.warn(`[Force Accounting WARNING] Total forces INCREASED unexpectedly at ${context}. Previous: ${previousTotal}, Current: ${totalForces}, Delta: ${delta}`);
+    }
+  }
+}
+
+/**
  * Main reducer function for game state
  */
 export function gameReducer(state: GameState, action: GameAction): GameState {
@@ -543,7 +663,385 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return state;
     }
 
-    // Find the current request
+    // Check if this is a synthetic COMBAT_START request
+    const isCombatStart = state.currentRequestId.startsWith('COMBAT_START::');
+    
+    if (isCombatStart) {
+      // Extract combat ID from synthetic request ID
+      const combatId = state.currentRequestId.replace('COMBAT_START::', '');
+      
+      // Validate force accounting before combat start
+      validateForceAccounting(state, `Before Combat Start (${combatId})`);
+      
+      // Find the scheduled combat
+      const scheduledCombat = state.scheduledCombats.find(c => c.combatId === combatId);
+      
+      if (!scheduledCombat) {
+        console.error('Combat start failed: scheduled combat not found for ID:', combatId, '. Maintaining current state.');
+        return state;
+      }
+      
+      console.log(`[Combat Start] Starting combat ${combatId}:`, {
+        committedForces: scheduledCombat.committedForces,
+        enemyForces: scheduledCombat.enemyForces,
+        dueTick: scheduledCombat.dueTick,
+        scheduledAtTick: scheduledCombat.scheduledAtTick,
+      });
+      
+      // Move scheduled combat to active combat
+      const activeCombat: ActiveCombat = {
+        combatId: scheduledCombat.combatId,
+        originRequestId: scheduledCombat.originRequestId,
+        enemyRemaining: scheduledCombat.enemyForces,
+        committedRemaining: scheduledCombat.committedForces,
+        initialEnemyForces: scheduledCombat.enemyForces,
+        initialCommittedForces: scheduledCombat.committedForces,
+        round: 0,
+        onWin: scheduledCombat.onWin,
+        onLose: scheduledCombat.onLose,
+        followUpsOnWin: scheduledCombat.followUpsOnWin,
+        followUpsOnLose: scheduledCombat.followUpsOnLose,
+      };
+      
+      // Remove from scheduled combats - this is critical for proper force accounting
+      const updatedScheduledCombats = state.scheduledCombats.filter(c => c.combatId !== combatId);
+      
+      // Verify the combat was removed (assertion)
+      if (updatedScheduledCombats.length !== state.scheduledCombats.length - 1) {
+        console.error(`[Combat Start ERROR] Failed to remove scheduled combat ${combatId}. Before: ${state.scheduledCombats.length}, After: ${updatedScheduledCombats.length}`);
+      }
+      
+      // Pick next request with the same tick (combat start is tickless)
+      const nextRequest = pickNextRequest({
+        ...state,
+        tick: state.tick,
+        activeCombat,
+        scheduledCombats: updatedScheduledCombats,
+      });
+      
+      const newState = {
+        ...state,
+        currentRequestId: nextRequest.id,
+        lastRequestId: state.currentRequestId,
+        activeCombat,
+        scheduledCombats: updatedScheduledCombats,
+      };
+      
+      // Validate force accounting after combat start
+      validateForceAccounting(newState, `After Combat Start (${combatId})`, state);
+      
+      return newState;
+    }
+    
+    // Check if this is a synthetic COMBAT_REPORT request
+    const isCombatReport = state.currentRequestId.startsWith('COMBAT_REPORT::');
+    
+    if (isCombatReport) {
+      // Combat report is a tickless info request - both options just acknowledge
+      // Pick next request with the same tick (tickless)
+      const nextRequest = pickNextRequest({
+        ...state,
+        tick: state.tick,
+      });
+      
+      return {
+        ...state,
+        tick: state.tick, // Same tick - combat report is tickless
+        currentRequestId: nextRequest.id,
+        lastRequestId: state.currentRequestId,
+      };
+    }
+    
+    // Check if this is a synthetic COMBAT_ROUND request
+    const isCombatRound = state.currentRequestId.startsWith('COMBAT_ROUND::');
+    
+    if (isCombatRound) {
+      // Extract combat ID from synthetic request ID
+      const combatId = state.currentRequestId.replace('COMBAT_ROUND::', '');
+      
+      // Verify we have an active combat
+      if (!state.activeCombat || state.activeCombat.combatId !== combatId) {
+        console.error('Combat round failed: no matching active combat for ID:', combatId, '. Maintaining current state.');
+        return state;
+      }
+      
+      const combat = state.activeCombat;
+      
+      // Option B (index 1) = Withdraw = immediate lose
+      if (action.optionIndex === 1) {
+        // Withdraw = lose
+        console.log(`[Combat Withdraw] Combat ${combat.combatId}:`, {
+          committedForces: combat.committedRemaining,
+          forfeitedForces: combat.committedRemaining,
+        });
+        
+        const statsBefore = { ...state.stats };
+        let stats = { ...state.stats };
+        let needs = { ...state.needs };
+        let scheduledEvents = [...state.scheduledEvents];
+        
+        // Apply lose effects if any
+        if (combat.onLose) {
+          const result = applyEffects(stats, needs, combat.onLose);
+          stats = result.stats;
+          needs = result.needs;
+        }
+        
+        // Clamp stats
+        stats = clampStats(stats);
+        
+        // Schedule follow-up events on lose if any
+        if (combat.followUpsOnLose) {
+          for (const followUp of combat.followUpsOnLose) {
+            const selectedCandidate = selectWeightedCandidate(followUp.candidates);
+            if (selectedCandidate) {
+              const delayRange = followUp.delayMaxTicks - followUp.delayMinTicks;
+              const delay = followUp.delayMinTicks + Math.floor(getRandomValue() * (delayRange + 1));
+              scheduledEvents.push({
+                targetTick: state.tick + delay,
+                requestId: selectedCandidate.requestId,
+                scheduledAtTick: state.tick,
+              });
+            }
+          }
+        }
+        
+        // Schedule combat report
+        scheduledEvents = scheduleCombatReport(
+          combat,
+          'withdraw',
+          statsBefore,
+          stats,
+          state.tick,
+          scheduledEvents
+        );
+        
+        // Clear active combat
+        // Pick next request (tickless)
+        const nextRequest = pickNextRequest({
+          ...state,
+          tick: state.tick,
+          stats,
+          needs,
+          activeCombat: undefined,
+          scheduledEvents,
+        });
+        
+        const newState = {
+          ...state,
+          tick: state.tick, // Same tick - combat is tickless
+          stats,
+          needs,
+          currentRequestId: nextRequest.id,
+          lastRequestId: state.currentRequestId,
+          activeCombat: undefined,
+          scheduledEvents,
+        };
+        
+        // Validate force accounting after withdrawal
+        validateForceAccounting(newState, `After Combat Withdraw (${combat.combatId})`, state);
+        
+        return newState;
+      }
+      
+      // Option A (index 0) = Fight = resolve one combat round
+      // Combat resolution logic:
+      // 1. M = min(committedRemaining, enemyRemaining)
+      // 2. Each side has M forces in direct combat, extras distributed evenly
+      // 3. Each match: one force from each side rolls 1d6
+      // 4. Compare rolls; loser loses 1 force; tie = no loss
+      
+      const M = Math.min(combat.committedRemaining, combat.enemyRemaining);
+      let playerLosses = 0;
+      let enemyLosses = 0;
+      
+      // Resolve M matches
+      for (let i = 0; i < M; i++) {
+        // Roll 1d6 for player and enemy
+        const playerRoll = Math.floor(getRandomValue() * 6) + 1;
+        const enemyRoll = Math.floor(getRandomValue() * 6) + 1;
+        
+        if (playerRoll > enemyRoll) {
+          enemyLosses++;
+        } else if (enemyRoll > playerRoll) {
+          playerLosses++;
+        }
+        // Tie = no loss
+      }
+      
+      // Update combat state
+      const newCommittedRemaining = Math.max(0, combat.committedRemaining - playerLosses);
+      const newEnemyRemaining = Math.max(0, combat.enemyRemaining - enemyLosses);
+      
+      // Check for combat end conditions
+      let combatEnded = false;
+      let playerWon = false;
+      
+      if (newCommittedRemaining <= 0 && newEnemyRemaining <= 0) {
+        // Both sides eliminated - player loses (conservative)
+        combatEnded = true;
+        playerWon = false;
+      } else if (newCommittedRemaining <= 0) {
+        // Player forces eliminated - lose
+        combatEnded = true;
+        playerWon = false;
+      } else if (newEnemyRemaining <= 0) {
+        // Enemy forces eliminated - win
+        combatEnded = true;
+        playerWon = true;
+      }
+      
+      if (combatEnded) {
+        // Combat is over - apply win/lose effects
+        const statsBefore = { ...state.stats };
+        let stats = { ...state.stats };
+        let needs = { ...state.needs };
+        let scheduledEvents = [...state.scheduledEvents];
+        
+        // Update combat state with final force counts for report
+        const updatedCombat: ActiveCombat = {
+          ...combat,
+          committedRemaining: newCommittedRemaining,
+          enemyRemaining: newEnemyRemaining,
+        };
+        
+        if (playerWon) {
+          // Return surviving forces to player
+          const survivorsReturned = newCommittedRemaining;
+          stats.landForces += survivorsReturned;
+          
+          console.log(`[Combat End - WIN] Combat ${combat.combatId}:`, {
+            survivorsReturned,
+            initialCommittedForces: combat.initialCommittedForces,
+            playerLosses: combat.initialCommittedForces - survivorsReturned,
+            enemyLosses: combat.initialEnemyForces,
+            newLandForces: stats.landForces,
+          });
+          
+          // Apply win effects if any
+          if (combat.onWin) {
+            const result = applyEffects(stats, needs, combat.onWin);
+            stats = result.stats;
+            needs = result.needs;
+          }
+          
+          // Schedule follow-up events on win if any
+          if (combat.followUpsOnWin) {
+            for (const followUp of combat.followUpsOnWin) {
+              const selectedCandidate = selectWeightedCandidate(followUp.candidates);
+              if (selectedCandidate) {
+                const delayRange = followUp.delayMaxTicks - followUp.delayMinTicks;
+                const delay = followUp.delayMinTicks + Math.floor(getRandomValue() * (delayRange + 1));
+                scheduledEvents.push({
+                  targetTick: state.tick + delay,
+                  requestId: selectedCandidate.requestId,
+                  scheduledAtTick: state.tick,
+                });
+              }
+            }
+          }
+        } else {
+          // Player lost - no forces returned
+          console.log(`[Combat End - LOSE] Combat ${combat.combatId}:`, {
+            survivorsReturned: 0,
+            initialCommittedForces: combat.initialCommittedForces,
+            playerLosses: combat.initialCommittedForces,
+            enemyLosses: combat.initialEnemyForces - newEnemyRemaining,
+          });
+          
+          // Apply lose effects if any
+          if (combat.onLose) {
+            const result = applyEffects(stats, needs, combat.onLose);
+            stats = result.stats;
+            needs = result.needs;
+          }
+          
+          // Schedule follow-up events on lose if any
+          if (combat.followUpsOnLose) {
+            for (const followUp of combat.followUpsOnLose) {
+              const selectedCandidate = selectWeightedCandidate(followUp.candidates);
+              if (selectedCandidate) {
+                const delayRange = followUp.delayMaxTicks - followUp.delayMinTicks;
+                const delay = followUp.delayMinTicks + Math.floor(getRandomValue() * (delayRange + 1));
+                scheduledEvents.push({
+                  targetTick: state.tick + delay,
+                  requestId: selectedCandidate.requestId,
+                  scheduledAtTick: state.tick,
+                });
+              }
+            }
+          }
+        }
+        
+        // Clamp stats
+        stats = clampStats(stats);
+        
+        // Schedule combat report
+        scheduledEvents = scheduleCombatReport(
+          updatedCombat,
+          playerWon ? 'win' : 'lose',
+          statsBefore,
+          stats,
+          state.tick,
+          scheduledEvents
+        );
+        
+        // Clear active combat and pick next request (tickless)
+        const nextRequest = pickNextRequest({
+          ...state,
+          tick: state.tick,
+          stats,
+          needs,
+          activeCombat: undefined,
+          scheduledEvents,
+        });
+        
+        const newState = {
+          ...state,
+          tick: state.tick, // Same tick - combat is tickless
+          stats,
+          needs,
+          currentRequestId: nextRequest.id,
+          lastRequestId: state.currentRequestId,
+          activeCombat: undefined,
+          scheduledEvents,
+        };
+        
+        // Validate force accounting after combat end
+        validateForceAccounting(newState, `After Combat End (${combat.combatId})`, state);
+        
+        return newState;
+      } else {
+        // Combat continues - update active combat state
+        const updatedCombat: ActiveCombat = {
+          ...combat,
+          committedRemaining: newCommittedRemaining,
+          enemyRemaining: newEnemyRemaining,
+          round: combat.round + 1,
+          lastRound: {
+            playerLosses,
+            enemyLosses,
+          },
+        };
+        
+        // Pick next request (should be another combat round, tickless)
+        const nextRequest = pickNextRequest({
+          ...state,
+          tick: state.tick,
+          activeCombat: updatedCombat,
+        });
+        
+        return {
+          ...state,
+          tick: state.tick, // Same tick - combat is tickless
+          currentRequestId: nextRequest.id,
+          lastRequestId: state.currentRequestId,
+          activeCombat: updatedCombat,
+        };
+      }
+    }
+    
+    // Find the current request (non-synthetic)
     const currentRequest = [...needRequests, ...infoRequests, ...eventRequests].find(
       (r) => r.id === state.currentRequestId
     );

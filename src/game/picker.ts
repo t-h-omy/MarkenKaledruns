@@ -150,6 +150,40 @@ export function pickNextRequest(
     chainStatus = stateOrStats.chainStatus || {};
     requestTriggerCounts = stateOrStats.requestTriggerCounts || {};
     gameState = stateOrStats;
+    
+    // Priority 0: Active combat takes precedence over everything
+    // If there is an active combat, return a combat round request
+    if (stateOrStats.activeCombat) {
+      const combat = stateOrStats.activeCombat;
+      const roundNumber = combat.round + 1;
+      
+      // Build text with current forces and last round results
+      let text = `Du: ${combat.committedRemaining} | Gegner: ${combat.enemyRemaining}`;
+      
+      if (combat.lastRound) {
+        text += `\n\nLetzte Runde: Du hast ${combat.lastRound.playerLosses} verloren, Gegner hat ${combat.lastRound.enemyLosses} verloren`;
+      }
+      
+      // Create synthetic combat round request
+      const combatRoundRequest: Request = {
+        id: `COMBAT_ROUND::${combat.combatId}`,
+        title: `Kampf – Runde ${roundNumber}`,
+        text,
+        options: [
+          {
+            text: 'Weiterkämpfen',
+            effects: {}, // Combat resolution handled in state.ts
+          },
+          {
+            text: 'Zurückziehen',
+            effects: {}, // Immediate lose handled in state.ts
+          },
+        ],
+        advancesTick: false, // Combat rounds don't advance the tick
+      };
+      
+      return combatRoundRequest;
+    }
   } else {
     // Called with individual parameters (legacy support)
     stats = stateOrStats;
@@ -219,6 +253,100 @@ export function pickNextRequest(
       
       // Return the first event that hasn't exceeded maxTriggers and meets requirements
       for (const dueEvent of events) {
+        // Check if this is a synthetic COMBAT_REPORT request
+        if (dueEvent.requestId.startsWith('COMBAT_REPORT::')) {
+          try {
+            // Extract report data from the request ID
+            const parts = dueEvent.requestId.split('::');
+            if (!parts[2]) {
+              throw new Error('Missing report data in combat report ID');
+            }
+            
+            const reportDataStr = decodeURIComponent(parts[2]);
+            const reportData = JSON.parse(reportDataStr);
+            
+            // Validate report data structure
+            if (!reportData.outcome || !reportData.statDeltas) {
+              throw new Error('Invalid report data structure');
+            }
+            
+            // Build outcome text
+            let outcomeText = '';
+            if (reportData.outcome === 'win') {
+              outcomeText = 'Sieg!';
+            } else if (reportData.outcome === 'withdraw') {
+              outcomeText = 'Rückzug';
+            } else {
+              outcomeText = 'Niederlage';
+            }
+            
+            // Build losses text
+            const lossesText = `Verluste: Du ${reportData.playerLosses || 0}, Gegner ${reportData.enemyLosses || 0}`;
+            
+            // Build consequences text using a helper function to reduce duplication
+            const statLabels: Record<string, string> = {
+              gold: 'Gold',
+              satisfaction: 'Zufriedenheit',
+              health: 'Gesundheit',
+              fireRisk: 'Brandrisiko',
+              farmers: 'Bauern',
+              landForces: 'Landstreitkräfte',
+            };
+            
+            const consequences: string[] = [];
+            for (const [key, label] of Object.entries(statLabels)) {
+              const delta = reportData.statDeltas[key];
+              if (delta !== undefined && delta !== 0) {
+                consequences.push(`${label}: ${delta > 0 ? '+' : ''}${delta}`);
+              }
+            }
+            
+            const consequencesText = consequences.length > 0 
+              ? `\n\nFolgen:\n${consequences.join('\n')}`
+              : '';
+            
+            // Create synthetic combat report request
+            const combatReportRequest: Request = {
+              id: dueEvent.requestId,
+              title: 'Kampfbericht',
+              text: `${outcomeText}\n\n${lossesText}${consequencesText}`,
+              options: [
+                {
+                  text: 'Verstanden',
+                  effects: {},
+                },
+                {
+                  text: 'Weiter',
+                  effects: {},
+                },
+              ],
+              advancesTick: false, // Combat report is tickless
+            };
+            
+            return combatReportRequest;
+          } catch (error) {
+            console.error('Failed to parse combat report data:', error);
+            // Return a fallback combat report request
+            const fallbackRequest: Request = {
+              id: dueEvent.requestId,
+              title: 'Kampfbericht',
+              text: 'Der Kampf ist beendet.',
+              options: [
+                {
+                  text: 'Verstanden',
+                  effects: {},
+                },
+                {
+                  text: 'Weiter',
+                  effects: {},
+                },
+              ],
+              advancesTick: false,
+            };
+            return fallbackRequest;
+          }
+        }
+        
         const scheduledRequest = [...needRequests, ...infoRequests, ...eventRequests].find(
           (r) => r.id === dueEvent.requestId
         );
@@ -258,18 +386,76 @@ export function pickNextRequest(
     // If all scheduled requests exceeded maxTriggers or are locked, fall through to normal logic
   }
 
-  // Crisis requests by priority order
-  if (stats.fireRisk > 70) {
-    const crisisRequest = eventRequests.find((r) => r.id === 'EVT_CRISIS_FIRE');
-    if (crisisRequest && crisisRequest.id !== actualLastRequestId) return crisisRequest;
+  /**
+   * Helper function to check if any crisis event is currently eligible
+   * Crisis events are prioritized in this order: Fire > Disease > Unrest
+   */
+  const getEligibleCrisis = (): Request | null => {
+    if (stats.fireRisk > 70) {
+      const crisisRequest = eventRequests.find((r) => r.id === 'EVT_CRISIS_FIRE');
+      if (crisisRequest && crisisRequest.id !== actualLastRequestId) return crisisRequest;
+    }
+    if (stats.health < 30) {
+      const crisisRequest = eventRequests.find((r) => r.id === 'EVT_CRISIS_DISEASE');
+      if (crisisRequest && crisisRequest.id !== actualLastRequestId) return crisisRequest;
+    }
+    if (stats.satisfaction < 30) {
+      const crisisRequest = eventRequests.find((r) => r.id === 'EVT_CRISIS_UNREST');
+      if (crisisRequest && crisisRequest.id !== actualLastRequestId) return crisisRequest;
+    }
+    return null;
+  };
+
+  // Priority 2: Check for due combats and apply "crisis before combat start" rule
+  // Find all combats that are due (dueTick <= current tick)
+  const dueCombats = (gameState && gameState.scheduledCombats) 
+    ? gameState.scheduledCombats.filter(combat => combat.dueTick <= tick)
+    : [];
+  
+  if (dueCombats.length > 0) {
+    // Crisis takes priority over combat start
+    const eligibleCrisis = getEligibleCrisis();
+    if (eligibleCrisis) {
+      return eligibleCrisis;
+    }
+    
+    // No crisis eligible: return synthetic combat start request
+    // IMPORTANT: Sort by scheduledAtTick for FIFO ordering (earliest scheduled combat first)
+    // This ensures multiple parallel combats start in the order they were scheduled,
+    // maintaining correct force accounting and preventing race conditions
+    dueCombats.sort((a, b) => a.scheduledAtTick - b.scheduledAtTick);
+    const firstDueCombat = dueCombats[0];
+    
+    console.log(`[Combat Selection] Selected combat for start:`, {
+      combatId: firstDueCombat.combatId,
+      scheduledAtTick: firstDueCombat.scheduledAtTick,
+      dueTick: firstDueCombat.dueTick,
+      committedForces: firstDueCombat.committedForces,
+      totalDueCombats: dueCombats.length,
+    });
+    
+    // Create synthetic request for combat start
+    // This synthetic request will be handled by state.ts to activate the combat
+    const combatStartRequest: Request = {
+      id: `COMBAT_START::${firstDueCombat.combatId}`,
+      title: 'Combat Begins',
+      text: 'Your forces are ready. The battle is about to begin!',
+      options: [
+        {
+          text: 'Begin combat',
+          effects: {}, // No immediate effects; state.ts will handle combat activation
+        },
+      ],
+      advancesTick: false, // Combat start is tickless, combat resolution advances ticks
+    };
+    
+    return combatStartRequest;
   }
-  if (stats.health < 30) {
-    const crisisRequest = eventRequests.find((r) => r.id === 'EVT_CRISIS_DISEASE');
-    if (crisisRequest && crisisRequest.id !== actualLastRequestId) return crisisRequest;
-  }
-  if (stats.satisfaction < 30) {
-    const crisisRequest = eventRequests.find((r) => r.id === 'EVT_CRISIS_UNREST');
-    if (crisisRequest && crisisRequest.id !== actualLastRequestId) return crisisRequest;
+
+  // Priority 3: Crisis requests by priority order (when no combat is due)
+  const crisisRequest = getEligibleCrisis();
+  if (crisisRequest) {
+    return crisisRequest;
   }
 
   // Check for required needs using the new cycle-based system
