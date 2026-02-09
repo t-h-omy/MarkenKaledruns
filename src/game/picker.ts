@@ -150,6 +150,40 @@ export function pickNextRequest(
     chainStatus = stateOrStats.chainStatus || {};
     requestTriggerCounts = stateOrStats.requestTriggerCounts || {};
     gameState = stateOrStats;
+    
+    // Priority 0: Active combat takes precedence over everything
+    // If there is an active combat, return a combat round request
+    if (stateOrStats.activeCombat) {
+      const combat = stateOrStats.activeCombat;
+      const roundNumber = combat.round + 1;
+      
+      // Build text with current forces and last round results
+      let text = `Du: ${combat.committedRemaining} | Gegner: ${combat.enemyRemaining}`;
+      
+      if (combat.lastRound) {
+        text += `\n\nLetzte Runde: Du verlierst ${combat.lastRound.playerLosses}, Gegner verliert ${combat.lastRound.enemyLosses}`;
+      }
+      
+      // Create synthetic combat round request
+      const combatRoundRequest: Request = {
+        id: `COMBAT_ROUND::${combat.combatId}`,
+        title: `Kampf – Runde ${roundNumber}`,
+        text,
+        options: [
+          {
+            text: 'Weiterkämpfen',
+            effects: {}, // Combat resolution handled in state.ts
+          },
+          {
+            text: 'Zurückziehen',
+            effects: {}, // Immediate lose handled in state.ts
+          },
+        ],
+        advancesTick: false, // Combat rounds don't advance the tick
+      };
+      
+      return combatRoundRequest;
+    }
   } else {
     // Called with individual parameters (legacy support)
     stats = stateOrStats;

@@ -592,6 +592,236 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       };
     }
     
+    // Check if this is a synthetic COMBAT_ROUND request
+    const isCombatRound = state.currentRequestId.startsWith('COMBAT_ROUND::');
+    
+    if (isCombatRound) {
+      // Extract combat ID from synthetic request ID
+      const combatId = state.currentRequestId.replace('COMBAT_ROUND::', '');
+      
+      // Verify we have an active combat
+      if (!state.activeCombat || state.activeCombat.combatId !== combatId) {
+        console.error('Combat round failed: no matching active combat for ID:', combatId, '. Maintaining current state.');
+        return state;
+      }
+      
+      const combat = state.activeCombat;
+      
+      // Option B (index 1) = Withdraw = immediate lose
+      if (action.optionIndex === 1) {
+        // Withdraw = lose
+        let stats = { ...state.stats };
+        let needs = { ...state.needs };
+        const scheduledEvents = [...state.scheduledEvents];
+        
+        // Apply lose effects if any
+        if (combat.onLose) {
+          const result = applyEffects(stats, needs, combat.onLose);
+          stats = result.stats;
+          needs = result.needs;
+        }
+        
+        // Clamp stats
+        stats = clampStats(stats);
+        
+        // Schedule follow-up events on lose if any
+        if (combat.followUpsOnLose) {
+          for (const followUp of combat.followUpsOnLose) {
+            const selectedCandidate = selectWeightedCandidate(followUp.candidates);
+            if (selectedCandidate) {
+              const delayRange = followUp.delayMaxTicks - followUp.delayMinTicks;
+              const delay = followUp.delayMinTicks + Math.floor(getRandomValue() * (delayRange + 1));
+              scheduledEvents.push({
+                targetTick: state.tick + 1 + delay,
+                requestId: selectedCandidate.requestId,
+                scheduledAtTick: state.tick,
+              });
+            }
+          }
+        }
+        
+        // Clear active combat
+        // Pick next request (tickless)
+        const nextRequest = pickNextRequest({
+          ...state,
+          tick: state.tick,
+          stats,
+          needs,
+          activeCombat: undefined,
+          scheduledEvents,
+        });
+        
+        return {
+          ...state,
+          tick: state.tick, // Same tick - combat is tickless
+          stats,
+          needs,
+          currentRequestId: nextRequest.id,
+          lastRequestId: state.currentRequestId,
+          activeCombat: undefined,
+          scheduledEvents,
+        };
+      }
+      
+      // Option A (index 0) = Fight = resolve one combat round
+      // Combat resolution logic:
+      // 1. M = min(committedRemaining, enemyRemaining)
+      // 2. Each side has M forces in direct combat, extras distributed evenly
+      // 3. Each force rolls 1d6, take max per side in each match
+      // 4. Compare max rolls; loser loses 1 force; tie = no loss
+      
+      const M = Math.min(combat.committedRemaining, combat.enemyRemaining);
+      let playerLosses = 0;
+      let enemyLosses = 0;
+      
+      // Resolve M matches
+      for (let i = 0; i < M; i++) {
+        // Roll 1d6 for player and enemy
+        const playerRoll = Math.floor(getRandomValue() * 6) + 1;
+        const enemyRoll = Math.floor(getRandomValue() * 6) + 1;
+        
+        if (playerRoll > enemyRoll) {
+          enemyLosses++;
+        } else if (enemyRoll > playerRoll) {
+          playerLosses++;
+        }
+        // Tie = no loss
+      }
+      
+      // Update combat state
+      const newCommittedRemaining = combat.committedRemaining - playerLosses;
+      const newEnemyRemaining = combat.enemyRemaining - enemyLosses;
+      
+      // Check for combat end conditions
+      let combatEnded = false;
+      let playerWon = false;
+      
+      if (newCommittedRemaining <= 0 && newEnemyRemaining <= 0) {
+        // Both sides eliminated - player loses (conservative)
+        combatEnded = true;
+        playerWon = false;
+      } else if (newCommittedRemaining <= 0) {
+        // Player forces eliminated - lose
+        combatEnded = true;
+        playerWon = false;
+      } else if (newEnemyRemaining <= 0) {
+        // Enemy forces eliminated - win
+        combatEnded = true;
+        playerWon = true;
+      }
+      
+      if (combatEnded) {
+        // Combat is over - apply win/lose effects
+        let stats = { ...state.stats };
+        let needs = { ...state.needs };
+        const scheduledEvents = [...state.scheduledEvents];
+        
+        if (playerWon) {
+          // Return surviving forces to player
+          stats.landForces += newCommittedRemaining;
+          
+          // Apply win effects if any
+          if (combat.onWin) {
+            const result = applyEffects(stats, needs, combat.onWin);
+            stats = result.stats;
+            needs = result.needs;
+          }
+          
+          // Schedule follow-up events on win if any
+          if (combat.followUpsOnWin) {
+            for (const followUp of combat.followUpsOnWin) {
+              const selectedCandidate = selectWeightedCandidate(followUp.candidates);
+              if (selectedCandidate) {
+                const delayRange = followUp.delayMaxTicks - followUp.delayMinTicks;
+                const delay = followUp.delayMinTicks + Math.floor(getRandomValue() * (delayRange + 1));
+                scheduledEvents.push({
+                  targetTick: state.tick + 1 + delay,
+                  requestId: selectedCandidate.requestId,
+                  scheduledAtTick: state.tick,
+                });
+              }
+            }
+          }
+        } else {
+          // Player lost - no forces returned
+          
+          // Apply lose effects if any
+          if (combat.onLose) {
+            const result = applyEffects(stats, needs, combat.onLose);
+            stats = result.stats;
+            needs = result.needs;
+          }
+          
+          // Schedule follow-up events on lose if any
+          if (combat.followUpsOnLose) {
+            for (const followUp of combat.followUpsOnLose) {
+              const selectedCandidate = selectWeightedCandidate(followUp.candidates);
+              if (selectedCandidate) {
+                const delayRange = followUp.delayMaxTicks - followUp.delayMinTicks;
+                const delay = followUp.delayMinTicks + Math.floor(getRandomValue() * (delayRange + 1));
+                scheduledEvents.push({
+                  targetTick: state.tick + 1 + delay,
+                  requestId: selectedCandidate.requestId,
+                  scheduledAtTick: state.tick,
+                });
+              }
+            }
+          }
+        }
+        
+        // Clamp stats
+        stats = clampStats(stats);
+        
+        // Clear active combat and pick next request (tickless)
+        const nextRequest = pickNextRequest({
+          ...state,
+          tick: state.tick,
+          stats,
+          needs,
+          activeCombat: undefined,
+          scheduledEvents,
+        });
+        
+        return {
+          ...state,
+          tick: state.tick, // Same tick - combat is tickless
+          stats,
+          needs,
+          currentRequestId: nextRequest.id,
+          lastRequestId: state.currentRequestId,
+          activeCombat: undefined,
+          scheduledEvents,
+        };
+      } else {
+        // Combat continues - update active combat state
+        const updatedCombat: ActiveCombat = {
+          ...combat,
+          committedRemaining: newCommittedRemaining,
+          enemyRemaining: newEnemyRemaining,
+          round: combat.round + 1,
+          lastRound: {
+            playerLosses,
+            enemyLosses,
+          },
+        };
+        
+        // Pick next request (should be another combat round, tickless)
+        const nextRequest = pickNextRequest({
+          ...state,
+          tick: state.tick,
+          activeCombat: updatedCombat,
+        });
+        
+        return {
+          ...state,
+          tick: state.tick, // Same tick - combat is tickless
+          currentRequestId: nextRequest.id,
+          lastRequestId: state.currentRequestId,
+          activeCombat: updatedCombat,
+        };
+      }
+    }
+    
     // Find the current request (non-synthetic)
     const currentRequest = [...needRequests, ...infoRequests, ...eventRequests].find(
       (r) => r.id === state.currentRequestId
