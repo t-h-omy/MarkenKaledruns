@@ -139,6 +139,31 @@ export interface Effect {
 }
 
 /**
+ * Combat outcome type
+ */
+export type CombatOutcome = "win" | "lose";
+
+/**
+ * Combat specification for a request
+ */
+export interface CombatSpec {
+  /** Number of enemy forces in the combat */
+  enemyForces: number;
+  /** Minimum ticks to wait before combat starts */
+  prepDelayMinTicks: number;
+  /** Maximum ticks to wait before combat starts */
+  prepDelayMaxTicks: number;
+  /** Effects applied when combat is won */
+  onWin?: Effect;
+  /** Effects applied when combat is lost */
+  onLose?: Effect;
+  /** Follow-up events triggered on win (chain support) */
+  followUpsOnWin?: FollowUp[];
+  /** Follow-up events triggered on lose (chain support) */
+  followUpsOnLose?: FollowUp[];
+}
+
+/**
  * Represents a weighted candidate for follow-up selection
  */
 export interface WeightedCandidate {
@@ -198,4 +223,8 @@ export interface Request {
   maxTriggers?: number;
   /** Array of unlock tokens required to show this event */
   requires?: string[];
+  /** Whether choosing an option should advance the game tick (default: true). Set to false for info/tutorial requests. */
+  advancesTick?: boolean;
+  /** Optional combat specification for this request */
+  combat?: CombatSpec;
 }

@@ -129,6 +129,73 @@
   overflow-y: auto;
 }
 
+/* Combat Slider Styles */
+.combat-slider-container {
+  background: rgba(100, 108, 255, 0.1);
+  border: 2px solid #646cff;
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.combat-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: #ffd700;
+}
+
+.combat-slider {
+  width: 100%;
+  height: 8px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: #4a4a4a;
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+}
+
+.combat-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: #646cff;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.combat-slider::-webkit-slider-thumb:hover {
+  background: #8086ff;
+  transform: scale(1.2);
+}
+
+.combat-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: #646cff;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.combat-slider::-moz-range-thumb:hover {
+  background: #8086ff;
+  transform: scale(1.2);
+}
+
+.combat-slider:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .options-container {
   display: flex;
   flex-direction: column;

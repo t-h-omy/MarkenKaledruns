@@ -3,7 +3,7 @@
  * Based on POF_SPEC.md specification.
  */
 
-import type { Stats, Needs, Effect, NeedsTracking, Request } from './models';
+import type { Stats, Needs, Effect, NeedsTracking, Request, FollowUp } from './models';
 import { DECLINE_COOLDOWN_TICKS, NEED_UNLOCK_THRESHOLDS, NEED_CONFIGS, NEED_INFO_REQUEST_MAP } from './models';
 import { needRequests, infoRequests, eventRequests } from './requests';
 import { pickNextRequest, selectWeightedCandidate, getRandomValue } from './picker';
@@ -30,7 +30,7 @@ export interface LogEntry {
   tick: number;
   requestId: string;
   optionText: string;
-  source: 'Request Decision' | 'Tax Income' | 'Population Growth';
+  source: 'Request Decision' | 'Tax Income' | 'Population Growth' | 'Combat Commit';
   deltas: {
     gold?: number;
     satisfaction?: number;
@@ -58,6 +58,58 @@ export interface ScheduledEvent {
 }
 
 /**
+ * Scheduled combat to occur at a future tick
+ */
+export interface ScheduledCombat {
+  /** Unique identifier for this combat instance */
+  combatId: string;
+  /** ID of the request that triggered this combat */
+  originRequestId: string;
+  /** Tick when combat should start */
+  dueTick: number;
+  /** Tick when this combat was scheduled (for FIFO ordering) */
+  scheduledAtTick: number;
+  /** Number of enemy forces */
+  enemyForces: number;
+  /** Number of committed player forces (reserved for this combat) */
+  committedForces: number;
+  /** Effects applied when combat is won */
+  onWin?: Effect;
+  /** Effects applied when combat is lost */
+  onLose?: Effect;
+  /** Follow-up events triggered on win */
+  followUpsOnWin?: FollowUp[];
+  /** Follow-up events triggered on lose */
+  followUpsOnLose?: FollowUp[];
+}
+
+/**
+ * Active combat currently in progress
+ */
+export interface ActiveCombat {
+  /** Unique identifier for this combat instance */
+  combatId: string;
+  /** ID of the request that triggered this combat */
+  originRequestId: string;
+  /** Remaining enemy forces */
+  enemyRemaining: number;
+  /** Remaining committed player forces */
+  committedRemaining: number;
+  /** Current round number */
+  round: number;
+  /** Results from the last combat round */
+  lastRound?: { playerLosses: number; enemyLosses: number };
+  /** Effects applied when combat is won */
+  onWin?: Effect;
+  /** Effects applied when combat is lost */
+  onLose?: Effect;
+  /** Follow-up events triggered on win */
+  followUpsOnWin?: FollowUp[];
+  /** Follow-up events triggered on lose */
+  followUpsOnLose?: FollowUp[];
+}
+
+/**
  * Complete game state
  */
 export interface GameState {
@@ -78,6 +130,10 @@ export interface GameState {
   requestTriggerCounts: Record<string, number>;
   /** Track unlock tokens for event requirements */
   unlocks: Record<string, true>;
+  /** Scheduled combats to occur at future ticks */
+  scheduledCombats: ScheduledCombat[];
+  /** Active combat currently in progress */
+  activeCombat?: ActiveCombat;
 }
 
 /**
@@ -86,6 +142,8 @@ export interface GameState {
 export type GameAction = {
   type: 'CHOOSE_OPTION';
   optionIndex: number;
+  /** Optional number of land forces to commit to combat (only used for combat requests) */
+  combatCommit?: number;
 };
 
 /**
@@ -124,6 +182,7 @@ export const initialState: GameState = {
   chainStatus: {},
   requestTriggerCounts: {},
   unlocks: {},
+  scheduledCombats: [],
 };
 
 /**
@@ -504,20 +563,82 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     const beforeStats = { ...state.stats };
     const newLog: LogEntry[] = [];
 
-    // 1. Apply option effects using the new pipeline
-    // Use need modifiers for event requests (not for need or info requests)
-    const isEventRequest = eventRequests.some(r => r.id === state.currentRequestId);
-    const modifiersToUse = isEventRequest ? needModifiers : [];
-    const { stats: statsFromPipeline, needs, appliedChanges } = applyOptionWithModifiers(
-      state, 
-      currentRequest, 
-      action.optionIndex,
-      modifiersToUse
-    );
-    let stats = statsFromPipeline;
+    // Handle combat commit for Option A (fight) when combat exists
+    const scheduledCombats = [...state.scheduledCombats];
+    let stats = { ...state.stats };
+    let needs = { ...state.needs };
+    let appliedChanges: AppliedChange[] = [];
+    
+    if (currentRequest.combat && action.optionIndex === 0) {
+      // Option A = fight for combat requests
+      const combatCommit = action.combatCommit;
+      
+      // Validate combatCommit
+      if (!combatCommit || combatCommit < 1 || combatCommit > state.stats.landForces) {
+        console.error('Invalid combatCommit:', combatCommit, 'Available forces:', state.stats.landForces);
+        return state; // Invalid commit, abort
+      }
+      
+      // Immediately reserve forces by subtracting from available landForces
+      stats.landForces = state.stats.landForces - combatCommit;
+      
+      // Calculate random delay for combat start
+      const { prepDelayMinTicks, prepDelayMaxTicks } = currentRequest.combat;
+      const delayRange = prepDelayMaxTicks - prepDelayMinTicks;
+      const delay = prepDelayMinTicks + Math.floor(getRandomValue() * (delayRange + 1));
+      const dueTick = state.tick + delay;
+      
+      // Generate unique combat ID
+      const combatId = `${currentRequest.id}-${state.tick}-${Date.now()}`;
+      
+      // Create scheduled combat entry
+      const newScheduledCombat = {
+        combatId,
+        originRequestId: currentRequest.id,
+        dueTick,
+        scheduledAtTick: state.tick,
+        enemyForces: currentRequest.combat.enemyForces,
+        committedForces: combatCommit,
+        onWin: currentRequest.combat.onWin,
+        onLose: currentRequest.combat.onLose,
+        followUpsOnWin: currentRequest.combat.followUpsOnWin,
+        followUpsOnLose: currentRequest.combat.followUpsOnLose,
+      };
+      
+      scheduledCombats.push(newScheduledCombat);
+      
+      // Add log entry for combat commitment
+      newLog.push({
+        tick: state.tick,
+        requestId: currentRequest.id,
+        optionText: option.text,
+        source: 'Combat Commit',
+        deltas: {
+          landForces: -combatCommit,
+        },
+      });
+      
+      // For combat commits, we don't apply the normal option effects
+      // The combat resolution will apply onWin or onLose effects later
+      needs = state.needs;
+    } else {
+      // Normal path: Apply option effects using the pipeline
+      // Use need modifiers for event requests (not for need or info requests)
+      const isEventRequest = eventRequests.some(r => r.id === state.currentRequestId);
+      const modifiersToUse = isEventRequest ? needModifiers : [];
+      const result = applyOptionWithModifiers(
+        state, 
+        currentRequest, 
+        action.optionIndex,
+        modifiersToUse
+      );
+      stats = result.stats;
+      needs = result.needs;
+      appliedChanges = result.appliedChanges;
+    }
 
     // Sync need-based unlock tokens with current needs state
-    let unlocks = syncNeedUnlockTokens(needs, state.unlocks);
+    const unlocks = syncNeedUnlockTokens(needs, state.unlocks);
 
     // Track need fulfillment and cooldowns
     const needsTracking = { ...state.needsTracking };
@@ -585,23 +706,25 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       }
     }
 
-    // Create log entry for request decision
-    // Filter appliedChanges to only include need modifiers (not base effects)
-    const needModifierChanges = appliedChanges.filter(change => 
-      change.source.startsWith('need:')
-    );
-    
-    const requestLogEntry = createLogEntry(
-      state.tick,
-      state.currentRequestId,
-      option.text,
-      'Request Decision',
-      beforeStats,
-      stats,
-      needModifierChanges.length > 0 ? needModifierChanges : undefined
-    );
-    if (Object.keys(requestLogEntry.deltas).length > 0) {
-      newLog.push(requestLogEntry);
+    // Create log entry for request decision (skip for combat commits as they have their own log)
+    if (!(currentRequest.combat && action.optionIndex === 0)) {
+      // Filter appliedChanges to only include need modifiers (not base effects)
+      const needModifierChanges = appliedChanges.filter(change => 
+        change.source.startsWith('need:')
+      );
+      
+      const requestLogEntry = createLogEntry(
+        state.tick,
+        state.currentRequestId,
+        option.text,
+        'Request Decision',
+        beforeStats,
+        stats,
+        needModifierChanges.length > 0 ? needModifierChanges : undefined
+      );
+      if (Object.keys(requestLogEntry.deltas).length > 0) {
+        newLog.push(requestLogEntry);
+      }
     }
 
     // Schedule follow-up events if any are triggered by this option
@@ -660,9 +783,51 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         chainStatus,
         requestTriggerCounts,
         unlocks,
+        scheduledCombats,
       };
     }
 
+    // Check if this is a tickless request (e.g., info requests)
+    if (currentRequest.advancesTick === false) {
+      // Tickless path: no baseline, no tick increment
+      // Pick next request using the SAME tick
+      const nextRequest = pickNextRequest({
+        tick: state.tick,
+        stats,
+        needs,
+        needsTracking,
+        newlyUnlockedNeed: null,
+        currentRequestId: state.currentRequestId,
+        lastRequestId: state.currentRequestId,
+        log: state.log,
+        gameOver: false,
+        scheduledEvents,
+        chainStatus,
+        requestTriggerCounts,
+        unlocks,
+        scheduledCombats,
+      });
+
+      // Return state with same tick, updated stats/needs/unlocks/log, new request
+      return {
+        tick: state.tick, // Same tick
+        stats,
+        needs,
+        needsTracking,
+        newlyUnlockedNeed: null,
+        currentRequestId: nextRequest.id,
+        lastRequestId: state.currentRequestId,
+        log: [...state.log, ...newLog],
+        gameOver: false,
+        scheduledEvents, // Keep as-is, no time advancement
+        chainStatus,
+        requestTriggerCounts,
+        unlocks,
+        scheduledCombats,
+      };
+    }
+
+    // Normal path: advance tick
     // 2. Apply baseline rules and track separately
     const beforeBaseline = { ...stats };
     const farmersBefore = stats.farmers;
@@ -743,6 +908,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         chainStatus,
         requestTriggerCounts,
         unlocks,
+        scheduledCombats,
       };
     }
 
@@ -761,6 +927,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       chainStatus,
       requestTriggerCounts,
       unlocks,
+      scheduledCombats,
     });
 
     // 5. Increment tick and update state
@@ -778,6 +945,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       chainStatus,
       requestTriggerCounts,
       unlocks,
+      scheduledCombats,
     };
   }
 
