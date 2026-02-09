@@ -125,6 +125,7 @@ export const infoRequests: Request[] = [
     title: 'Marketplace Established',
     text: 'Your marketplace is now operational. As long as this need stays fulfilled, the "Market Day" event can occur, bringing new trading opportunities to your village.',
     canTriggerRandomly: false,
+    advancesTick: false,
     options: [
       {
         text: 'Understood.',
@@ -141,6 +142,7 @@ export const infoRequests: Request[] = [
     title: 'Bread Production Active',
     text: 'Your bakery is now producing bread. Each tick, there is a 10% chance to gain +1 additional farmer growth, supporting population expansion.',
     canTriggerRandomly: false,
+    advancesTick: false,
     options: [
       {
         text: 'Understood.',
@@ -157,6 +159,7 @@ export const infoRequests: Request[] = [
     title: 'Brewery Operational',
     text: 'Beer production has begun. The "Feierabend in der Kneipe" event is now unlocked, providing satisfaction-related benefits for your villagers.',
     canTriggerRandomly: false,
+    advancesTick: false,
     options: [
       {
         text: 'Understood.',
@@ -173,6 +176,7 @@ export const infoRequests: Request[] = [
     title: 'Firewood Supply Organized',
     text: 'Professional firewood supply is now active. When an event increases fire risk, there is a 25% chance the increase is reduced by half, protecting your village.',
     canTriggerRandomly: false,
+    advancesTick: false,
     options: [
       {
         text: 'Understood.',
@@ -189,6 +193,7 @@ export const infoRequests: Request[] = [
     title: 'Central Well Constructed',
     text: 'Your well is now operational. When an event grants health, there is a 50% chance to gain +1 additional health, improving overall village wellbeing.',
     canTriggerRandomly: false,
+    advancesTick: false,
     options: [
       {
         text: 'Understood.',

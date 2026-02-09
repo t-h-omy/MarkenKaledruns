@@ -517,7 +517,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     let stats = statsFromPipeline;
 
     // Sync need-based unlock tokens with current needs state
-    let unlocks = syncNeedUnlockTokens(needs, state.unlocks);
+    const unlocks = syncNeedUnlockTokens(needs, state.unlocks);
 
     // Track need fulfillment and cooldowns
     const needsTracking = { ...state.needsTracking };
@@ -663,6 +663,45 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       };
     }
 
+    // Check if this is a tickless request (e.g., info requests)
+    if (currentRequest.advancesTick === false) {
+      // Tickless path: no baseline, no tick increment
+      // Pick next request using the SAME tick
+      const nextRequest = pickNextRequest({
+        tick: state.tick,
+        stats,
+        needs,
+        needsTracking,
+        newlyUnlockedNeed: null,
+        currentRequestId: state.currentRequestId,
+        lastRequestId: state.currentRequestId,
+        log: state.log,
+        gameOver: false,
+        scheduledEvents,
+        chainStatus,
+        requestTriggerCounts,
+        unlocks,
+      });
+
+      // Return state with same tick, updated stats/needs/unlocks/log, new request
+      return {
+        tick: state.tick, // Same tick
+        stats,
+        needs,
+        needsTracking,
+        newlyUnlockedNeed: null,
+        currentRequestId: nextRequest.id,
+        lastRequestId: state.currentRequestId,
+        log: [...state.log, ...newLog],
+        gameOver: false,
+        scheduledEvents, // Keep as-is, no time advancement
+        chainStatus,
+        requestTriggerCounts,
+        unlocks,
+      };
+    }
+
+    // Normal path: advance tick
     // 2. Apply baseline rules and track separately
     const beforeBaseline = { ...stats };
     const farmersBefore = stats.farmers;

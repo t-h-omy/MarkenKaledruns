@@ -198,4 +198,6 @@ export interface Request {
   maxTriggers?: number;
   /** Array of unlock tokens required to show this event */
   requires?: string[];
+  /** Whether choosing an option should advance the game tick (default: true). Set to false for info/tutorial requests. */
+  advancesTick?: boolean;
 }
