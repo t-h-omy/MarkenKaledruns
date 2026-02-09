@@ -292,8 +292,9 @@ export const eventRequests: Request[] = [
       {
         text: 'SURRENDER',
         effects: {
-          gold: -20,
-          satisfaction: -3,
+          gold: -25,
+          satisfaction: -4,
+          farmers: -3,
         },
       },
     ],
