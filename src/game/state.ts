@@ -3,7 +3,7 @@
  * Based on POF_SPEC.md specification.
  */
 
-import type { Stats, Needs, Effect, NeedsTracking, Request } from './models';
+import type { Stats, Needs, Effect, NeedsTracking, Request, FollowUp } from './models';
 import { DECLINE_COOLDOWN_TICKS, NEED_UNLOCK_THRESHOLDS, NEED_CONFIGS, NEED_INFO_REQUEST_MAP } from './models';
 import { needRequests, infoRequests, eventRequests } from './requests';
 import { pickNextRequest, selectWeightedCandidate, getRandomValue } from './picker';
@@ -58,6 +58,58 @@ export interface ScheduledEvent {
 }
 
 /**
+ * Scheduled combat to occur at a future tick
+ */
+export interface ScheduledCombat {
+  /** Unique identifier for this combat instance */
+  combatId: string;
+  /** ID of the request that triggered this combat */
+  originRequestId: string;
+  /** Tick when combat should start */
+  dueTick: number;
+  /** Tick when this combat was scheduled (for FIFO ordering) */
+  scheduledAtTick: number;
+  /** Number of enemy forces */
+  enemyForces: number;
+  /** Number of committed player forces (reserved for this combat) */
+  committedForces: number;
+  /** Effects applied when combat is won */
+  onWin?: Effect;
+  /** Effects applied when combat is lost */
+  onLose?: Effect;
+  /** Follow-up events triggered on win */
+  followUpsOnWin?: FollowUp[];
+  /** Follow-up events triggered on lose */
+  followUpsOnLose?: FollowUp[];
+}
+
+/**
+ * Active combat currently in progress
+ */
+export interface ActiveCombat {
+  /** Unique identifier for this combat instance */
+  combatId: string;
+  /** ID of the request that triggered this combat */
+  originRequestId: string;
+  /** Remaining enemy forces */
+  enemyRemaining: number;
+  /** Remaining committed player forces */
+  committedRemaining: number;
+  /** Current round number */
+  round: number;
+  /** Results from the last combat round */
+  lastRound?: { playerLosses: number; enemyLosses: number };
+  /** Effects applied when combat is won */
+  onWin?: Effect;
+  /** Effects applied when combat is lost */
+  onLose?: Effect;
+  /** Follow-up events triggered on win */
+  followUpsOnWin?: FollowUp[];
+  /** Follow-up events triggered on lose */
+  followUpsOnLose?: FollowUp[];
+}
+
+/**
  * Complete game state
  */
 export interface GameState {
@@ -78,6 +130,10 @@ export interface GameState {
   requestTriggerCounts: Record<string, number>;
   /** Track unlock tokens for event requirements */
   unlocks: Record<string, true>;
+  /** Scheduled combats to occur at future ticks */
+  scheduledCombats: ScheduledCombat[];
+  /** Active combat currently in progress */
+  activeCombat?: ActiveCombat;
 }
 
 /**
@@ -124,6 +180,7 @@ export const initialState: GameState = {
   chainStatus: {},
   requestTriggerCounts: {},
   unlocks: {},
+  scheduledCombats: [],
 };
 
 /**
@@ -660,6 +717,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         chainStatus,
         requestTriggerCounts,
         unlocks,
+        scheduledCombats: state.scheduledCombats,
       };
     }
 
@@ -681,6 +739,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         chainStatus,
         requestTriggerCounts,
         unlocks,
+        scheduledCombats: state.scheduledCombats,
       });
 
       // Return state with same tick, updated stats/needs/unlocks/log, new request
@@ -698,6 +757,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         chainStatus,
         requestTriggerCounts,
         unlocks,
+        scheduledCombats: state.scheduledCombats,
       };
     }
 
@@ -782,6 +842,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         chainStatus,
         requestTriggerCounts,
         unlocks,
+        scheduledCombats: state.scheduledCombats,
       };
     }
 
@@ -800,6 +861,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       chainStatus,
       requestTriggerCounts,
       unlocks,
+      scheduledCombats: state.scheduledCombats,
     });
 
     // 5. Increment tick and update state
@@ -817,6 +879,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       chainStatus,
       requestTriggerCounts,
       unlocks,
+      scheduledCombats: state.scheduledCombats,
     };
   }
 
