@@ -13,8 +13,23 @@ function App() {
     (r) => r.id === gameState.currentRequestId
   )
 
+  // Combat commit state for slider
+  const maxForces = gameState.stats.landForces
+  const [combatCommit, setCombatCommit] = useState(Math.min(5, maxForces))
+
+  // Update combatCommit when maxForces changes
+  const effectiveMaxForces = Math.max(1, maxForces)
+  if (combatCommit > effectiveMaxForces) {
+    setCombatCommit(effectiveMaxForces)
+  }
+
   const handleOptionClick = (optionIndex: number) => {
-    dispatch({ type: 'CHOOSE_OPTION', optionIndex })
+    // If combat request and Option A (index 0), pass combatCommit
+    if (currentRequest?.combat && optionIndex === 0) {
+      dispatch({ type: 'CHOOSE_OPTION', optionIndex, combatCommit })
+    } else {
+      dispatch({ type: 'CHOOSE_OPTION', optionIndex })
+    }
   }
 
   // Get last 3 log entries
@@ -254,10 +269,37 @@ function App() {
               <>
                 <h3 className="request-title">{currentRequest.title}</h3>
                 <p className="request-text">{currentRequest.text}</p>
+                
+                {/* Combat Slider UI */}
+                {currentRequest.combat && (
+                  <div className="combat-slider-container">
+                    <div className="combat-info">
+                      <span>Einsatz: {combatCommit} Landkräfte</span>
+                      <span>Gegner: {currentRequest.combat.enemyForces}</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="1"
+                      max={Math.max(1, maxForces)}
+                      value={combatCommit}
+                      onChange={(e) => setCombatCommit(Number(e.target.value))}
+                      disabled={maxForces < 1}
+                      className="combat-slider"
+                    />
+                  </div>
+                )}
+                
                 <div className="options-container">
                   {currentRequest.options.map((option, index) => {
                     const effects = formatEffects(option.effects)
-                    const { disabled, reason } = isOptionDisabled(option.effects)
+                    let { disabled, reason } = isOptionDisabled(option.effects)
+                    
+                    // For combat requests, disable Option A if no forces available
+                    if (currentRequest.combat && index === 0 && maxForces < 1) {
+                      disabled = true
+                      reason = 'No land forces available'
+                    }
+                    
                     return (
                       <button
                         key={index}

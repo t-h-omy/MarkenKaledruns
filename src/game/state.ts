@@ -142,6 +142,8 @@ export interface GameState {
 export type GameAction = {
   type: 'CHOOSE_OPTION';
   optionIndex: number;
+  /** Optional number of land forces to commit to combat (only used for combat requests) */
+  combatCommit?: number;
 };
 
 /**
