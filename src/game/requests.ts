@@ -256,10 +256,7 @@ export const eventRequests: Request[] = [
     options: [
       {
         text: 'FIGHT AND ROB',
-        effects: {
-          landForces: -3,
-          gold: 5
-        },
+        effects: {},
       },
       {
         text: 'PAY TOLL',
@@ -273,14 +270,24 @@ export const eventRequests: Request[] = [
     id: 'EVT_RAID_LARGE',
     title: 'The War Horns',
     text: 'A massive raiding force is at the gates! Stand your ground and fight, or the intruders will bring destruction to your village.',
+    combat: {
+      enemyForces: 20,
+      prepDelayMinTicks: 1,
+      prepDelayMaxTicks: 3,
+      onWin: {
+        gold: 20,
+        fireRisk: 12,
+      },
+      onLose: {
+        gold: -30,
+        satisfaction: -5,
+        farmers: -8,
+      },
+    },
     options: [
       {
         text: 'FIGHT',
-        effects: {
-          landForces: -8,
-          fireRisk: 12,
-          gold: 20
-        },
+        effects: {},
       },
       {
         text: 'DO NOT FIGHT',
@@ -932,23 +939,36 @@ export const eventRequests: Request[] = [
     title: 'Battle at Aescweald',
     text: 'Blackgeat\'s banners crest the ridge — the battle Brimwulf came to you for. Feldric\'s voice stays calm: "Hold. Then strike." Brimwulf\'s men lock shields beside yours.',
     canTriggerRandomly: false,
+    combat: {
+      enemyForces: 15,
+      prepDelayMinTicks: 1,
+      prepDelayMaxTicks: 3,
+      onWin: {
+        satisfaction: 2,
+      },
+      onLose: {
+        satisfaction: -3,
+      },
+      followUpsOnWin: [
+        {
+          triggerOnOptionIndex: 0,
+          delayMinTicks: 5,
+          delayMaxTicks: 10,
+          candidates: [{ requestId: 'CHAIN_BLACKGEAT_AFTER_BATTLE_STATE', weight: 1 }],
+        },
+      ],
+      followUpsOnLose: [
+        {
+          triggerOnOptionIndex: 0,
+          delayMinTicks: 5,
+          delayMaxTicks: 10,
+          candidates: [{ requestId: 'CHAIN_BLACKGEAT_AFTER_BATTLE_STATE', weight: 1 }],
+        },
+      ],
+    },
     options: [
-      { text: 'HOLD THE LINE', effects: { landForces: -5, satisfaction: 2 } },
+      { text: 'HOLD THE LINE', effects: {} },
       { text: 'RISKY CHARGE', effects: { landForces: -8, gold: 15 } },
-    ],
-    followUps: [
-      {
-        triggerOnOptionIndex: 0,
-        delayMinTicks: 5,
-        delayMaxTicks: 10,
-        candidates: [{ requestId: 'CHAIN_BLACKGEAT_AFTER_BATTLE_STATE', weight: 1 }],
-      },
-      {
-        triggerOnOptionIndex: 1,
-        delayMinTicks: 5,
-        delayMaxTicks: 10,
-        candidates: [{ requestId: 'CHAIN_BLACKGEAT_AFTER_BATTLE_STATE', weight: 1 }],
-      },
     ],
   },
 
@@ -1092,28 +1112,38 @@ export const eventRequests: Request[] = [
     title: 'The Battle for Freedom',
     text: 'Hrycgwulf grows impatient with your stalling. The Blackgeat banners appear on the horizon. Feldric draws his blade: "What shall we do, Mylord?"',
     canTriggerRandomly: false,
+    combat: {
+      enemyForces: 25,
+      prepDelayMinTicks: 1,
+      prepDelayMaxTicks: 2,
+      followUpsOnWin: [
+        {
+          triggerOnOptionIndex: 0,
+          delayMinTicks: 1,
+          delayMaxTicks: 1,
+          candidates: [{ requestId: 'CHAIN_BLACKGEAT_FREEDOM_CELEBRATION', weight: 1 }],
+        },
+      ],
+      followUpsOnLose: [
+        {
+          triggerOnOptionIndex: 0,
+          delayMinTicks: 1,
+          delayMaxTicks: 1,
+          candidates: [{ requestId: 'CHAIN_BLACKGEAT_UNIVERSAL_RECOVERY', weight: 1 }],
+        },
+      ],
+    },
     options: [
       { 
         text: 'STAND YOUR GROUND', 
-        effects: { landForces: -10 } 
+        effects: {} 
       },
       { 
         text: 'RETREAT', 
-        effects: {  } 
-      },
-    ],
-    followUps: [
-      {
-        triggerOnOptionIndex: 0, // STAND YOUR GROUND -> Celebration
-        delayMinTicks: 1,
-        delayMaxTicks: 1,
-        candidates: [{ requestId: 'CHAIN_BLACKGEAT_FREEDOM_CELEBRATION', weight: 1 }],
-      },
-      {
-        triggerOnOptionIndex: 1, // RETREAT -> Shared Recovery
-        delayMinTicks: 1,
-        delayMaxTicks: 1,
-        candidates: [{ requestId: 'CHAIN_BLACKGEAT_UNIVERSAL_RECOVERY', weight: 1 }],
+        effects: {
+          satisfaction: -5,
+          gold: -15,
+        } 
       },
     ],
   },
