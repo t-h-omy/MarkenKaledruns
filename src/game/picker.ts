@@ -420,9 +420,19 @@ export function pickNextRequest(
     }
     
     // No crisis eligible: return synthetic combat start request
-    // Sort by scheduledAtTick for FIFO ordering (earliest scheduled combat first)
+    // IMPORTANT: Sort by scheduledAtTick for FIFO ordering (earliest scheduled combat first)
+    // This ensures multiple parallel combats start in the order they were scheduled,
+    // maintaining correct force accounting and preventing race conditions
     dueCombats.sort((a, b) => a.scheduledAtTick - b.scheduledAtTick);
     const firstDueCombat = dueCombats[0];
+    
+    console.log(`[Combat Selection] Selected combat for start:`, {
+      combatId: firstDueCombat.combatId,
+      scheduledAtTick: firstDueCombat.scheduledAtTick,
+      dueTick: firstDueCombat.dueTick,
+      committedForces: firstDueCombat.committedForces,
+      totalDueCombats: dueCombats.length,
+    });
     
     // Create synthetic request for combat start
     // This synthetic request will be handled by state.ts to activate the combat

@@ -597,7 +597,7 @@ function scheduleCombatReport(
 function validateForceAccounting(
   state: GameState,
   context: string,
-  expectedChange?: { landForces?: number; reserved?: number }
+  previousState?: GameState
 ): void {
   // Calculate reserved forces in scheduled combats
   const reservedInScheduled = state.scheduledCombats.reduce(
@@ -611,28 +611,44 @@ function validateForceAccounting(
   // Total forces = available + reserved
   const totalForces = state.stats.landForces + reservedInScheduled + reservedInActive;
   
+  // Calculate previous total if provided
+  let previousTotal: number | undefined;
+  if (previousState) {
+    const prevReservedInScheduled = previousState.scheduledCombats.reduce(
+      (sum, combat) => sum + combat.committedForces,
+      0
+    );
+    const prevReservedInActive = previousState.activeCombat ? previousState.activeCombat.committedRemaining : 0;
+    previousTotal = previousState.stats.landForces + prevReservedInScheduled + prevReservedInActive;
+  }
+  
   // Log force accounting details
   console.log(`[Force Accounting] ${context}:`, {
     available: state.stats.landForces,
     reservedInScheduled,
     reservedInActive,
     totalForces,
+    previousTotal,
+    delta: previousTotal !== undefined ? totalForces - previousTotal : 'N/A',
     scheduledCombatsCount: state.scheduledCombats.length,
     hasActiveCombat: !!state.activeCombat,
-    expectedChange,
   });
   
   // Assertion: landForces should never be negative
   if (state.stats.landForces < 0) {
-    console.error(`[Force Accounting ERROR] Negative landForces detected at ${context}:`, state.stats.landForces);
+    const errorMsg = `[Force Accounting ERROR] Negative landForces detected at ${context}: ${state.stats.landForces}`;
+    console.error(errorMsg);
+    // Log stack trace for debugging
+    console.trace('Negative landForces stack trace:');
   }
   
-  // Warning: total forces shouldn't decrease without explanation
-  if (expectedChange && expectedChange.landForces !== undefined) {
-    const expectedTotal = totalForces - expectedChange.landForces;
-    // Allow some tolerance for rounding
-    if (Math.abs(expectedTotal - totalForces) > 0.1 && expectedChange.landForces !== 0) {
-      console.warn(`[Force Accounting] Unexpected total force change at ${context}. Expected: ${expectedTotal}, Got: ${totalForces}`);
+  // Warning: total forces shouldn't change without explanation
+  if (previousTotal !== undefined && Math.abs(totalForces - previousTotal) > 0.1) {
+    const delta = totalForces - previousTotal;
+    // Only warn if forces increased (shouldn't happen) or decreased unexpectedly
+    // Combat losses are expected, so we only warn on increases
+    if (delta > 0) {
+      console.warn(`[Force Accounting WARNING] Total forces INCREASED unexpectedly at ${context}. Previous: ${previousTotal}, Current: ${totalForces}, Delta: ${delta}`);
     }
   }
 }
@@ -712,7 +728,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       };
       
       // Validate force accounting after combat start
-      validateForceAccounting(newState, `After Combat Start (${combatId})`);
+      validateForceAccounting(newState, `After Combat Start (${combatId})`, state);
       
       return newState;
     }
@@ -823,7 +839,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         };
         
         // Validate force accounting after withdrawal
-        validateForceAccounting(newState, `After Combat Withdraw (${combat.combatId})`);
+        validateForceAccounting(newState, `After Combat Withdraw (${combat.combatId})`, state);
         
         return newState;
       }
@@ -992,7 +1008,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         };
         
         // Validate force accounting after combat end
-        validateForceAccounting(newState, `After Combat End (${combat.combatId})`);
+        validateForceAccounting(newState, `After Combat End (${combat.combatId})`, state);
         
         return newState;
       } else {
