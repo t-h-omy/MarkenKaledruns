@@ -1144,8 +1144,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         modifiersToUse
       );
       // Use result stats but preserve the combat commitment to landForces
-      stats = result.stats;
-      stats.landForces = reservedLandForces;
+      stats = { ...result.stats, landForces: reservedLandForces };
       needs = result.needs;
       appliedChanges = result.appliedChanges;
     } else {
