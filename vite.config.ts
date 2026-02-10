@@ -34,6 +34,9 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['vite.svg'],
+      workbox: {
+        cleanupOutdatedCaches: true
+      },
       manifest: {
         name: 'React PWA',
         short_name: 'ReactPWA',
