@@ -11,11 +11,19 @@ if (import.meta.env.DEV) {
 }
 
 // Register service worker with immediate activation and auto-reload on update
-const updateSW = registerSW({
+let updateServiceWorker: ((reloadPage?: boolean) => Promise<void>) | undefined
+
+const update = () => {
+  if (updateServiceWorker) {
+    updateServiceWorker(true)
+  }
+}
+
+updateServiceWorker = registerSW({
   immediate: true,
   onNeedRefresh() {
     // Update the service worker and reload the page
-    updateSW(true)
+    update()
   },
   onOfflineReady() {
     console.log('App ready to work offline')
