@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write  # Need write permission to push to gh-pages branch
+  pull-requests: write  # Need write permission to comment on PRs
 
 concurrency:
   group: gh-pages-${{ github.ref }}  # Separate concurrency per branch
@@ -152,6 +153,80 @@ jobs:
             git push origin gh-pages
             echo "✅ Deployed successfully!"
           fi
+
+      - name: Post Preview URL to PR
+        if: github.ref != 'refs/heads/main'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const deploymentUrl = '${{ steps.deploy-config.outputs.deployment_url }}';
+            const branchName = '${{ github.ref_name }}';
+            const timestamp = new Date().toUTCString();
+            
+            const commentBody = `🚀 **Preview Deployment**
+
+            Branch \`${branchName}\` has been deployed!
+
+            🔗 **Preview URL:** ${deploymentUrl}
+
+            <sub>Last updated: ${timestamp}</sub>
+            <!-- preview-deployment-${branchName} -->`;
+            
+            // Find the PR associated with this branch
+            let prNumber = null;
+            
+            // If this is a pull_request event, get the PR number directly
+            if (context.eventName === 'pull_request' && context.payload.pull_request) {
+              prNumber = context.payload.pull_request.number;
+            } else {
+              // For push events, search for PRs with this head branch
+              const prs = await github.rest.pulls.list({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                head: `${context.repo.owner}:${branchName}`
+              });
+              
+              if (prs.data.length > 0) {
+                prNumber = prs.data[0].number;
+              }
+            }
+            
+            if (!prNumber) {
+              console.log('No PR found for this branch, skipping comment');
+              return;
+            }
+            
+            // Find existing comment for this specific branch
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber
+            });
+            
+            const existingComment = comments.data.find(comment => 
+              comment.body.includes(`<!-- preview-deployment-${branchName} -->`)
+            );
+            
+            if (existingComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: commentBody
+              });
+              console.log('Updated existing comment');
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: commentBody
+              });
+              console.log('Created new comment');
+            }
 
       - name: Comment deployment URL
         run: |
