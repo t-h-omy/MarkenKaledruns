@@ -1082,6 +1082,10 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     let needs = { ...state.needs };
     let appliedChanges: AppliedChange[] = [];
     
+    // Determine modifiers to use (only for event requests)
+    const isEventRequest = eventRequests.some(r => r.id === state.currentRequestId);
+    const modifiersToUse = isEventRequest ? needModifiers : [];
+    
     if (currentRequest.combat && action.optionIndex === 0) {
       // Option A = fight for combat requests
       const combatCommit = action.combatCommit;
@@ -1093,7 +1097,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       }
       
       // Immediately reserve forces by subtracting from available landForces
-      stats.landForces = state.stats.landForces - combatCommit;
+      const reservedLandForces = state.stats.landForces - combatCommit;
       
       // Calculate random delay for combat start
       const { prepDelayMinTicks, prepDelayMaxTicks } = currentRequest.combat;
@@ -1133,22 +1137,19 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       
       // Apply option effects for combat commits in addition to scheduling combat
       // Both option effects and combat resolution effects (onWin/onLose) will be applied
-      const isEventRequest = eventRequests.some(r => r.id === state.currentRequestId);
-      const modifiersToUse = isEventRequest ? needModifiers : [];
       const result = applyOptionWithModifiers(
         state, 
         currentRequest, 
         action.optionIndex,
         modifiersToUse
       );
-      stats = { ...result.stats, landForces: stats.landForces }; // Preserve the combat commitment
+      // Use result stats but preserve the combat commitment to landForces
+      stats = result.stats;
+      stats.landForces = reservedLandForces;
       needs = result.needs;
       appliedChanges = result.appliedChanges;
     } else {
       // Normal path: Apply option effects using the pipeline
-      // Use need modifiers for event requests (not for need or info requests)
-      const isEventRequest = eventRequests.some(r => r.id === state.currentRequestId);
-      const modifiersToUse = isEventRequest ? needModifiers : [];
       const result = applyOptionWithModifiers(
         state, 
         currentRequest, 
