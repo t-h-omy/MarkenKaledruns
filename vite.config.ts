@@ -6,13 +6,8 @@ import { VitePWA } from 'vite-plugin-pwa'
 import { readFileSync } from 'fs'
 const packageJson = JSON.parse(readFileSync('./package.json', 'utf-8'))
 
-// Get branch name from environment or fallback to "local"
-const getBranch = () => {
-  return process.env.GITHUB_REF_NAME || 'local'
-}
-
 const appVersion = packageJson.version
-const gitBranch = getBranch()
+const gitBranch = process.env.GITHUB_REF_NAME || 'local'
 
 // Derive base path from environment variable or GitHub repository name
 // Priority: VITE_BASE_PATH env var > computed from GITHUB_REPOSITORY > local dev fallback
