@@ -60,9 +60,16 @@ Increment for:
    git commit -m "Bump version to 1.0.1 - Fix combat surrender penalties"
    ```
 
-## Current Version: 1.0.0
+## Current Version: 1.0.2
 
 ### Version History
+- **1.0.2** - Patch version increment
+  - Version number updated from 1.0.1 to 1.0.2
+- **1.0.1** - Combat report bug fixes and English translation
+  - Fixed combat report button bug (infinite loop)
+  - Translated all battle texts from German to English
+  - Improved text formatting with line breaks
+  - Reduced combat report buttons from 2 to 1
 - **1.0.0** - Initial release with combat system fixes
   - Fixed combat event options (SURRENDER, PAY TRIBUTE, etc.)
   - Added version display to UI
