@@ -1131,9 +1131,19 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         },
       });
       
-      // For combat commits, we don't apply the normal option effects
-      // The combat resolution will apply onWin or onLose effects later
-      needs = state.needs;
+      // Apply option effects for combat commits in addition to scheduling combat
+      // Both option effects and combat resolution effects (onWin/onLose) will be applied
+      const isEventRequest = eventRequests.some(r => r.id === state.currentRequestId);
+      const modifiersToUse = isEventRequest ? needModifiers : [];
+      const result = applyOptionWithModifiers(
+        state, 
+        currentRequest, 
+        action.optionIndex,
+        modifiersToUse
+      );
+      stats = { ...result.stats, landForces: stats.landForces }; // Preserve the combat commitment
+      needs = result.needs;
+      appliedChanges = result.appliedChanges;
     } else {
       // Normal path: Apply option effects using the pipeline
       // Use need modifiers for event requests (not for need or info requests)

@@ -1442,8 +1442,8 @@ export const eventRequests: Request[] = [
       },
     },
     options: [
-      { text: 'HOLD', effects: { landForces: -4 } },
-      { text: 'COUNTERSTRIKE', effects: { landForces: -6, gold: 10 } },
+      { text: 'HOLD', effects: {} },
+      { text: 'COUNTERSTRIKE', effects: { gold: 10 } },
     ],
     followUps: [
       {
@@ -1480,8 +1480,8 @@ export const eventRequests: Request[] = [
       },
     },
     options: [
-      { text: 'PROTECT THE VILLAGE', effects: { landForces: -5, fireRisk: -4, satisfaction: 1 } },
-      { text: 'PRESS THE LINE', effects: { landForces: -3, farmers: -4, fireRisk: 6 } },
+      { text: 'PROTECT THE VILLAGE', effects: { fireRisk: -4, satisfaction: 1 } },
+      { text: 'PRESS THE LINE', effects: { farmers: -4, fireRisk: 6 } },
     ],
     followUps: [
       {
@@ -1518,7 +1518,7 @@ export const eventRequests: Request[] = [
       },
     },
     options: [
-      { text: 'ALL-IN STRIKE', effects: { landForces: -5, gold: 35, satisfaction: 5 } },
+      { text: 'ALL-IN STRIKE', effects: { gold: 35, satisfaction: 5 } },
       { text: 'WITHDRAW', effects: { satisfaction: -2, farmers: -5 } },
     ],
     followUps: [
