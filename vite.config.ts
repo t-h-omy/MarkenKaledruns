@@ -6,15 +6,21 @@ import { VitePWA } from 'vite-plugin-pwa'
 import { readFileSync } from 'fs'
 const packageJson = JSON.parse(readFileSync('./package.json', 'utf-8'))
 
-// Derive base path from GitHub repository name
-// In GitHub Actions: process.env.GITHUB_REPOSITORY = "owner/repo"
-// For local dev, fallback to hardcoded repo name
+// Derive base path from environment variable or GitHub repository name
+// Priority: VITE_BASE_PATH env var > computed from GITHUB_REPOSITORY > local dev fallback
 const getBasePath = () => {
+  // If VITE_BASE_PATH is set (from GitHub Actions), use it
+  if (process.env.VITE_BASE_PATH) {
+    return process.env.VITE_BASE_PATH
+  }
+  
+  // Otherwise, derive from GitHub repository name
   const repo = process.env.GITHUB_REPOSITORY
   if (repo) {
     const repoName = repo.split('/')[1]
     return `/${repoName}/`
   }
+  
   // Fallback for local development
   return '/MarkenKaledruns/'
 }
