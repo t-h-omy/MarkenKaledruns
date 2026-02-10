@@ -9,6 +9,36 @@ import { needRequests, infoRequests, eventRequests } from './requests';
 import { isNeedUnlocked, isNeedRequired, isNeedOnCooldown, meetsRequirements } from './state';
 
 /**
+ * Helper function to get a request's title by ID
+ * @param requestId The ID of the request to lookup
+ * @returns The request's title, or a fallback string if not found
+ */
+function getRequestTitle(requestId: string): string {
+  const allRequests = [...needRequests, ...infoRequests, ...eventRequests];
+  const request = allRequests.find(r => r.id === requestId);
+  
+  if (!request) {
+    return requestId; // Fallback to ID if request not found
+  }
+  
+  // Prefer title if it exists
+  if (request.title) {
+    return request.title;
+  }
+  
+  // Fallback to truncated text if no title
+  if (request.text) {
+    const firstSentence = request.text.split(/[.!?]\s+/)[0].trim();
+    return firstSentence.length > 50 
+      ? firstSentence.substring(0, 47) + '...'
+      : firstSentence;
+  }
+  
+  // Final fallback to ID
+  return requestId;
+}
+
+/**
  * Deterministic random number generator using a simple LCG algorithm.
  * Based on Numerical Recipes - Park and Miller generator.
  */
@@ -431,10 +461,12 @@ export function pickNextRequest(
     
     // Create synthetic request for combat start
     // This synthetic request will be handled by state.ts to activate the combat
+    // Include origin event reference for clarity
+    const originEventName = getRequestTitle(firstDueCombat.originRequestId);
     const combatStartRequest: Request = {
       id: `COMBAT_START::${firstDueCombat.combatId}`,
       title: 'Battle Begins',
-      text: 'Your forces are ready. The battle is about to commence!',
+      text: `Your forces are ready. The battle is about to commence!\n\nThis is the battle from: ${originEventName}`,
       options: [
         {
           text: 'Begin Battle',
