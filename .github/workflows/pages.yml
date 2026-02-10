@@ -3,7 +3,7 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches:
-      - main  # Only deploy from main branch
+      - '**'  # Deploy from all branches
 
 permissions:
   contents: read
@@ -11,8 +11,8 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
-  cancel-in-progress: true
+  group: pages-${{ github.ref }}  # Separate concurrency group per branch
+  cancel-in-progress: true  # Last push deploys - cancels previous runs on same branch
 
 jobs:
   build:
