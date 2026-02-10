@@ -54,6 +54,7 @@ jobs:
         env:
           GITHUB_REPOSITORY: ${{ github.repository }}
           VITE_BASE_PATH: ${{ steps.deploy-config.outputs.base_path }}
+          GITHUB_REF_NAME: ${{ github.ref_name }}
 
       - name: Deploy to gh-pages branch
         run: |

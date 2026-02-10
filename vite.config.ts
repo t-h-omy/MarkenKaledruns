@@ -6,6 +6,9 @@ import { VitePWA } from 'vite-plugin-pwa'
 import { readFileSync } from 'fs'
 const packageJson = JSON.parse(readFileSync('./package.json', 'utf-8'))
 
+const appVersion = packageJson.version
+const gitBranch = process.env.GITHUB_REF_NAME || 'local'
+
 // Derive base path from environment variable or GitHub repository name
 // Priority: VITE_BASE_PATH env var > computed from GITHUB_REPOSITORY > local dev fallback
 const getBasePath = () => {
@@ -57,6 +60,7 @@ export default defineConfig({
   ],
   base: basePath,
   define: {
-    'import.meta.env.VITE_APP_VERSION': JSON.stringify(packageJson.version)
+    '__APP_VERSION__': JSON.stringify(appVersion),
+    '__GIT_BRANCH__': JSON.stringify(gitBranch)
   }
 })

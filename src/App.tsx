@@ -464,7 +464,7 @@ function App() {
         
         {/* Version display */}
         <div className="version-footer">
-          v{import.meta.env.VITE_APP_VERSION || '1.0.0'}
+          v{__APP_VERSION__} ({__GIT_BRANCH__})
         </div>
       </div>
     </div>
