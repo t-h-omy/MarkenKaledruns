@@ -169,13 +169,14 @@ jobs:
 
             🔗 **Preview URL:** ${deploymentUrl}
 
-            <sub>Last updated: ${timestamp}</sub>`;
+            <sub>Last updated: ${timestamp}</sub>
+            <!-- preview-deployment-${branchName} -->`;
             
             // Find the PR associated with this branch
             let prNumber = null;
             
             // If this is a pull_request event, get the PR number directly
-            if (context.payload.pull_request) {
+            if (context.eventName === 'pull_request' && context.payload.pull_request) {
               prNumber = context.payload.pull_request.number;
             } else {
               // For push events, search for PRs with this head branch
@@ -196,7 +197,7 @@ jobs:
               return;
             }
             
-            // Find existing comment
+            // Find existing comment for this specific branch
             const comments = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -204,7 +205,7 @@ jobs:
             });
             
             const existingComment = comments.data.find(comment => 
-              comment.body.includes('🚀 **Preview Deployment**')
+              comment.body.includes(`<!-- preview-deployment-${branchName} -->`)
             );
             
             if (existingComment) {
