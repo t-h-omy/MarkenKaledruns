@@ -1103,6 +1103,7 @@ export const eventRequests: Request[] = [
       },
       onLose: {
         satisfaction: -3,
+      },
       followUpsOnWin: [
         {
           triggerOnOptionIndex: 0,
@@ -1427,6 +1428,17 @@ export const eventRequests: Request[] = [
     title: 'First Clash',
     text: 'The Blackgeat war begins. Their vanguard probes your line. Feldric: "They test for weakness. Show none."',
     canTriggerRandomly: false,
+    combat: {
+      enemyForces: 6,
+      prepDelayMinTicks: 3,
+      prepDelayMaxTicks: 5,
+      onWin: {
+        satisfaction: 2,
+      },
+      onLose: {
+        satisfaction: -3,
+      },
+    },
     options: [
       { text: 'HOLD', effects: { landForces: -4 } },
       { text: 'COUNTERSTRIKE', effects: { landForces: -6, gold: 10 } },
@@ -1454,6 +1466,17 @@ export const eventRequests: Request[] = [
     title: 'Smoke and Discipline',
     text: 'During the second war round against Blackgeat, they set brushfires to blind you. Feldric snarls: "They want panic."',
     canTriggerRandomly: false,
+    combat: {
+      enemyForces: 6,
+      prepDelayMinTicks: 3,
+      prepDelayMaxTicks: 5,
+      onWin: {
+        satisfaction: 2,
+      },
+      onLose: {
+        satisfaction: -3,
+      },
+    },
     options: [
       { text: 'PROTECT THE VILLAGE', effects: { landForces: -5, fireRisk: -4, satisfaction: 1 } },
       { text: 'PRESS THE LINE', effects: { landForces: -3, farmers: -4, fireRisk: 6 } },
@@ -1481,6 +1504,17 @@ export const eventRequests: Request[] = [
     title: 'The Breaking Point',
     text: 'This is the final showdown: Hrycgwulf commits Blackgeat\'s main force. Feldric: "This is it."',
     canTriggerRandomly: false,
+    combat: {
+      enemyForces: 12,
+      prepDelayMinTicks: 3,
+      prepDelayMaxTicks: 5,
+      onWin: {
+        satisfaction: 2,
+      },
+      onLose: {
+        satisfaction: -3,
+      },
+    },
     options: [
       { text: 'ALL-IN STRIKE', effects: { landForces: -5, gold: 35, satisfaction: 5 } },
       { text: 'WITHDRAW', effects: { satisfaction: -2, farmers: -5 } },
