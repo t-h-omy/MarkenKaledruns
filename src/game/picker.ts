@@ -28,7 +28,7 @@ function getRequestTitle(requestId: string): string {
   
   // Fallback to truncated text if no title
   if (request.text) {
-    const firstSentence = request.text.split(/[.!?]/)[0];
+    const firstSentence = request.text.split(/[.!?]\s+/)[0].trim();
     return firstSentence.length > 50 
       ? firstSentence.substring(0, 47) + '...'
       : firstSentence;
