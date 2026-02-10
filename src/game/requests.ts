@@ -221,16 +221,14 @@ export const eventRequests: Request[] = [
     title: 'Shadows in the Woods',
     text: 'A small band of brigands has been spotted nearby. Do we drive them off by force or pay a "toll" to keep the peace?',
     combat: {
-      enemyForces: 8,
-      prepDelayMinTicks: 1,
-      prepDelayMaxTicks: 3,
+      enemyForces: 3,
+      prepDelayMinTicks: 3,
+      prepDelayMaxTicks: 5,
       onWin: {
-        gold: 15,
-        satisfaction: 5,
+        gold: 10,
       },
       onLose: {
-        gold: -20,
-        farmers: -5,
+        gold: -10,
       },
     },
     options: [
@@ -251,30 +249,28 @@ export const eventRequests: Request[] = [
     title: 'The War Horns',
     text: 'A massive raiding force is at the gates! Stand your ground and fight, or the intruders will bring destruction to your village.',
     combat: {
-      enemyForces: 20,
-      prepDelayMinTicks: 1,
-      prepDelayMaxTicks: 3,
+      enemyForces: 8,
+      prepDelayMinTicks: 3,
+      prepDelayMaxTicks: 5,
       onWin: {
-        gold: 20,
-        fireRisk: 12,
+        gold: 25,
       },
       onLose: {
         gold: -30,
-        satisfaction: -5,
         farmers: -8,
+        satisfaction: -5,
       },
     },
     options: [
       {
         text: 'FIGHT',
-        effects: {},
+        effects: {fireRisk: 12,},
       },
       {
         text: 'SURRENDER',
         effects: {
-          gold: -25,
-          satisfaction: -4,
-          farmers: -3,
+          gold: -20,
+          satisfaction: -3,
         },
       },
     ],
@@ -784,21 +780,29 @@ export const eventRequests: Request[] = [
   {
     id: 'EVT_TRAVELER_BETRAYS',
     title: 'Betrayal in the Night',
-    text: 'The traveler was a spy! They have stolen supplies and fled into the darkness.',
+    text: 'The traveler was a spy! They have stolen gold and fled into the darkness.',
     canTriggerRandomly: false,
+    combat: {
+      enemyForces: 3,
+      prepDelayMinTicks: 8,
+      prepDelayMaxTicks: 10,
+      onWin: {
+        satisfaction: 2,
+      },
+      onLose: {
+        gold: -20,
+      },
+    },
     options: [
       {
-        text: 'PURSUE',
+        text: 'LONG PURSUE',
         effects: {
-          gold: -15,
-          landForces: -2,
         },
       },
       {
         text: 'LET THEM GO',
         effects: {
           gold: -20,
-          satisfaction: -5,
         },
       },
     ],
@@ -813,14 +817,12 @@ export const eventRequests: Request[] = [
         text: 'SEEK HEALER',
         effects: {
           gold: -15,
-          health: 3,
         },
       },
       {
         text: 'IGNORE SUPERSTITION',
         effects: {
-          satisfaction: -3,
-          health: -2,
+          health: -5,
         },
       },
     ],
@@ -920,9 +922,9 @@ export const eventRequests: Request[] = [
     text: 'Blackgeat\'s banners crest the ridge — the battle Brimwulf came to you for. Feldric\'s voice stays calm: "Hold. Then strike." Brimwulf\'s men lock shields beside yours.',
     canTriggerRandomly: false,
     combat: {
-      enemyForces: 15,
-      prepDelayMinTicks: 1,
-      prepDelayMaxTicks: 3,
+      enemyForces: 6,
+      prepDelayMinTicks: 3,
+      prepDelayMaxTicks: 5,
       onWin: {
         satisfaction: 2,
       },
@@ -1093,9 +1095,14 @@ export const eventRequests: Request[] = [
     text: 'Hrycgwulf grows impatient with your stalling. The Blackgeat banners appear on the horizon. Feldric draws his blade: "What shall we do, Mylord?"',
     canTriggerRandomly: false,
     combat: {
-      enemyForces: 25,
-      prepDelayMinTicks: 1,
-      prepDelayMaxTicks: 2,
+      enemyForces: 12,
+      prepDelayMinTicks: 3,
+      prepDelayMaxTicks: 5,
+      onWin: {
+        satisfaction: 2,
+      },
+      onLose: {
+        satisfaction: -3,
       followUpsOnWin: [
         {
           triggerOnOptionIndex: 0,
