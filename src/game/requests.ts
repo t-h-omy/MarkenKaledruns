@@ -131,10 +131,6 @@ export const infoRequests: Request[] = [
         text: 'Understood.',
         effects: {},
       },
-      {
-        text: 'Continue.',
-        effects: {},
-      },
     ],
   },
   {
@@ -146,10 +142,6 @@ export const infoRequests: Request[] = [
     options: [
       {
         text: 'Understood.',
-        effects: {},
-      },
-      {
-        text: 'Continue.',
         effects: {},
       },
     ],
@@ -165,10 +157,6 @@ export const infoRequests: Request[] = [
         text: 'Understood.',
         effects: {},
       },
-      {
-        text: 'Continue.',
-        effects: {},
-      },
     ],
   },
   {
@@ -182,10 +170,6 @@ export const infoRequests: Request[] = [
         text: 'Understood.',
         effects: {},
       },
-      {
-        text: 'Continue.',
-        effects: {},
-      },
     ],
   },
   {
@@ -197,10 +181,6 @@ export const infoRequests: Request[] = [
     options: [
       {
         text: 'Understood.',
-        effects: {},
-      },
-      {
-        text: 'Continue.',
         effects: {},
       },
     ],
@@ -1805,10 +1785,12 @@ export function validateRequests(): void {
   const duplicateIds: string[] = [];
 
   for (const request of allRequests) {
-    // Check 1: Each request must have exactly 2 options
-    if (request.options.length !== 2) {
+    // Check 1: Info requests must have exactly 1 option, all others must have exactly 2
+    const isInfoRequest = request.id.startsWith('INFO_');
+    const expectedOptions = isInfoRequest ? 1 : 2;
+    if (request.options.length !== expectedOptions) {
       errors.push(
-        `Request "${request.id}" has ${request.options.length} options, expected exactly 2`
+        `Request "${request.id}" has ${request.options.length} options, expected exactly ${expectedOptions}`
       );
     }
 
