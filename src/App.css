@@ -197,7 +197,7 @@
   cursor: not-allowed;
 }
 
-/* Battle-specific styling for better readability */
+/* Improved styling for request titles */
 .request-panel h3.request-title {
   font-size: 1.25rem;
   line-height: 1.3;
