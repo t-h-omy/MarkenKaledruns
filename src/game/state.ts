@@ -1574,8 +1574,8 @@ export function getCurrentRequest(state: GameState): Request | null {
             effects: {},
           },
         ],
-        advancesTick: false,
-      };
+        advancesTick: false, // Combat report is a tickless info screen
+      }; // Single button instead of two - both options were functionally identical
     } catch (error) {
       console.error('Failed to parse combat report:', error);
       return {
@@ -1588,8 +1588,8 @@ export function getCurrentRequest(state: GameState): Request | null {
             effects: {},
           },
         ],
-        advancesTick: false,
-      };
+        advancesTick: false, // Combat report is a tickless info screen
+      }; // Single button instead of two - both options were functionally identical
     }
   }
   

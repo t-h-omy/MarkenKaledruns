@@ -317,7 +317,7 @@ export function pickNextRequest(
                 },
               ],
               advancesTick: false, // Combat report is tickless
-            };
+            }; // Single button instead of two - both options were functionally identical
             
             return combatReportRequest;
           } catch (error) {
@@ -334,7 +334,7 @@ export function pickNextRequest(
                 },
               ],
               advancesTick: false,
-            };
+            }; // Single button instead of two - both options were functionally identical
             return fallbackRequest;
           }
         }
