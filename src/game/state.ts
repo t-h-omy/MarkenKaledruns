@@ -197,6 +197,36 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 /**
+ * Helper function to get a request's title by ID
+ * @param requestId The ID of the request to lookup
+ * @returns The request's title, or a fallback string if not found
+ */
+function getRequestTitleFromId(requestId: string): string {
+  const allRequests = [...needRequests, ...infoRequests, ...eventRequests];
+  const request = allRequests.find(r => r.id === requestId);
+  
+  if (!request) {
+    return requestId; // Fallback to ID if request not found
+  }
+  
+  // Prefer title if it exists
+  if (request.title) {
+    return request.title;
+  }
+  
+  // Fallback to truncated text if no title
+  if (request.text) {
+    const firstSentence = request.text.split(/[.!?]\s+/)[0].trim();
+    return firstSentence.length > 50 
+      ? firstSentence.substring(0, 47) + '...'
+      : firstSentence;
+  }
+  
+  // Final fallback to ID
+  return requestId;
+}
+
+/**
  * Clamps stats according to game rules
  * Gold minimum is -50 (bankruptcy threshold)
  */
@@ -1516,10 +1546,23 @@ export function getCurrentRequest(state: GameState): Request | null {
   
   // Check if this is a synthetic combat start request
   if (state.currentRequestId.startsWith('COMBAT_START::')) {
+    // Extract combatId from the request ID (format: COMBAT_START::combatId)
+    const combatId = state.currentRequestId.substring('COMBAT_START::'.length);
+    
+    // Look up the scheduled combat to get origin event info
+    const scheduledCombat = state.scheduledCombats.find(c => c.combatId === combatId);
+    
+    // Build text with origin event name if available
+    let text = 'Your forces are ready. The battle is about to commence!';
+    if (scheduledCombat) {
+      const originEventName = getRequestTitleFromId(scheduledCombat.originRequestId);
+      text += `\n\nThis is the battle from: ${originEventName}`;
+    }
+    
     return {
       id: state.currentRequestId,
       title: 'Battle Begins',
-      text: 'Your forces are ready. The battle is about to commence!',
+      text,
       options: [
         {
           text: 'Begin Battle',
