@@ -52,7 +52,7 @@ These changes ensure that:
    - Service worker checks for updates
    - If new service worker detected:
      - `onNeedRefresh()` callback is triggered
-     - Calls `updateSW(true)` to activate new service worker
+     - Calls `updateServiceWorker(true)` to activate new service worker
      - Page automatically reloads
    - User sees the new version immediately
 
@@ -83,7 +83,7 @@ After merging this PR and deploying to main:
    ├─ No → Continue using current version
    └─ Yes → Trigger onNeedRefresh()
       ↓
-      Call updateSW(true)
+      Call updateServiceWorker(true)
       ↓
       New SW calls skipWaiting()
       ↓
