@@ -158,24 +158,24 @@ export function pickNextRequest(
       const roundNumber = combat.round + 1;
       
       // Build text with current forces and last round results
-      let text = `Du: ${combat.committedRemaining} | Gegner: ${combat.enemyRemaining}`;
+      let text = `Your Forces: ${combat.committedRemaining}\nEnemy Forces: ${combat.enemyRemaining}`;
       
       if (combat.lastRound) {
-        text += `\n\nLetzte Runde: Du hast ${combat.lastRound.playerLosses} verloren, Gegner hat ${combat.lastRound.enemyLosses} verloren`;
+        text += `\n\nLast Round:\nYour Losses: ${combat.lastRound.playerLosses}\nEnemy Losses: ${combat.lastRound.enemyLosses}`;
       }
       
       // Create synthetic combat round request
       const combatRoundRequest: Request = {
         id: `COMBAT_ROUND::${combat.combatId}`,
-        title: `Kampf – Runde ${roundNumber}`,
+        title: `Battle – Round ${roundNumber}`,
         text,
         options: [
           {
-            text: 'Weiterkämpfen',
+            text: 'Continue Fighting',
             effects: {}, // Combat resolution handled in state.ts
           },
           {
-            text: 'Zurückziehen',
+            text: 'Withdraw',
             effects: {}, // Immediate lose handled in state.ts
           },
         ],
@@ -273,24 +273,24 @@ export function pickNextRequest(
             // Build outcome text
             let outcomeText = '';
             if (reportData.outcome === 'win') {
-              outcomeText = 'Sieg!';
+              outcomeText = 'Victory!';
             } else if (reportData.outcome === 'withdraw') {
-              outcomeText = 'Rückzug';
+              outcomeText = 'Withdrawal';
             } else {
-              outcomeText = 'Niederlage';
+              outcomeText = 'Defeat';
             }
             
             // Build losses text
-            const lossesText = `Verluste: Du ${reportData.playerLosses || 0}, Gegner ${reportData.enemyLosses || 0}`;
+            const lossesText = `Casualties:\nYou: ${reportData.playerLosses || 0}\nEnemy: ${reportData.enemyLosses || 0}`;
             
             // Build consequences text using a helper function to reduce duplication
             const statLabels: Record<string, string> = {
               gold: 'Gold',
-              satisfaction: 'Zufriedenheit',
-              health: 'Gesundheit',
-              fireRisk: 'Brandrisiko',
-              farmers: 'Bauern',
-              landForces: 'Landstreitkräfte',
+              satisfaction: 'Satisfaction',
+              health: 'Health',
+              fireRisk: 'Fire Risk',
+              farmers: 'Farmers',
+              landForces: 'Land Forces',
             };
             
             const consequences: string[] = [];
@@ -302,21 +302,17 @@ export function pickNextRequest(
             }
             
             const consequencesText = consequences.length > 0 
-              ? `\n\nFolgen:\n${consequences.join('\n')}`
+              ? `\n\nConsequences:\n${consequences.join('\n')}`
               : '';
             
             // Create synthetic combat report request
             const combatReportRequest: Request = {
               id: dueEvent.requestId,
-              title: 'Kampfbericht',
+              title: 'Battle Report',
               text: `${outcomeText}\n\n${lossesText}${consequencesText}`,
               options: [
                 {
-                  text: 'Verstanden',
-                  effects: {},
-                },
-                {
-                  text: 'Weiter',
+                  text: 'Continue',
                   effects: {},
                 },
               ],
@@ -329,15 +325,11 @@ export function pickNextRequest(
             // Return a fallback combat report request
             const fallbackRequest: Request = {
               id: dueEvent.requestId,
-              title: 'Kampfbericht',
-              text: 'Der Kampf ist beendet.',
+              title: 'Battle Report',
+              text: 'The battle has ended.',
               options: [
                 {
-                  text: 'Verstanden',
-                  effects: {},
-                },
-                {
-                  text: 'Weiter',
+                  text: 'Continue',
                   effects: {},
                 },
               ],
@@ -438,11 +430,11 @@ export function pickNextRequest(
     // This synthetic request will be handled by state.ts to activate the combat
     const combatStartRequest: Request = {
       id: `COMBAT_START::${firstDueCombat.combatId}`,
-      title: 'Combat Begins',
-      text: 'Your forces are ready. The battle is about to begin!',
+      title: 'Battle Begins',
+      text: 'Your forces are ready. The battle is about to commence!',
       options: [
         {
-          text: 'Begin combat',
+          text: 'Begin Battle',
           effects: {}, // No immediate effects; state.ts will handle combat activation
         },
       ],

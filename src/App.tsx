@@ -277,8 +277,8 @@ function App() {
                 {currentRequest.combat && (
                   <div className="combat-slider-container">
                     <div className="combat-info">
-                      <span>Einsatz: {combatCommit} Landkräfte</span>
-                      <span>Gegner: {currentRequest.combat.enemyForces}</span>
+                      <span>Deploy: {combatCommit} Land Forces</span>
+                      <span>Enemy: {currentRequest.combat.enemyForces}</span>
                     </div>
                     <input
                       type="range"
