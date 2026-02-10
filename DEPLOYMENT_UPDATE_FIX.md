@@ -31,9 +31,9 @@ These changes ensure that:
 
 ### 2. Updated Service Worker Registration
 **File: `src/main.tsx`**
-- Stored the return value of `registerSW()` as `updateSW` function
-- Modified `onNeedRefresh` to call `updateSW(true)` instead of `window.location.reload()`
-- This properly updates the service worker AND reloads the page
+- Using `window.location.reload()` in `onNeedRefresh` callback
+- With `skipWaiting` and `clientsClaim`, the new SW activates before reload
+- Simple and reliable approach
 
 ### 3. Version Bump
 **File: `package.json`**
@@ -52,8 +52,8 @@ These changes ensure that:
    - Service worker checks for updates
    - If new service worker detected:
      - `onNeedRefresh()` callback is triggered
-     - Calls `updateServiceWorker(true)` to activate new service worker
-     - Page automatically reloads
+     - Calls `window.location.reload()` to reload the page
+     - New SW (with skipWaiting/clientsClaim) takes over immediately
    - User sees the new version immediately
 
 ## Verification Steps
@@ -83,15 +83,15 @@ After merging this PR and deploying to main:
    ├─ No → Continue using current version
    └─ Yes → Trigger onNeedRefresh()
       ↓
-      Call updateServiceWorker(true)
+      Call window.location.reload()
       ↓
-      New SW calls skipWaiting()
+      New SW (skipWaiting) activates
       ↓
-      New SW calls clientsClaim()
+      New SW (clientsClaim) takes control
       ↓
-      Page reloads
+      Page reloads with new version
       ↓
-      User sees new version
+      User sees updated version
 ```
 
 ### Why `registerType: 'prompt'` Instead of `'autoUpdate'`
