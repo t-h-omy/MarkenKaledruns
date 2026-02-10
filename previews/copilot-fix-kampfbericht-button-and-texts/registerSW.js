@@ -1,1 +1,0 @@
-if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/MarkenKaledruns/previews/copilot-fix-kampfbericht-button-and-texts/sw.js', { scope: '/MarkenKaledruns/previews/copilot-fix-kampfbericht-button-and-texts/' })})}
