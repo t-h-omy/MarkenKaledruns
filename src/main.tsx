@@ -14,7 +14,11 @@ if (import.meta.env.DEV) {
 registerSW({
   immediate: true,
   onNeedRefresh() {
+    // When update is detected, reload the page to activate new version
     window.location.reload()
+  },
+  onOfflineReady() {
+    console.log('App ready to work offline')
   }
 })
 
