@@ -254,17 +254,19 @@ export const eventRequests: Request[] = [
       prepDelayMaxTicks: 5,
       onWin: {
         gold: 25,
+        fireRisk: 12,
       },
       onLose: {
         gold: -30,
         farmers: -8,
         satisfaction: -5,
+        fireRisk: 12,
       },
     },
     options: [
       {
         text: 'FIGHT',
-        effects: {fireRisk: 12,},
+        effects: {},
       },
       {
         text: 'SURRENDER',

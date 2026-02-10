@@ -778,16 +778,22 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       
       // Option B (index 1) = Withdraw = immediate lose
       if (action.optionIndex === 1) {
-        // Withdraw = lose
+        // Withdraw = return remaining forces to landForces and apply lose effects
         console.log(`[Combat Withdraw] Combat ${combat.combatId}:`, {
-          committedForces: combat.committedRemaining,
-          forfeitedForces: combat.committedRemaining,
+          committedRemaining: combat.committedRemaining,
+          returningForces: combat.committedRemaining,
         });
         
         const statsBefore = { ...state.stats };
         let stats = { ...state.stats };
         let needs = { ...state.needs };
         let scheduledEvents = [...state.scheduledEvents];
+        
+        // Return remaining forces to landForces (only if > 0 to avoid edge cases)
+        if (combat.committedRemaining > 0) {
+          stats.landForces += combat.committedRemaining;
+          console.log(`[Combat Withdraw] Returned ${combat.committedRemaining} forces to landForces. New total: ${stats.landForces}`);
+        }
         
         // Apply lose effects if any
         if (combat.onLose) {
