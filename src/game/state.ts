@@ -1564,6 +1564,8 @@ export function getCurrentRequest(state: GameState): Request | null {
         ? `\n\nConsequences:\n${consequences.join('\n')}`
         : '';
       
+      
+      // Single button instead of two - both options were functionally identical
       return {
         id: state.currentRequestId,
         title: 'Battle Report',
@@ -1575,9 +1577,11 @@ export function getCurrentRequest(state: GameState): Request | null {
           },
         ],
         advancesTick: false, // Combat report is a tickless info screen
-      }; // Single button instead of two - both options were functionally identical
+      };
     } catch (error) {
       console.error('Failed to parse combat report:', error);
+      
+      // Single button instead of two - both options were functionally identical
       return {
         id: state.currentRequestId,
         title: 'Battle Report',
@@ -1589,7 +1593,7 @@ export function getCurrentRequest(state: GameState): Request | null {
           },
         ],
         advancesTick: false, // Combat report is a tickless info screen
-      }; // Single button instead of two - both options were functionally identical
+      };
     }
   }
   

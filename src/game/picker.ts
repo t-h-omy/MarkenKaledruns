@@ -306,6 +306,7 @@ export function pickNextRequest(
               : '';
             
             // Create synthetic combat report request
+            // Single button instead of two - both options were functionally identical
             const combatReportRequest: Request = {
               id: dueEvent.requestId,
               title: 'Battle Report',
@@ -317,12 +318,14 @@ export function pickNextRequest(
                 },
               ],
               advancesTick: false, // Combat report is tickless
-            }; // Single button instead of two - both options were functionally identical
+            };
             
             return combatReportRequest;
           } catch (error) {
             console.error('Failed to parse combat report data:', error);
+            
             // Return a fallback combat report request
+            // Single button instead of two - both options were functionally identical
             const fallbackRequest: Request = {
               id: dueEvent.requestId,
               title: 'Battle Report',
@@ -334,7 +337,7 @@ export function pickNextRequest(
                 },
               ],
               advancesTick: false,
-            }; // Single button instead of two - both options were functionally identical
+            };
             return fallbackRequest;
           }
         }
