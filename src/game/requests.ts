@@ -1880,7 +1880,7 @@ export const eventRequests: Request[] = [
           satisfaction: 5,
         },
         authorityCheck: {
-          minCommit: 5,
+          minCommit: 0,
           maxCommit: 50,
           threshold: 15,
           onSuccess: {
@@ -1894,7 +1894,8 @@ export const eventRequests: Request[] = [
           successFeedbackRequestId: 'INFO_AUTHORITY_SUCCESS',
           failureFeedbackRequestId: 'INFO_AUTHORITY_FAILURE',
           refundOnSuccessPercent: 100,
-          extraLossOnFailurePercent: 50,
+          extraLossOnFailurePercent: 25,
+          failExtraLossChance: 30,
         },
       },
       {
@@ -2446,7 +2447,7 @@ export const eventRequests: Request[] = [
           gold: 10,
         },
         authorityCheck: {
-          minCommit: 10,
+          minCommit: 0,
           maxCommit: 40,
           threshold: 25,
           onSuccess: {
@@ -2459,7 +2460,8 @@ export const eventRequests: Request[] = [
           successFeedbackRequestId: 'INFO_TRADE_SUCCESS',
           failureFeedbackRequestId: 'INFO_TRADE_FAILURE',
           refundOnSuccessPercent: 100,
-          extraLossOnFailurePercent: 30,
+          extraLossOnFailurePercent: 20,
+          failExtraLossChance: 25,
         },
       },
       {
@@ -2482,7 +2484,7 @@ export const eventRequests: Request[] = [
         text: 'ADDRESS THE CROWD',
         effects: {},
         authorityCheck: {
-          minCommit: 15,
+          minCommit: 0,
           maxCommit: 50,
           threshold: 30,
           onSuccess: {
@@ -2497,7 +2499,8 @@ export const eventRequests: Request[] = [
           successFeedbackRequestId: 'INFO_RIOT_SUCCESS',
           failureFeedbackRequestId: 'INFO_RIOT_FAILURE',
           refundOnSuccessPercent: 80,
-          extraLossOnFailurePercent: 50,
+          extraLossOnFailurePercent: 30,
+          failExtraLossChance: 35,
         },
       },
       {
@@ -2521,7 +2524,7 @@ export const eventRequests: Request[] = [
         text: 'RENDER JUDGMENT',
         effects: {},
         authorityCheck: {
-          minCommit: 12,
+          minCommit: 0,
           maxCommit: 45,
           threshold: 28,
           onSuccess: {
@@ -2535,7 +2538,8 @@ export const eventRequests: Request[] = [
           successFeedbackRequestId: 'INFO_JUSTICE_SUCCESS',
           failureFeedbackRequestId: 'INFO_JUSTICE_FAILURE',
           refundOnSuccessPercent: 100,
-          extraLossOnFailurePercent: 40,
+          extraLossOnFailurePercent: 25,
+          failExtraLossChance: 30,
         },
       },
       {
@@ -2558,7 +2562,7 @@ export const eventRequests: Request[] = [
         text: 'FORCE REFORMS',
         effects: {},
         authorityCheck: {
-          minCommit: 20,
+          minCommit: 0,
           maxCommit: 60,
           threshold: 40,
           onSuccess: {
@@ -2572,7 +2576,8 @@ export const eventRequests: Request[] = [
           successFeedbackRequestId: 'INFO_REFORM_SUCCESS',
           failureFeedbackRequestId: 'INFO_REFORM_FAILURE',
           refundOnSuccessPercent: 90,
-          extraLossOnFailurePercent: 40,
+          extraLossOnFailurePercent: 25,
+          failExtraLossChance: 30,
         },
       },
       {
@@ -2595,7 +2600,7 @@ export const eventRequests: Request[] = [
         text: 'RECRUIT THEM',
         effects: {},
         authorityCheck: {
-          minCommit: 18,
+          minCommit: 0,
           maxCommit: 55,
           threshold: 35,
           onSuccess: {
@@ -2609,7 +2614,8 @@ export const eventRequests: Request[] = [
           successFeedbackRequestId: 'INFO_BANDIT_SUCCESS',
           failureFeedbackRequestId: 'INFO_BANDIT_FAILURE',
           refundOnSuccessPercent: 100,
-          extraLossOnFailurePercent: 50,
+          extraLossOnFailurePercent: 30,
+          failExtraLossChance: 35,
         },
       },
       {
@@ -2632,7 +2638,7 @@ export const eventRequests: Request[] = [
         text: 'IMPLEMENT REFORM',
         effects: {},
         authorityCheck: {
-          minCommit: 15,
+          minCommit: 0,
           maxCommit: 50,
           threshold: 32,
           onSuccess: {
@@ -2646,7 +2652,8 @@ export const eventRequests: Request[] = [
           successFeedbackRequestId: 'INFO_TAX_SUCCESS',
           failureFeedbackRequestId: 'INFO_TAX_FAILURE',
           refundOnSuccessPercent: 100,
-          extraLossOnFailurePercent: 35,
+          extraLossOnFailurePercent: 22,
+          failExtraLossChance: 25,
         },
       },
       {
@@ -2669,7 +2676,7 @@ export const eventRequests: Request[] = [
         text: 'MAKE A DECREE',
         effects: {},
         authorityCheck: {
-          minCommit: 20,
+          minCommit: 0,
           maxCommit: 55,
           threshold: 38,
           onSuccess: {
@@ -2683,7 +2690,8 @@ export const eventRequests: Request[] = [
           successFeedbackRequestId: 'INFO_RELIGIOUS_SUCCESS',
           failureFeedbackRequestId: 'INFO_RELIGIOUS_FAILURE',
           refundOnSuccessPercent: 100,
-          extraLossOnFailurePercent: 45,
+          extraLossOnFailurePercent: 28,
+          failExtraLossChance: 30,
         },
       },
       {
@@ -2706,7 +2714,7 @@ export const eventRequests: Request[] = [
         text: 'ASSERT CLAIM',
         effects: {},
         authorityCheck: {
-          minCommit: 25,
+          minCommit: 0,
           maxCommit: 65,
           threshold: 45,
           onSuccess: {
@@ -2721,7 +2729,8 @@ export const eventRequests: Request[] = [
           successFeedbackRequestId: 'INFO_BORDER_SUCCESS',
           failureFeedbackRequestId: 'INFO_BORDER_FAILURE',
           refundOnSuccessPercent: 90,
-          extraLossOnFailurePercent: 40,
+          extraLossOnFailurePercent: 25,
+          failExtraLossChance: 30,
         },
       },
       {
@@ -2744,7 +2753,7 @@ export const eventRequests: Request[] = [
         text: 'PROSECUTE FULLY',
         effects: {},
         authorityCheck: {
-          minCommit: 18,
+          minCommit: 0,
           maxCommit: 50,
           threshold: 33,
           onSuccess: {
@@ -2760,7 +2769,8 @@ export const eventRequests: Request[] = [
           successFeedbackRequestId: 'INFO_CORRUPT_SUCCESS',
           failureFeedbackRequestId: 'INFO_CORRUPT_FAILURE',
           refundOnSuccessPercent: 100,
-          extraLossOnFailurePercent: 50,
+          extraLossOnFailurePercent: 30,
+          failExtraLossChance: 35,
         },
       },
       {
@@ -2784,7 +2794,7 @@ export const eventRequests: Request[] = [
         text: 'BACK A CLAIMANT',
         effects: {},
         authorityCheck: {
-          minCommit: 30,
+          minCommit: 0,
           maxCommit: 70,
           threshold: 50,
           onSuccess: {
@@ -2800,7 +2810,8 @@ export const eventRequests: Request[] = [
           successFeedbackRequestId: 'INFO_SUCCESSION_SUCCESS',
           failureFeedbackRequestId: 'INFO_SUCCESSION_FAILURE',
           refundOnSuccessPercent: 80,
-          extraLossOnFailurePercent: 50,
+          extraLossOnFailurePercent: 30,
+          failExtraLossChance: 40,
         },
       },
       {
@@ -2822,7 +2833,7 @@ export const eventRequests: Request[] = [
         text: 'BACK ONE GUILD',
         effects: {},
         authorityCheck: {
-          minCommit: 14,
+          minCommit: 0,
           maxCommit: 45,
           threshold: 30,
           onSuccess: {
@@ -2836,7 +2847,8 @@ export const eventRequests: Request[] = [
           successFeedbackRequestId: 'INFO_GUILD_SUCCESS',
           failureFeedbackRequestId: 'INFO_GUILD_FAILURE',
           refundOnSuccessPercent: 100,
-          extraLossOnFailurePercent: 40,
+          extraLossOnFailurePercent: 25,
+          failExtraLossChance: 30,
         },
       },
       {
@@ -2859,7 +2871,7 @@ export const eventRequests: Request[] = [
         text: 'DEMAND EQUALITY',
         effects: {},
         authorityCheck: {
-          minCommit: 22,
+          minCommit: 0,
           maxCommit: 60,
           threshold: 42,
           onSuccess: {
@@ -2874,7 +2886,8 @@ export const eventRequests: Request[] = [
           successFeedbackRequestId: 'INFO_ENVOY_SUCCESS',
           failureFeedbackRequestId: 'INFO_ENVOY_FAILURE',
           refundOnSuccessPercent: 100,
-          extraLossOnFailurePercent: 30,
+          extraLossOnFailurePercent: 20,
+          failExtraLossChance: 25,
         },
       },
       {
@@ -2897,7 +2910,7 @@ export const eventRequests: Request[] = [
         text: 'REDISTRIBUTE LAND',
         effects: {},
         authorityCheck: {
-          minCommit: 28,
+          minCommit: 0,
           maxCommit: 70,
           threshold: 50,
           onSuccess: {
@@ -2913,7 +2926,8 @@ export const eventRequests: Request[] = [
           successFeedbackRequestId: 'INFO_LAND_SUCCESS',
           failureFeedbackRequestId: 'INFO_LAND_FAILURE',
           refundOnSuccessPercent: 85,
-          extraLossOnFailurePercent: 45,
+          extraLossOnFailurePercent: 28,
+          failExtraLossChance: 35,
         },
       },
       {
@@ -2936,7 +2950,7 @@ export const eventRequests: Request[] = [
         text: 'ABOLISH TRADITION',
         effects: {},
         authorityCheck: {
-          minCommit: 20,
+          minCommit: 0,
           maxCommit: 55,
           threshold: 38,
           onSuccess: {
@@ -2951,7 +2965,8 @@ export const eventRequests: Request[] = [
           successFeedbackRequestId: 'INFO_TRADITION_SUCCESS',
           failureFeedbackRequestId: 'INFO_TRADITION_FAILURE',
           refundOnSuccessPercent: 100,
-          extraLossOnFailurePercent: 50,
+          extraLossOnFailurePercent: 30,
+          failExtraLossChance: 35,
         },
       },
       {
@@ -2974,7 +2989,7 @@ export const eventRequests: Request[] = [
         text: 'RECRUIT PIRATES',
         effects: {},
         authorityCheck: {
-          minCommit: 16,
+          minCommit: 0,
           maxCommit: 48,
           threshold: 32,
           onSuccess: {
@@ -2988,7 +3003,8 @@ export const eventRequests: Request[] = [
           successFeedbackRequestId: 'INFO_PIRATE_SUCCESS',
           failureFeedbackRequestId: 'INFO_PIRATE_FAILURE',
           refundOnSuccessPercent: 100,
-          extraLossOnFailurePercent: 40,
+          extraLossOnFailurePercent: 25,
+          failExtraLossChance: 30,
         },
       },
       {
@@ -3010,7 +3026,7 @@ export const eventRequests: Request[] = [
         text: 'NEGOTIATE TERMS',
         effects: {},
         authorityCheck: {
-          minCommit: 24,
+          minCommit: 0,
           maxCommit: 62,
           threshold: 44,
           onSuccess: {
@@ -3026,7 +3042,8 @@ export const eventRequests: Request[] = [
           successFeedbackRequestId: 'INFO_MARRIAGE_SUCCESS',
           failureFeedbackRequestId: 'INFO_MARRIAGE_FAILURE',
           refundOnSuccessPercent: 90,
-          extraLossOnFailurePercent: 45,
+          extraLossOnFailurePercent: 28,
+          failExtraLossChance: 35,
         },
       },
       {
