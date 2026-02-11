@@ -380,7 +380,7 @@ function App() {
                           <div className="authority-header">
                             <div className="authority-title">
                               <span className="authority-icon">👑</span>
-                              <span>Authority Commitment {config.minCommit === 0 ? '(Optional)' : ''}</span>
+                              <span>Authority Commitment</span>
                             </div>
                             <div className={`authority-outcome ${willSucceed ? 'success' : 'failure'}`}>
                               {willSucceed ? '✓ SUCCESS' : '✗ UNCERTAIN'}
@@ -457,9 +457,9 @@ function App() {
                                 <span className="fork-effect negative">
                                   Authority Lost: {currentCommit}
                                 </span>
-                                {config.extraLossOnFailurePercent !== undefined && config.extraLossOnFailurePercent > 0 && (
+                                {config.extraLossOnFailure !== undefined && config.extraLossOnFailure > 0 && (
                                   <span className="fork-effect negative">
-                                    Extra Loss: {config.extraLossOnFailurePercent}% ({Math.floor(currentCommit * config.extraLossOnFailurePercent / 100)} authority)
+                                    Extra Loss: {config.extraLossOnFailure} authority
                                   </span>
                                 )}
                               </div>

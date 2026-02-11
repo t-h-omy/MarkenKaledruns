@@ -213,10 +213,8 @@ export interface AuthorityCheck {
   failureFeedbackRequestId?: string;
   /** Percentage of committed authority refunded on success (0-100, default: 100) */
   refundOnSuccessPercent?: number;
-  /** Extra authority loss on failure (as percentage of committed, 0-100, default: 0) */
-  extraLossOnFailurePercent?: number;
-  /** Probability that extraLossOnFailurePercent is applied on failure (0-100, default: 100). Makes extra loss rare instead of guaranteed. */
-  failExtraLossChance?: number;
+  /** Extra authority loss on failure as a fixed whole number (default: 0) */
+  extraLossOnFailure?: number;
 }
 
 /**
