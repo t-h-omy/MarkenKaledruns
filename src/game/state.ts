@@ -733,11 +733,20 @@ function resolveAuthorityCheck(check: PendingAuthorityCheck): AuthorityCheckResu
   
   let totalLoss = committed - refunded;
   
-  // Apply extra loss on failure
+  // Apply extra loss on failure (probabilistic now)
+  // New behavior: failExtraLossChance controls whether extra loss is applied (default 100% for backwards compatibility).
+  // This makes extra penalties rare instead of guaranteed, improving game balance.
+  // Extra loss magnitude (extraLossOnFailurePercent) should typically be small (0-30%) to avoid punishing swings.
   if (!success) {
     const extraLossPercent = config.extraLossOnFailurePercent ?? 0;
-    const extraLoss = Math.floor((committed * extraLossPercent) / 100);
-    totalLoss += extraLoss;
+    if (extraLossPercent > 0) {
+      const failExtraLossChance = config.failExtraLossChance ?? 100;
+      const roll = Math.random() * 100;
+      if (roll < failExtraLossChance) {
+        const extraLoss = Math.floor((committed * extraLossPercent) / 100);
+        totalLoss += extraLoss;
+      }
+    }
   }
   
   // Determine which effects to apply

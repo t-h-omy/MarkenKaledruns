@@ -197,7 +197,7 @@ export interface FollowUp {
  * and the check resolves on the next tick (delay=1).
  */
 export interface AuthorityCheck {
-  /** Minimum authority commitment required */
+  /** Minimum authority commitment required (can be 0 for optional commitment) */
   minCommit: number;
   /** Maximum authority commitment allowed */
   maxCommit: number;
@@ -215,6 +215,8 @@ export interface AuthorityCheck {
   refundOnSuccessPercent?: number;
   /** Extra authority loss on failure (as percentage of committed, 0-100, default: 0) */
   extraLossOnFailurePercent?: number;
+  /** Probability that extraLossOnFailurePercent is applied on failure (0-100, default: 100). Makes extra loss rare instead of guaranteed. */
+  failExtraLossChance?: number;
 }
 
 /**

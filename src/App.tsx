@@ -59,7 +59,7 @@ function App() {
       const option = currentRequest?.options.find(opt => opt.authorityCheck)
       if (option?.authorityCheck) {
         const config = option.authorityCheck
-        // Clamp to valid range: at least minCommit, at most min(maxCommit, available authority)
+        // Allow 0 commitment (optional spend). Clamp to valid range: at least minCommit (can be 0), at most min(maxCommit, available authority)
         const defaultCommit = Math.max(config.minCommit, Math.min(config.maxCommit, Math.floor(maxAuthority)))
         if (authorityCommit < config.minCommit || authorityCommit > config.maxCommit) {
           setAuthorityCommit(defaultCommit)
@@ -370,15 +370,17 @@ function App() {
                       const maxCommittable = Math.floor(maxAuthority)
                       const currentCommit = Math.min(authorityCommit, maxCommittable)
                       const willSucceed = currentCommit >= config.threshold
-                      const successChance = currentCommit >= config.threshold ? 100 : 
-                        Math.floor((currentCommit / config.threshold) * 100)
+                      // Safely calculate success chance, handling 0 threshold edge case
+                      const successChance = config.threshold === 0 ? 100 : 
+                        (currentCommit >= config.threshold ? 100 : 
+                          Math.floor((currentCommit / config.threshold) * 100))
                       
                       return (
                         <div key={index}>
                           <div className="authority-header">
                             <div className="authority-title">
                               <span className="authority-icon">👑</span>
-                              <span>Authority Commitment</span>
+                              <span>Authority Commitment {config.minCommit === 0 ? '(Optional)' : ''}</span>
                             </div>
                             <div className={`authority-outcome ${willSucceed ? 'success' : 'failure'}`}>
                               {willSucceed ? '✓ SUCCESS' : '✗ UNCERTAIN'}
@@ -406,7 +408,6 @@ function App() {
                             max={Math.min(config.maxCommit, maxCommittable)}
                             value={currentCommit}
                             onChange={(e) => setAuthorityCommit(Number(e.target.value))}
-                            disabled={maxAuthority < config.minCommit}
                             className={`authority-slider ${willSucceed ? 'success' : 'uncertain'}`}
                           />
                           
