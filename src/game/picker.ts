@@ -102,13 +102,6 @@ export function getRandomValue(): number {
 }
 
 /**
- * Probability for events with authority constraints to trigger when within their authority band.
- * This prevents all events in a band from being eligible simultaneously, which would cause
- * repetitive event chains when authority is in a specific range.
- */
-const AUTHORITY_BAND_TRIGGER_PROBABILITY = 0.5;
-
-/**
  * Selects one candidate from an array using weighted random selection.
  * The selection is deterministic when using a seeded RNG.
  * 
@@ -147,8 +140,7 @@ export function selectWeightedCandidate<T extends { weight: number }>(
 
 /**
  * Checks if an event is eligible based on authority range.
- * Events with authority ranges have a probabilistic chance to trigger,
- * not a guarantee, to prevent all band-specific events from appearing repeatedly.
+ * All events within their authority range are eligible and part of the normal picker pool.
  */
 function isEligibleByAuthority(request: Request, authority: number): boolean {
   // If no authority constraints, always eligible
@@ -165,9 +157,8 @@ function isEligibleByAuthority(request: Request, authority: number): boolean {
     return false;
   }
   
-  // Authority is within range - use probability to determine eligibility
-  // This prevents all events in a band from triggering repeatedly
-  return rng.next() < AUTHORITY_BAND_TRIGGER_PROBABILITY;
+  // Authority is within range - event is eligible
+  return true;
 }
 
 /**
