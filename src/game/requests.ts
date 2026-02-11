@@ -1871,6 +1871,8 @@ export const eventRequests: Request[] = [
     id: 'EVT_AUTHORITY_TEST',
     title: 'Test of Authority',
     text: 'A rival faction challenges your political influence. You can commit authority to maintain your position. Success will refund your commitment, failure will cost you dearly.',
+    authorityMin: 34,
+    authorityMax: 100,
     options: [
       {
         text: 'ASSERT AUTHORITY',
@@ -2435,6 +2437,8 @@ export const eventRequests: Request[] = [
     id: 'EVT_COMMIT_NEGOTIATE_TRADE',
     title: 'Trade Negotiation',
     text: 'A wealthy merchant guild seeks exclusive trading rights. You can leverage your authority to demand better terms, but failure could damage your reputation.',
+    authorityMin: 34,
+    authorityMax: 100,
     options: [
       {
         text: 'NEGOTIATE HARD',
@@ -2471,6 +2475,8 @@ export const eventRequests: Request[] = [
     id: 'EVT_COMMIT_QUELL_RIOT',
     title: 'Brewing Riot',
     text: 'Angry citizens gather in the square, demanding change. You can use your authority to calm them, but if you fail, violence may erupt.',
+    authorityMin: 34,
+    authorityMax: 100,
     options: [
       {
         text: 'ADDRESS THE CROWD',
@@ -2508,6 +2514,8 @@ export const eventRequests: Request[] = [
     id: 'EVT_COMMIT_JUSTICE_DISPUTE',
     title: 'Noble Dispute',
     text: 'Two noble families feud over land rights. Your judgment will be final, but you need authority to make it stick.',
+    authorityMin: 34,
+    authorityMax: 100,
     options: [
       {
         text: 'RENDER JUDGMENT',
@@ -2543,6 +2551,8 @@ export const eventRequests: Request[] = [
     id: 'EVT_COMMIT_MILITARY_REFORM',
     title: 'Military Reorganization',
     text: 'Your military structure is outdated. Reforming it requires authority to overcome resistance from traditional commanders.',
+    authorityMin: 34,
+    authorityMax: 100,
     options: [
       {
         text: 'FORCE REFORMS',
@@ -2578,6 +2588,8 @@ export const eventRequests: Request[] = [
     id: 'EVT_COMMIT_BANDIT_PARLEY',
     title: 'Bandit Negotiation',
     text: 'A bandit chief offers to serve you instead of raiding. This requires enough authority to command their respect and loyalty.',
+    authorityMin: 34,
+    authorityMax: 100,
     options: [
       {
         text: 'RECRUIT THEM',
@@ -2613,6 +2625,8 @@ export const eventRequests: Request[] = [
     id: 'EVT_COMMIT_TAX_REFORM',
     title: 'Tax Collection Reform',
     text: 'The tax system is corrupt and inefficient. Overhauling it requires authority to force compliance from entrenched interests.',
+    authorityMin: 34,
+    authorityMax: 100,
     options: [
       {
         text: 'IMPLEMENT REFORM',
@@ -2648,6 +2662,8 @@ export const eventRequests: Request[] = [
     id: 'EVT_COMMIT_RELIGIOUS_DISPUTE',
     title: 'Religious Controversy',
     text: 'A religious dispute threatens to divide your people. Only strong authority can unite them under a single decision.',
+    authorityMin: 34,
+    authorityMax: 100,
     options: [
       {
         text: 'MAKE A DECREE',
@@ -2683,6 +2699,8 @@ export const eventRequests: Request[] = [
     id: 'EVT_COMMIT_BORDER_CLAIM',
     title: 'Border Dispute',
     text: 'Contested lands lie between your territory and a neighbor\'s. Assert your claim with authority, or concede the ground.',
+    authorityMin: 34,
+    authorityMax: 100,
     options: [
       {
         text: 'ASSERT CLAIM',
@@ -2719,6 +2737,8 @@ export const eventRequests: Request[] = [
     id: 'EVT_COMMIT_CORRUPT_OFFICIAL',
     title: 'Corruption Exposed',
     text: 'A powerful official is caught embezzling. Punishing them requires authority, as they have many allies.',
+    authorityMin: 34,
+    authorityMax: 100,
     options: [
       {
         text: 'PROSECUTE FULLY',
@@ -2757,6 +2777,8 @@ export const eventRequests: Request[] = [
     id: 'EVT_COMMIT_SUCCESSION_CRISIS',
     title: 'Succession Crisis',
     text: 'A neighboring lord dies without clear heir. Several claimants seek your backing. Your choice requires authority to enforce.',
+    authorityMin: 34,
+    authorityMax: 100,
     options: [
       {
         text: 'BACK A CLAIMANT',
@@ -2793,6 +2815,8 @@ export const eventRequests: Request[] = [
     id: 'EVT_COMMIT_GUILD_RIVALRY',
     title: 'Guild Power Struggle',
     text: 'Two merchant guilds vie for dominance. Choosing a winner requires authority to make your decision final.',
+    authorityMin: 34,
+    authorityMax: 100,
     options: [
       {
         text: 'BACK ONE GUILD',
@@ -2828,6 +2852,8 @@ export const eventRequests: Request[] = [
     id: 'EVT_COMMIT_FOREIGN_ENVOY',
     title: 'Foreign Envoy',
     text: 'An envoy from a distant kingdom offers trade and alliance, but demands concessions. Your authority determines the terms.',
+    authorityMin: 34,
+    authorityMax: 100,
     options: [
       {
         text: 'DEMAND EQUALITY',
@@ -2864,6 +2890,8 @@ export const eventRequests: Request[] = [
     id: 'EVT_COMMIT_LAND_DISTRIBUTION',
     title: 'Land Redistribution',
     text: 'The poor demand land reform. Redistributing land from wealthy nobles requires immense authority to overcome their resistance.',
+    authorityMin: 34,
+    authorityMax: 100,
     options: [
       {
         text: 'REDISTRIBUTE LAND',
@@ -2901,6 +2929,8 @@ export const eventRequests: Request[] = [
     id: 'EVT_COMMIT_CHALLENGE_TRADITION',
     title: 'Ancient Tradition',
     text: 'An archaic tradition harms your people, but it\'s deeply revered. Only strong authority can change it without causing upheaval.',
+    authorityMin: 34,
+    authorityMax: 100,
     options: [
       {
         text: 'ABOLISH TRADITION',
@@ -2937,6 +2967,8 @@ export const eventRequests: Request[] = [
     id: 'EVT_COMMIT_PIRATE_ALLIANCE',
     title: 'River Pirates',
     text: 'Pirates control the river trade. You can attempt to recruit them as privateers, but it requires authority they will respect.',
+    authorityMin: 34,
+    authorityMax: 100,
     options: [
       {
         text: 'RECRUIT PIRATES',
@@ -2971,6 +3003,8 @@ export const eventRequests: Request[] = [
     id: 'EVT_COMMIT_MARRIAGE_ALLIANCE',
     title: 'Political Marriage',
     text: 'A powerful family offers a marriage alliance. Securing favorable terms requires authority to negotiate from strength.',
+    authorityMin: 34,
+    authorityMax: 100,
     options: [
       {
         text: 'NEGOTIATE TERMS',
