@@ -1812,6 +1812,77 @@ export const eventRequests: Request[] = [
       },
     ],
   },
+  
+  // AUTHORITY SYSTEM TEST EVENTS
+  {
+    id: 'EVT_AUTHORITY_TEST',
+    title: 'Test of Authority',
+    text: 'A rival faction challenges your political influence. You can commit authority to maintain your position. Success will refund your commitment, failure will cost you dearly.',
+    options: [
+      {
+        text: 'ASSERT AUTHORITY',
+        effects: {
+          satisfaction: 5,
+        },
+        authorityCheck: {
+          minCommit: 5,
+          maxCommit: 50,
+          threshold: 15,
+          onSuccess: {
+            gold: 20,
+            authority: 5,
+          },
+          onFailure: {
+            gold: -10,
+            satisfaction: -10,
+          },
+          successFeedbackRequestId: 'INFO_AUTHORITY_SUCCESS',
+          failureFeedbackRequestId: 'INFO_AUTHORITY_FAILURE',
+          refundOnSuccessPercent: 100,
+          extraLossOnFailurePercent: 50,
+        },
+      },
+      {
+        text: 'BACK DOWN',
+        effects: {
+          satisfaction: -5,
+          authority: -3,
+        },
+      },
+    ],
+  },
+];
+
+/**
+ * Info-Requests for authority system feedback
+ */
+export const authorityInfoRequests: Request[] = [
+  {
+    id: 'INFO_AUTHORITY_SUCCESS',
+    title: 'Authority Prevails',
+    text: 'Your show of political power has impressed the faction. They back down and offer tribute. Your authority is returned to you.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [
+      {
+        text: 'ACCEPT',
+        effects: {},
+      },
+    ],
+  },
+  {
+    id: 'INFO_AUTHORITY_FAILURE',
+    title: 'Authority Challenged',
+    text: 'Your influence was insufficient. The rival faction gains ground, and your reputation suffers. Your committed authority is lost, and you face additional losses.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [
+      {
+        text: 'ACKNOWLEDGE',
+        effects: {},
+      },
+    ],
+  },
 ];
 
 /**
@@ -1820,7 +1891,7 @@ export const eventRequests: Request[] = [
  * Throws errors if validation fails.
  */
 export function validateRequests(): void {
-  const allRequests = [...needRequests, ...infoRequests, ...eventRequests];
+  const allRequests = [...needRequests, ...infoRequests, ...authorityInfoRequests, ...eventRequests];
   const errors: string[] = [];
 
   // Collect all request IDs

@@ -14,6 +14,10 @@ function App() {
   const maxForces = gameState.stats.landForces
   const [combatCommit, setCombatCommit] = useState(Math.min(5, maxForces))
 
+  // Authority commit state for slider
+  const maxAuthority = gameState.stats.authority
+  const [authorityCommit, setAuthorityCommit] = useState(10)
+
   // Update combatCommit when maxForces changes or when a new request appears
   useEffect(() => {
     const effectiveMax = Math.max(1, maxForces)
@@ -26,10 +30,30 @@ function App() {
     }
   }, [maxForces, currentRequest?.id, currentRequest?.combat, combatCommit])
 
+  // Update authorityCommit when maxAuthority changes or when a new request with authority check appears
+  useEffect(() => {
+    const hasAuthorityCheck = currentRequest?.options.some(opt => opt.authorityCheck)
+    if (hasAuthorityCheck) {
+      const option = currentRequest?.options.find(opt => opt.authorityCheck)
+      if (option?.authorityCheck) {
+        const config = option.authorityCheck
+        const defaultCommit = Math.min(config.minCommit, maxAuthority)
+        if (authorityCommit < config.minCommit || authorityCommit > config.maxCommit) {
+          setAuthorityCommit(defaultCommit)
+        }
+      }
+    }
+  }, [maxAuthority, currentRequest?.id, authorityCommit, currentRequest?.options])
+
   const handleOptionClick = (optionIndex: number) => {
+    const option = currentRequest?.options[optionIndex]
+    
     // If combat request and Option A (index 0), pass combatCommit
     if (currentRequest?.combat && optionIndex === 0) {
       dispatch({ type: 'CHOOSE_OPTION', optionIndex, combatCommit })
+    } else if (option?.authorityCheck) {
+      // If option has authority check, pass authorityCommit
+      dispatch({ type: 'CHOOSE_OPTION', optionIndex, authorityCommit })
     } else {
       dispatch({ type: 'CHOOSE_OPTION', optionIndex })
     }
@@ -189,6 +213,14 @@ function App() {
         isFuzzy: false
       })
     }
+    if (effects.authority !== undefined) {
+      formatted.push({ 
+        label: 'Authority', 
+        value: effects.authority, 
+        isPositive: effects.authority > 0,
+        isFuzzy: false
+      })
+    }
     
     // Add need fulfillment indicators
     if (effects.marketplace) formatted.push({ label: '✓ Marketplace', value: '', isPositive: true, isFuzzy: false })
@@ -229,6 +261,10 @@ function App() {
             <span className="stat-icon">⚔️</span>
             <span className="stat-value">{gameState.stats.landForces}</span>
           </div>
+          <div className="stat-compact">
+            <span className="stat-icon">👑</span>
+            <span className="stat-value">{Math.floor(gameState.stats.authority)}</span>
+          </div>
         </div>
 
         {/* Bankruptcy Warning */}
@@ -251,6 +287,7 @@ function App() {
               <div>🔥 Fire Risk: {gameState.stats.fireRisk}</div>
               <div>👨‍🌾 Farmers: {gameState.stats.farmers}</div>
               <div>⚔️ Land Forces: {gameState.stats.landForces}</div>
+              <div>👑 Authority: {Math.floor(gameState.stats.authority)}</div>
             </div>
             <button 
               className="restart-button" 
@@ -289,6 +326,33 @@ function App() {
                       disabled={maxForces < 1}
                       className="combat-slider"
                     />
+                  </div>
+                )}
+                
+                {/* Authority Slider UI */}
+                {currentRequest.options.some(opt => opt.authorityCheck) && (
+                  <div className="authority-slider-container">
+                    {currentRequest.options.map((option, index) => {
+                      if (!option.authorityCheck) return null
+                      const config = option.authorityCheck
+                      return (
+                        <div key={index}>
+                          <div className="authority-info">
+                            <span>Commit Authority: {authorityCommit}</span>
+                            <span>Threshold: {config.threshold}</span>
+                          </div>
+                          <input
+                            type="range"
+                            min={config.minCommit}
+                            max={Math.min(config.maxCommit, Math.floor(maxAuthority))}
+                            value={Math.min(authorityCommit, Math.floor(maxAuthority))}
+                            onChange={(e) => setAuthorityCommit(Number(e.target.value))}
+                            disabled={maxAuthority < config.minCommit}
+                            className="authority-slider"
+                          />
+                        </div>
+                      )
+                    })}
                   </div>
                 )}
                 
