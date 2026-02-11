@@ -1815,6 +1815,26 @@ export const eventRequests: Request[] = [
   
   // AUTHORITY SYSTEM TEST EVENTS
   {
+    id: 'EVT_AUTHORITY_SIMPLE_TEST',
+    title: 'Diplomatic Victory',
+    text: 'Your diplomatic efforts have paid off. The neighboring lord recognizes your authority.',
+    options: [
+      {
+        text: 'ACCEPT RECOGNITION',
+        effects: {
+          authority: 10,
+          gold: 5,
+        },
+      },
+      {
+        text: 'REMAIN HUMBLE',
+        effects: {
+          satisfaction: 5,
+        },
+      },
+    ],
+  },
+  {
     id: 'EVT_AUTHORITY_TEST',
     title: 'Test of Authority',
     text: 'A rival faction challenges your political influence. You can commit authority to maintain your position. Success will refund your commitment, failure will cost you dearly.',
