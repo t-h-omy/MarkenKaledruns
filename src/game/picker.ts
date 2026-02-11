@@ -139,7 +139,11 @@ export function selectWeightedCandidate<T extends { weight: number }>(
 }
 
 /**
- * Checks if an event is eligible based on authority range
+ * Checks if an event is eligible based on authority range.
+ * All events within their authority range are eligible and part of the normal picker pool.
+ * 
+ * Note: This function is deterministic (no RNG calls). Randomness is applied during
+ * the selection phase when picking from the eligible pool, not during filtering.
  */
 function isEligibleByAuthority(request: Request, authority: number): boolean {
   // If no authority constraints, always eligible
@@ -147,16 +151,16 @@ function isEligibleByAuthority(request: Request, authority: number): boolean {
     return true;
   }
   
-  // Check min authority
+  // Check if authority is outside the allowed range - always ineligible
   if (request.authorityMin !== undefined && authority < request.authorityMin) {
     return false;
   }
   
-  // Check max authority
   if (request.authorityMax !== undefined && authority > request.authorityMax) {
     return false;
   }
   
+  // Authority is within range - event is eligible
   return true;
 }
 
