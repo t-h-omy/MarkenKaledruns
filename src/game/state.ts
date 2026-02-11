@@ -733,10 +733,11 @@ function resolveAuthorityCheck(check: PendingAuthorityCheck): AuthorityCheckResu
   
   let totalLoss = committed - refunded;
   
-  // Apply extra loss on failure
+  // Apply extra loss on failure (deterministic whole number)
+  // On failure, apply the fixed extraLossOnFailure amount if specified.
+  // This is a flat penalty independent of the commitment amount.
   if (!success) {
-    const extraLossPercent = config.extraLossOnFailurePercent ?? 0;
-    const extraLoss = Math.floor((committed * extraLossPercent) / 100);
+    const extraLoss = config.extraLossOnFailure ?? 0;
     totalLoss += extraLoss;
   }
   
