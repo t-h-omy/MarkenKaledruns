@@ -262,9 +262,12 @@ function App() {
             <span className="stat-icon">⚔️</span>
             <span className="stat-value">{gameState.stats.landForces}</span>
           </div>
-          <div className="stat-compact">
+          <div className="stat-compact stat-authority">
             <span className="stat-icon">👑</span>
-            <span className="stat-value">{Math.floor(gameState.stats.authority)}</span>
+            <div className="stat-authority-content">
+              <span className="stat-label">Authority</span>
+              <span className="stat-value">{Math.floor(gameState.stats.authority)}</span>
+            </div>
           </div>
         </div>
 
@@ -337,21 +340,102 @@ function App() {
                       if (!option.authorityCheck) return null
                       const config = option.authorityCheck
                       const maxCommittable = Math.floor(maxAuthority)
+                      const currentCommit = Math.min(authorityCommit, maxCommittable)
+                      const willSucceed = currentCommit >= config.threshold
+                      const successChance = currentCommit >= config.threshold ? 100 : 
+                        Math.floor((currentCommit / config.threshold) * 100)
+                      
                       return (
                         <div key={index}>
-                          <div className="authority-info">
-                            <span>Commit Authority: {authorityCommit}</span>
-                            <span>Threshold: {config.threshold}</span>
+                          <div className="authority-header">
+                            <div className="authority-title">
+                              <span className="authority-icon">👑</span>
+                              <span>Authority Commitment</span>
+                            </div>
+                            <div className={`authority-outcome ${willSucceed ? 'success' : 'failure'}`}>
+                              {willSucceed ? '✓ SUCCESS' : '✗ UNCERTAIN'}
+                            </div>
                           </div>
+                          
+                          <div className="authority-commit-display">
+                            <div className="commit-value">
+                              <span className="commit-label">Committing:</span>
+                              <span className="commit-amount">{currentCommit}</span>
+                            </div>
+                            <div className="commit-threshold">
+                              <span className="threshold-label">Threshold:</span>
+                              <span className="threshold-amount">{config.threshold}</span>
+                            </div>
+                            <div className={`commit-probability ${willSucceed ? 'success' : 'uncertain'}`}>
+                              <span className="probability-label">Chance:</span>
+                              <span className="probability-amount">{successChance}%</span>
+                            </div>
+                          </div>
+                          
                           <input
                             type="range"
                             min={config.minCommit}
                             max={Math.min(config.maxCommit, maxCommittable)}
-                            value={Math.min(authorityCommit, maxCommittable)}
+                            value={currentCommit}
                             onChange={(e) => setAuthorityCommit(Number(e.target.value))}
                             disabled={maxAuthority < config.minCommit}
-                            className="authority-slider"
+                            className={`authority-slider ${willSucceed ? 'success' : 'uncertain'}`}
                           />
+                          
+                          <div className="authority-range-labels">
+                            <span>{config.minCommit} min</span>
+                            <span>{Math.min(config.maxCommit, maxCommittable)} max</span>
+                          </div>
+                          
+                          {/* Fork Preview */}
+                          <div className="authority-fork-preview">
+                            <div className="fork-section fork-success">
+                              <div className="fork-header">
+                                <span className="fork-icon">✓</span>
+                                <span className="fork-title">On Success:</span>
+                              </div>
+                              <div className="fork-effects">
+                                {option.effects && Object.keys(option.effects).length > 0 && (
+                                  <span className="fork-effect">Base effects apply</span>
+                                )}
+                                {config.onSuccess && formatEffects(config.onSuccess).map((eff, i) => (
+                                  <span key={i} className={`fork-effect ${eff.isPositive ? 'positive' : 'negative'}`}>
+                                    {eff.label}: {eff.isFuzzy ? eff.value : (typeof eff.value === 'number' ? (eff.value > 0 ? '+' : '') + eff.value : eff.value)}
+                                  </span>
+                                ))}
+                                {config.refundOnSuccessPercent !== undefined && config.refundOnSuccessPercent > 0 && (
+                                  <span className="fork-effect positive">
+                                    Refund: {config.refundOnSuccessPercent}% ({Math.floor(currentCommit * config.refundOnSuccessPercent / 100)} authority)
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            
+                            <div className="fork-section fork-failure">
+                              <div className="fork-header">
+                                <span className="fork-icon">✗</span>
+                                <span className="fork-title">On Failure:</span>
+                              </div>
+                              <div className="fork-effects">
+                                {option.effects && Object.keys(option.effects).length > 0 && (
+                                  <span className="fork-effect">Base effects apply</span>
+                                )}
+                                {config.onFailure && formatEffects(config.onFailure).map((eff, i) => (
+                                  <span key={i} className={`fork-effect ${eff.isPositive ? 'positive' : 'negative'}`}>
+                                    {eff.label}: {eff.isFuzzy ? eff.value : (typeof eff.value === 'number' ? (eff.value > 0 ? '+' : '') + eff.value : eff.value)}
+                                  </span>
+                                ))}
+                                <span className="fork-effect negative">
+                                  Authority Lost: {currentCommit}
+                                </span>
+                                {config.extraLossOnFailurePercent !== undefined && config.extraLossOnFailurePercent > 0 && (
+                                  <span className="fork-effect negative">
+                                    Extra Loss: {config.extraLossOnFailurePercent}% ({Math.floor(currentCommit * config.extraLossOnFailurePercent / 100)} authority)
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       )
                     })}
