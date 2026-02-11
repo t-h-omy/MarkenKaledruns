@@ -184,7 +184,7 @@ function App() {
   }
 
   // Format effects for display
-  const formatEffects = (effects: Effect): Array<{ label: string; value: number | string; isPositive: boolean; isFuzzy: boolean }> => {
+  const formatEffects = (effects: Effect, excludeAuthority = false): Array<{ label: string; value: number | string; isPositive: boolean; isFuzzy: boolean }> => {
     const formatted: Array<{ label: string; value: number | string; isPositive: boolean; isFuzzy: boolean }> = []
     
     if (effects.gold !== undefined) {
@@ -236,7 +236,7 @@ function App() {
         isFuzzy: false
       })
     }
-    if (effects.authority !== undefined) {
+    if (effects.authority !== undefined && !excludeAuthority) {
       formatted.push({ 
         label: 'Authority', 
         value: effects.authority, 
@@ -286,10 +286,7 @@ function App() {
           </div>
           <div className="stat-compact stat-authority">
             <span className="stat-icon">👑</span>
-            <div className="stat-authority-content">
-              <span className="stat-label">Authority</span>
-              <span className="stat-value">{Math.floor(gameState.stats.authority)}</span>
-            </div>
+            <span className="stat-value">{Math.floor(gameState.stats.authority)}</span>
             {/* Floating Feedback for Authority Changes */}
             {authorityFeedback.map(feedback => (
               <div 
@@ -475,7 +472,7 @@ function App() {
                 
                 <div className="options-container">
                   {currentRequest.options.map((option, index) => {
-                    const effects = formatEffects(option.effects)
+                    const effects = formatEffects(option.effects, true)
                     let { disabled, reason } = isOptionDisabled(option.effects)
                     
                     // For combat requests, disable Option A if no forces available
