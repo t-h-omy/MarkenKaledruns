@@ -37,7 +37,8 @@ function App() {
       const option = currentRequest?.options.find(opt => opt.authorityCheck)
       if (option?.authorityCheck) {
         const config = option.authorityCheck
-        const defaultCommit = Math.min(config.minCommit, maxAuthority)
+        // Clamp to valid range: at least minCommit, at most min(maxCommit, available authority)
+        const defaultCommit = Math.max(config.minCommit, Math.min(config.maxCommit, Math.floor(maxAuthority)))
         if (authorityCommit < config.minCommit || authorityCommit > config.maxCommit) {
           setAuthorityCommit(defaultCommit)
         }
@@ -335,6 +336,7 @@ function App() {
                     {currentRequest.options.map((option, index) => {
                       if (!option.authorityCheck) return null
                       const config = option.authorityCheck
+                      const maxCommittable = Math.floor(maxAuthority)
                       return (
                         <div key={index}>
                           <div className="authority-info">
@@ -344,8 +346,8 @@ function App() {
                           <input
                             type="range"
                             min={config.minCommit}
-                            max={Math.min(config.maxCommit, Math.floor(maxAuthority))}
-                            value={Math.min(authorityCommit, Math.floor(maxAuthority))}
+                            max={Math.min(config.maxCommit, maxCommittable)}
+                            value={Math.min(authorityCommit, maxCommittable)}
                             onChange={(e) => setAuthorityCommit(Number(e.target.value))}
                             disabled={maxAuthority < config.minCommit}
                             className="authority-slider"
