@@ -206,12 +206,14 @@ export const eventRequests: Request[] = [
           landForces: 5,
           farmers: -5,
           gold: -5,
+          authority: 3,
         },
       },
       {
         text: 'NO',
         effects: {
           satisfaction: 3,
+          authority: -2,
         },
       },
     ],
@@ -226,9 +228,11 @@ export const eventRequests: Request[] = [
       prepDelayMaxTicks: 5,
       onWin: {
         gold: 10,
+        authority: 5,
       },
       onLose: {
         gold: -10,
+        authority: -5,
       },
     },
     options: [
@@ -240,6 +244,7 @@ export const eventRequests: Request[] = [
         text: 'PAY TOLL',
         effects: {
           gold: -10,
+          authority: -3,
         },
       },
     ],
@@ -255,12 +260,14 @@ export const eventRequests: Request[] = [
       onWin: {
         gold: 25,
         fireRisk: 12,
+        authority: 10,
       },
       onLose: {
         gold: -30,
         farmers: -8,
         satisfaction: -5,
         fireRisk: 12,
+        authority: -10,
       },
     },
     options: [
@@ -273,6 +280,7 @@ export const eventRequests: Request[] = [
         effects: {
           gold: -20,
           satisfaction: -3,
+          authority: -8,
         },
       },
     ],
@@ -286,6 +294,7 @@ export const eventRequests: Request[] = [
         text: 'PAY',
         effects: {
           gold: -10,
+          authority: 2,
         },
       },
       {
@@ -293,6 +302,7 @@ export const eventRequests: Request[] = [
         effects: {
           landForces: -2,
           satisfaction: -4,
+          authority: -4,
         },
       },
     ],
@@ -306,12 +316,14 @@ export const eventRequests: Request[] = [
         text: 'PATROL',
         effects: {
           landForces: -2,
+          authority: 1,
         },
       },
       {
         text: 'IGNORE',
         effects: {
           farmers: -5,
+          authority: -2,
         },
       },
     ],
@@ -325,6 +337,7 @@ export const eventRequests: Request[] = [
         text: 'COMPENSATE',
         effects: {
           gold: -15,
+          authority: 3,
         },
       },
       {
@@ -430,6 +443,7 @@ export const eventRequests: Request[] = [
         effects: {
           gold: -40,
           satisfaction: 20,
+          authority: -5,
         },
       },
       {
@@ -437,6 +451,7 @@ export const eventRequests: Request[] = [
         effects: {
           landForces: -2,
           farmers: -10,
+          authority: 5,
         },
       },
     ],
@@ -451,12 +466,14 @@ export const eventRequests: Request[] = [
         effects: {
           gold: -40,
           health: 20,
+          authority: 3,
         },
       },
       {
         text: 'IGNORE',
         effects: {
           farmers: -15,
+          authority: -8,
         },
       },
     ],
@@ -471,6 +488,7 @@ export const eventRequests: Request[] = [
         effects: {
           gold: -40,
           fireRisk: -20,
+          authority: 3,
         },
       },
       {
@@ -478,6 +496,7 @@ export const eventRequests: Request[] = [
         effects: {
           farmers: -10,
           health: -5,
+          authority: -8,
         },
       },
     ],
@@ -512,11 +531,14 @@ export const eventRequests: Request[] = [
         effects: {
           gold: -10,
           satisfaction: 6,
+          authority: 2,
         },
       },
       {
         text: 'DECLINE',
-        effects: {},
+        effects: {
+          authority: -1,
+        },
       },
     ],
   },
@@ -530,11 +552,14 @@ export const eventRequests: Request[] = [
         effects: {
           gold: -10,
           health: 6,
+          authority: 2,
         },
       },
       {
         text: 'DECLINE',
-        effects: {},
+        effects: {
+          authority: -1,
+        },
       },
     ],
   },
@@ -548,11 +573,14 @@ export const eventRequests: Request[] = [
         effects: {
           gold: -15,
           landForces: 5,
+          authority: 3,
         },
       },
       {
         text: 'DECLINE',
-        effects: {},
+        effects: {
+          authority: -1,
+        },
       },
     ],
   },
@@ -566,11 +594,14 @@ export const eventRequests: Request[] = [
         effects: {
           gold: -10,
           fireRisk: -6,
+          authority: 1,
         },
       },
       {
         text: 'DECLINE',
-        effects: {},
+        effects: {
+          authority: -1,
+        },
       },
     ],
   },
@@ -584,6 +615,7 @@ export const eventRequests: Request[] = [
         effects: {
           gold: -15,
           satisfaction: 6,
+          authority: -2,
         },
       },
       {
@@ -591,6 +623,7 @@ export const eventRequests: Request[] = [
         effects: {
           gold: 25,
           satisfaction: -6,
+          authority: 4,
         },
       },
     ],
@@ -2968,6 +3001,272 @@ export const eventRequests: Request[] = [
           gold: 25,
           landForces: 5,
           authority: -3,
+        },
+      },
+    ],
+  },
+  
+  // EGO TEST EVENTS - Test humility, hubris, pride, and character
+  {
+    id: 'EVT_EGO_HUMBLE_PEASANT',
+    title: 'The Wise Peasant',
+    text: 'An elderly peasant offers unsolicited advice on governance. He speaks wisely, but addressing you as an equal. Do you listen humbly or assert your station?',
+    options: [
+      {
+        text: 'LISTEN HUMBLY',
+        effects: {
+          authority: -2,
+          satisfaction: 10,
+          gold: 5,
+        },
+      },
+      {
+        text: 'PUT HIM IN HIS PLACE',
+        effects: {
+          authority: 3,
+          satisfaction: -8,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_EGO_PUBLIC_CRITICISM',
+    title: 'Public Criticism',
+    text: 'A merchant loudly criticizes your recent decisions in the town square. Others are watching to see how you respond.',
+    options: [
+      {
+        text: 'LAUGH IT OFF',
+        effects: {
+          authority: -3,
+          satisfaction: 8,
+        },
+      },
+      {
+        text: 'ARREST HIM',
+        effects: {
+          authority: 5,
+          satisfaction: -12,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_EGO_MINOR_SLIGHT',
+    title: 'Minor Disrespect',
+    text: 'A guard forgets to bow when you pass. It\'s a small oversight, but others notice. How do you react?',
+    options: [
+      {
+        text: 'IGNORE IT',
+        effects: {
+          authority: -1,
+          satisfaction: 3,
+        },
+      },
+      {
+        text: 'PUNISH SEVERELY',
+        effects: {
+          authority: 3,
+          satisfaction: -8,
+          landForces: -1,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_EGO_FLATTERY',
+    title: 'Obvious Flattery',
+    text: 'A courtier praises you with absurd exaggerations, calling you "the greatest leader ever to walk the earth." It\'s clearly insincere.',
+    options: [
+      {
+        text: 'ENJOY THE PRAISE',
+        effects: {
+          authority: -5,
+          gold: -5,
+          satisfaction: -5,
+        },
+      },
+      {
+        text: 'CALL OUT THE LIE',
+        effects: {
+          authority: 5,
+          satisfaction: 8,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_EGO_ADMIT_MISTAKE',
+    title: 'Public Mistake',
+    text: 'You made an error in judgment that cost the village resources. Do you admit fault publicly or deflect blame?',
+    options: [
+      {
+        text: 'ADMIT FAULT',
+        effects: {
+          authority: -5,
+          satisfaction: 15,
+          gold: -5,
+        },
+      },
+      {
+        text: 'BLAME OTHERS',
+        effects: {
+          authority: 8,
+          satisfaction: -10,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_EGO_RIVAL_SUCCESS',
+    title: 'Rival\'s Success',
+    text: 'A rival leader achieves great success. Your advisors suggest you publicly congratulate them to show grace, but it would acknowledge their superiority.',
+    options: [
+      {
+        text: 'CONGRATULATE THEM',
+        effects: {
+          authority: -3,
+          satisfaction: 8,
+          gold: 10,
+        },
+      },
+      {
+        text: 'REMAIN SILENT',
+        effects: {
+          authority: 2,
+          satisfaction: -5,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_EGO_GRAND_TITLE',
+    title: 'Grandiose Title',
+    text: 'A sycophant suggests you adopt a grandiose new title: "His Magnificence, Supreme Protector of the Realm." It\'s ridiculous but flattering.',
+    options: [
+      {
+        text: 'ACCEPT THE TITLE',
+        effects: {
+          authority: -8,
+          satisfaction: -12,
+          gold: -10,
+        },
+      },
+      {
+        text: 'REFUSE HUMBLY',
+        effects: {
+          authority: 5,
+          satisfaction: 15,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_EGO_SERVANT_COMPLAINT',
+    title: 'Servant\'s Complaint',
+    text: 'A servant complains that you\'ve been unfair. The grievance is legitimate, but admitting it would show weakness.',
+    options: [
+      {
+        text: 'MAKE IT RIGHT',
+        effects: {
+          authority: -4,
+          satisfaction: 12,
+          gold: -5,
+        },
+      },
+      {
+        text: 'DISMISS THE SERVANT',
+        effects: {
+          authority: 6,
+          satisfaction: -10,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_EGO_LAVISH_FEAST',
+    title: 'Lavish Feast',
+    text: 'You could throw a lavish feast to demonstrate your wealth and power, but the expense would be enormous and the people are struggling.',
+    options: [
+      {
+        text: 'THROW THE FEAST',
+        effects: {
+          gold: -40,
+          authority: 10,
+          satisfaction: -15,
+        },
+      },
+      {
+        text: 'MODEST CELEBRATION',
+        effects: {
+          gold: -10,
+          authority: -2,
+          satisfaction: 10,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_EGO_EXPERT_ADVICE',
+    title: 'Expert\'s Warning',
+    text: 'An expert warns that your plan is flawed. Accepting their advice would mean admitting you were wrong before the council.',
+    options: [
+      {
+        text: 'HEED THE WARNING',
+        effects: {
+          authority: -6,
+          gold: 15,
+          satisfaction: 8,
+        },
+      },
+      {
+        text: 'PROCEED AS PLANNED',
+        effects: {
+          authority: 4,
+          gold: -20,
+          satisfaction: -12,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_EGO_STATUE',
+    title: 'Monument to Yourself',
+    text: 'Advisors suggest erecting a statue in your honor. It would immortalize your legacy, but the cost is steep and the optics questionable.',
+    options: [
+      {
+        text: 'BUILD THE STATUE',
+        effects: {
+          gold: -35,
+          authority: 8,
+          satisfaction: -15,
+        },
+      },
+      {
+        text: 'DECLINE',
+        effects: {
+          authority: -2,
+          satisfaction: 12,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_EGO_OVERREACTION',
+    title: 'Petty Theft',
+    text: 'Someone stole a chicken from your personal coop. It\'s a trivial loss, but some advisors suggest making an example.',
+    options: [
+      {
+        text: 'HARSH PUNISHMENT',
+        effects: {
+          authority: 4,
+          satisfaction: -15,
+        },
+      },
+      {
+        text: 'IGNORE IT',
+        effects: {
+          authority: -2,
+          satisfaction: 5,
         },
       },
     ],
