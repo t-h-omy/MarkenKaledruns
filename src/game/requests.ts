@@ -1871,6 +1871,79 @@ export const eventRequests: Request[] = [
       },
     ],
   },
+  
+  // AUTHORITY BAND TEST EVENTS
+  {
+    id: 'EVT_LOW_AUTHORITY',
+    title: 'Desperate Plea',
+    text: 'With your authority waning, a desperate merchant begs for protection money. Your weakened position makes this a difficult situation.',
+    authorityMin: 0,
+    authorityMax: 33,
+    options: [
+      {
+        text: 'PAY PROTECTION',
+        effects: {
+          gold: -15,
+          satisfaction: 5,
+        },
+      },
+      {
+        text: 'REFUSE',
+        effects: {
+          satisfaction: -10,
+          authority: -2,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_MEDIUM_AUTHORITY',
+    title: 'Political Maneuver',
+    text: 'Your moderate influence allows you to negotiate a favorable trade deal with a neighboring settlement.',
+    authorityMin: 34,
+    authorityMax: 66,
+    options: [
+      {
+        text: 'ACCEPT DEAL',
+        effects: {
+          gold: 15,
+          authority: 3,
+        },
+      },
+      {
+        text: 'DEMAND MORE',
+        effects: {
+          gold: 5,
+          authority: -5,
+          satisfaction: -5,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_HIGH_AUTHORITY',
+    title: 'Summit of Lords',
+    text: 'Your formidable authority grants you an invitation to the regional council. This is an opportunity to solidify your position among the elite.',
+    authorityMin: 67,
+    authorityMax: 100,
+    options: [
+      {
+        text: 'ATTEND SUMMIT',
+        effects: {
+          gold: 25,
+          authority: 10,
+          satisfaction: 10,
+        },
+      },
+      {
+        text: 'SEND DELEGATE',
+        effects: {
+          gold: 10,
+          authority: 3,
+        },
+      },
+    ],
+  },
 ];
 
 /**

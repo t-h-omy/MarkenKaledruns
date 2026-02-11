@@ -17,6 +17,28 @@ function App() {
   // Authority commit state for slider
   const maxAuthority = gameState.stats.authority
   const [authorityCommit, setAuthorityCommit] = useState(10)
+  
+  // Floating feedback for authority changes
+  const [authorityFeedback, setAuthorityFeedback] = useState<Array<{ id: number; amount: number }>>([])
+  const [previousAuthority, setPreviousAuthority] = useState(gameState.stats.authority)
+  
+  // Track authority changes and show floating feedback
+  useEffect(() => {
+    const currentAuthority = gameState.stats.authority
+    const delta = currentAuthority - previousAuthority
+    
+    if (delta !== 0 && previousAuthority !== 0) {
+      const feedbackId = Date.now()
+      setAuthorityFeedback(prev => [...prev, { id: feedbackId, amount: delta }])
+      
+      // Remove after 3 seconds
+      setTimeout(() => {
+        setAuthorityFeedback(prev => prev.filter(f => f.id !== feedbackId))
+      }, 3000)
+    }
+    
+    setPreviousAuthority(currentAuthority)
+  }, [gameState.stats.authority])
 
   // Update combatCommit when maxForces changes or when a new request appears
   useEffect(() => {
@@ -268,6 +290,15 @@ function App() {
               <span className="stat-label">Authority</span>
               <span className="stat-value">{Math.floor(gameState.stats.authority)}</span>
             </div>
+            {/* Floating Feedback for Authority Changes */}
+            {authorityFeedback.map(feedback => (
+              <div 
+                key={feedback.id} 
+                className={`authority-floating-feedback ${feedback.amount > 0 ? 'positive' : 'negative'}`}
+              >
+                {feedback.amount > 0 ? '+' : ''}{feedback.amount}
+              </div>
+            ))}
           </div>
         </div>
 

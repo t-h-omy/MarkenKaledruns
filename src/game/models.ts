@@ -277,4 +277,8 @@ export interface Request {
   advancesTick?: boolean;
   /** Optional combat specification for this request */
   combat?: CombatSpec;
+  /** Authority range filter: minimum authority required to show this event */
+  authorityMin?: number;
+  /** Authority range filter: maximum authority allowed to show this event */
+  authorityMax?: number;
 }

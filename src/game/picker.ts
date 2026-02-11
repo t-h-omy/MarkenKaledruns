@@ -139,6 +139,28 @@ export function selectWeightedCandidate<T extends { weight: number }>(
 }
 
 /**
+ * Checks if an event is eligible based on authority range
+ */
+function isEligibleByAuthority(request: Request, authority: number): boolean {
+  // If no authority constraints, always eligible
+  if (request.authorityMin === undefined && request.authorityMax === undefined) {
+    return true;
+  }
+  
+  // Check min authority
+  if (request.authorityMin !== undefined && authority < request.authorityMin) {
+    return false;
+  }
+  
+  // Check max authority
+  if (request.authorityMax !== undefined && authority > request.authorityMax) {
+    return false;
+  }
+  
+  return true;
+}
+
+/**
  * Picks the next request based on selection rules from POF_SPEC.md
  * 
  * Priority order:
@@ -535,7 +557,8 @@ export function pickNextRequest(
            !crisisEventIds.includes(r.id) &&
            (r.canTriggerRandomly !== false) &&
            isEligibleForRandomTrigger(r) &&
-           !isLockedByRequirements(r)
+           !isLockedByRequirements(r) &&
+           isEligibleByAuthority(r, stats.authority)
   );
   if (availableEvents.length > 0) {
     return availableEvents[rng.nextInt(availableEvents.length)];
@@ -546,7 +569,8 @@ export function pickNextRequest(
     (r) => !crisisEventIds.includes(r.id) && 
            (r.canTriggerRandomly !== false) && 
            isEligibleForRandomTrigger(r) &&
-           !isLockedByRequirements(r)
+           !isLockedByRequirements(r) &&
+           isEligibleByAuthority(r, stats.authority)
   );
   
   if (nonCrisisEvents.length === 0) {
