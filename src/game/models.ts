@@ -20,6 +20,8 @@ export interface Stats {
   farmers: number;
   /** Number of land forces (>= 0, optionally clamp to 0..100) */
   landForces: number;
+  /** Authority stat (0..999.999, represents political power/influence) */
+  authority: number;
 }
 
 /**
@@ -126,6 +128,8 @@ export interface Effect {
   farmers?: number;
   /** Change in land forces count */
   landForces?: number;
+  /** Change in authority level */
+  authority?: number;
   /** Set marketplace need flag */
   marketplace?: boolean;
   /** Set bread need flag */
@@ -188,6 +192,50 @@ export interface FollowUp {
 }
 
 /**
+ * Configuration for an authority check on an option.
+ * When an option has an authority check, the player can commit authority
+ * and the check resolves on the next tick (delay=1).
+ */
+export interface AuthorityCheck {
+  /** Minimum authority commitment required */
+  minCommit: number;
+  /** Maximum authority commitment allowed */
+  maxCommit: number;
+  /** Authority threshold needed for success (commitment >= threshold = success) */
+  threshold: number;
+  /** Effects applied when check succeeds (in addition to base option effects) */
+  onSuccess?: Effect;
+  /** Effects applied when check fails (in addition to base option effects) */
+  onFailure?: Effect;
+  /** Request ID to show as feedback on success (scheduled for tick+1) */
+  successFeedbackRequestId?: string;
+  /** Request ID to show as feedback on failure (scheduled for tick+1) */
+  failureFeedbackRequestId?: string;
+  /** Percentage of committed authority refunded on success (0-100, default: 100) */
+  refundOnSuccessPercent?: number;
+  /** Extra authority loss on failure (as percentage of committed, 0-100, default: 0) */
+  extraLossOnFailurePercent?: number;
+}
+
+/**
+ * Result of an authority check after resolution
+ */
+export interface AuthorityCheckResult {
+  /** Whether the check succeeded */
+  success: boolean;
+  /** Amount of authority that was committed */
+  committed: number;
+  /** Amount of authority refunded (on success) */
+  refunded: number;
+  /** Total authority loss (committed - refunded + extra loss on failure) */
+  totalLoss: number;
+  /** Effects applied based on success/failure */
+  appliedEffects?: Effect;
+  /** Request ID for feedback event (if any) */
+  feedbackRequestId?: string;
+}
+
+/**
  * Represents a player choice option in a request.
  */
 export interface Option {
@@ -195,6 +243,8 @@ export interface Option {
   text: string;
   /** The effects applied when this option is chosen */
   effects: Effect;
+  /** Optional authority check for this option */
+  authorityCheck?: AuthorityCheck;
 }
 
 /**
@@ -227,4 +277,8 @@ export interface Request {
   advancesTick?: boolean;
   /** Optional combat specification for this request */
   combat?: CombatSpec;
+  /** Authority range filter: minimum authority required to show this event */
+  authorityMin?: number;
+  /** Authority range filter: maximum authority allowed to show this event */
+  authorityMax?: number;
 }

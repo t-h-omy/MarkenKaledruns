@@ -14,6 +14,32 @@ function App() {
   const maxForces = gameState.stats.landForces
   const [combatCommit, setCombatCommit] = useState(Math.min(5, maxForces))
 
+  // Authority commit state for slider
+  const maxAuthority = gameState.stats.authority
+  const [authorityCommit, setAuthorityCommit] = useState(10)
+  
+  // Floating feedback for authority changes
+  const [authorityFeedback, setAuthorityFeedback] = useState<Array<{ id: number; amount: number }>>([])
+  const [previousAuthority, setPreviousAuthority] = useState(gameState.stats.authority)
+  
+  // Track authority changes and show floating feedback
+  useEffect(() => {
+    const currentAuthority = gameState.stats.authority
+    const delta = currentAuthority - previousAuthority
+    
+    if (delta !== 0 && previousAuthority !== 0) {
+      const feedbackId = Date.now()
+      setAuthorityFeedback(prev => [...prev, { id: feedbackId, amount: delta }])
+      
+      // Remove after 3 seconds
+      setTimeout(() => {
+        setAuthorityFeedback(prev => prev.filter(f => f.id !== feedbackId))
+      }, 3000)
+    }
+    
+    setPreviousAuthority(currentAuthority)
+  }, [gameState.stats.authority])
+
   // Update combatCommit when maxForces changes or when a new request appears
   useEffect(() => {
     const effectiveMax = Math.max(1, maxForces)
@@ -26,10 +52,31 @@ function App() {
     }
   }, [maxForces, currentRequest?.id, currentRequest?.combat, combatCommit])
 
+  // Update authorityCommit when maxAuthority changes or when a new request with authority check appears
+  useEffect(() => {
+    const hasAuthorityCheck = currentRequest?.options.some(opt => opt.authorityCheck)
+    if (hasAuthorityCheck) {
+      const option = currentRequest?.options.find(opt => opt.authorityCheck)
+      if (option?.authorityCheck) {
+        const config = option.authorityCheck
+        // Clamp to valid range: at least minCommit, at most min(maxCommit, available authority)
+        const defaultCommit = Math.max(config.minCommit, Math.min(config.maxCommit, Math.floor(maxAuthority)))
+        if (authorityCommit < config.minCommit || authorityCommit > config.maxCommit) {
+          setAuthorityCommit(defaultCommit)
+        }
+      }
+    }
+  }, [maxAuthority, currentRequest?.id, authorityCommit, currentRequest?.options])
+
   const handleOptionClick = (optionIndex: number) => {
+    const option = currentRequest?.options[optionIndex]
+    
     // If combat request and Option A (index 0), pass combatCommit
     if (currentRequest?.combat && optionIndex === 0) {
       dispatch({ type: 'CHOOSE_OPTION', optionIndex, combatCommit })
+    } else if (option?.authorityCheck) {
+      // If option has authority check, pass authorityCommit
+      dispatch({ type: 'CHOOSE_OPTION', optionIndex, authorityCommit })
     } else {
       dispatch({ type: 'CHOOSE_OPTION', optionIndex })
     }
@@ -189,6 +236,14 @@ function App() {
         isFuzzy: false
       })
     }
+    if (effects.authority !== undefined) {
+      formatted.push({ 
+        label: 'Authority', 
+        value: effects.authority, 
+        isPositive: effects.authority > 0,
+        isFuzzy: false
+      })
+    }
     
     // Add need fulfillment indicators
     if (effects.marketplace) formatted.push({ label: '✓ Marketplace', value: '', isPositive: true, isFuzzy: false })
@@ -229,6 +284,22 @@ function App() {
             <span className="stat-icon">⚔️</span>
             <span className="stat-value">{gameState.stats.landForces}</span>
           </div>
+          <div className="stat-compact stat-authority">
+            <span className="stat-icon">👑</span>
+            <div className="stat-authority-content">
+              <span className="stat-label">Authority</span>
+              <span className="stat-value">{Math.floor(gameState.stats.authority)}</span>
+            </div>
+            {/* Floating Feedback for Authority Changes */}
+            {authorityFeedback.map(feedback => (
+              <div 
+                key={feedback.id} 
+                className={`authority-floating-feedback ${feedback.amount > 0 ? 'positive' : 'negative'}`}
+              >
+                {feedback.amount > 0 ? '+' : ''}{feedback.amount}
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Bankruptcy Warning */}
@@ -251,6 +322,7 @@ function App() {
               <div>🔥 Fire Risk: {gameState.stats.fireRisk}</div>
               <div>👨‍🌾 Farmers: {gameState.stats.farmers}</div>
               <div>⚔️ Land Forces: {gameState.stats.landForces}</div>
+              <div>👑 Authority: {Math.floor(gameState.stats.authority)}</div>
             </div>
             <button 
               className="restart-button" 
@@ -289,6 +361,115 @@ function App() {
                       disabled={maxForces < 1}
                       className="combat-slider"
                     />
+                  </div>
+                )}
+                
+                {/* Authority Slider UI */}
+                {currentRequest.options.some(opt => opt.authorityCheck) && (
+                  <div className="authority-slider-container">
+                    {currentRequest.options.map((option, index) => {
+                      if (!option.authorityCheck) return null
+                      const config = option.authorityCheck
+                      const maxCommittable = Math.floor(maxAuthority)
+                      const currentCommit = Math.min(authorityCommit, maxCommittable)
+                      const willSucceed = currentCommit >= config.threshold
+                      const successChance = currentCommit >= config.threshold ? 100 : 
+                        Math.floor((currentCommit / config.threshold) * 100)
+                      
+                      return (
+                        <div key={index}>
+                          <div className="authority-header">
+                            <div className="authority-title">
+                              <span className="authority-icon">👑</span>
+                              <span>Authority Commitment</span>
+                            </div>
+                            <div className={`authority-outcome ${willSucceed ? 'success' : 'failure'}`}>
+                              {willSucceed ? '✓ SUCCESS' : '✗ UNCERTAIN'}
+                            </div>
+                          </div>
+                          
+                          <div className="authority-commit-display">
+                            <div className="commit-value">
+                              <span className="commit-label">Committing:</span>
+                              <span className="commit-amount">{currentCommit}</span>
+                            </div>
+                            <div className="commit-threshold">
+                              <span className="threshold-label">Threshold:</span>
+                              <span className="threshold-amount">{config.threshold}</span>
+                            </div>
+                            <div className={`commit-probability ${willSucceed ? 'success' : 'uncertain'}`}>
+                              <span className="probability-label">Chance:</span>
+                              <span className="probability-amount">{successChance}%</span>
+                            </div>
+                          </div>
+                          
+                          <input
+                            type="range"
+                            min={config.minCommit}
+                            max={Math.min(config.maxCommit, maxCommittable)}
+                            value={currentCommit}
+                            onChange={(e) => setAuthorityCommit(Number(e.target.value))}
+                            disabled={maxAuthority < config.minCommit}
+                            className={`authority-slider ${willSucceed ? 'success' : 'uncertain'}`}
+                          />
+                          
+                          <div className="authority-range-labels">
+                            <span>{config.minCommit} min</span>
+                            <span>{Math.min(config.maxCommit, maxCommittable)} max</span>
+                          </div>
+                          
+                          {/* Fork Preview */}
+                          <div className="authority-fork-preview">
+                            <div className="fork-section fork-success">
+                              <div className="fork-header">
+                                <span className="fork-icon">✓</span>
+                                <span className="fork-title">On Success:</span>
+                              </div>
+                              <div className="fork-effects">
+                                {option.effects && Object.keys(option.effects).length > 0 && (
+                                  <span className="fork-effect">Base effects apply</span>
+                                )}
+                                {config.onSuccess && formatEffects(config.onSuccess).map((eff, i) => (
+                                  <span key={i} className={`fork-effect ${eff.isPositive ? 'positive' : 'negative'}`}>
+                                    {eff.label}: {eff.isFuzzy ? eff.value : (typeof eff.value === 'number' ? (eff.value > 0 ? '+' : '') + eff.value : eff.value)}
+                                  </span>
+                                ))}
+                                {config.refundOnSuccessPercent !== undefined && config.refundOnSuccessPercent > 0 && (
+                                  <span className="fork-effect positive">
+                                    Refund: {config.refundOnSuccessPercent}% ({Math.floor(currentCommit * config.refundOnSuccessPercent / 100)} authority)
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            
+                            <div className="fork-section fork-failure">
+                              <div className="fork-header">
+                                <span className="fork-icon">✗</span>
+                                <span className="fork-title">On Failure:</span>
+                              </div>
+                              <div className="fork-effects">
+                                {option.effects && Object.keys(option.effects).length > 0 && (
+                                  <span className="fork-effect">Base effects apply</span>
+                                )}
+                                {config.onFailure && formatEffects(config.onFailure).map((eff, i) => (
+                                  <span key={i} className={`fork-effect ${eff.isPositive ? 'positive' : 'negative'}`}>
+                                    {eff.label}: {eff.isFuzzy ? eff.value : (typeof eff.value === 'number' ? (eff.value > 0 ? '+' : '') + eff.value : eff.value)}
+                                  </span>
+                                ))}
+                                <span className="fork-effect negative">
+                                  Authority Lost: {currentCommit}
+                                </span>
+                                {config.extraLossOnFailurePercent !== undefined && config.extraLossOnFailurePercent > 0 && (
+                                  <span className="fork-effect negative">
+                                    Extra Loss: {config.extraLossOnFailurePercent}% ({Math.floor(currentCommit * config.extraLossOnFailurePercent / 100)} authority)
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
                 )}
                 

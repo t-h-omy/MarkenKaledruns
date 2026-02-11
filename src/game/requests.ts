@@ -206,12 +206,14 @@ export const eventRequests: Request[] = [
           landForces: 5,
           farmers: -5,
           gold: -5,
+          authority: 3,
         },
       },
       {
         text: 'NO',
         effects: {
           satisfaction: 3,
+          authority: -2,
         },
       },
     ],
@@ -226,9 +228,11 @@ export const eventRequests: Request[] = [
       prepDelayMaxTicks: 5,
       onWin: {
         gold: 10,
+        authority: 5,
       },
       onLose: {
         gold: -10,
+        authority: -5,
       },
     },
     options: [
@@ -240,6 +244,7 @@ export const eventRequests: Request[] = [
         text: 'PAY TOLL',
         effects: {
           gold: -10,
+          authority: -3,
         },
       },
     ],
@@ -255,12 +260,14 @@ export const eventRequests: Request[] = [
       onWin: {
         gold: 25,
         fireRisk: 12,
+        authority: 10,
       },
       onLose: {
         gold: -30,
         farmers: -8,
         satisfaction: -5,
         fireRisk: 12,
+        authority: -10,
       },
     },
     options: [
@@ -273,6 +280,7 @@ export const eventRequests: Request[] = [
         effects: {
           gold: -20,
           satisfaction: -3,
+          authority: -8,
         },
       },
     ],
@@ -286,6 +294,7 @@ export const eventRequests: Request[] = [
         text: 'PAY',
         effects: {
           gold: -10,
+          authority: 2,
         },
       },
       {
@@ -293,6 +302,7 @@ export const eventRequests: Request[] = [
         effects: {
           landForces: -2,
           satisfaction: -4,
+          authority: -4,
         },
       },
     ],
@@ -306,12 +316,14 @@ export const eventRequests: Request[] = [
         text: 'PATROL',
         effects: {
           landForces: -2,
+          authority: 1,
         },
       },
       {
         text: 'IGNORE',
         effects: {
           farmers: -5,
+          authority: -2,
         },
       },
     ],
@@ -325,6 +337,7 @@ export const eventRequests: Request[] = [
         text: 'COMPENSATE',
         effects: {
           gold: -15,
+          authority: 3,
         },
       },
       {
@@ -430,6 +443,7 @@ export const eventRequests: Request[] = [
         effects: {
           gold: -40,
           satisfaction: 20,
+          authority: -5,
         },
       },
       {
@@ -437,6 +451,7 @@ export const eventRequests: Request[] = [
         effects: {
           landForces: -2,
           farmers: -10,
+          authority: 5,
         },
       },
     ],
@@ -451,12 +466,14 @@ export const eventRequests: Request[] = [
         effects: {
           gold: -40,
           health: 20,
+          authority: 3,
         },
       },
       {
         text: 'IGNORE',
         effects: {
           farmers: -15,
+          authority: -8,
         },
       },
     ],
@@ -471,6 +488,7 @@ export const eventRequests: Request[] = [
         effects: {
           gold: -40,
           fireRisk: -20,
+          authority: 3,
         },
       },
       {
@@ -478,6 +496,7 @@ export const eventRequests: Request[] = [
         effects: {
           farmers: -10,
           health: -5,
+          authority: -8,
         },
       },
     ],
@@ -512,11 +531,14 @@ export const eventRequests: Request[] = [
         effects: {
           gold: -10,
           satisfaction: 6,
+          authority: 2,
         },
       },
       {
         text: 'DECLINE',
-        effects: {},
+        effects: {
+          authority: -1,
+        },
       },
     ],
   },
@@ -530,11 +552,14 @@ export const eventRequests: Request[] = [
         effects: {
           gold: -10,
           health: 6,
+          authority: 2,
         },
       },
       {
         text: 'DECLINE',
-        effects: {},
+        effects: {
+          authority: -1,
+        },
       },
     ],
   },
@@ -548,11 +573,14 @@ export const eventRequests: Request[] = [
         effects: {
           gold: -15,
           landForces: 5,
+          authority: 3,
         },
       },
       {
         text: 'DECLINE',
-        effects: {},
+        effects: {
+          authority: -1,
+        },
       },
     ],
   },
@@ -566,11 +594,14 @@ export const eventRequests: Request[] = [
         effects: {
           gold: -10,
           fireRisk: -6,
+          authority: 1,
         },
       },
       {
         text: 'DECLINE',
-        effects: {},
+        effects: {
+          authority: -1,
+        },
       },
     ],
   },
@@ -584,6 +615,7 @@ export const eventRequests: Request[] = [
         effects: {
           gold: -15,
           satisfaction: 6,
+          authority: -2,
         },
       },
       {
@@ -591,6 +623,7 @@ export const eventRequests: Request[] = [
         effects: {
           gold: 25,
           satisfaction: -6,
+          authority: 4,
         },
       },
     ],
@@ -1812,6 +1845,1721 @@ export const eventRequests: Request[] = [
       },
     ],
   },
+  
+  // AUTHORITY SYSTEM TEST EVENTS
+  {
+    id: 'EVT_AUTHORITY_SIMPLE_TEST',
+    title: 'Diplomatic Victory',
+    text: 'Your diplomatic efforts have paid off. The neighboring lord recognizes your authority.',
+    options: [
+      {
+        text: 'ACCEPT RECOGNITION',
+        effects: {
+          authority: 10,
+          gold: 5,
+        },
+      },
+      {
+        text: 'REMAIN HUMBLE',
+        effects: {
+          satisfaction: 5,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_AUTHORITY_TEST',
+    title: 'Test of Authority',
+    text: 'A rival faction challenges your political influence. You can commit authority to maintain your position. Success will refund your commitment, failure will cost you dearly.',
+    options: [
+      {
+        text: 'ASSERT AUTHORITY',
+        effects: {
+          satisfaction: 5,
+        },
+        authorityCheck: {
+          minCommit: 5,
+          maxCommit: 50,
+          threshold: 15,
+          onSuccess: {
+            gold: 20,
+            authority: 5,
+          },
+          onFailure: {
+            gold: -10,
+            satisfaction: -10,
+          },
+          successFeedbackRequestId: 'INFO_AUTHORITY_SUCCESS',
+          failureFeedbackRequestId: 'INFO_AUTHORITY_FAILURE',
+          refundOnSuccessPercent: 100,
+          extraLossOnFailurePercent: 50,
+        },
+      },
+      {
+        text: 'BACK DOWN',
+        effects: {
+          satisfaction: -5,
+          authority: -3,
+        },
+      },
+    ],
+  },
+  
+  // LOW AUTHORITY EVENTS (authorityMin: 0, authorityMax: 33)
+  // These events reflect weak leadership, disrespect, and vulnerability
+  {
+    id: 'EVT_LOW_AUTHORITY',
+    title: 'Desperate Plea',
+    text: 'With your authority waning, a desperate merchant begs for protection money. Your weakened position makes this a difficult situation.',
+    authorityMin: 0,
+    authorityMax: 33,
+    options: [
+      {
+        text: 'PAY PROTECTION',
+        effects: {
+          gold: -15,
+          satisfaction: 5,
+        },
+      },
+      {
+        text: 'REFUSE',
+        effects: {
+          satisfaction: -10,
+          authority: -2,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_LOW_GUARD_INSUBORDINATION',
+    title: 'Disrespectful Guards',
+    text: 'Your guards openly mock your orders. One even spits at your feet. Your weakened authority has emboldened them to disrespect you.',
+    authorityMin: 0,
+    authorityMax: 33,
+    options: [
+      {
+        text: 'PUNISH THEM',
+        effects: {
+          landForces: -2,
+          satisfaction: -5,
+          authority: 2,
+        },
+      },
+      {
+        text: 'IGNORE IT',
+        effects: {
+          authority: -3,
+          satisfaction: -3,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_LOW_SABOTAGE',
+    title: 'Sabotage in the Night',
+    text: 'Someone has been stealing from the grain stores. Your lack of authority makes it impossible to maintain order or discover the culprit.',
+    authorityMin: 0,
+    authorityMax: 33,
+    options: [
+      {
+        text: 'INVESTIGATE',
+        effects: {
+          gold: -10,
+          farmers: -2,
+          authority: 1,
+        },
+      },
+      {
+        text: 'ACCEPT THE LOSS',
+        effects: {
+          gold: -5,
+          satisfaction: -8,
+          authority: -2,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_LOW_PETITION_DENIED',
+    title: 'Petition Rejected',
+    text: 'You petition the regional lord for aid, but are turned away at the gates. "We deal only with legitimate leaders," the guards say.',
+    authorityMin: 0,
+    authorityMax: 33,
+    options: [
+      {
+        text: 'PLEAD HARDER',
+        effects: {
+          gold: -5,
+          authority: -2,
+          satisfaction: -5,
+        },
+      },
+      {
+        text: 'LEAVE WITH DIGNITY',
+        effects: {
+          satisfaction: -3,
+          authority: 1,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_LOW_DEBT_COLLECTOR',
+    title: 'The Debt Collector',
+    text: 'A ruthless debt collector arrives, sensing your weakness. He demands payment with interest - or else he\'ll take what he\'s owed by force.',
+    authorityMin: 0,
+    authorityMax: 33,
+    options: [
+      {
+        text: 'PAY THE DEBT',
+        effects: {
+          gold: -20,
+          satisfaction: 3,
+        },
+      },
+      {
+        text: 'REFUSE TO PAY',
+        effects: {
+          landForces: -3,
+          gold: -10,
+          authority: -3,
+          satisfaction: -5,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_LOW_COUNCIL_REVOLT',
+    title: 'Council Challenge',
+    text: 'Your own council openly questions your decisions. "Perhaps we need new leadership," one elder suggests loudly.',
+    authorityMin: 0,
+    authorityMax: 33,
+    options: [
+      {
+        text: 'STAND FIRM',
+        effects: {
+          satisfaction: -10,
+          authority: 3,
+        },
+      },
+      {
+        text: 'COMPROMISE',
+        effects: {
+          gold: -15,
+          satisfaction: 5,
+          authority: -2,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_LOW_BANDITS_MOCK',
+    title: 'Mocked by Bandits',
+    text: 'A band of thieves leaves mocking notes at your doorstep, daring you to stop them. They know you lack the authority to organize an effective response.',
+    authorityMin: 0,
+    authorityMax: 33,
+    options: [
+      {
+        text: 'IGNORE THEM',
+        effects: {
+          authority: -2,
+          satisfaction: -8,
+        },
+      },
+      {
+        text: 'HIRE MERCENARIES',
+        effects: {
+          gold: -25,
+          authority: 2,
+          satisfaction: 5,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_LOW_FARMERS_LEAVE',
+    title: 'Mass Exodus',
+    text: 'Several farming families announce they\'re leaving for a neighboring settlement with "real leadership." Your reputation has failed you.',
+    authorityMin: 0,
+    authorityMax: 33,
+    options: [
+      {
+        text: 'BEG THEM TO STAY',
+        effects: {
+          farmers: -2,
+          gold: -10,
+          authority: -3,
+          satisfaction: -5,
+        },
+      },
+      {
+        text: 'LET THEM GO',
+        effects: {
+          farmers: -5,
+          authority: -1,
+          satisfaction: -3,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_LOW_MERCHANT_EXTORTION',
+    title: 'Merchant Extortion',
+    text: 'A traveling merchant realizes your position is weak. He demands triple the usual prices for essential goods, knowing you have no leverage to refuse.',
+    authorityMin: 0,
+    authorityMax: 33,
+    options: [
+      {
+        text: 'PAY THE PRICE',
+        effects: {
+          gold: -20,
+          health: 5,
+          authority: -1,
+        },
+      },
+      {
+        text: 'REFUSE TO BUY',
+        effects: {
+          health: -10,
+          satisfaction: -8,
+          authority: 1,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_LOW_AUTHORITY_CRISIS',
+    title: 'Crisis of Confidence',
+    text: 'Word spreads that you are unfit to lead. People whisper behind your back, and decisions are ignored. The settlement teeters on the edge of chaos.',
+    authorityMin: 0,
+    authorityMax: 33,
+    options: [
+      {
+        text: 'MAKE A GRAND GESTURE',
+        effects: {
+          gold: -30,
+          satisfaction: 10,
+          authority: 5,
+        },
+      },
+      {
+        text: 'WAIT IT OUT',
+        effects: {
+          satisfaction: -15,
+          health: -5,
+          authority: -2,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_MEDIUM_AUTHORITY',
+    title: 'Political Maneuver',
+    text: 'Your moderate influence allows you to negotiate a favorable trade deal with a neighboring settlement.',
+    authorityMin: 34,
+    authorityMax: 66,
+    options: [
+      {
+        text: 'ACCEPT DEAL',
+        effects: {
+          gold: 15,
+          authority: 3,
+        },
+      },
+      {
+        text: 'DEMAND MORE',
+        effects: {
+          gold: 5,
+          authority: -5,
+          satisfaction: -5,
+        },
+      },
+    ],
+  },
+  
+  // HIGH AUTHORITY EVENTS (authorityMin: 67, authorityMax: 100)
+  // These events reflect strong leadership, political intrigue, and high-stakes scenarios
+  {
+    id: 'EVT_HIGH_AUTHORITY',
+    title: 'Summit of Lords',
+    text: 'Your formidable authority grants you an invitation to the regional council. This is an opportunity to solidify your position among the elite.',
+    authorityMin: 67,
+    authorityMax: 100,
+    options: [
+      {
+        text: 'ATTEND SUMMIT',
+        effects: {
+          gold: 25,
+          authority: 10,
+          satisfaction: 10,
+        },
+      },
+      {
+        text: 'SEND DELEGATE',
+        effects: {
+          gold: 10,
+          authority: 3,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_HIGH_RIVAL_CHALLENGE',
+    title: 'Rival Marken\'s Challenge',
+    text: 'Lord Heinrich of the neighboring Mark challenges your authority publicly, claiming your lands should be his. This affront cannot go unanswered.',
+    authorityMin: 67,
+    authorityMax: 100,
+    options: [
+      {
+        text: 'ACCEPT THE DUEL',
+        effects: {
+          authority: 10,
+          landForces: -5,
+          gold: 20,
+          satisfaction: 15,
+        },
+      },
+      {
+        text: 'DIPLOMATIC REBUKE',
+        effects: {
+          gold: 15,
+          authority: 5,
+          satisfaction: 5,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_HIGH_ALLIANCE_OFFER',
+    title: 'Alliance Proposal',
+    text: 'The Count of the Eastern Marches offers a formal alliance. With your strong reputation, this could open doors to greater power and wealth.',
+    authorityMin: 67,
+    authorityMax: 100,
+    options: [
+      {
+        text: 'ACCEPT ALLIANCE',
+        effects: {
+          gold: 40,
+          authority: 15,
+          landForces: 10,
+        },
+      },
+      {
+        text: 'REMAIN INDEPENDENT',
+        effects: {
+          authority: 5,
+          satisfaction: 10,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_HIGH_ASSASSINATION_PLOT',
+    title: 'Assassination Uncovered',
+    text: 'Your spies uncover a plot against your life, orchestrated by jealous rivals. Your authority gives you the resources to respond decisively.',
+    authorityMin: 67,
+    authorityMax: 100,
+    options: [
+      {
+        text: 'STRIKE FIRST',
+        effects: {
+          gold: -20,
+          authority: 10,
+          landForces: 5,
+          satisfaction: -5,
+        },
+      },
+      {
+        text: 'FORTIFY DEFENSES',
+        effects: {
+          gold: -15,
+          authority: 5,
+          landForces: 3,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_HIGH_ROYAL_SUMMONS',
+    title: 'Royal Summons',
+    text: 'The King himself summons you to court, recognizing your authority. This is a rare honor that could elevate your status significantly.',
+    authorityMin: 67,
+    authorityMax: 100,
+    options: [
+      {
+        text: 'ATTEND WITH ENTOURAGE',
+        effects: {
+          gold: -30,
+          authority: 20,
+          satisfaction: 15,
+        },
+      },
+      {
+        text: 'ATTEND HUMBLY',
+        effects: {
+          gold: -10,
+          authority: 10,
+          satisfaction: 8,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_HIGH_BETRAYAL',
+    title: 'The Trusted Betrayer',
+    text: 'Your closest advisor has been secretly undermining you, selling information to your enemies. Your authority will determine how you handle this betrayal.',
+    authorityMin: 67,
+    authorityMax: 100,
+    options: [
+      {
+        text: 'PUBLIC EXECUTION',
+        effects: {
+          authority: 15,
+          satisfaction: -10,
+          landForces: -2,
+        },
+      },
+      {
+        text: 'EXILE QUIETLY',
+        effects: {
+          authority: 8,
+          satisfaction: 5,
+          gold: -10,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_HIGH_TRIBUTE_DEMAND',
+    title: 'Tribute Demanded',
+    text: 'A weaker neighboring lord sends tribute, acknowledging your superior authority. This is the fruit of your strong leadership.',
+    authorityMin: 67,
+    authorityMax: 100,
+    options: [
+      {
+        text: 'ACCEPT TRIBUTE',
+        effects: {
+          gold: 35,
+          authority: 8,
+          satisfaction: 10,
+        },
+      },
+      {
+        text: 'REFUSE GRACIOUSLY',
+        effects: {
+          authority: 12,
+          satisfaction: 15,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_HIGH_POWER_PLAY',
+    title: 'Political Machinations',
+    text: 'You have the opportunity to eliminate a political rival through legal maneuvering. Your authority makes this possible, but the ethics are questionable.',
+    authorityMin: 67,
+    authorityMax: 100,
+    options: [
+      {
+        text: 'DESTROY RIVAL',
+        effects: {
+          gold: 20,
+          authority: 10,
+          satisfaction: -8,
+        },
+      },
+      {
+        text: 'SHOW MERCY',
+        effects: {
+          authority: 5,
+          satisfaction: 12,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_HIGH_GRAND_TOURNAMENT',
+    title: 'The Grand Tournament',
+    text: 'You host a magnificent tournament that attracts nobles from across the realm. Your authority ensures this event will be remembered.',
+    authorityMin: 67,
+    authorityMax: 100,
+    options: [
+      {
+        text: 'LAVISH CELEBRATION',
+        effects: {
+          gold: -40,
+          authority: 15,
+          satisfaction: 20,
+        },
+      },
+      {
+        text: 'MODEST AFFAIR',
+        effects: {
+          gold: -20,
+          authority: 8,
+          satisfaction: 12,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_HIGH_DIPLOMATIC_CRISIS',
+    title: 'Diplomatic Incident',
+    text: 'An insult from a foreign ambassador threatens war. Your authority gives you the standing to demand satisfaction or broker peace.',
+    authorityMin: 67,
+    authorityMax: 100,
+    options: [
+      {
+        text: 'DEMAND APOLOGY',
+        effects: {
+          authority: 12,
+          satisfaction: 10,
+          gold: 15,
+        },
+      },
+      {
+        text: 'PREPARE FOR WAR',
+        effects: {
+          authority: 8,
+          landForces: 8,
+          gold: -25,
+          satisfaction: 5,
+        },
+      },
+    ],
+  },
+  
+  // AUTHORITY COMMIT EVENTS (events with authorityCheck for risk/reward)
+  // These provide meaningful choices with authority stakes
+  {
+    id: 'EVT_COMMIT_NEGOTIATE_TRADE',
+    title: 'Trade Negotiation',
+    text: 'A wealthy merchant guild seeks exclusive trading rights. You can leverage your authority to demand better terms, but failure could damage your reputation.',
+    options: [
+      {
+        text: 'NEGOTIATE HARD',
+        effects: {
+          gold: 10,
+        },
+        authorityCheck: {
+          minCommit: 10,
+          maxCommit: 40,
+          threshold: 25,
+          onSuccess: {
+            gold: 30,
+            satisfaction: 5,
+          },
+          onFailure: {
+            satisfaction: -8,
+          },
+          successFeedbackRequestId: 'INFO_TRADE_SUCCESS',
+          failureFeedbackRequestId: 'INFO_TRADE_FAILURE',
+          refundOnSuccessPercent: 100,
+          extraLossOnFailurePercent: 30,
+        },
+      },
+      {
+        text: 'ACCEPT THEIR TERMS',
+        effects: {
+          gold: 15,
+          authority: -2,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_COMMIT_QUELL_RIOT',
+    title: 'Brewing Riot',
+    text: 'Angry citizens gather in the square, demanding change. You can use your authority to calm them, but if you fail, violence may erupt.',
+    options: [
+      {
+        text: 'ADDRESS THE CROWD',
+        effects: {},
+        authorityCheck: {
+          minCommit: 15,
+          maxCommit: 50,
+          threshold: 30,
+          onSuccess: {
+            satisfaction: 15,
+            authority: 5,
+          },
+          onFailure: {
+            satisfaction: -15,
+            landForces: -3,
+            gold: -10,
+          },
+          successFeedbackRequestId: 'INFO_RIOT_SUCCESS',
+          failureFeedbackRequestId: 'INFO_RIOT_FAILURE',
+          refundOnSuccessPercent: 80,
+          extraLossOnFailurePercent: 50,
+        },
+      },
+      {
+        text: 'SEND IN GUARDS',
+        effects: {
+          satisfaction: -10,
+          landForces: -2,
+          authority: -3,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_COMMIT_JUSTICE_DISPUTE',
+    title: 'Noble Dispute',
+    text: 'Two noble families feud over land rights. Your judgment will be final, but you need authority to make it stick.',
+    options: [
+      {
+        text: 'RENDER JUDGMENT',
+        effects: {},
+        authorityCheck: {
+          minCommit: 12,
+          maxCommit: 45,
+          threshold: 28,
+          onSuccess: {
+            gold: 20,
+            satisfaction: 10,
+          },
+          onFailure: {
+            satisfaction: -12,
+            gold: -15,
+          },
+          successFeedbackRequestId: 'INFO_JUSTICE_SUCCESS',
+          failureFeedbackRequestId: 'INFO_JUSTICE_FAILURE',
+          refundOnSuccessPercent: 100,
+          extraLossOnFailurePercent: 40,
+        },
+      },
+      {
+        text: 'DEFER TO COUNCIL',
+        effects: {
+          authority: -5,
+          satisfaction: 3,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_COMMIT_MILITARY_REFORM',
+    title: 'Military Reorganization',
+    text: 'Your military structure is outdated. Reforming it requires authority to overcome resistance from traditional commanders.',
+    options: [
+      {
+        text: 'FORCE REFORMS',
+        effects: {},
+        authorityCheck: {
+          minCommit: 20,
+          maxCommit: 60,
+          threshold: 40,
+          onSuccess: {
+            landForces: 10,
+            authority: 8,
+          },
+          onFailure: {
+            landForces: -5,
+            satisfaction: -10,
+          },
+          successFeedbackRequestId: 'INFO_REFORM_SUCCESS',
+          failureFeedbackRequestId: 'INFO_REFORM_FAILURE',
+          refundOnSuccessPercent: 90,
+          extraLossOnFailurePercent: 40,
+        },
+      },
+      {
+        text: 'GRADUAL CHANGE',
+        effects: {
+          landForces: 3,
+          gold: -15,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_COMMIT_BANDIT_PARLEY',
+    title: 'Bandit Negotiation',
+    text: 'A bandit chief offers to serve you instead of raiding. This requires enough authority to command their respect and loyalty.',
+    options: [
+      {
+        text: 'RECRUIT THEM',
+        effects: {},
+        authorityCheck: {
+          minCommit: 18,
+          maxCommit: 55,
+          threshold: 35,
+          onSuccess: {
+            landForces: 8,
+            satisfaction: -5,
+          },
+          onFailure: {
+            gold: -20,
+            landForces: -4,
+          },
+          successFeedbackRequestId: 'INFO_BANDIT_SUCCESS',
+          failureFeedbackRequestId: 'INFO_BANDIT_FAILURE',
+          refundOnSuccessPercent: 100,
+          extraLossOnFailurePercent: 50,
+        },
+      },
+      {
+        text: 'REFUSE THEM',
+        effects: {
+          authority: 2,
+          satisfaction: 5,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_COMMIT_TAX_REFORM',
+    title: 'Tax Collection Reform',
+    text: 'The tax system is corrupt and inefficient. Overhauling it requires authority to force compliance from entrenched interests.',
+    options: [
+      {
+        text: 'IMPLEMENT REFORM',
+        effects: {},
+        authorityCheck: {
+          minCommit: 15,
+          maxCommit: 50,
+          threshold: 32,
+          onSuccess: {
+            gold: 35,
+            satisfaction: 8,
+          },
+          onFailure: {
+            gold: -10,
+            satisfaction: -15,
+          },
+          successFeedbackRequestId: 'INFO_TAX_SUCCESS',
+          failureFeedbackRequestId: 'INFO_TAX_FAILURE',
+          refundOnSuccessPercent: 100,
+          extraLossOnFailurePercent: 35,
+        },
+      },
+      {
+        text: 'KEEP STATUS QUO',
+        effects: {
+          gold: 5,
+          authority: -3,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_COMMIT_RELIGIOUS_DISPUTE',
+    title: 'Religious Controversy',
+    text: 'A religious dispute threatens to divide your people. Only strong authority can unite them under a single decision.',
+    options: [
+      {
+        text: 'MAKE A DECREE',
+        effects: {},
+        authorityCheck: {
+          minCommit: 20,
+          maxCommit: 55,
+          threshold: 38,
+          onSuccess: {
+            satisfaction: 15,
+            authority: 10,
+          },
+          onFailure: {
+            satisfaction: -20,
+            farmers: -5,
+          },
+          successFeedbackRequestId: 'INFO_RELIGIOUS_SUCCESS',
+          failureFeedbackRequestId: 'INFO_RELIGIOUS_FAILURE',
+          refundOnSuccessPercent: 100,
+          extraLossOnFailurePercent: 45,
+        },
+      },
+      {
+        text: 'ALLOW PLURALISM',
+        effects: {
+          satisfaction: 5,
+          authority: -4,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_COMMIT_BORDER_CLAIM',
+    title: 'Border Dispute',
+    text: 'Contested lands lie between your territory and a neighbor\'s. Assert your claim with authority, or concede the ground.',
+    options: [
+      {
+        text: 'ASSERT CLAIM',
+        effects: {},
+        authorityCheck: {
+          minCommit: 25,
+          maxCommit: 65,
+          threshold: 45,
+          onSuccess: {
+            farmers: 8,
+            gold: 25,
+            authority: 12,
+          },
+          onFailure: {
+            landForces: -6,
+            satisfaction: -10,
+          },
+          successFeedbackRequestId: 'INFO_BORDER_SUCCESS',
+          failureFeedbackRequestId: 'INFO_BORDER_FAILURE',
+          refundOnSuccessPercent: 90,
+          extraLossOnFailurePercent: 40,
+        },
+      },
+      {
+        text: 'CONCEDE LANDS',
+        effects: {
+          authority: -5,
+          satisfaction: -5,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_COMMIT_CORRUPT_OFFICIAL',
+    title: 'Corruption Exposed',
+    text: 'A powerful official is caught embezzling. Punishing them requires authority, as they have many allies.',
+    options: [
+      {
+        text: 'PROSECUTE FULLY',
+        effects: {},
+        authorityCheck: {
+          minCommit: 18,
+          maxCommit: 50,
+          threshold: 33,
+          onSuccess: {
+            gold: 25,
+            satisfaction: 12,
+            authority: 8,
+          },
+          onFailure: {
+            gold: -15,
+            satisfaction: -12,
+            landForces: -3,
+          },
+          successFeedbackRequestId: 'INFO_CORRUPT_SUCCESS',
+          failureFeedbackRequestId: 'INFO_CORRUPT_FAILURE',
+          refundOnSuccessPercent: 100,
+          extraLossOnFailurePercent: 50,
+        },
+      },
+      {
+        text: 'QUIET DISMISSAL',
+        effects: {
+          gold: 10,
+          authority: -4,
+          satisfaction: -5,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_COMMIT_SUCCESSION_CRISIS',
+    title: 'Succession Crisis',
+    text: 'A neighboring lord dies without clear heir. Several claimants seek your backing. Your choice requires authority to enforce.',
+    options: [
+      {
+        text: 'BACK A CLAIMANT',
+        effects: {},
+        authorityCheck: {
+          minCommit: 30,
+          maxCommit: 70,
+          threshold: 50,
+          onSuccess: {
+            gold: 40,
+            landForces: 12,
+            authority: 15,
+          },
+          onFailure: {
+            gold: -25,
+            landForces: -8,
+            satisfaction: -10,
+          },
+          successFeedbackRequestId: 'INFO_SUCCESSION_SUCCESS',
+          failureFeedbackRequestId: 'INFO_SUCCESSION_FAILURE',
+          refundOnSuccessPercent: 80,
+          extraLossOnFailurePercent: 50,
+        },
+      },
+      {
+        text: 'STAY NEUTRAL',
+        effects: {
+          authority: -3,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_COMMIT_GUILD_RIVALRY',
+    title: 'Guild Power Struggle',
+    text: 'Two merchant guilds vie for dominance. Choosing a winner requires authority to make your decision final.',
+    options: [
+      {
+        text: 'BACK ONE GUILD',
+        effects: {},
+        authorityCheck: {
+          minCommit: 14,
+          maxCommit: 45,
+          threshold: 30,
+          onSuccess: {
+            gold: 30,
+            satisfaction: 8,
+          },
+          onFailure: {
+            gold: -18,
+            satisfaction: -15,
+          },
+          successFeedbackRequestId: 'INFO_GUILD_SUCCESS',
+          failureFeedbackRequestId: 'INFO_GUILD_FAILURE',
+          refundOnSuccessPercent: 100,
+          extraLossOnFailurePercent: 40,
+        },
+      },
+      {
+        text: 'FORCE COMPROMISE',
+        effects: {
+          gold: 12,
+          authority: -2,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_COMMIT_FOREIGN_ENVOY',
+    title: 'Foreign Envoy',
+    text: 'An envoy from a distant kingdom offers trade and alliance, but demands concessions. Your authority determines the terms.',
+    options: [
+      {
+        text: 'DEMAND EQUALITY',
+        effects: {},
+        authorityCheck: {
+          minCommit: 22,
+          maxCommit: 60,
+          threshold: 42,
+          onSuccess: {
+            gold: 35,
+            authority: 12,
+            satisfaction: 10,
+          },
+          onFailure: {
+            authority: -5,
+            satisfaction: -8,
+          },
+          successFeedbackRequestId: 'INFO_ENVOY_SUCCESS',
+          failureFeedbackRequestId: 'INFO_ENVOY_FAILURE',
+          refundOnSuccessPercent: 100,
+          extraLossOnFailurePercent: 30,
+        },
+      },
+      {
+        text: 'ACCEPT THEIR TERMS',
+        effects: {
+          gold: 20,
+          authority: -3,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_COMMIT_LAND_DISTRIBUTION',
+    title: 'Land Redistribution',
+    text: 'The poor demand land reform. Redistributing land from wealthy nobles requires immense authority to overcome their resistance.',
+    options: [
+      {
+        text: 'REDISTRIBUTE LAND',
+        effects: {},
+        authorityCheck: {
+          minCommit: 28,
+          maxCommit: 70,
+          threshold: 50,
+          onSuccess: {
+            farmers: 12,
+            satisfaction: 20,
+            authority: 10,
+          },
+          onFailure: {
+            satisfaction: -18,
+            gold: -25,
+            farmers: -6,
+          },
+          successFeedbackRequestId: 'INFO_LAND_SUCCESS',
+          failureFeedbackRequestId: 'INFO_LAND_FAILURE',
+          refundOnSuccessPercent: 85,
+          extraLossOnFailurePercent: 45,
+        },
+      },
+      {
+        text: 'MAINTAIN STATUS QUO',
+        effects: {
+          satisfaction: -8,
+          authority: -2,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_COMMIT_CHALLENGE_TRADITION',
+    title: 'Ancient Tradition',
+    text: 'An archaic tradition harms your people, but it\'s deeply revered. Only strong authority can change it without causing upheaval.',
+    options: [
+      {
+        text: 'ABOLISH TRADITION',
+        effects: {},
+        authorityCheck: {
+          minCommit: 20,
+          maxCommit: 55,
+          threshold: 38,
+          onSuccess: {
+            satisfaction: 15,
+            health: 8,
+            authority: 10,
+          },
+          onFailure: {
+            satisfaction: -20,
+            authority: -8,
+          },
+          successFeedbackRequestId: 'INFO_TRADITION_SUCCESS',
+          failureFeedbackRequestId: 'INFO_TRADITION_FAILURE',
+          refundOnSuccessPercent: 100,
+          extraLossOnFailurePercent: 50,
+        },
+      },
+      {
+        text: 'RESPECT TRADITION',
+        effects: {
+          satisfaction: 5,
+          health: -5,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_COMMIT_PIRATE_ALLIANCE',
+    title: 'River Pirates',
+    text: 'Pirates control the river trade. You can attempt to recruit them as privateers, but it requires authority they will respect.',
+    options: [
+      {
+        text: 'RECRUIT PIRATES',
+        effects: {},
+        authorityCheck: {
+          minCommit: 16,
+          maxCommit: 48,
+          threshold: 32,
+          onSuccess: {
+            gold: 28,
+            landForces: 6,
+          },
+          onFailure: {
+            gold: -22,
+            satisfaction: -10,
+          },
+          successFeedbackRequestId: 'INFO_PIRATE_SUCCESS',
+          failureFeedbackRequestId: 'INFO_PIRATE_FAILURE',
+          refundOnSuccessPercent: 100,
+          extraLossOnFailurePercent: 40,
+        },
+      },
+      {
+        text: 'IGNORE THEM',
+        effects: {
+          gold: -10,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_COMMIT_MARRIAGE_ALLIANCE',
+    title: 'Political Marriage',
+    text: 'A powerful family offers a marriage alliance. Securing favorable terms requires authority to negotiate from strength.',
+    options: [
+      {
+        text: 'NEGOTIATE TERMS',
+        effects: {},
+        authorityCheck: {
+          minCommit: 24,
+          maxCommit: 62,
+          threshold: 44,
+          onSuccess: {
+            gold: 45,
+            landForces: 10,
+            authority: 15,
+          },
+          onFailure: {
+            gold: -20,
+            authority: -10,
+            satisfaction: -12,
+          },
+          successFeedbackRequestId: 'INFO_MARRIAGE_SUCCESS',
+          failureFeedbackRequestId: 'INFO_MARRIAGE_FAILURE',
+          refundOnSuccessPercent: 90,
+          extraLossOnFailurePercent: 45,
+        },
+      },
+      {
+        text: 'ACCEPT AS OFFERED',
+        effects: {
+          gold: 25,
+          landForces: 5,
+          authority: -3,
+        },
+      },
+    ],
+  },
+  
+  // EGO TEST EVENTS - Test humility, hubris, pride, and character
+  {
+    id: 'EVT_EGO_HUMBLE_PEASANT',
+    title: 'The Wise Peasant',
+    text: 'An elderly peasant offers unsolicited advice on governance. He speaks wisely, but addressing you as an equal. Do you listen humbly or assert your station?',
+    options: [
+      {
+        text: 'LISTEN HUMBLY',
+        effects: {
+          authority: -2,
+          satisfaction: 10,
+          gold: 5,
+        },
+      },
+      {
+        text: 'PUT HIM IN HIS PLACE',
+        effects: {
+          authority: 3,
+          satisfaction: -8,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_EGO_PUBLIC_CRITICISM',
+    title: 'Public Criticism',
+    text: 'A merchant loudly criticizes your recent decisions in the town square. Others are watching to see how you respond.',
+    options: [
+      {
+        text: 'LAUGH IT OFF',
+        effects: {
+          authority: -3,
+          satisfaction: 8,
+        },
+      },
+      {
+        text: 'ARREST HIM',
+        effects: {
+          authority: 5,
+          satisfaction: -12,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_EGO_MINOR_SLIGHT',
+    title: 'Minor Disrespect',
+    text: 'A guard forgets to bow when you pass. It\'s a small oversight, but others notice. How do you react?',
+    options: [
+      {
+        text: 'IGNORE IT',
+        effects: {
+          authority: -1,
+          satisfaction: 3,
+        },
+      },
+      {
+        text: 'PUNISH SEVERELY',
+        effects: {
+          authority: 3,
+          satisfaction: -8,
+          landForces: -1,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_EGO_FLATTERY',
+    title: 'Obvious Flattery',
+    text: 'A courtier praises you with absurd exaggerations, calling you "the greatest leader ever to walk the earth." It\'s clearly insincere.',
+    options: [
+      {
+        text: 'ENJOY THE PRAISE',
+        effects: {
+          authority: -5,
+          gold: -5,
+          satisfaction: -5,
+        },
+      },
+      {
+        text: 'CALL OUT THE LIE',
+        effects: {
+          authority: 5,
+          satisfaction: 8,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_EGO_ADMIT_MISTAKE',
+    title: 'Public Mistake',
+    text: 'You made an error in judgment that cost the village resources. Do you admit fault publicly or deflect blame?',
+    options: [
+      {
+        text: 'ADMIT FAULT',
+        effects: {
+          authority: -5,
+          satisfaction: 15,
+          gold: -5,
+        },
+      },
+      {
+        text: 'BLAME OTHERS',
+        effects: {
+          authority: 8,
+          satisfaction: -10,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_EGO_RIVAL_SUCCESS',
+    title: 'Rival\'s Success',
+    text: 'A rival leader achieves great success. Your advisors suggest you publicly congratulate them to show grace, but it would acknowledge their superiority.',
+    options: [
+      {
+        text: 'CONGRATULATE THEM',
+        effects: {
+          authority: -3,
+          satisfaction: 8,
+          gold: 10,
+        },
+      },
+      {
+        text: 'REMAIN SILENT',
+        effects: {
+          authority: 2,
+          satisfaction: -5,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_EGO_GRAND_TITLE',
+    title: 'Grandiose Title',
+    text: 'A sycophant suggests you adopt a grandiose new title: "His Magnificence, Supreme Protector of the Realm." It\'s ridiculous but flattering.',
+    options: [
+      {
+        text: 'ACCEPT THE TITLE',
+        effects: {
+          authority: -8,
+          satisfaction: -12,
+          gold: -10,
+        },
+      },
+      {
+        text: 'REFUSE HUMBLY',
+        effects: {
+          authority: 5,
+          satisfaction: 15,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_EGO_SERVANT_COMPLAINT',
+    title: 'Servant\'s Complaint',
+    text: 'A servant complains that you\'ve been unfair. The grievance is legitimate, but admitting it would show weakness.',
+    options: [
+      {
+        text: 'MAKE IT RIGHT',
+        effects: {
+          authority: -4,
+          satisfaction: 12,
+          gold: -5,
+        },
+      },
+      {
+        text: 'DISMISS THE SERVANT',
+        effects: {
+          authority: 6,
+          satisfaction: -10,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_EGO_LAVISH_FEAST',
+    title: 'Lavish Feast',
+    text: 'You could throw a lavish feast to demonstrate your wealth and power, but the expense would be enormous and the people are struggling.',
+    options: [
+      {
+        text: 'THROW THE FEAST',
+        effects: {
+          gold: -40,
+          authority: 10,
+          satisfaction: -15,
+        },
+      },
+      {
+        text: 'MODEST CELEBRATION',
+        effects: {
+          gold: -10,
+          authority: -2,
+          satisfaction: 10,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_EGO_EXPERT_ADVICE',
+    title: 'Expert\'s Warning',
+    text: 'An expert warns that your plan is flawed. Accepting their advice would mean admitting you were wrong before the council.',
+    options: [
+      {
+        text: 'HEED THE WARNING',
+        effects: {
+          authority: -6,
+          gold: 15,
+          satisfaction: 8,
+        },
+      },
+      {
+        text: 'PROCEED AS PLANNED',
+        effects: {
+          authority: 4,
+          gold: -20,
+          satisfaction: -12,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_EGO_STATUE',
+    title: 'Monument to Yourself',
+    text: 'Advisors suggest erecting a statue in your honor. It would immortalize your legacy, but the cost is steep and the optics questionable.',
+    options: [
+      {
+        text: 'BUILD THE STATUE',
+        effects: {
+          gold: -35,
+          authority: 8,
+          satisfaction: -15,
+        },
+      },
+      {
+        text: 'DECLINE',
+        effects: {
+          authority: -2,
+          satisfaction: 12,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_EGO_OVERREACTION',
+    title: 'Petty Theft',
+    text: 'Someone stole a chicken from your personal coop. It\'s a trivial loss, but some advisors suggest making an example.',
+    options: [
+      {
+        text: 'HARSH PUNISHMENT',
+        effects: {
+          authority: 4,
+          satisfaction: -15,
+        },
+      },
+      {
+        text: 'IGNORE IT',
+        effects: {
+          authority: -2,
+          satisfaction: 5,
+        },
+      },
+    ],
+  },
+];
+
+/**
+ * Info-Requests for authority system feedback
+ */
+export const authorityInfoRequests: Request[] = [
+  {
+    id: 'INFO_AUTHORITY_SUCCESS',
+    title: 'Authority Prevails',
+    text: 'Your show of political power has impressed the faction. They back down and offer tribute. Your authority is returned to you.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [
+      {
+        text: 'ACCEPT',
+        effects: {},
+      },
+    ],
+  },
+  {
+    id: 'INFO_AUTHORITY_FAILURE',
+    title: 'Authority Challenged',
+    text: 'Your influence was insufficient. The rival faction gains ground, and your reputation suffers. Your committed authority is lost, and you face additional losses.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [
+      {
+        text: 'ACKNOWLEDGE',
+        effects: {},
+      },
+    ],
+  },
+  // Feedback events for authority commit scenarios
+  {
+    id: 'INFO_TRADE_SUCCESS',
+    title: 'Negotiation Victory',
+    text: 'Your firm negotiating stance paid off. The merchant guild agrees to your terms, and your authority remains intact.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'EXCELLENT', effects: {} }],
+  },
+  {
+    id: 'INFO_TRADE_FAILURE',
+    title: 'Negotiation Failure',
+    text: 'The merchants walked away from the table, insulted by your overreach. The deal is lost and your reputation damaged.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'ACCEPT DEFEAT', effects: {} }],
+  },
+  {
+    id: 'INFO_RIOT_SUCCESS',
+    title: 'Crisis Averted',
+    text: 'Your words resonated with the crowd. They disperse peacefully, moved by your leadership and vision.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'WELL DONE', effects: {} }],
+  },
+  {
+    id: 'INFO_RIOT_FAILURE',
+    title: 'Riot Erupts',
+    text: 'The crowd jeered and threw stones. Violence broke out, and guards had to intervene forcefully. Your authority was not enough.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'REGRET IT', effects: {} }],
+  },
+  {
+    id: 'INFO_JUSTICE_SUCCESS',
+    title: 'Justice Served',
+    text: 'Both families accept your judgment. Your authority has brought peace and order to the dispute.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'GOOD', effects: {} }],
+  },
+  {
+    id: 'INFO_JUSTICE_FAILURE',
+    title: 'Justice Rejected',
+    text: 'The families reject your ruling, calling you weak and incompetent. The feud intensifies.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'UNFORTUNATE', effects: {} }],
+  },
+  {
+    id: 'INFO_REFORM_SUCCESS',
+    title: 'Reforms Implemented',
+    text: 'Despite resistance, your authority prevails. The military is reorganized and strengthened under new leadership.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'PROCEED', effects: {} }],
+  },
+  {
+    id: 'INFO_REFORM_FAILURE',
+    title: 'Reforms Rejected',
+    text: 'The old guard refuses your changes. Some officers even resign in protest, weakening your forces.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'ACCEPT IT', effects: {} }],
+  },
+  {
+    id: 'INFO_BANDIT_SUCCESS',
+    title: 'Bandits Recruited',
+    text: 'The bandit chief kneels before you, swearing loyalty. His warriors are now yours to command.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'WELCOME THEM', effects: {} }],
+  },
+  {
+    id: 'INFO_BANDIT_FAILURE',
+    title: 'Bandits Betray',
+    text: 'The bandits laugh at your offer and raid your settlement. Your weakness has cost you dearly.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'CURSE THEM', effects: {} }],
+  },
+  {
+    id: 'INFO_TAX_SUCCESS',
+    title: 'Tax Reform Succeeds',
+    text: 'Your authority overcomes the corrupt officials. The new tax system is efficient and fair, filling the coffers.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'CELEBRATE', effects: {} }],
+  },
+  {
+    id: 'INFO_TAX_FAILURE',
+    title: 'Tax Reform Fails',
+    text: 'The entrenched interests sabotage your reforms. Tax collection collapses into chaos and resentment.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'REGROUP', effects: {} }],
+  },
+  {
+    id: 'INFO_RELIGIOUS_SUCCESS',
+    title: 'Unity Achieved',
+    text: 'Your decree brings religious harmony. The people unite under your wisdom and authority.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'BLESSED', effects: {} }],
+  },
+  {
+    id: 'INFO_RELIGIOUS_FAILURE',
+    title: 'Religious Schism',
+    text: 'Your decree inflames the dispute. Families are torn apart, and some flee the settlement in protest.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'DAMAGE DONE', effects: {} }],
+  },
+  {
+    id: 'INFO_BORDER_SUCCESS',
+    title: 'Territory Secured',
+    text: 'Your claim is recognized. The contested lands are now yours, bringing new farmers and resources.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'EXPAND', effects: {} }],
+  },
+  {
+    id: 'INFO_BORDER_FAILURE',
+    title: 'Border War',
+    text: 'Your neighbor rejects your claim with force. A brief but bloody skirmish costs you dearly.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'RETREAT', effects: {} }],
+  },
+  {
+    id: 'INFO_CORRUPT_SUCCESS',
+    title: 'Corruption Rooted Out',
+    text: 'The corrupt official is punished publicly. The recovered funds and restored integrity boost morale.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'JUSTICE', effects: {} }],
+  },
+  {
+    id: 'INFO_CORRUPT_FAILURE',
+    title: 'Corruption Persists',
+    text: 'The official\'s allies strike back. Your prosecution fails, and the corrupt network retaliates.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'FAILED', effects: {} }],
+  },
+  {
+    id: 'INFO_SUCCESSION_SUCCESS',
+    title: 'Succession Secured',
+    text: 'Your chosen claimant takes power, grateful for your support. Rich rewards and alliance follow.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'PROFIT', effects: {} }],
+  },
+  {
+    id: 'INFO_SUCCESSION_FAILURE',
+    title: 'Succession War',
+    text: 'Your candidate loses. The victorious claimant remembers your opposition with hostility.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'COSTLY', effects: {} }],
+  },
+  {
+    id: 'INFO_GUILD_SUCCESS',
+    title: 'Guild United',
+    text: 'Your choice stands. The favored guild prospers, and trade flourishes under clear leadership.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'PROSPER', effects: {} }],
+  },
+  {
+    id: 'INFO_GUILD_FAILURE',
+    title: 'Guild Chaos',
+    text: 'Both guilds reject your decision. Trade war erupts, damaging the economy and your standing.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'CHAOS', effects: {} }],
+  },
+  {
+    id: 'INFO_ENVOY_SUCCESS',
+    title: 'Equal Partnership',
+    text: 'The foreign kingdom accepts your terms. A profitable alliance is formed on equal footing.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'ALLIANCE', effects: {} }],
+  },
+  {
+    id: 'INFO_ENVOY_FAILURE',
+    title: 'Diplomatic Insult',
+    text: 'The envoy leaves in anger. Your overreach is seen as arrogance, damaging foreign relations.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'ISOLATION', effects: {} }],
+  },
+  {
+    id: 'INFO_LAND_SUCCESS',
+    title: 'Land Reform Success',
+    text: 'Despite noble resistance, your authority carries the day. Land is redistributed fairly, and the poor rejoice.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'REFORM', effects: {} }],
+  },
+  {
+    id: 'INFO_LAND_FAILURE',
+    title: 'Land Reform Disaster',
+    text: 'The nobles revolt against your reforms. Chaos ensues as farmers flee and the economy collapses.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'DISASTER', effects: {} }],
+  },
+  {
+    id: 'INFO_TRADITION_SUCCESS',
+    title: 'Tradition Abolished',
+    text: 'Your authority is sufficient. The harmful tradition ends, and a new era of progress begins.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'PROGRESS', effects: {} }],
+  },
+  {
+    id: 'INFO_TRADITION_FAILURE',
+    title: 'Tradition Defended',
+    text: 'The people reject your decree. You are branded a heretic, and the tradition continues stronger than ever.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'DEFEATED', effects: {} }],
+  },
+  {
+    id: 'INFO_PIRATE_SUCCESS',
+    title: 'Pirates Tamed',
+    text: 'The pirates serve you now. River trade is yours to control, bringing gold and security.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'COMMAND', effects: {} }],
+  },
+  {
+    id: 'INFO_PIRATE_FAILURE',
+    title: 'Pirates Raid',
+    text: 'The pirates scoff at your authority. They raid your docks and escape with your gold.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'LOSSES', effects: {} }],
+  },
+  {
+    id: 'INFO_MARRIAGE_SUCCESS',
+    title: 'Marriage Sealed',
+    text: 'The alliance is formed on favorable terms. Wealth, troops, and prestige flow from the union.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'ALLIANCE', effects: {} }],
+  },
+  {
+    id: 'INFO_MARRIAGE_FAILURE',
+    title: 'Marriage Broken',
+    text: 'The family withdraws the offer, insulted by your demands. The alliance opportunity is lost.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'LOST', effects: {} }],
+  },
 ];
 
 /**
@@ -1820,7 +3568,7 @@ export const eventRequests: Request[] = [
  * Throws errors if validation fails.
  */
 export function validateRequests(): void {
-  const allRequests = [...needRequests, ...infoRequests, ...eventRequests];
+  const allRequests = [...needRequests, ...infoRequests, ...authorityInfoRequests, ...eventRequests];
   const errors: string[] = [];
 
   // Collect all request IDs

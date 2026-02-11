@@ -3,9 +3,9 @@
  * Based on POF_SPEC.md specification.
  */
 
-import type { Stats, Needs, Effect, NeedsTracking, Request, FollowUp } from './models';
+import type { Stats, Needs, Effect, NeedsTracking, Request, FollowUp, AuthorityCheck, AuthorityCheckResult } from './models';
 import { DECLINE_COOLDOWN_TICKS, NEED_UNLOCK_THRESHOLDS, NEED_CONFIGS, NEED_INFO_REQUEST_MAP } from './models';
-import { needRequests, infoRequests, eventRequests } from './requests';
+import { needRequests, infoRequests, authorityInfoRequests, eventRequests } from './requests';
 import { pickNextRequest, selectWeightedCandidate, getRandomValue } from './picker';
 import { needModifiers } from './modifiers';
 
@@ -38,6 +38,7 @@ export interface LogEntry {
     fireRisk?: number;
     farmers?: number;
     landForces?: number;
+    authority?: number;
   };
   /** Applied changes from modifiers or need effects */
   appliedChanges?: AppliedChange[];
@@ -114,6 +115,26 @@ export interface ActiveCombat {
 }
 
 /**
+ * Pending authority check scheduled for resolution
+ */
+export interface PendingAuthorityCheck {
+  /** Unique identifier for this check */
+  checkId: string;
+  /** Tick when this check was initiated */
+  initiatedTick: number;
+  /** Tick when this check should resolve */
+  resolveTick: number;
+  /** Request ID that initiated this check */
+  originRequestId: string;
+  /** Option index that was chosen */
+  optionIndex: number;
+  /** Amount of authority committed */
+  committed: number;
+  /** Authority check configuration */
+  config: AuthorityCheck;
+}
+
+/**
  * Complete game state
  */
 export interface GameState {
@@ -138,6 +159,8 @@ export interface GameState {
   scheduledCombats: ScheduledCombat[];
   /** Active combat currently in progress */
   activeCombat?: ActiveCombat;
+  /** Pending authority checks to resolve at future ticks */
+  pendingAuthorityChecks: PendingAuthorityCheck[];
 }
 
 /**
@@ -148,6 +171,8 @@ export type GameAction = {
   optionIndex: number;
   /** Optional number of land forces to commit to combat (only used for combat requests) */
   combatCommit?: number;
+  /** Optional amount of authority to commit (only used for options with authority checks) */
+  authorityCommit?: number;
 };
 
 /**
@@ -162,6 +187,7 @@ export const initialState: GameState = {
     fireRisk: 20,
     farmers: 20,
     landForces: 5,
+    authority: 20,
   },
   needs: {
     marketplace: false,
@@ -187,6 +213,7 @@ export const initialState: GameState = {
   requestTriggerCounts: {},
   unlocks: {},
   scheduledCombats: [],
+  pendingAuthorityChecks: [],
 };
 
 /**
@@ -202,7 +229,7 @@ function clamp(value: number, min: number, max: number): number {
  * @returns The request's title, or a fallback string if not found
  */
 function getRequestTitleFromId(requestId: string): string {
-  const allRequests = [...needRequests, ...infoRequests, ...eventRequests];
+  const allRequests = [...needRequests, ...infoRequests, ...authorityInfoRequests, ...eventRequests];
   const request = allRequests.find(r => r.id === requestId);
   
   if (!request) {
@@ -239,6 +266,7 @@ function clampStats(stats: Stats): Stats {
     gold: Math.max(-50, stats.gold),
     farmers: Math.max(0, stats.farmers),
     landForces: Math.max(0, stats.landForces),
+    authority: clamp(stats.authority, 0, 999.999),
   };
 }
 
@@ -256,6 +284,7 @@ function applyEffects(stats: Stats, needs: Needs, effects: Effect): { stats: Sta
   if (effects.fireRisk !== undefined) newStats.fireRisk += effects.fireRisk;
   if (effects.farmers !== undefined) newStats.farmers += effects.farmers;
   if (effects.landForces !== undefined) newStats.landForces += effects.landForces;
+  if (effects.authority !== undefined) newStats.authority += effects.authority;
 
   // Apply need flags
   if (effects.marketplace !== undefined) newNeeds.marketplace = effects.marketplace;
@@ -312,7 +341,7 @@ export function applyOptionWithModifiers(
   const { stats: statsAfterEffects, needs } = applyEffects(state.stats, state.needs, delta);
   
   // Record base changes from the delta
-  const statKeys: Array<keyof Stats> = ['gold', 'satisfaction', 'health', 'fireRisk', 'farmers', 'landForces'];
+  const statKeys: Array<keyof Stats> = ['gold', 'satisfaction', 'health', 'fireRisk', 'farmers', 'landForces', 'authority'];
   for (const key of statKeys) {
     if (delta[key] !== undefined && delta[key] !== 0) {
       appliedChanges.push({
@@ -493,6 +522,9 @@ function createLogEntry(
   }
   if (afterStats.landForces !== beforeStats.landForces) {
     deltas.landForces = afterStats.landForces - beforeStats.landForces;
+  }
+  if (afterStats.authority !== beforeStats.authority) {
+    deltas.authority = afterStats.authority - beforeStats.authority;
   }
 
   return {
@@ -681,6 +713,49 @@ function validateForceAccounting(
       console.warn(`[Force Accounting WARNING] Total forces INCREASED unexpectedly at ${context}. Previous: ${previousTotal}, Current: ${totalForces}, Delta: ${delta}`);
     }
   }
+}
+
+/**
+ * Resolves a pending authority check and returns the result
+ * @param check The pending authority check to resolve
+ * @returns Authority check result with success/failure and effects
+ */
+function resolveAuthorityCheck(check: PendingAuthorityCheck): AuthorityCheckResult {
+  const config = check.config;
+  const committed = check.committed;
+  
+  // Determine success based on threshold
+  const success = committed >= config.threshold;
+  
+  // Calculate refund and loss
+  const refundPercent = success ? (config.refundOnSuccessPercent ?? 100) : 0;
+  const refunded = Math.floor((committed * refundPercent) / 100);
+  
+  let totalLoss = committed - refunded;
+  
+  // Apply extra loss on failure
+  if (!success) {
+    const extraLossPercent = config.extraLossOnFailurePercent ?? 0;
+    const extraLoss = Math.floor((committed * extraLossPercent) / 100);
+    totalLoss += extraLoss;
+  }
+  
+  // Determine which effects to apply
+  const appliedEffects = success ? config.onSuccess : config.onFailure;
+  
+  // Determine feedback request
+  const feedbackRequestId = success 
+    ? config.successFeedbackRequestId 
+    : config.failureFeedbackRequestId;
+  
+  return {
+    success,
+    committed,
+    refunded,
+    totalLoss,
+    appliedEffects,
+    feedbackRequestId,
+  };
 }
 
 /**
@@ -1087,7 +1162,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
     
     // Find the current request (non-synthetic)
-    const currentRequest = [...needRequests, ...infoRequests, ...eventRequests].find(
+    const currentRequest = [...needRequests, ...infoRequests, ...authorityInfoRequests, ...eventRequests].find(
       (r) => r.id === state.currentRequestId
     );
 
@@ -1177,6 +1252,55 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       stats = { ...result.stats, landForces: reservedLandForces };
       needs = result.needs;
       appliedChanges = result.appliedChanges;
+    } else if (option.authorityCheck && action.authorityCommit !== undefined) {
+      // Handle authority check
+      const authorityCheck = option.authorityCheck;
+      const authorityCommit = action.authorityCommit;
+      
+      // Validate authorityCommit
+      if (authorityCommit < authorityCheck.minCommit || 
+          authorityCommit > authorityCheck.maxCommit || 
+          authorityCommit > state.stats.authority) {
+        console.error('Invalid authorityCommit:', authorityCommit, 
+                     'Range:', authorityCheck.minCommit, '-', authorityCheck.maxCommit,
+                     'Available:', state.stats.authority);
+        return state; // Invalid commit, abort
+      }
+      
+      // Immediately deduct committed authority
+      const reservedAuthority = state.stats.authority - authorityCommit;
+      
+      // Generate unique check ID
+      const checkId = `${currentRequest.id}-${state.tick}-${Date.now()}`;
+      
+      // Create pending authority check (resolves at tick+1)
+      const newPendingCheck: PendingAuthorityCheck = {
+        checkId,
+        initiatedTick: state.tick,
+        resolveTick: state.tick + 1, // Always delay=1
+        originRequestId: currentRequest.id,
+        optionIndex: action.optionIndex,
+        committed: authorityCommit,
+        config: authorityCheck,
+      };
+      
+      // Add to pending checks
+      const pendingAuthorityChecks = [...state.pendingAuthorityChecks, newPendingCheck];
+      
+      // Apply option effects
+      const result = applyOptionWithModifiers(
+        state, 
+        currentRequest, 
+        action.optionIndex,
+        modifiersToUse
+      );
+      // Use result stats but preserve the authority commitment
+      stats = { ...result.stats, authority: reservedAuthority };
+      needs = result.needs;
+      appliedChanges = result.appliedChanges;
+      
+      // Update state to include pending checks before advancing
+      state = { ...state, pendingAuthorityChecks };
     } else {
       // Normal path: Apply option effects using the pipeline
       const result = applyOptionWithModifiers(
@@ -1337,6 +1461,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         requestTriggerCounts,
         unlocks,
         scheduledCombats,
+        pendingAuthorityChecks: state.pendingAuthorityChecks,
       };
     }
 
@@ -1359,6 +1484,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         requestTriggerCounts,
         unlocks,
         scheduledCombats,
+        pendingAuthorityChecks: state.pendingAuthorityChecks,
       });
 
       // Return state with same tick, updated stats/needs/unlocks/log, new request
@@ -1377,6 +1503,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         requestTriggerCounts,
         unlocks,
         scheduledCombats,
+        pendingAuthorityChecks: state.pendingAuthorityChecks,
       };
     }
 
@@ -1462,7 +1589,47 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         requestTriggerCounts,
         unlocks,
         scheduledCombats,
+        pendingAuthorityChecks: state.pendingAuthorityChecks,
       };
+    }
+
+    // 3.5. Resolve pending authority checks that are due
+    let pendingAuthorityChecks = [...state.pendingAuthorityChecks];
+    const nextTick = state.tick + 1;
+    
+    // Find checks that should resolve on the next tick
+    const checksToResolve = pendingAuthorityChecks.filter(check => check.resolveTick === nextTick);
+    
+    // Process each check
+    for (const check of checksToResolve) {
+      const result = resolveAuthorityCheck(check);
+      
+      // Apply refund to authority
+      if (result.refunded > 0) {
+        stats.authority += result.refunded;
+        stats = clampStats(stats);
+      }
+      
+      // Apply success/failure effects if any
+      if (result.appliedEffects) {
+        const effectsResult = applyEffects(stats, needs, result.appliedEffects);
+        stats = clampStats(effectsResult.stats);
+        needs = effectsResult.needs;
+      }
+      
+      // Schedule feedback event if provided
+      if (result.feedbackRequestId) {
+        const feedbackEvent: ScheduledEvent = {
+          targetTick: nextTick,
+          requestId: result.feedbackRequestId,
+          scheduledAtTick: state.tick,
+          priority: 'normal',
+        };
+        scheduledEvents.push(feedbackEvent);
+      }
+      
+      // Remove from pending checks
+      pendingAuthorityChecks = pendingAuthorityChecks.filter(c => c.checkId !== check.checkId);
     }
 
     // 4. Pick next request (passing needs tracking for cooldown check)
@@ -1481,6 +1648,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       requestTriggerCounts,
       unlocks,
       scheduledCombats,
+      pendingAuthorityChecks,
     });
 
     // 5. Increment tick and update state
@@ -1499,6 +1667,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       requestTriggerCounts,
       unlocks,
       scheduledCombats,
+      pendingAuthorityChecks,
     };
   }
 
@@ -1657,7 +1826,7 @@ export function getCurrentRequest(state: GameState): Request | null {
   }
   
   // Regular request - look it up in the arrays
-  return [...needRequests, ...infoRequests, ...eventRequests].find(
+  return [...needRequests, ...infoRequests, ...authorityInfoRequests, ...eventRequests].find(
     (r) => r.id === state.currentRequestId
   ) || null;
 }

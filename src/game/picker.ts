@@ -5,7 +5,7 @@
 
 import type { GameState } from './state';
 import type { Stats, Needs, Request, NeedsTracking } from './models';
-import { needRequests, infoRequests, eventRequests } from './requests';
+import { needRequests, infoRequests, authorityInfoRequests, eventRequests } from './requests';
 import { isNeedUnlocked, isNeedRequired, isNeedOnCooldown, meetsRequirements } from './state';
 
 /**
@@ -14,7 +14,7 @@ import { isNeedUnlocked, isNeedRequired, isNeedOnCooldown, meetsRequirements } f
  * @returns The request's title, or a fallback string if not found
  */
 function getRequestTitle(requestId: string): string {
-  const allRequests = [...needRequests, ...infoRequests, ...eventRequests];
+  const allRequests = [...needRequests, ...infoRequests, ...authorityInfoRequests, ...eventRequests];
   const request = allRequests.find(r => r.id === requestId);
   
   if (!request) {
@@ -136,6 +136,28 @@ export function selectWeightedCandidate<T extends { weight: number }>(
 
   // Fallback to last candidate (shouldn't happen with proper floating point math)
   return candidates[candidates.length - 1];
+}
+
+/**
+ * Checks if an event is eligible based on authority range
+ */
+function isEligibleByAuthority(request: Request, authority: number): boolean {
+  // If no authority constraints, always eligible
+  if (request.authorityMin === undefined && request.authorityMax === undefined) {
+    return true;
+  }
+  
+  // Check min authority
+  if (request.authorityMin !== undefined && authority < request.authorityMin) {
+    return false;
+  }
+  
+  // Check max authority
+  if (request.authorityMax !== undefined && authority > request.authorityMax) {
+    return false;
+  }
+  
+  return true;
 }
 
 /**
@@ -372,7 +394,7 @@ export function pickNextRequest(
           }
         }
         
-        const scheduledRequest = [...needRequests, ...infoRequests, ...eventRequests].find(
+        const scheduledRequest = [...needRequests, ...infoRequests, ...authorityInfoRequests, ...eventRequests].find(
           (r) => r.id === dueEvent.requestId
         );
         
@@ -535,7 +557,8 @@ export function pickNextRequest(
            !crisisEventIds.includes(r.id) &&
            (r.canTriggerRandomly !== false) &&
            isEligibleForRandomTrigger(r) &&
-           !isLockedByRequirements(r)
+           !isLockedByRequirements(r) &&
+           isEligibleByAuthority(r, stats.authority)
   );
   if (availableEvents.length > 0) {
     return availableEvents[rng.nextInt(availableEvents.length)];
@@ -546,7 +569,8 @@ export function pickNextRequest(
     (r) => !crisisEventIds.includes(r.id) && 
            (r.canTriggerRandomly !== false) && 
            isEligibleForRandomTrigger(r) &&
-           !isLockedByRequirements(r)
+           !isLockedByRequirements(r) &&
+           isEligibleByAuthority(r, stats.authority)
   );
   
   if (nonCrisisEvents.length === 0) {
