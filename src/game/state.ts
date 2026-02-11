@@ -6,7 +6,7 @@
 import type { Stats, Needs, Effect, NeedsTracking, Request, FollowUp, AuthorityCheck, AuthorityCheckResult } from './models';
 import { DECLINE_COOLDOWN_TICKS, NEED_UNLOCK_THRESHOLDS, NEED_CONFIGS, NEED_INFO_REQUEST_MAP } from './models';
 import { needRequests, infoRequests, authorityInfoRequests, eventRequests } from './requests';
-import { pickNextRequest, selectWeightedCandidate, getRandomValue } from './picker';
+import { pickNextRequest, selectWeightedCandidate, getRandomValue, resetRandom } from './picker';
 import { needModifiers } from './modifiers';
 
 /**
@@ -1835,6 +1835,9 @@ export function getCurrentRequest(state: GameState): Request | null {
  * Initialize the game with the first request
  */
 export function initializeGame(): GameState {
+  // Reset RNG to get fresh random sequence for each new game
+  resetRandom();
+  
   const firstRequest = pickNextRequest(initialState);
   return {
     ...initialState,
