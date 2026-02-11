@@ -91,7 +91,34 @@ farmers += floor(health / 10)
 ```
 Population grows based on village health. Better health conditions attract more settlers.
 
-See `POF_SPEC.md` for complete game specification including all 30 requests and their effects.
+### Authority System
+
+The game features a comprehensive **Authority** system that represents your political influence and leadership power. Authority ranges from 0-100 and creates dynamic gameplay through:
+
+#### Authority Bands
+- **Low Authority (0-33)**: Face disrespect, sabotage, and challenges to your legitimacy
+- **Medium Authority (34-66)**: Normal governance with balanced opportunities
+- **High Authority (67-100)**: Access elite events, alliances, and high-stakes political scenarios
+
+#### Authority Mechanics
+- **Basic Changes**: Events grant or cost authority based on your leadership decisions
+- **Authority Commits**: Risk authority on important decisions for greater rewards (or losses)
+- **Ego Tests**: Moral dilemmas testing humility vs hubris, mercy vs severity
+- **Event Filtering**: Band-specific events create distinct experiences at different power levels
+
+#### Key Features
+- **Political Capital**: Authority is spent to enforce difficult decisions
+- **Delayed Resolution**: Authority commits resolve on the next tick, creating tension
+- **Risk/Reward**: Success can refund committed authority; failure can multiply losses
+- **Character Development**: Your choices shape what kind of leader you become
+
+**📖 See `AUTHORITY_DESIGN.md` for complete authority system documentation including:**
+- Detailed mechanics and strategy guide
+- Developer balancing guidelines  
+- Event creation best practices
+- Technical implementation reference
+
+See `POF_SPEC.md` for complete game specification including all requests and their effects.
 
 ## 🌐 Deployment
 
