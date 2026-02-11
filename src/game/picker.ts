@@ -139,7 +139,9 @@ export function selectWeightedCandidate<T extends { weight: number }>(
 }
 
 /**
- * Checks if an event is eligible based on authority range
+ * Checks if an event is eligible based on authority range.
+ * Events with authority ranges have a probabilistic chance to trigger,
+ * not a guarantee, to prevent all band-specific events from appearing repeatedly.
  */
 function isEligibleByAuthority(request: Request, authority: number): boolean {
   // If no authority constraints, always eligible
@@ -147,17 +149,20 @@ function isEligibleByAuthority(request: Request, authority: number): boolean {
     return true;
   }
   
-  // Check min authority
+  // Check if authority is outside the allowed range - always ineligible
   if (request.authorityMin !== undefined && authority < request.authorityMin) {
     return false;
   }
   
-  // Check max authority
   if (request.authorityMax !== undefined && authority > request.authorityMax) {
     return false;
   }
   
-  return true;
+  // Authority is within range - use probability to determine eligibility
+  // This prevents all events in a band from triggering repeatedly
+  // 50% chance for events with authority constraints
+  const AUTHORITY_BAND_TRIGGER_PROBABILITY = 0.5;
+  return rng.next() < AUTHORITY_BAND_TRIGGER_PROBABILITY;
 }
 
 /**
