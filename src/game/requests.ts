@@ -280,7 +280,7 @@ export const eventRequests: Request[] = [
         effects: {
           gold: -20,
           satisfaction: -3,
-          authority: -8,
+          authority: -5,
         },
       },
     ],
@@ -2960,7 +2960,7 @@ export const eventRequests: Request[] = [
           },
           onFailure: {
             satisfaction: -20,
-            authority: -8,
+            authority: -5,
           },
           successFeedbackRequestId: 'INFO_TRADITION_SUCCESS',
           failureFeedbackRequestId: 'INFO_TRADITION_FAILURE',
@@ -3036,7 +3036,7 @@ export const eventRequests: Request[] = [
           },
           onFailure: {
             gold: -20,
-            authority: -10,
+            authority: -6,
             satisfaction: -12,
           },
           successFeedbackRequestId: 'INFO_MARRIAGE_SUCCESS',
