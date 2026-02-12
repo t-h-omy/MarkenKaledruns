@@ -590,14 +590,15 @@ function applyAuthorityBoosts(
         weightIncrease = commitRatio * boost.boostValue;
         break;
         
-      case "threshold":
+      case "threshold": {
         // Binary: crosses threshold or doesn't
         // Example: boostValue=3, committed >= threshold = +3 weight, else +0
         const crossesThreshold = committed >= threshold;
         weightIncrease = crossesThreshold ? boost.boostValue : 0;
         break;
+      }
         
-      case "stepped":
+      case "stepped": {
         // Discrete steps based on commitment percentage
         // Example: steps=3, boostValue=1, commitRatio creates 4 tiers (0%, 33%, 66%, 100%)
         const numSteps = boost.steps ?? 3;
@@ -605,6 +606,7 @@ function applyAuthorityBoosts(
         const currentStep = Math.floor(commitRatio / stepSize);
         weightIncrease = currentStep * boost.boostValue;
         break;
+      }
         
       default:
         console.warn(`[Authority Boost] Unknown boost type: ${(boost as AuthorityFollowUpBoost).boostType}`);
