@@ -3,7 +3,7 @@
  * Based on POF_SPEC.md specification.
  */
 
-import type { Stats, Needs, Effect, NeedsTracking, Request, FollowUp, AuthorityCheck, AuthorityCheckResult } from './models';
+import type { Stats, Needs, Effect, NeedsTracking, Request, FollowUp, AuthorityCheck, AuthorityCheckResult, WeightedCandidate, AuthorityFollowUpBoost } from './models';
 import { DECLINE_COOLDOWN_TICKS, NEED_UNLOCK_THRESHOLDS, NEED_CONFIGS, NEED_INFO_REQUEST_MAP } from './models';
 import { needRequests, infoRequests, authorityInfoRequests, eventRequests } from './requests';
 import { pickNextRequest, selectWeightedCandidate, getRandomValue, resetRandom } from './picker';
@@ -56,6 +56,17 @@ export interface ScheduledEvent {
   scheduledAtTick: number;
   /** Priority of the scheduled event (default: "normal") */
   priority?: "info" | "normal";
+  /** 
+   * Authority commit context from the event that scheduled this.
+   * Used for debugging and potential future features (e.g., showing player
+   * their authority investment paid off).
+   */
+  authorityCommitContext?: {
+    /** Amount of authority that was committed */
+    committed: number;
+    /** Request ID that had the authority commit */
+    originRequestId: string;
+  };
 }
 
 /**
@@ -538,14 +549,97 @@ function createLogEntry(
 }
 
 /**
- * Schedules follow-up events based on the chosen option
+ * Applies authority commit boosts to follow-up candidate weights.
+ * Authority commits INCREASE weights, making beneficial outcomes more likely.
+ * 
+ * @param originalCandidates Base candidates with their default weights
+ * @param boosts Weight boost rules from authority check
+ * @param committed Amount of authority committed
+ * @param maxCommit Maximum authority that could be committed
+ * @param threshold Authority threshold for success (used by threshold boost type)
+ * @returns Modified candidates with boosted weights
+ */
+function applyAuthorityBoosts(
+  originalCandidates: WeightedCandidate[],
+  boosts: AuthorityFollowUpBoost[],
+  committed: number,
+  maxCommit: number,
+  threshold: number
+): WeightedCandidate[] {
+  // Clone candidates to avoid mutation
+  const boostedCandidates = originalCandidates.map(c => ({ ...c }));
+  
+  // Calculate commitment ratio (0.0 to 1.0)
+  const commitRatio = maxCommit > 0 ? committed / maxCommit : 0;
+  
+  for (const boost of boosts) {
+    // Find candidate to boost
+    const candidate = boostedCandidates.find(c => c.requestId === boost.targetRequestId);
+    
+    if (!candidate) {
+      console.warn(`[Authority Boost] Target not found in candidates: ${boost.targetRequestId}`);
+      continue;
+    }
+    
+    let weightIncrease = 0;
+    
+    switch (boost.boostType) {
+      case "linear":
+        // Weight increases linearly with commitment
+        // Example: boostValue=2, 50% commit = +1 weight, 100% commit = +2 weight
+        weightIncrease = commitRatio * boost.boostValue;
+        break;
+        
+      case "threshold": {
+        // Binary: crosses threshold or doesn't
+        // Example: boostValue=3, committed >= threshold = +3 weight, else +0
+        const crossesThreshold = committed >= threshold;
+        weightIncrease = crossesThreshold ? boost.boostValue : 0;
+        break;
+      }
+        
+      case "stepped": {
+        // Discrete steps based on commitment percentage
+        // Example: steps=3, boostValue=1, commitRatio creates 4 tiers (0%, 33%, 66%, 100%)
+        const numSteps = Math.max(1, boost.steps ?? 3);  // Ensure at least 1 step to avoid division by zero
+        const stepSize = 1 / numSteps;
+        const currentStep = Math.floor(commitRatio / stepSize);
+        weightIncrease = currentStep * boost.boostValue;
+        break;
+      }
+        
+      default:
+        console.warn(`[Authority Boost] Unknown boost type: ${(boost as AuthorityFollowUpBoost).boostType}`);
+        continue;
+    }
+    
+    // Apply weight increase
+    // Note: All boost types produce non-negative values, but we guard against negative
+    // weights as a defensive measure in case boost logic changes in the future
+    candidate.weight = candidate.weight + Math.max(0, weightIncrease);
+    
+    // Debug logging
+    if (weightIncrease > 0) {
+      console.log(`[Authority Boost] ${boost.targetRequestId}: +${weightIncrease.toFixed(2)} weight (${boost.boostType}, committed: ${committed}/${maxCommit})`);
+    }
+  }
+  
+  return boostedCandidates;
+}
+
+/**
+ * Schedules follow-up events based on the chosen option.
+ * If authority was committed, applies boosts to follow-up probabilities.
+ * 
  * @returns Updated scheduled events array
  */
 function scheduleFollowUps(
-  currentRequest: { id: string; followUps?: Array<{ triggerOnOptionIndex: number; delayMinTicks: number; delayMaxTicks: number; candidates: Array<{ requestId: string; weight: number }> }> },
+  currentRequest: Request,
+  option: { authorityCheck?: AuthorityCheck },
   optionIndex: number,
   currentTick: number,
-  existingScheduledEvents: ScheduledEvent[]
+  existingScheduledEvents: ScheduledEvent[],
+  authorityCommit?: number  // NEW: Pass authority commit amount
 ): ScheduledEvent[] {
   const scheduledEvents = [...existingScheduledEvents];
   
@@ -559,8 +653,28 @@ function scheduleFollowUps(
   );
 
   for (const followUp of triggeredFollowUps) {
-    // Select one candidate using weighted random selection
-    const selectedCandidate = selectWeightedCandidate(followUp.candidates);
+    // Start with base candidate weights
+    let candidates = followUp.candidates;
+    
+    // NEW: Apply authority boosts if authority was committed
+    if (authorityCommit !== undefined && 
+        authorityCommit > 0 && 
+        option.authorityCheck?.followUpBoosts && 
+        option.authorityCheck.followUpBoosts.length > 0) {
+      
+      candidates = applyAuthorityBoosts(
+        followUp.candidates,
+        option.authorityCheck.followUpBoosts,
+        authorityCommit,
+        option.authorityCheck.maxCommit,
+        option.authorityCheck.threshold
+      );
+      
+      console.log(`[Follow-Up Scheduling] Authority commit of ${authorityCommit} applied boosts to follow-up candidates`);
+    }
+    
+    // Select one candidate using weighted random selection (with boosted weights)
+    const selectedCandidate = selectWeightedCandidate(candidates);
     
     if (selectedCandidate) {
       // Calculate random delay within the specified range
@@ -572,6 +686,11 @@ function scheduleFollowUps(
         targetTick: currentTick + 1 + delay,
         requestId: selectedCandidate.requestId,
         scheduledAtTick: currentTick,
+        // NEW: Attach authority commit context for tracking/debugging
+        authorityCommitContext: authorityCommit !== undefined && authorityCommit > 0 ? {
+          committed: authorityCommit,
+          originRequestId: currentRequest.id,
+        } : undefined,
       });
     }
   }
@@ -1408,9 +1527,11 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     // Schedule follow-up events if any are triggered by this option
     let scheduledEvents = scheduleFollowUps(
       currentRequest,
+      option,  // NEW: Pass full option object
       action.optionIndex,
       state.tick,
-      state.scheduledEvents
+      state.scheduledEvents,
+      action.authorityCommit  // NEW: Pass authority commit (undefined if not committed)
     );
 
     // Remove the current request from scheduled events if it was scheduled

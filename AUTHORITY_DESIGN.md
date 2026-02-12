@@ -114,6 +114,67 @@ authorityCheck: {
 - High refund rates (90-100%) mean success is essentially free
 - High extra loss rates (40-50%) make failure devastating
 
+### Follow-Up Probability Boosts (NEW)
+
+Authority commits can now influence future events in request chains. Higher commitment increases the probability of beneficial follow-up events, creating a **dual-layer authority system**:
+
+1. **Immediate Layer** (existing): Success/failure effects resolve next tick
+2. **Strategic Layer** (new): Commitment level influences future event probabilities
+
+**How It Works**:
+```typescript
+authorityCheck: {
+  minCommit: 0,
+  maxCommit: 40,
+  threshold: 25,
+  onSuccess: { authority: 3, satisfaction: 5 },  // Immediate effects
+  onFailure: { authority: -5, satisfaction: -3 },
+  followUpBoosts: [  // NEW: Influence follow-up probabilities
+    {
+      targetRequestId: 'EVT_TRAVELER_TEACHES',
+      boostType: 'linear',
+      boostValue: 2,  // Max +2 weight at full commit
+      description: 'Increases chance traveler is helpful',
+    },
+  ],
+}
+```
+
+**Boost Types**:
+
+- **Linear**: Weight increases smoothly with commitment amount
+  - Formula: `weight += (committed / maxCommit) * boostValue`
+  - Example: `boostValue=2` means +2 weight at max commit, +1 at 50% commit
+  - Use for: Gradual improvements where every bit of investment helps
+
+- **Threshold**: Binary - crosses threshold or doesn't
+  - Formula: `weight += boostValue if committed >= threshold, else +0`
+  - Example: `boostValue=3` means +3 weight only if threshold met
+  - Use for: All-or-nothing scenarios where partial commitment doesn't help
+
+- **Stepped**: Discrete tiers based on commitment percentage
+  - Formula: `weight += floor((committed / maxCommit) * steps) * boostValue`
+  - Example: `steps=3, boostValue=1` means +0/+1/+2/+3 at 0%/33%/66%/100%
+  - Use for: Tier-based systems (low/medium/high investment)
+
+**Example: Mysterious Traveler**:
+```
+Base probabilities:
+- Helpful outcome: 75% (weight: 3)
+- Betrayal outcome: 25% (weight: 1)
+
+With linear boost (boostValue=2):
+- No commit (0):      Helpful 75% (3/4),  Betrayal 25% (1/4)
+- Half commit (20):   Helpful 80% (4/5),  Betrayal 20% (1/5)
+- Full commit (40):   Helpful 83% (5/6),  Betrayal 17% (1/6)
+```
+
+**Strategic Implications**:
+- Players now face a richer decision: "Do I commit more authority for immediate safety AND better long-term outcomes?"
+- Authority becomes an investment in future event chains, not just immediate results
+- Different boost types create varied risk/reward profiles across events
+- Backward compatible: events without `followUpBoosts` work exactly as before
+
 ### Event Filtering
 
 Events can be restricted to authority bands:
@@ -281,7 +342,17 @@ These test what kind of leader you want to be. There's no "right" answer—just 
 - 30+ feedback events
 - Updated existing events with authority
 
-### Phase 4: Finalization (This Document)
+### Phase 4: Follow-Up Probability Boosts (Completed)
+- New `AuthorityFollowUpBoost` interface
+- Enhanced `AuthorityCheck` with `followUpBoosts` field
+- Updated `ScheduledEvent` with authority commit context
+- `applyAuthorityBoosts` function for weight calculations
+- Updated `scheduleFollowUps` to apply boosts
+- Example event: Mysterious Traveler with follow-up boosts
+- Three boost types: linear, threshold, stepped
+- Full backward compatibility with existing events
+
+### Phase 5: Finalization (This Document)
 - Comprehensive documentation
 - Balance verification
 - Code quality review
@@ -297,6 +368,14 @@ interface Stats {
   // ... other stats
 }
 
+interface AuthorityFollowUpBoost {
+  targetRequestId: string;  // Follow-up event ID to boost
+  boostType: "linear" | "threshold" | "stepped";
+  boostValue: number;  // Weight increase amount
+  steps?: number;  // For stepped boost type (default: 3)
+  description?: string;  // Optional UI hint
+}
+
 interface AuthorityCheck {
   minCommit: number;
   maxCommit: number;
@@ -307,12 +386,24 @@ interface AuthorityCheck {
   failureFeedbackRequestId?: string;
   refundOnSuccessPercent?: number;  // Default: 100
   extraLossOnFailurePercent?: number;  // Default: 0
+  followUpBoosts?: AuthorityFollowUpBoost[];  // NEW: Influence follow-up probabilities
 }
 
 interface Request {
   authorityMin?: number;  // Minimum authority to see event
   authorityMax?: number;  // Maximum authority to see event
   // ... other fields
+}
+
+interface ScheduledEvent {
+  targetTick: number;
+  requestId: string;
+  scheduledAtTick: number;
+  priority?: "info" | "normal";
+  authorityCommitContext?: {  // NEW: Tracking authority investment
+    committed: number;
+    originRequestId: string;
+  };
 }
 ```
 

@@ -3459,6 +3459,168 @@ export const eventRequests: Request[] = [
       },
     ],
   },
+  // EXAMPLE: Authority Boost Follow-Up System
+  {
+    id: 'EVT_MYSTERIOUS_TRAVELER_ENHANCED',
+    title: 'Mysterious Traveler',
+    text: 'A hooded stranger arrives at your gates, asking for shelter. He seems educated but evasive about his past. You can use your authority to investigate his background more thoroughly.',
+    canTriggerRandomly: true,
+    authorityMin: 20,
+    authorityMax: 100,
+    options: [
+      {
+        text: 'WELCOME & INVESTIGATE',
+        effects: {
+          gold: -5,
+          satisfaction: 2,
+        },
+        authorityCheck: {
+          minCommit: 0,
+          maxCommit: 40,
+          threshold: 25,
+          // Immediate effects (existing system)
+          onSuccess: {
+            authority: 3,  // Successful investigation boosts your reputation
+            satisfaction: 5,
+          },
+          onFailure: {
+            authority: -5,  // Failed investigation makes you look paranoid
+            satisfaction: -3,
+          },
+          refundOnSuccessPercent: 100,
+          extraLossOnFailure: 5,
+          successFeedbackRequestId: 'INFO_TRAVELER_INVESTIGATED',
+          failureFeedbackRequestId: 'INFO_TRAVELER_INVESTIGATION_FAILED',
+          // NEW: Follow-up probability boosts
+          followUpBoosts: [
+            {
+              targetRequestId: 'EVT_TRAVELER_TEACHES',
+              boostType: 'linear',
+              boostValue: 2,  // Max +2 weight at full commit
+              description: 'Increases chance traveler is helpful',
+            },
+          ],
+        },
+      },
+      {
+        text: 'SEND AWAY',
+        effects: {
+          satisfaction: -2,
+        },
+      },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [
+          { requestId: 'EVT_TRAVELER_TEACHES', weight: 3 },    // Base: 75% (3/4)
+          { requestId: 'EVT_TRAVELER_BETRAYS', weight: 1 },    // Base: 25% (1/4)
+          // WITH AUTHORITY BOOST:
+          // No commit (0):     TEACHES 75% (3/4),     BETRAYS 25% (1/4)
+          // Half commit (20):  TEACHES 80% (4/5),     BETRAYS 20% (1/5)
+          // Full commit (40):  TEACHES 83% (5/6),     BETRAYS 17% (1/6)
+        ],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 3,
+        delayMaxTicks: 5,
+        candidates: [
+          { requestId: 'EVT_TRAVELER_CURSE', weight: 2 },
+          { requestId: 'EVT_TRAVELER_RETURNS', weight: 1 },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'EVT_TRAVELER_TEACHES',
+    title: 'Grateful Teacher',
+    text: 'The traveler reveals he is a scholar fleeing persecution. In gratitude for your hospitality, he offers to teach your citizens advanced techniques.',
+    canTriggerRandomly: false,
+    options: [
+      {
+        text: 'ACCEPT HIS TEACHINGS',
+        effects: {
+          gold: 15,
+          satisfaction: 8,
+          authority: 5,
+        },
+      },
+      {
+        text: 'POLITELY DECLINE',
+        effects: {
+          satisfaction: 3,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_TRAVELER_BETRAYS',
+    title: 'Saboteur Revealed',
+    text: 'The traveler was actually a spy! He has stolen valuable information and fled, leaving chaos in his wake.',
+    canTriggerRandomly: false,
+    options: [
+      {
+        text: 'DAMAGE CONTROL',
+        effects: {
+          gold: -20,
+          satisfaction: -10,
+          authority: -8,
+        },
+      },
+      {
+        text: 'ACCEPT THE LOSS',
+        effects: {
+          gold: -15,
+          authority: -5,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_TRAVELER_CURSE',
+    title: 'Vengeful Wanderer',
+    text: 'The rejected traveler curses your village as he leaves. Strange misfortunes begin to occur.',
+    canTriggerRandomly: false,
+    options: [
+      {
+        text: 'SEEK REMEDY',
+        effects: {
+          gold: -10,
+          satisfaction: -5,
+        },
+      },
+      {
+        text: 'IGNORE SUPERSTITION',
+        effects: {
+          satisfaction: -8,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_TRAVELER_RETURNS',
+    title: 'Second Chance',
+    text: 'The traveler returns months later, having found success elsewhere. He remembers your rejection but is willing to forgive.',
+    canTriggerRandomly: false,
+    options: [
+      {
+        text: 'APOLOGIZE',
+        effects: {
+          gold: 5,
+          satisfaction: 3,
+        },
+      },
+      {
+        text: 'MAINTAIN POSITION',
+        effects: {
+          authority: 2,
+        },
+      },
+    ],
+  },
 ];
 
 /**
@@ -3812,6 +3974,22 @@ export const authorityInfoRequests: Request[] = [
     advancesTick: false,
     canTriggerRandomly: false,
     options: [{ text: 'CRUSHED', effects: {} }],
+  },
+  {
+    id: 'INFO_TRAVELER_INVESTIGATED',
+    title: 'Investigation Success',
+    text: 'Your investigation reveals the traveler is indeed a respected scholar. Your cautious approach is seen as wise leadership.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'VINDICATED', effects: {} }],
+  },
+  {
+    id: 'INFO_TRAVELER_INVESTIGATION_FAILED',
+    title: 'Investigation Failed',
+    text: 'Your investigation found nothing, but the traveler is offended by your suspicion. Word spreads that you are paranoid and unwelcoming.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'EMBARRASSED', effects: {} }],
   },
 ];
 
