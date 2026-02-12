@@ -192,6 +192,55 @@ export interface FollowUp {
 }
 
 /**
+ * Defines how authority commitment boosts follow-up event probabilities.
+ * Authority commits INCREASE the weight of specified follow-up events,
+ * making them more likely to occur.
+ */
+export interface AuthorityFollowUpBoost {
+  /** 
+   * Target follow-up request ID whose probability should be increased.
+   * This should match a requestId in the followUps.candidates array.
+   */
+  targetRequestId: string;
+  
+  /** 
+   * Boost type determines how authority commitment affects probability:
+   * - "linear": weight increases linearly with authority committed
+   *   Formula: weight += (committed / maxCommit) * boostValue
+   *   Example: boostValue=2 means +2 weight at max commit, +1 at 50% commit
+   * 
+   * - "threshold": weight increases if commitment crosses threshold
+   *   Formula: weight += boostValue if committed >= threshold, else +0
+   *   Example: boostValue=3 means +3 weight only if threshold met
+   * 
+   * - "stepped": weight increases in discrete steps
+   *   Formula: weight += floor((committed / maxCommit) * steps) * boostValue
+   *   Example: steps=3, boostValue=1 means +0/+1/+2/+3 at 0%/33%/66%/100%
+   */
+  boostType: "linear" | "threshold" | "stepped";
+  
+  /** 
+   * Boost value interpretation depends on boostType:
+   * - linear: maximum weight increase at 100% commitment
+   * - threshold: fixed weight increase when threshold crossed
+   * - stepped: weight increase per step
+   */
+  boostValue: number;
+  
+  /**
+   * For "stepped" boostType: number of discrete steps (default: 3)
+   * Ignored for other types.
+   */
+  steps?: number;
+  
+  /** 
+   * Optional description shown to player explaining what this boost affects.
+   * Example: "Increases chance traveler is helpful"
+   */
+  description?: string;
+}
+
+/**
  * Configuration for an authority check on an option.
  * When an option has an authority check, the player can commit authority
  * and the check resolves on the next tick (delay=1).
@@ -215,6 +264,8 @@ export interface AuthorityCheck {
   refundOnSuccessPercent?: number;
   /** Extra authority loss on failure as a fixed whole number (default: 0) */
   extraLossOnFailure?: number;
+  /** Follow-up probability boosts (NEW: influences future event probabilities) */
+  followUpBoosts?: AuthorityFollowUpBoost[];
 }
 
 /**
