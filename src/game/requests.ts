@@ -2229,7 +2229,7 @@ export const eventRequests: Request[] = [
         text: 'RALLY THEM',
         effects: {},
         authorityCheck: {
-          minCommit: 10,
+          minCommit: 7,
           maxCommit: 25,
           threshold: 12,
           onSuccess: {
@@ -2266,7 +2266,7 @@ export const eventRequests: Request[] = [
         text: 'MAKE YOUR STAND',
         effects: {},
         authorityCheck: {
-          minCommit: 15,
+          minCommit: 12,
           maxCommit: 30,
           threshold: 18,
           onSuccess: {
@@ -2296,7 +2296,7 @@ export const eventRequests: Request[] = [
   {
     id: 'EVT_COMMIT_LOW_DEBT_NEGOTIATION',
     title: 'Debt Relief',
-    text: 'Creditors circle like vultures. If you can muster enough authority, you might negotiate better terms. Otherwise, they will take everything.',
+    text: 'Creditors circle like vultures. Hiring a lawyer to negotiate costs 5 gold upfront. If you can muster enough authority, you might secure better terms. Otherwise, they will take everything.',
     authorityMin: 0,
     authorityMax: 33,
     options: [
