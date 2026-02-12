@@ -2179,6 +2179,160 @@ export const eventRequests: Request[] = [
     ],
   },
   
+  // LOW AUTHORITY COMMIT EVENTS (authorityMin: 0, authorityMax: 33)
+  // These events allow players with low authority to still participate in authority commit mechanics
+  {
+    id: 'EVT_COMMIT_LOW_DESPERATE_PLEA',
+    title: 'Desperate Negotiation',
+    text: 'A local merchant offers to help rebuild your reputation - but only if you can scrape together enough authority to prove you\'re worth the risk.',
+    authorityMin: 0,
+    authorityMax: 33,
+    options: [
+      {
+        text: 'TRY TO CONVINCE',
+        effects: {},
+        authorityCheck: {
+          minCommit: 0,
+          maxCommit: 30,
+          threshold: 15,
+          onSuccess: {
+            gold: 25,
+            satisfaction: 8,
+            authority: 3,
+          },
+          onFailure: {
+            gold: -5,
+            satisfaction: -5,
+          },
+          successFeedbackRequestId: 'INFO_LOW_PLEA_SUCCESS',
+          failureFeedbackRequestId: 'INFO_LOW_PLEA_FAILURE',
+          refundOnSuccessPercent: 100,
+          extraLossOnFailure: 5,
+        },
+      },
+      {
+        text: 'DECLINE OFFER',
+        effects: {
+          satisfaction: -3,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_COMMIT_LOW_GUARD_LOYALTY',
+    title: 'Wavering Guards',
+    text: 'Your guards whisper of desertion. You could attempt to rally them with what little authority you have left, or let them go.',
+    authorityMin: 0,
+    authorityMax: 33,
+    options: [
+      {
+        text: 'RALLY THEM',
+        effects: {},
+        authorityCheck: {
+          minCommit: 0,
+          maxCommit: 25,
+          threshold: 12,
+          onSuccess: {
+            landForces: 3,
+            authority: 4,
+          },
+          onFailure: {
+            landForces: -2,
+            satisfaction: -8,
+          },
+          successFeedbackRequestId: 'INFO_LOW_GUARD_SUCCESS',
+          failureFeedbackRequestId: 'INFO_LOW_GUARD_FAILURE',
+          refundOnSuccessPercent: 90,
+          extraLossOnFailure: 5,
+        },
+      },
+      {
+        text: 'LET THEM LEAVE',
+        effects: {
+          landForces: -3,
+          authority: -2,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_COMMIT_LOW_VILLAGE_RESPECT',
+    title: 'Earning Respect',
+    text: 'The villagers doubt your leadership. You could make a bold stand to prove yourself worthy, but it requires mustering what authority you still possess.',
+    authorityMin: 0,
+    authorityMax: 33,
+    options: [
+      {
+        text: 'MAKE YOUR STAND',
+        effects: {},
+        authorityCheck: {
+          minCommit: 0,
+          maxCommit: 30,
+          threshold: 18,
+          onSuccess: {
+            satisfaction: 12,
+            authority: 5,
+            farmers: 3,
+          },
+          onFailure: {
+            satisfaction: -10,
+            farmers: -2,
+          },
+          successFeedbackRequestId: 'INFO_LOW_RESPECT_SUCCESS',
+          failureFeedbackRequestId: 'INFO_LOW_RESPECT_FAILURE',
+          refundOnSuccessPercent: 100,
+          extraLossOnFailure: 6,
+        },
+      },
+      {
+        text: 'STAY QUIET',
+        effects: {
+          satisfaction: -5,
+          authority: -1,
+        },
+      },
+    ],
+  },
+  {
+    id: 'EVT_COMMIT_LOW_DEBT_NEGOTIATION',
+    title: 'Debt Relief',
+    text: 'Creditors circle like vultures. Hiring a lawyer to negotiate costs 5 gold upfront. If you can muster enough authority, you might secure better terms. Otherwise, they will take everything.',
+    authorityMin: 0,
+    authorityMax: 33,
+    options: [
+      {
+        text: 'NEGOTIATE',
+        effects: {
+          gold: -5,
+        },
+        authorityCheck: {
+          minCommit: 0,
+          maxCommit: 28,
+          threshold: 16,
+          onSuccess: {
+            gold: 15,
+            authority: 3,
+          },
+          onFailure: {
+            gold: -15,
+            satisfaction: -7,
+          },
+          successFeedbackRequestId: 'INFO_LOW_DEBT_SUCCESS',
+          failureFeedbackRequestId: 'INFO_LOW_DEBT_FAILURE',
+          refundOnSuccessPercent: 100,
+          extraLossOnFailure: 7,
+        },
+      },
+      {
+        text: 'PAY FULL PRICE',
+        effects: {
+          gold: -20,
+          authority: -2,
+        },
+      },
+    ],
+  },
+  
   // HIGH AUTHORITY EVENTS (authorityMin: 67, authorityMax: 100)
   // These events reflect strong leadership, political intrigue, and high-stakes scenarios
   {
@@ -3593,6 +3747,71 @@ export const authorityInfoRequests: Request[] = [
     advancesTick: false,
     canTriggerRandomly: false,
     options: [{ text: 'LOST', effects: {} }],
+  },
+  // Feedback events for LOW authority commit scenarios
+  {
+    id: 'INFO_LOW_PLEA_SUCCESS',
+    title: 'Merchant Impressed',
+    text: 'The merchant sees potential in you. "Perhaps you\'re worth investing in after all," he says, handing over coins and words of support.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'GRATEFUL', effects: {} }],
+  },
+  {
+    id: 'INFO_LOW_PLEA_FAILURE',
+    title: 'Merchant Dismisses You',
+    text: 'The merchant shakes his head. "You lack the standing I need. Come back when you\'re a real leader." He walks away.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'HUMILIATED', effects: {} }],
+  },
+  {
+    id: 'INFO_LOW_GUARD_SUCCESS',
+    title: 'Guards Rallied',
+    text: 'Your words strike a chord. The guards stand straighter, remembering their oaths. "We\'ll stand with you, lord," their captain declares.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'UNITED', effects: {} }],
+  },
+  {
+    id: 'INFO_LOW_GUARD_FAILURE',
+    title: 'Guards Desert',
+    text: 'Your speech falls flat. The guards exchange glances and begin walking away. Some leave the settlement entirely.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'ABANDONED', effects: {} }],
+  },
+  {
+    id: 'INFO_LOW_RESPECT_SUCCESS',
+    title: 'Respect Earned',
+    text: 'The villagers see your determination and courage. Slowly, they begin to believe in you again. You\'ve turned a corner.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'RENEWED', effects: {} }],
+  },
+  {
+    id: 'INFO_LOW_RESPECT_FAILURE',
+    title: 'Respect Lost',
+    text: 'Your attempt to assert yourself backfires spectacularly. Villagers laugh openly, and some pack their belongings to leave.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'MOCKED', effects: {} }],
+  },
+  {
+    id: 'INFO_LOW_DEBT_SUCCESS',
+    title: 'Debt Reduced',
+    text: 'Your negotiating skill surprises the creditors. They agree to reduced terms, impressed by your resolve despite your circumstances.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'RELIEVED', effects: {} }],
+  },
+  {
+    id: 'INFO_LOW_DEBT_FAILURE',
+    title: 'Debt Enforced',
+    text: 'The creditors laugh at your weak position. They seize assets and spread word of your incompetence throughout the region.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'CRUSHED', effects: {} }],
   },
 ];
 
