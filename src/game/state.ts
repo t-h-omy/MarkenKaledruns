@@ -601,7 +601,7 @@ function applyAuthorityBoosts(
       case "stepped": {
         // Discrete steps based on commitment percentage
         // Example: steps=3, boostValue=1, commitRatio creates 4 tiers (0%, 33%, 66%, 100%)
-        const numSteps = boost.steps ?? 3;
+        const numSteps = Math.max(1, boost.steps ?? 3);  // Ensure at least 1 step to avoid division by zero
         const stepSize = 1 / numSteps;
         const currentStep = Math.floor(commitRatio / stepSize);
         weightIncrease = currentStep * boost.boostValue;
@@ -613,7 +613,9 @@ function applyAuthorityBoosts(
         continue;
     }
     
-    // Apply weight increase (always additive, never negative)
+    // Apply weight increase
+    // Note: All boost types produce non-negative values, but we guard against negative
+    // weights as a defensive measure in case boost logic changes in the future
     candidate.weight = candidate.weight + Math.max(0, weightIncrease);
     
     // Debug logging
