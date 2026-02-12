@@ -1880,7 +1880,7 @@ export const eventRequests: Request[] = [
           satisfaction: 5,
         },
         authorityCheck: {
-          minCommit: 10,
+          minCommit: 0,
           maxCommit: 50,
           threshold: 15,
           onSuccess: {
@@ -2192,7 +2192,7 @@ export const eventRequests: Request[] = [
         text: 'TRY TO CONVINCE',
         effects: {},
         authorityCheck: {
-          minCommit: 10,
+          minCommit: 0,
           maxCommit: 30,
           threshold: 15,
           onSuccess: {
@@ -2229,7 +2229,7 @@ export const eventRequests: Request[] = [
         text: 'RALLY THEM',
         effects: {},
         authorityCheck: {
-          minCommit: 7,
+          minCommit: 0,
           maxCommit: 25,
           threshold: 12,
           onSuccess: {
@@ -2266,7 +2266,7 @@ export const eventRequests: Request[] = [
         text: 'MAKE YOUR STAND',
         effects: {},
         authorityCheck: {
-          minCommit: 12,
+          minCommit: 0,
           maxCommit: 30,
           threshold: 18,
           onSuccess: {
@@ -2306,7 +2306,7 @@ export const eventRequests: Request[] = [
           gold: -5,
         },
         authorityCheck: {
-          minCommit: 12,
+          minCommit: 0,
           maxCommit: 28,
           threshold: 16,
           onSuccess: {
@@ -2600,7 +2600,7 @@ export const eventRequests: Request[] = [
           gold: 10,
         },
         authorityCheck: {
-          minCommit: 15,
+          minCommit: 0,
           maxCommit: 40,
           threshold: 25,
           onSuccess: {
@@ -2636,7 +2636,7 @@ export const eventRequests: Request[] = [
         text: 'ADDRESS THE CROWD',
         effects: {},
         authorityCheck: {
-          minCommit: 20,
+          minCommit: 0,
           maxCommit: 50,
           threshold: 30,
           onSuccess: {
@@ -2675,7 +2675,7 @@ export const eventRequests: Request[] = [
         text: 'RENDER JUDGMENT',
         effects: {},
         authorityCheck: {
-          minCommit: 18,
+          minCommit: 0,
           maxCommit: 45,
           threshold: 28,
           onSuccess: {
@@ -2712,7 +2712,7 @@ export const eventRequests: Request[] = [
         text: 'FORCE REFORMS',
         effects: {},
         authorityCheck: {
-          minCommit: 25,
+          minCommit: 0,
           maxCommit: 60,
           threshold: 40,
           onSuccess: {
@@ -2749,7 +2749,7 @@ export const eventRequests: Request[] = [
         text: 'RECRUIT THEM',
         effects: {},
         authorityCheck: {
-          minCommit: 20,
+          minCommit: 0,
           maxCommit: 55,
           threshold: 35,
           onSuccess: {
@@ -2786,7 +2786,7 @@ export const eventRequests: Request[] = [
         text: 'IMPLEMENT REFORM',
         effects: {},
         authorityCheck: {
-          minCommit: 20,
+          minCommit: 0,
           maxCommit: 50,
           threshold: 32,
           onSuccess: {
@@ -2823,7 +2823,7 @@ export const eventRequests: Request[] = [
         text: 'MAKE A DECREE',
         effects: {},
         authorityCheck: {
-          minCommit: 25,
+          minCommit: 0,
           maxCommit: 55,
           threshold: 38,
           onSuccess: {
@@ -2860,7 +2860,7 @@ export const eventRequests: Request[] = [
         text: 'ASSERT CLAIM',
         effects: {},
         authorityCheck: {
-          minCommit: 30,
+          minCommit: 0,
           maxCommit: 65,
           threshold: 45,
           onSuccess: {
@@ -2898,7 +2898,7 @@ export const eventRequests: Request[] = [
         text: 'PROSECUTE FULLY',
         effects: {},
         authorityCheck: {
-          minCommit: 20,
+          minCommit: 0,
           maxCommit: 50,
           threshold: 33,
           onSuccess: {
@@ -2938,7 +2938,7 @@ export const eventRequests: Request[] = [
         text: 'BACK A CLAIMANT',
         effects: {},
         authorityCheck: {
-          minCommit: 30,
+          minCommit: 0,
           maxCommit: 70,
           threshold: 50,
           onSuccess: {
@@ -2976,7 +2976,7 @@ export const eventRequests: Request[] = [
         text: 'BACK ONE GUILD',
         effects: {},
         authorityCheck: {
-          minCommit: 20,
+          minCommit: 0,
           maxCommit: 45,
           threshold: 30,
           onSuccess: {
@@ -3013,7 +3013,7 @@ export const eventRequests: Request[] = [
         text: 'DEMAND EQUALITY',
         effects: {},
         authorityCheck: {
-          minCommit: 25,
+          minCommit: 0,
           maxCommit: 60,
           threshold: 42,
           onSuccess: {
@@ -3051,7 +3051,7 @@ export const eventRequests: Request[] = [
         text: 'REDISTRIBUTE LAND',
         effects: {},
         authorityCheck: {
-          minCommit: 30,
+          minCommit: 0,
           maxCommit: 70,
           threshold: 50,
           onSuccess: {
@@ -3090,7 +3090,7 @@ export const eventRequests: Request[] = [
         text: 'ABOLISH TRADITION',
         effects: {},
         authorityCheck: {
-          minCommit: 25,
+          minCommit: 0,
           maxCommit: 55,
           threshold: 38,
           onSuccess: {
@@ -3128,7 +3128,7 @@ export const eventRequests: Request[] = [
         text: 'RECRUIT PIRATES',
         effects: {},
         authorityCheck: {
-          minCommit: 20,
+          minCommit: 0,
           maxCommit: 48,
           threshold: 32,
           onSuccess: {
@@ -3164,7 +3164,7 @@ export const eventRequests: Request[] = [
         text: 'NEGOTIATE TERMS',
         effects: {},
         authorityCheck: {
-          minCommit: 25,
+          minCommit: 0,
           maxCommit: 62,
           threshold: 44,
           onSuccess: {
