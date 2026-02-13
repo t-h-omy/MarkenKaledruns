@@ -750,61 +750,6 @@ export const eventRequests: Request[] = [
       },
     ],
   },
-  // Test event with follow-ups to demonstrate branching event chains
-  {
-    id: 'EVT_MYSTERIOUS_TRAVELER',
-    title: 'The Mysterious Traveler',
-    text: 'A hooded traveler arrives at your gates, offering to share valuable knowledge in exchange for hospitality. Do you welcome them or send them away?',
-    options: [
-      {
-        text: 'WELCOME',
-        effects: {
-          gold: -5,
-          satisfaction: 2,
-        },
-        authorityCheck: {
-          minCommit: 0,
-          maxCommit: 30,
-          threshold: 0,
-          refundOnSuccessPercent: 100,
-          followUpBoosts: [
-            {
-              targetRequestId: 'EVT_TRAVELER_TEACHES',
-              boostType: 'linear',
-              boostValue: 2,
-              description: 'Increases chance traveler shares knowledge',
-            },
-          ],
-        },
-      },
-      {
-        text: 'SEND AWAY',
-        effects: {
-          satisfaction: -2,
-        },
-      },
-    ],
-    followUps: [
-      {
-        triggerOnOptionIndex: 0, // WELCOME
-        delayMinTicks: 2,
-        delayMaxTicks: 4,
-        candidates: [
-          { requestId: 'EVT_TRAVELER_TEACHES', weight: 3 },
-          { requestId: 'EVT_TRAVELER_BETRAYS', weight: 1 },
-        ],
-      },
-      {
-        triggerOnOptionIndex: 1, // SEND AWAY
-        delayMinTicks: 3,
-        delayMaxTicks: 5,
-        candidates: [
-          { requestId: 'EVT_TRAVELER_CURSE', weight: 2 },
-          { requestId: 'EVT_TRAVELER_RETURNS', weight: 1 },
-        ],
-      },
-    ],
-  },
 
   // =========================================================
   // BLACKGEAT CHAIN - The Black March
