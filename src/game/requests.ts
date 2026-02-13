@@ -762,6 +762,20 @@ export const eventRequests: Request[] = [
           gold: -5,
           satisfaction: 2,
         },
+        authorityCheck: {
+          minCommit: 0,
+          maxCommit: 30,
+          threshold: 0,
+          refundOnSuccessPercent: 100,
+          followUpBoosts: [
+            {
+              targetRequestId: 'EVT_TRAVELER_TEACHES',
+              boostType: 'linear',
+              boostValue: 2,
+              description: 'Increases chance traveler shares knowledge',
+            },
+          ],
+        },
       },
       {
         text: 'SEND AWAY',
