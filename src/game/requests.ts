@@ -3391,7 +3391,7 @@ export const eventRequests: Request[] = [
     authorityMax: 100,
     options: [
       {
-        text: 'WELCOME WITH RESPECT',
+        text: 'DEMAND RESPECT',
         effects: {
           gold: -5,
           satisfaction: 2,

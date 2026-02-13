@@ -381,8 +381,8 @@ function App() {
                         (currentCommit >= threshold ? 100 : 
                           Math.floor((currentCommit / threshold) * 100))
                       
-                      // Calculate percentage increase for follow-up boosts
-                      let percentageIncrease = 0
+                      // Calculate overall probability for follow-up boosts
+                      let followUpProbability = 0
                       if (hasFollowUpBoosts && !hasImmediateEffects && currentRequest.followUps) {
                         // Find the follow-up for this option
                         const followUp = currentRequest.followUps.find(fu => fu.triggerOnOptionIndex === index)
@@ -396,7 +396,6 @@ function App() {
                           if (targetCandidate) {
                             // Calculate base probability (no boost)
                             const totalBaseWeight = followUp.candidates.reduce((sum, c) => sum + c.weight, 0)
-                            const baseProbability = (targetCandidate.weight / totalBaseWeight) * 100
                             
                             // Calculate boosted probability
                             const commitRatio = config.maxCommit > 0 ? currentCommit / config.maxCommit : 0
@@ -405,8 +404,8 @@ function App() {
                             const totalBoostedWeight = totalBaseWeight + weightIncrease
                             const boostedProbability = (boostedWeight / totalBoostedWeight) * 100
                             
-                            // Calculate the increase
-                            percentageIncrease = boostedProbability - baseProbability
+                            // Store the overall probability (not the increase)
+                            followUpProbability = boostedProbability
                           }
                         }
                       }
@@ -445,8 +444,8 @@ function App() {
                             {hasFollowUpBoosts && !hasImmediateEffects && (
                               <div className="commit-boost-info">
                                 <div className="boost-impact">
-                                  <span className="impact-label">Future impact:</span>
-                                  <span className="impact-amount">+{percentageIncrease.toFixed(0)}%</span>
+                                  <span className="impact-label">Outcome chance:</span>
+                                  <span className="impact-amount">{followUpProbability.toFixed(0)}%</span>
                                 </div>
                                 {config.followUpBoosts?.map((boost) => (
                                   <div key={boost.targetRequestId} className="boost-description">
