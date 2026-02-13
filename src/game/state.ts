@@ -862,7 +862,20 @@ function resolveAuthorityCheck(check: PendingAuthorityCheck): AuthorityCheckResu
   
   // Determine success based on threshold (default to 0 if not specified)
   const threshold = config.threshold ?? 0;
-  const success = committed >= threshold;
+  
+  // Probabilistic success determination
+  let success: boolean;
+  if (committed >= threshold) {
+    // Committed enough - guaranteed success
+    success = true;
+  } else if (threshold === 0) {
+    // No threshold means automatic success
+    success = true;
+  } else {
+    // Below threshold - probabilistic outcome based on how much was committed
+    const successChance = committed / threshold;
+    success = Math.random() < successChance;
+  }
   
   // Calculate refund and loss
   const refundPercent = success ? (config.refundOnSuccessPercent ?? 100) : 0;
