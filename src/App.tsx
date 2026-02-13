@@ -46,6 +46,8 @@ function App() {
     amount: number;
     startX: number;
     startY: number;
+    targetX: number;
+    targetY: number;
   }
   const [flyingFeedbacks, setFlyingFeedbacks] = useState<FlyingFeedback[]>([])
   const [previousHealth, setPreviousHealth] = useState(gameState.stats.health)
@@ -94,13 +96,23 @@ function App() {
       const startX = lastClickedOption.rect.left + lastClickedOption.rect.width / 2
       const startY = lastClickedOption.rect.top + lastClickedOption.rect.height / 2
       
-      const newFeedbacks = changes.map(change => ({
-        id: Date.now() + Math.random(),
-        stat: change.stat,
-        amount: change.delta,
-        startX,
-        startY
-      }))
+      const newFeedbacks = changes.map(change => {
+        // Get target position immediately when creating feedback
+        const targetElement = document.querySelector(`[data-stat="${change.stat}"]`)
+        const targetRect = targetElement?.getBoundingClientRect()
+        const targetX = targetRect ? targetRect.left + targetRect.width / 2 : startX
+        const targetY = targetRect ? targetRect.top + targetRect.height / 2 : startY
+        
+        return {
+          id: Date.now() + Math.random(),
+          stat: change.stat,
+          amount: change.delta,
+          startX,
+          startY,
+          targetX,
+          targetY
+        }
+      })
       
       setFlyingFeedbacks(prev => [...prev, ...newFeedbacks])
       
@@ -111,7 +123,7 @@ function App() {
         }, 5000)
       })
     }
-  }, [gameState.stats.health, gameState.stats.satisfaction, gameState.stats.fireRisk, gameState.stats.authority])
+  }, [gameState.stats.health, gameState.stats.satisfaction, gameState.stats.fireRisk, gameState.stats.authority, lastClickedOption, previousHealth, previousSatisfaction, previousFireRisk, previousAuthority])
   
   // Track authority changes and show floating feedback (kept for backward compatibility)
   useEffect(() => {
@@ -459,34 +471,23 @@ function App() {
         </div>
 
         {/* Flying Feedback Overlay */}
-        {flyingFeedbacks.map(feedback => {
-          // Get target stat element position
-          const targetElement = document.querySelector(`[data-stat="${feedback.stat}"]`)
-          const targetRect = targetElement?.getBoundingClientRect()
-          
-          if (!targetRect) return null
-          
-          const targetX = targetRect.left + targetRect.width / 2
-          const targetY = targetRect.top + targetRect.height / 2
-          
-          return (
-            <div
-              key={feedback.id}
-              className={`flying-feedback ${feedback.amount > 0 ? 'positive' : 'negative'}`}
-              style={{
-                '--start-x': `${feedback.startX}px`,
-                '--start-y': `${feedback.startY}px`,
-                '--end-x': `${targetX}px`,
-                '--end-y': `${targetY}px`,
-              } as React.CSSProperties}
-            >
-              <span className="feedback-icon">{getStatIcon(feedback.stat)}</span>
-              <span className="feedback-amount">
-                {feedback.amount > 0 ? '+' : ''}{Math.round(feedback.amount)}
-              </span>
-            </div>
-          )
-        })}
+        {flyingFeedbacks.map(feedback => (
+          <div
+            key={feedback.id}
+            className={`flying-feedback ${feedback.amount > 0 ? 'positive' : 'negative'}`}
+            style={{
+              '--start-x': `${feedback.startX}px`,
+              '--start-y': `${feedback.startY}px`,
+              '--end-x': `${feedback.targetX}px`,
+              '--end-y': `${feedback.targetY}px`,
+            } as React.CSSProperties}
+          >
+            <span className="feedback-icon">{getStatIcon(feedback.stat)}</span>
+            <span className="feedback-amount">
+              {feedback.amount > 0 ? '+' : ''}{Math.round(feedback.amount)}
+            </span>
+          </div>
+        ))}
 
         {/* Bankruptcy Warning */}
         {showBankruptcyWarning && !gameState.gameOver && (
