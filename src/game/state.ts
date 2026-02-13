@@ -1818,9 +1818,20 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     // 4.5. Check if the picked request was a scheduled event with committed authority
     // If so, refund the authority since the boosted follow-up was successfully shown
-    const scheduledEvent = scheduledEvents.find(
+    // Match using the same logic as pickNextRequest: find first event due for this tick
+    const dueScheduledEvents = scheduledEvents.filter(
       event => event.requestId === nextRequest.id && event.targetTick <= state.tick + 1
     );
+    
+    // Sort by scheduledAtTick (FIFO) to match picker behavior
+    dueScheduledEvents.sort((a, b) => {
+      if (a.scheduledAtTick === b.scheduledAtTick) {
+        return a.targetTick - b.targetTick;
+      }
+      return a.scheduledAtTick - b.scheduledAtTick;
+    });
+    
+    const scheduledEvent = dueScheduledEvents[0];
     
     if (scheduledEvent?.authorityCommitContext) {
       const refundAmount = scheduledEvent.authorityCommitContext.committed;
