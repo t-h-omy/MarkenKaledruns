@@ -46,7 +46,7 @@ export const needRequests: Request[] = [
       {
         text: 'IGNORE',
         effects: {
-          health: -8,
+          health: -5,
         },
       },
     ],
@@ -66,7 +66,7 @@ export const needRequests: Request[] = [
       {
         text: 'FORBID',
         effects: {
-          satisfaction: -15,
+          satisfaction: -10,
         },
       },
     ],
@@ -206,14 +206,14 @@ export const eventRequests: Request[] = [
           landForces: 5,
           farmers: -5,
           gold: -5,
-          authority: 3,
+          authority: 1,
         },
       },
       {
         text: 'NO',
         effects: {
-          satisfaction: 3,
-          authority: -2,
+          satisfaction: 5,
+          authority: -1,
         },
       },
     ],
@@ -228,11 +228,11 @@ export const eventRequests: Request[] = [
       prepDelayMaxTicks: 5,
       onWin: {
         gold: 10,
-        authority: 5,
+        authority: 1,
       },
       onLose: {
         gold: -10,
-        authority: -5,
+        authority: -2,
       },
     },
     options: [
@@ -244,7 +244,7 @@ export const eventRequests: Request[] = [
         text: 'PAY TOLL',
         effects: {
           gold: -10,
-          authority: -3,
+          authority: -1,
         },
       },
     ],
@@ -260,27 +260,26 @@ export const eventRequests: Request[] = [
       onWin: {
         gold: 25,
         fireRisk: 12,
-        authority: 10,
+        authority: 2,
       },
       onLose: {
         gold: -30,
         farmers: -8,
         satisfaction: -5,
-        fireRisk: 12,
-        authority: -10,
+        authority: -4,
       },
     },
     options: [
       {
         text: 'FIGHT',
-        effects: {},
+        effects: {fireRisk: 10},
       },
       {
         text: 'SURRENDER',
         effects: {
           gold: -20,
           satisfaction: -3,
-          authority: -5,
+          authority: -4,
         },
       },
     ],
@@ -294,7 +293,6 @@ export const eventRequests: Request[] = [
         text: 'PAY',
         effects: {
           gold: -10,
-          authority: 2,
         },
       },
       {
@@ -302,7 +300,7 @@ export const eventRequests: Request[] = [
         effects: {
           landForces: -2,
           satisfaction: -4,
-          authority: -4,
+          authority: -2,
         },
       },
     ],
@@ -311,12 +309,24 @@ export const eventRequests: Request[] = [
     id: 'EVT_RESTLESS_NIGHT',
     title: 'Whispers in the Dark',
     text: 'Strange noises have been reported near the storage huts. Send a patrol to investigate, or dismiss it as simple superstition?',
+    combat: {
+      enemyForces: 2,
+      prepDelayMinTicks: 3,
+      prepDelayMaxTicks: 5,
+      onWin: {
+        authority: 1,
+        satisfaction: 2
+      },
+      onLose: {
+        farmers: -5,
+        satisfaction: -5,
+        authority: -2,
+      },
+    },
     options: [
       {
         text: 'PATROL',
         effects: {
-          landForces: -2,
-          authority: 1,
         },
       },
       {
@@ -337,7 +347,7 @@ export const eventRequests: Request[] = [
         text: 'COMPENSATE',
         effects: {
           gold: -15,
-          authority: 3,
+          authority: 1,
         },
       },
       {
@@ -358,9 +368,10 @@ export const eventRequests: Request[] = [
       {
         text: 'ALLOW',
         effects: {
-          farmers: 20,
+          farmers: 6,
+          landForce: 2,
           fireRisk: 10,
-          health: -8,
+          health: -5,
         },
       },
       {
@@ -380,7 +391,7 @@ export const eventRequests: Request[] = [
         text: 'CONCEDE',
         effects: {
           gold: -15,
-          satisfaction: 4,
+          satisfaction: 2,
         },
       },
       {
@@ -400,7 +411,7 @@ export const eventRequests: Request[] = [
         text: 'HELP',
         effects: {
           gold: -5,
-          satisfaction: 5,
+          satisfaction: 2,
         },
       },
       {
@@ -414,19 +425,19 @@ export const eventRequests: Request[] = [
   {
     id: 'EVT_HARVEST_HELPERS',
     title: 'The Golden Fields',
-    text: 'The crops are ripening all at once. Hiring seasonal helpers could save the harvest before the autumn rains arrive.',
+    text: 'The crops are ripening all at once. Hiring seasonal helpers could save the harvest before the rats can spread.',
     options: [
       {
         text: 'HIRE',
         effects: {
-          gold: -10,
+          gold: -20,
           farmers: 5,
         },
       },
       {
         text: 'DO NOTHING',
         effects: {
-          health: -5,
+          health: -6,
         },
       },
     ],
@@ -443,15 +454,15 @@ export const eventRequests: Request[] = [
         effects: {
           gold: -40,
           satisfaction: 20,
-          authority: -5,
+          authority: -8,
         },
       },
       {
         text: 'CRACK DOWN',
         effects: {
-          landForces: -2,
+          landForces: -5,
           farmers: -10,
-          authority: 5,
+          authority: 2,
         },
       },
     ],
@@ -466,14 +477,12 @@ export const eventRequests: Request[] = [
         effects: {
           gold: -40,
           health: 20,
-          authority: 3,
         },
       },
       {
         text: 'IGNORE',
         effects: {
           farmers: -15,
-          authority: -8,
         },
       },
     ],
@@ -488,7 +497,6 @@ export const eventRequests: Request[] = [
         effects: {
           gold: -40,
           fireRisk: -20,
-          authority: 3,
         },
       },
       {
@@ -512,7 +520,7 @@ export const eventRequests: Request[] = [
         text: 'BUILD',
         effects: {
           landForces: -1,
-          fireRisk: -6,
+          fireRisk: -5,
         },
       },
       {
@@ -530,14 +538,12 @@ export const eventRequests: Request[] = [
         text: 'HOLD',
         effects: {
           gold: -10,
-          satisfaction: 6,
-          authority: 2,
+          satisfaction: 4,
         },
       },
       {
         text: 'DECLINE',
         effects: {
-          authority: -1,
         },
       },
     ],
@@ -550,15 +556,13 @@ export const eventRequests: Request[] = [
       {
         text: 'BUY',
         effects: {
-          gold: -10,
-          health: 6,
-          authority: 2,
+          gold: -15,
+          health: 5,
         },
       },
       {
         text: 'DECLINE',
         effects: {
-          authority: -1,
         },
       },
     ],
@@ -573,13 +577,12 @@ export const eventRequests: Request[] = [
         effects: {
           gold: -15,
           landForces: 5,
-          authority: 3,
+          authority: 1,
         },
       },
       {
         text: 'DECLINE',
         effects: {
-          authority: -1,
         },
       },
     ],
@@ -593,14 +596,12 @@ export const eventRequests: Request[] = [
         text: 'ORGANIZE',
         effects: {
           gold: -10,
-          fireRisk: -6,
-          authority: 1,
+          fireRisk: -4,
         },
       },
       {
         text: 'DECLINE',
         effects: {
-          authority: -1,
         },
       },
     ],
@@ -613,17 +614,17 @@ export const eventRequests: Request[] = [
       {
         text: 'LOWER taxes',
         effects: {
-          gold: -15,
-          satisfaction: 6,
-          authority: -2,
+          gold: -20,
+          satisfaction: 5,
+          authority: -1,
         },
       },
       {
         text: 'RAISE taxes',
         effects: {
           gold: 25,
-          satisfaction: -6,
-          authority: 4,
+          satisfaction: -8,
+          authority: 1,
         },
       },
     ],
@@ -636,16 +637,15 @@ export const eventRequests: Request[] = [
     text: "A nearby forest fire threatens the outskirts. If we don't send help to contain it, the winds may bring the disaster to our door.",
     options: [
       {
-        text: 'FIGHT',
+        text: 'FIGHT THE FIRE',
         effects: {
           health: -5,
-          farmers: -2,
         },
       },
       {
         text: 'DO NOTHING',
         effects: {
-          fireRisk: 10,
+          fireRisk: 15,
         },
       },
     ],
@@ -658,13 +658,13 @@ export const eventRequests: Request[] = [
       {
         text: 'QUARANTINE',
         effects: {
-          satisfaction: -5,
+          satisfaction: -6,
         },
       },
       {
         text: 'IGNORE',
         effects: {
-          health: -8,
+          health: -7,
         },
       },
     ],
@@ -678,13 +678,14 @@ export const eventRequests: Request[] = [
         text: 'MORE GUARDS',
         effects: {
           landForces: -2,
-          satisfaction: 4,
+          authority: 1,
         },
       },
       {
         text: 'DO NOTHING',
         effects: {
           gold: -15,
+          authority: -1,
         },
       },
     ],
@@ -698,13 +699,13 @@ export const eventRequests: Request[] = [
         text: 'COMPENSATE',
         effects: {
           gold: -15,
-          health: 4
+          health: 1,
         },
       },
       {
         text: 'DO NOTHING',
         effects: {
-          satisfaction: -4,
+          satisfaction: -6,
           farmers: -3,
         },
       },
@@ -719,13 +720,12 @@ export const eventRequests: Request[] = [
         text: 'REPLACE',
         effects: {
           gold: -10,
-          satisfaction: 4
         },
       },
       {
         text: 'IGNORE',
         effects: {
-          fireRisk: 6,
+          fireRisk: 10,
           health: -4,
         },
       },
@@ -740,12 +740,13 @@ export const eventRequests: Request[] = [
         text: 'MEDIATE',
         effects: {
           gold: -10,
+          authoriy: 1,
         },
       },
       {
         text: 'IGNORE',
         effects: {
-          farmers: -3,
+          farmers: -4,
         },
       },
     ],
@@ -794,14 +795,14 @@ export const eventRequests: Request[] = [
     text: 'Feldric your Marshal bows. "About Brimwulf\'s alliance request: if we accept, we need to ready our troops."',
     canTriggerRandomly: false,
     options: [
-      { text: 'UPGRADE ARMS', effects: { gold: -10, landForces: 6 } },
+      { text: 'UPGRADE ARMS', effects: { gold: -10, landForces: 5 } },
       { text: 'MARCH NOW', effects: {} },
     ],
     followUps: [
       {
         triggerOnOptionIndex: 0,
         delayMinTicks: 5,
-        delayMaxTicks: 10,
+        delayMaxTicks: 8,
         candidates: [
           { requestId: 'CHAIN_BLACKGEAT_PREP_FELDRIC', weight: 2 },
           { requestId: 'CHAIN_BLACKGEAT_BATTLE_GRAYFORD', weight: 1 },
@@ -824,35 +825,37 @@ export const eventRequests: Request[] = [
     text: 'Blackgeat\'s banners crest the ridge — the battle Brimwulf came to you for. Feldric\'s voice stays calm: "Hold. Then strike." Brimwulf\'s men lock shields beside yours.',
     canTriggerRandomly: false,
     combat: {
-      enemyForces: 6,
+      enemyForces: 7,
       prepDelayMinTicks: 3,
       prepDelayMaxTicks: 5,
       onWin: {
         satisfaction: 2,
+        authority: 1,
       },
       onLose: {
         satisfaction: -3,
+        authority: -2
       },
       followUpsOnWin: [
         {
           triggerOnOptionIndex: 0,
-          delayMinTicks: 5,
-          delayMaxTicks: 10,
+          delayMinTicks: 3,
+          delayMaxTicks: 6,
           candidates: [{ requestId: 'CHAIN_BLACKGEAT_AFTER_BATTLE_STATE', weight: 1 }],
         },
       ],
       followUpsOnLose: [
         {
           triggerOnOptionIndex: 0,
-          delayMinTicks: 5,
-          delayMaxTicks: 10,
+          delayMinTicks: 3,
+          delayMaxTicks: 6,
           candidates: [{ requestId: 'CHAIN_BLACKGEAT_AFTER_BATTLE_STATE', weight: 1 }],
         },
       ],
     },
     options: [
       { text: 'HOLD THE LINE', effects: {} },
-      { text: 'RETREAT NOW', effects: { satisfaction: -2 } },
+      { text: 'RETREAT NOW', effects: { satisfaction: -2, authority: -3 } },
     ],
   },
 
@@ -924,8 +927,8 @@ export const eventRequests: Request[] = [
     text: 'Following the Aescweald battle, Hrycgwulf of Blackgeat arrives with a message. "You are capable. Pay a border tribute and we turn our army elsewhere." Feldric adds quietly, "This is their next move after Aescweald."',
     canTriggerRandomly: false,
     options: [
-      { text: 'PAY ONCE', effects: { gold: -20, satisfaction: -1 } },
-      { text: 'REFUSE', effects: { satisfaction: 2 } },
+      { text: 'PAY', effects: { gold: -15, authority: -2 } },
+      { text: 'REFUSE', effects: { authority: 1 } },
     ],
     followUps: [
       {
@@ -957,8 +960,8 @@ export const eventRequests: Request[] = [
     text: 'This is the second demand after Hrycgwulf\'s first tribute request. Hrycgwulf stays polite. "Tribute is not punishment. It is safety." Feldric spits, "It\'s a leash."',
     canTriggerRandomly: false,
     options: [
-      { text: 'PAY AGAIN', effects: { gold: -10, satisfaction: -2 } },
-      { text: 'PREPARE FOR WAR', effects: { landForces: 5, gold: -10 } },
+      { text: 'PAY AGAIN', effects: { gold: -15, authority: -2 } },
+      { text: 'PREPARE FOR WAR', effects: { authority: 1 } },
     ],
     followUps: [
       {
@@ -997,14 +1000,17 @@ export const eventRequests: Request[] = [
     text: 'Hrycgwulf grows impatient with your stalling. The Blackgeat banners appear on the horizon. Feldric draws his blade: "What shall we do, Mylord?"',
     canTriggerRandomly: false,
     combat: {
-      enemyForces: 12,
-      prepDelayMinTicks: 3,
-      prepDelayMaxTicks: 5,
+      enemyForces: 15,
+      prepDelayMinTicks: 5,
+      prepDelayMaxTicks: 8,
       onWin: {
         satisfaction: 2,
+        authority: 2,
       },
       onLose: {
+        gold: - 25,
         satisfaction: -3,
+        authority: -3
       },
       followUpsOnWin: [
         {
@@ -1026,7 +1032,7 @@ export const eventRequests: Request[] = [
     options: [
       { 
         text: 'STAND YOUR GROUND', 
-        effects: {} 
+        effects: {fireRisk: 5 
       },
       { 
         text: 'PAY TRIBUTE', 
@@ -1048,11 +1054,11 @@ export const eventRequests: Request[] = [
     options: [
       { 
         text: 'HOLD A GRAND FEAST', 
-        effects: { satisfaction: 8, health: 6 } 
+        effects: { satisfaction: 8, health: 6, authority: 2} 
       },
       { 
         text: 'REBUILD THE BORDER', 
-        effects: { gold: -10, landForces: 10, fireRisk: -10 } 
+        effects: { gold: -10, landForces: 10, fireRisk: -10, authority: 2} 
       },
     ],
   },
@@ -1067,7 +1073,7 @@ export const eventRequests: Request[] = [
     options: [
       { 
         text: 'FOCUS ON RECOVERY', 
-        effects: { health: 4, satisfaction: 3 } 
+        effects: { health: 4, satisfaction: 3} 
       },
       { 
         text: 'SALVAGE THE RUINS', 
@@ -1084,8 +1090,8 @@ export const eventRequests: Request[] = [
     text: 'After the battle of Aescweald, Brimwulf\'s smile is thin. "Wulfham shed more blood than you. Compensation is expected." Feldric whispers, "This is the hook."',
     canTriggerRandomly: false,
     options: [
-      { text: 'PAY', effects: { gold: -15 } },
-      { text: 'REFUSE', effects: {} },
+      { text: 'PAY', effects: { gold: -15, authority: -1} },
+      { text: 'REFUSE', effects: {authority: 1} },
     ],
     followUps: [
       {
@@ -1111,8 +1117,8 @@ export const eventRequests: Request[] = [
     text: 'Brimwulf returns again — this is the second payment demand since Aescweald. "The roads. The wagons. The widows. Pay again."',
     canTriggerRandomly: false,
     options: [
-      { text: 'PAY', effects: { gold: -5 } },
-      { text: 'REFUSE', effects: {} },
+      { text: 'PAY', effects: { gold: -15, authority: -1} },
+      { text: 'REFUSE', effects: {authority: 1} },
     ],
     followUps: [
       {
@@ -1138,8 +1144,8 @@ export const eventRequests: Request[] = [
     text: 'Brimwulf stops pretending. "Coin, or Wulfham secures your lands permanently." Feldric says, "This started with Aescweald. Now it\'s extortion. Give me leave to prepare."',
     canTriggerRandomly: false,
     options: [
-      { text: 'PREPARE (FELDRIC)', effects: { farmers: -5, landForces: 5 } },
-      { text: 'PAY TO DELAY', effects: { gold: -10 } },
+      { text: 'PREenemyFOR WAR', effects: { farmers: -5, landForces: 5 } },
+      { text: 'PAY TO DELAY', effects: { gold: -15 } },
     ],
     followUps: [
       {
@@ -1165,8 +1171,8 @@ export const eventRequests: Request[] = [
     text: 'Weeks after the battle of Aescweald, Feldric meets Brimwulf at the border stones. "One step further," Feldric says, "and we settle this in iron."',
     canTriggerRandomly: false,
     options: [
-      { text: 'STAND FIRM', effects: { landForces: -8, gold: 30 } },
-      { text: 'BACK DOWN', effects: { gold: -15, farmers: -5 } },
+      { text: 'STAND FIRM', effects: {  } },
+      { text: 'BACK DOWN', effects: { gold: -15, farmers: -5, authority: -3} },
     ],
     followUps: [
       {
@@ -1192,8 +1198,8 @@ export const eventRequests: Request[] = [
     text: 'Wulfham withdraws — you are victorious! Feldric\'s verdict: "You\'ll remember this every time an ally asks for \'help\'."',
     canTriggerRandomly: false,
     options: [
-      { text: 'DEMAND GOLD', effects: { gold: 30, satisfaction: 1 } },
-      { text: 'DEMAND SWORDS', effects: { landForces: 5, satisfaction: 1 } },
+      { text: 'DEMAND GOLD', effects: { gold: 30, satisfaction: 1, authority: 2} },
+      { text: 'DEMAND SWORDS', effects: { landForces: 5, satisfaction: 1, authority: 2} },
     ],
   },
 
@@ -1219,7 +1225,7 @@ export const eventRequests: Request[] = [
     text: 'Because you refused Brimwulf\'s alliance request earlier, he returns in defeat. "Wulfham burns. Blackgeat\'s march turns toward you."',
     canTriggerRandomly: false,
     options: [
-      { text: 'SEND LATE AID', effects: { gold: -5, landForces: -6 } },
+      { text: 'SEND LATE AID', effects: { gold: -15, landForces: -6 } },
       { text: 'DO NOTHING', effects: {} },
     ],
     followUps: [
@@ -1246,7 +1252,7 @@ export const eventRequests: Request[] = [
     text: 'As consequence of Wulfham\'s defeat, Blackgeat\'s envoy Hrycgwulf arrives at your gates. "Submit, or be folded into Blackgeat." Feldric\'s hand rests on his sword.',
     canTriggerRandomly: false,
     options: [
-      { text: 'BOW and PAY', effects: { gold: -15 } },
+      { text: 'BOW and PAY', effects: { gold: -15, authority: -1,} },
       { text: 'RESIST and PREPARE', effects: {} },
     ],
     followUps: [
@@ -1274,7 +1280,7 @@ export const eventRequests: Request[] = [
     canTriggerRandomly: false,
     options: [
       { text: 'RESIST and PREPARE', effects: {} },
-      { text: 'BOW and PAY', effects: { gold: -15 } },
+      { text: 'BOW and PAY', effects: { gold: -15, authority: -1} },
     ],
     followUps: [
       {
@@ -1301,7 +1307,7 @@ export const eventRequests: Request[] = [
     text: 'Feldric your Marshall comes before you: "We need better preparation for the coming battle with Blackgeat."',
     canTriggerRandomly: false,
     options: [
-      { text: 'RAISE THE HOST', effects: { landForces: 4, farmers: -4 } },
+      { text: 'RAISE THE HOST', effects: { landForces: 4, farmers: -4, gold: -10 } },
       { text: 'MEET THEM NOW', effects: {} },
     ],
     followUps: [
@@ -1336,9 +1342,11 @@ export const eventRequests: Request[] = [
       prepDelayMaxTicks: 5,
       onWin: {
         satisfaction: 2,
+        authority: 2,
       },
       onLose: {
         satisfaction: -3,
+        authority: -3,
       },
     },
     options: [
@@ -1369,14 +1377,16 @@ export const eventRequests: Request[] = [
     text: 'During the second war round against Blackgeat, they set brushfires to blind you. Feldric snarls: "They want panic."',
     canTriggerRandomly: false,
     combat: {
-      enemyForces: 6,
+      enemyForces: 8,
       prepDelayMinTicks: 3,
       prepDelayMaxTicks: 5,
       onWin: {
         satisfaction: 2,
+        authority: 2
       },
       onLose: {
         satisfaction: -3,
+        authority: -3,
       },
     },
     options: [
@@ -1407,14 +1417,16 @@ export const eventRequests: Request[] = [
     text: 'This is the final showdown: Hrycgwulf commits Blackgeat\'s main force. Feldric: "This is it."',
     canTriggerRandomly: false,
     combat: {
-      enemyForces: 12,
+      enemyForces: 15,
       prepDelayMinTicks: 3,
       prepDelayMaxTicks: 5,
       onWin: {
         satisfaction: 2,
+        authority: 2,
       },
       onLose: {
         satisfaction: -3,
+        authority: -3,
       },
     },
     options: [
@@ -1448,8 +1460,8 @@ export const eventRequests: Request[] = [
     text: 'After three war rounds, Blackgeat pulls back and the war finally ends. Feldric wipes blood from his lip: "This is what resisting Blackgeat costs—and what it buys."',
     canTriggerRandomly: false,
     options: [
-      { text: 'SELL THE LOOT', effects: { gold: 35, satisfaction: 2 } },
-      { text: 'KEEP THE LOOT', effects: { landForces: 5, satisfaction: 2 } },
+      { text: 'SELL THE LOOT', effects: { gold: 35, satisfaction: 2, authority: 1,} },
+      { text: 'KEEP THE LOOT', effects: { landForces: 5, satisfaction: 2, authority:1,} },
     ],
   },
 
@@ -1461,8 +1473,8 @@ export const eventRequests: Request[] = [
     text: 'As the Blackgeat war drags on, riders from a neighboring free barony arrive at dusk: "We won\'t watch you fall."',
     canTriggerRandomly: false,
     options: [
-      { text: 'ACCEPT HELP', effects: { landForces: 3 } },
-      { text: 'ACCEPT AND PAY', effects: { gold: -10, landForces: 6 } },
+      { text: 'ACCEPT HELP', effects: { landForces: 4 } },
+      { text: 'ACCEPT AND PAY', effects: { gold: -15, landForces: 8 } },
     ],
     followUps: [
       {
@@ -1488,8 +1500,8 @@ export const eventRequests: Request[] = [
     text: 'The Blackgeat war ends badly. You live, but they loot the village. Feldric\'s eyes are stone: "A bitter defeat! What should we do now?"',
     canTriggerRandomly: false,
     options: [
-      { text: 'SAFE TREASURY', effects: { gold: -15, farmers: -12 } },
-      { text: 'SAFE YOUR PEOPLE ', effects: { gold: -35, farmers: -4 } },
+      { text: 'SAFE TREASURY', effects: { gold: -15, farmers: -12, authority: -3,} },
+      { text: 'SAFE YOUR PEOPLE ', effects: { gold: -35, farmers: -4, authority: -3,} },
     ],
     followUps: [
       {
@@ -1529,7 +1541,7 @@ export const eventRequests: Request[] = [
     text: 'This tribute demand comes from Hrycgwulf\'s earlier ultimatum. His messenger waits: "The first payment." Feldric murmurs: "This is how Blackgeat turns a threat into routine."',
     canTriggerRandomly: false,
     options: [
-      { text: 'PAY', effects: { gold: -10, satisfaction: -1 } },
+      { text: 'PAY', effects: { gold: -15, satisfaction: -1, authority: -1,} },
       { text: 'REFUSE AND ARM', effects: {} },
     ],
     followUps: [
@@ -1556,7 +1568,7 @@ export const eventRequests: Request[] = [
     text: 'The second tribute demand from Blackgeat arrives. Hrycgwulf repeats the terms, less polite this time.',
     canTriggerRandomly: false,
     options: [
-      { text: 'PAY', effects: { gold: -10, satisfaction: -1 } },
+      { text: 'PAY', effects: { gold: -15, satisfaction: -1, authority: -1,} },
       { text: 'REFUSE AND ARM', effects: {} },
     ],
     followUps: [
@@ -1583,7 +1595,7 @@ export const eventRequests: Request[] = [
     text: 'Hrycgwulf comes back with another tribute demand. The people notice the wagons leaving your gates and start whispering about submission.',
     canTriggerRandomly: false,
     options: [
-      { text: 'PAY', effects: { gold: -10, satisfaction: -2 } },
+      { text: 'PAY', effects: { gold: -15, satisfaction: -2, authority: -1,} },
       { text: 'REFUSE AND ARM', effects: {} },
     ],
     followUps: [
@@ -1610,7 +1622,7 @@ export const eventRequests: Request[] = [
     text: 'Blackgeat\'s next tribute demand arrives with Hrycgwulf\'s personal seal. Feldric says, "They\'re making sure you remember who\'s in charge."',
     canTriggerRandomly: false,
     options: [
-      { text: 'PAY', effects: { gold: -10, satisfaction: -2 } },
+      { text: 'PAY', effects: { gold: -15, satisfaction: -2, authority: -1,} },
       { text: 'REFUSE AND ARM', effects: {} },
     ],
     followUps: [
@@ -1637,7 +1649,7 @@ export const eventRequests: Request[] = [
     text: 'Another routine tribute demand from Blackgeat. Feldric says, "Paying five times teaches them you\'ll pay a sixth."',
     canTriggerRandomly: false,
     options: [
-      { text: 'PAY', effects: { gold: -10, satisfaction: -1 } },
+      { text: 'PAY', effects: { gold: -15, satisfaction: -1, authority: -1,} },
       { text: 'REFUSE AND ARM', effects: {} },
     ],
     followUps: [
@@ -1685,7 +1697,7 @@ export const eventRequests: Request[] = [
         text: 'RISKY DEALS',
         effects: {
           gold: 15,
-          satisfaction: -1,
+          satisfaction: -5,
         },
       },
     ],
@@ -1700,14 +1712,14 @@ export const eventRequests: Request[] = [
       {
         text: 'LET THEM PAY',
         effects: {
-          satisfaction: 6,
+          satisfaction: 2,
         },
       },
       {
         text: 'SUBSIDIZE DRINKS',
         effects: {
-          satisfaction: 10,
-          gold: -5,
+          satisfaction: 6,
+          gold: -20,
         },
       },
     ],
@@ -1722,14 +1734,14 @@ export const eventRequests: Request[] = [
       {
         text: 'ACCEPT RECOGNITION',
         effects: {
-          authority: 10,
-          gold: 5,
+          authority: 3,
+          gold: 15,
         },
       },
       {
         text: 'REMAIN HUMBLE',
         effects: {
-          satisfaction: 5,
+          satisfaction: 4,
         },
       },
     ],
@@ -1748,11 +1760,11 @@ export const eventRequests: Request[] = [
         },
         authorityCheck: {
           minCommit: 0,
-          maxCommit: 50,
-          threshold: 15,
+          maxCommit: 20,
+          threshold: 20,
           onSuccess: {
             gold: 20,
-            authority: 5,
+            authority: 1,
           },
           onFailure: {
             gold: -10,
@@ -1768,7 +1780,7 @@ export const eventRequests: Request[] = [
         text: 'BACK DOWN',
         effects: {
           satisfaction: -5,
-          authority: -3,
+          authority: -2,
         },
       },
     ],
@@ -1779,7 +1791,7 @@ export const eventRequests: Request[] = [
   {
     id: 'EVT_LOW_AUTHORITY',
     title: 'Desperate Plea',
-    text: 'With your authority waning, a desperate merchant begs for protection money. Your weakened position makes this a difficult situation.',
+    text: 'With your authority waning, a merchant demands protection money. Your weakened position makes this a difficult situation.',
     authorityMin: 0,
     authorityMax: 33,
     options: [
@@ -1787,14 +1799,13 @@ export const eventRequests: Request[] = [
         text: 'PAY PROTECTION',
         effects: {
           gold: -15,
-          satisfaction: 5,
+          authority: -2,
         },
       },
       {
         text: 'REFUSE',
         effects: {
-          satisfaction: -10,
-          authority: -2,
+          authority: 1,
         },
       },
     ],
@@ -1809,16 +1820,15 @@ export const eventRequests: Request[] = [
       {
         text: 'PUNISH THEM',
         effects: {
-          landForces: -2,
+          landForces: -4,
           satisfaction: -5,
-          authority: 2,
+          authority: 1,
         },
       },
       {
         text: 'IGNORE IT',
         effects: {
-          authority: -3,
-          satisfaction: -3,
+          authority: -2,
         },
       },
     ],
