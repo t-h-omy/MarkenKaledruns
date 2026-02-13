@@ -39,10 +39,10 @@ function App() {
   const [authorityFeedback, setAuthorityFeedback] = useState<Array<{ id: number; amount: number }>>([])
   const [previousAuthority, setPreviousAuthority] = useState(gameState.stats.authority)
   
-  // Universal flying feedback system for health, satisfaction, fireRisk (and authority)
+  // Universal flying feedback system for health, satisfaction, fireRisk, authority, gold, farmers (population), and landForces
   type FlyingFeedback = {
     id: number;
-    stat: 'health' | 'satisfaction' | 'fireRisk' | 'authority';
+    stat: 'health' | 'satisfaction' | 'fireRisk' | 'authority' | 'gold' | 'farmers' | 'landForces';
     amount: number;
     startX: number;
     startY: number;
@@ -53,11 +53,14 @@ function App() {
   const [previousHealth, setPreviousHealth] = useState(gameState.stats.health)
   const [previousSatisfaction, setPreviousSatisfaction] = useState(gameState.stats.satisfaction)
   const [previousFireRisk, setPreviousFireRisk] = useState(gameState.stats.fireRisk)
+  const [previousGold, setPreviousGold] = useState(gameState.stats.gold)
+  const [previousFarmers, setPreviousFarmers] = useState(gameState.stats.farmers)
+  const [previousLandForces, setPreviousLandForces] = useState(gameState.stats.landForces)
   const [lastClickedOption, setLastClickedOption] = useState<{ index: number; rect: DOMRect } | null>(null)
   
   // Track stat changes and show flying feedback
   useEffect(() => {
-    const changes: Array<{ stat: 'health' | 'satisfaction' | 'fireRisk' | 'authority'; delta: number }> = []
+    const changes: Array<{ stat: 'health' | 'satisfaction' | 'fireRisk' | 'authority' | 'gold' | 'farmers' | 'landForces'; delta: number }> = []
     
     // Check health
     const currentHealth = gameState.stats.health
@@ -91,6 +94,30 @@ function App() {
     }
     setPreviousAuthority(currentAuthority)
     
+    // Check gold
+    const currentGold = gameState.stats.gold
+    const goldDelta = currentGold - previousGold
+    if (goldDelta !== 0 && previousGold !== 0) {
+      changes.push({ stat: 'gold', delta: goldDelta })
+    }
+    setPreviousGold(currentGold)
+    
+    // Check farmers (population)
+    const currentFarmers = gameState.stats.farmers
+    const farmersDelta = currentFarmers - previousFarmers
+    if (farmersDelta !== 0 && previousFarmers !== 0) {
+      changes.push({ stat: 'farmers', delta: farmersDelta })
+    }
+    setPreviousFarmers(currentFarmers)
+    
+    // Check landForces
+    const currentLandForces = gameState.stats.landForces
+    const landForcesDelta = currentLandForces - previousLandForces
+    if (landForcesDelta !== 0 && previousLandForces !== 0) {
+      changes.push({ stat: 'landForces', delta: landForcesDelta })
+    }
+    setPreviousLandForces(currentLandForces)
+    
     // Create flying feedback for all changes
     if (changes.length > 0 && lastClickedOption) {
       const startX = lastClickedOption.rect.left + lastClickedOption.rect.width / 2
@@ -116,14 +143,14 @@ function App() {
       
       setFlyingFeedbacks(prev => [...prev, ...newFeedbacks])
       
-      // Remove after 5 seconds (increased from 3s for better visibility)
+      // Remove after 3 seconds
       newFeedbacks.forEach(feedback => {
         setTimeout(() => {
           setFlyingFeedbacks(prev => prev.filter(f => f.id !== feedback.id))
-        }, 5000)
+        }, 3000)
       })
     }
-  }, [gameState.stats.health, gameState.stats.satisfaction, gameState.stats.fireRisk, gameState.stats.authority, lastClickedOption, previousHealth, previousSatisfaction, previousFireRisk, previousAuthority])
+  }, [gameState.stats.health, gameState.stats.satisfaction, gameState.stats.fireRisk, gameState.stats.authority, gameState.stats.gold, gameState.stats.farmers, gameState.stats.landForces, lastClickedOption, previousHealth, previousSatisfaction, previousFireRisk, previousAuthority, previousGold, previousFarmers, previousLandForces])
   
   // Track authority changes and show floating feedback (kept for backward compatibility)
   useEffect(() => {
@@ -143,7 +170,7 @@ function App() {
     setPreviousAuthority(currentAuthority)
   }, [gameState.stats.authority])
 
-  // Handle delayed request transitions (1.5s delay to see feedback)
+  // Handle delayed request transitions (0.5s delay to see feedback)
   useEffect(() => {
     const actualRequest = getCurrentRequest(gameState)
     
@@ -152,17 +179,23 @@ function App() {
       return
     }
     
-    // If the request has changed, show it after delay
-    if (actualRequest?.id !== displayedRequest?.id) {
+    // Check if request changed OR if we're in combat and the round changed
+    const requestChanged = actualRequest?.id !== displayedRequest?.id
+    const combatRoundChanged = gameState.activeCombat && 
+      displayedRequest?.id.startsWith('COMBAT_ROUND::') &&
+      actualRequest?.id === displayedRequest?.id
+    
+    // If the request has changed or combat round progressed, show it after delay
+    if (requestChanged || combatRoundChanged) {
       // Only delay if coming from a previous request (not initial load)
       if (displayedRequest !== null) {
         setIsShowingFeedback(true)
         
-        // After 1.5 seconds, show the new request
+        // After 0.5 seconds, show the new request
         const timer = setTimeout(() => {
           setDisplayedRequest(actualRequest)
           setIsShowingFeedback(false)
-        }, 1500)
+        }, 500)
         
         return () => clearTimeout(timer)
       } else {
@@ -170,7 +203,7 @@ function App() {
         setDisplayedRequest(actualRequest)
       }
     }
-  }, [gameState.currentRequestId, gameState.tick])
+  }, [gameState.currentRequestId, gameState.tick, gameState.activeCombat?.round])
 
   // Update combatCommit when maxForces changes or when a new request appears
   useEffect(() => {
@@ -231,16 +264,29 @@ function App() {
   }
   
   const handleConfirmAuthority = () => {
-    if (authorityModalOpen === null) return
+    if (authorityModalOpen === null || !currentRequest) return
+    
+    const optionIndex = authorityModalOpen
+    const option = currentRequest.options[optionIndex]
+    
+    if (!option) return
     
     // Save the commitment for this option
     setAuthorityCommitments(prev => ({
       ...prev,
-      [authorityModalOpen]: authorityCommit
+      [optionIndex]: authorityCommit
     }))
     
     // Close modal
     setAuthorityModalOpen(null)
+    
+    // Automatically trigger the option click
+    // Note: We can't capture the button rect here, so lastClickedOption will be null
+    // This means flying feedback won't originate from a button position
+    setLastClickedOption(null)
+    
+    // Dispatch the CHOOSE_OPTION action with the authority commitment
+    dispatch({ type: 'CHOOSE_OPTION', optionIndex, authorityCommit })
   }
 
   // Get last 3 log entries
@@ -345,12 +391,15 @@ function App() {
   }
 
   // Get stat icon for feedback
-  const getStatIcon = (stat: 'health' | 'satisfaction' | 'fireRisk' | 'authority'): string => {
+  const getStatIcon = (stat: 'health' | 'satisfaction' | 'fireRisk' | 'authority' | 'gold' | 'farmers' | 'landForces'): string => {
     switch (stat) {
       case 'health': return '❤️'
       case 'satisfaction': return '😊'
       case 'fireRisk': return '🔥'
       case 'authority': return '👑'
+      case 'gold': return '💰'
+      case 'farmers': return '👤'
+      case 'landForces': return '⚔️'
     }
   }
 
