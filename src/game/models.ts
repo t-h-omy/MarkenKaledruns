@@ -250,8 +250,8 @@ export interface AuthorityCheck {
   minCommit: number;
   /** Maximum authority commitment allowed */
   maxCommit: number;
-  /** Authority threshold needed for success (commitment >= threshold = success) */
-  threshold: number;
+  /** Authority threshold needed for success (commitment >= threshold = success). Optional - only needed when onSuccess/onFailure are defined. */
+  threshold?: number;
   /** Effects applied when check succeeds (in addition to base option effects) */
   onSuccess?: Effect;
   /** Effects applied when check fails (in addition to base option effects) */

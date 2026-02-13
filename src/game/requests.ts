@@ -3385,41 +3385,28 @@ export const eventRequests: Request[] = [
   {
     id: 'EVT_MYSTERIOUS_TRAVELER_ENHANCED',
     title: 'Mysterious Traveler',
-    text: 'A hooded stranger arrives at your gates, asking for shelter. He seems educated but evasive about his past. You can use your authority to investigate his background more thoroughly.',
+    text: 'A hooded stranger arrives at your gates, asking for shelter. He seems educated but evasive about his past. You can use your authority to show respect and hospitality, which may influence his future behavior.',
     canTriggerRandomly: true,
     authorityMin: 20,
     authorityMax: 100,
     options: [
       {
-        text: 'WELCOME & INVESTIGATE',
+        text: 'WELCOME WITH RESPECT',
         effects: {
           gold: -5,
           satisfaction: 2,
         },
         authorityCheck: {
           minCommit: 0,
-          maxCommit: 40,
-          threshold: 25,
-          // Immediate effects (existing system)
-          onSuccess: {
-            authority: 3,  // Successful investigation boosts your reputation
-            satisfaction: 5,
-          },
-          onFailure: {
-            authority: -5,  // Failed investigation makes you look paranoid
-            satisfaction: -3,
-          },
-          refundOnSuccessPercent: 100,
-          extraLossOnFailure: 5,
-          successFeedbackRequestId: 'INFO_TRAVELER_INVESTIGATED',
-          failureFeedbackRequestId: 'INFO_TRAVELER_INVESTIGATION_FAILED',
-          // NEW: Follow-up probability boosts
+          maxCommit: 10,
+          // No immediate effects - authority commit only affects follow-up probabilities
+          // Follow-up probability boosts
           followUpBoosts: [
             {
               targetRequestId: 'EVT_TRAVELER_TEACHES',
               boostType: 'linear',
-              boostValue: 2,  // Max +2 weight at full commit
-              description: 'Increases chance traveler is helpful',
+              boostValue: 5.0,  // At max commit (10): 75% → ~89%
+              description: 'Increases chance traveler shares knowledge',
             },
           ],
         },
@@ -3440,9 +3427,9 @@ export const eventRequests: Request[] = [
           { requestId: 'EVT_TRAVELER_TEACHES', weight: 3 },    // Base: 75% (3/4)
           { requestId: 'EVT_TRAVELER_BETRAYS', weight: 1 },    // Base: 25% (1/4)
           // WITH AUTHORITY BOOST:
-          // No commit (0):     TEACHES 75% (3/4),     BETRAYS 25% (1/4)
-          // Half commit (20):  TEACHES 80% (4/5),     BETRAYS 20% (1/5)
-          // Full commit (40):  TEACHES 83% (5/6),     BETRAYS 17% (1/6)
+          // No commit (0):     TEACHES 75% (3/4),      BETRAYS 25% (1/4)
+          // Half commit (5):   TEACHES ~85% (5.5/6.5), BETRAYS ~15% (1/6.5)
+          // Full commit (10):  TEACHES ~89% (8/9),     BETRAYS ~11% (1/9)
         ],
       },
       {
