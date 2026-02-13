@@ -667,7 +667,7 @@ function scheduleFollowUps(
         option.authorityCheck.followUpBoosts,
         authorityCommit,
         option.authorityCheck.maxCommit,
-        option.authorityCheck.threshold
+        option.authorityCheck.threshold ?? 0
       );
       
       console.log(`[Follow-Up Scheduling] Authority commit of ${authorityCommit} applied boosts to follow-up candidates`);
@@ -843,8 +843,26 @@ function resolveAuthorityCheck(check: PendingAuthorityCheck): AuthorityCheckResu
   const config = check.config;
   const committed = check.committed;
   
-  // Determine success based on threshold
-  const success = committed >= config.threshold;
+  // If there are no immediate effects (onSuccess/onFailure), then there's no success/failure
+  // In this case, just refund all authority and don't apply any effects
+  const hasImmediateEffects = !!(config.onSuccess || config.onFailure);
+  
+  if (!hasImmediateEffects) {
+    // No success/failure for follow-up-only boosts
+    // Refund all committed authority
+    return {
+      success: true, // Not really applicable, but set to true for consistency
+      committed,
+      refunded: committed, // Full refund
+      totalLoss: 0,
+      appliedEffects: undefined,
+      feedbackRequestId: undefined,
+    };
+  }
+  
+  // Determine success based on threshold (default to 0 if not specified)
+  const threshold = config.threshold ?? 0;
+  const success = committed >= threshold;
   
   // Calculate refund and loss
   const refundPercent = success ? (config.refundOnSuccessPercent ?? 100) : 0;

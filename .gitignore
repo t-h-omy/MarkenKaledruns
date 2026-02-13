@@ -27,3 +27,5 @@ test-*.md
 *.njsproj
 *.sln
 *.sw?
+public/demo.html
+public/server.js

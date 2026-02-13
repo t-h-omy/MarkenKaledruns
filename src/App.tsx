@@ -374,11 +374,41 @@ function App() {
                       const hasImmediateEffects = !!(config.onSuccess || config.onFailure)
                       const hasFollowUpBoosts = !!(config.followUpBoosts && config.followUpBoosts.length > 0)
                       
-                      const willSucceed = currentCommit >= config.threshold
+                      const threshold = config.threshold || 0
+                      const willSucceed = currentCommit >= threshold
                       // Safely calculate success chance, handling 0 threshold edge case
-                      const successChance = config.threshold === 0 ? 100 : 
-                        (currentCommit >= config.threshold ? 100 : 
-                          Math.floor((currentCommit / config.threshold) * 100))
+                      const successChance = threshold === 0 ? 100 : 
+                        (currentCommit >= threshold ? 100 : 
+                          Math.floor((currentCommit / threshold) * 100))
+                      
+                      // Calculate overall probability for follow-up boosts
+                      let followUpProbability = 0
+                      if (hasFollowUpBoosts && !hasImmediateEffects && currentRequest.followUps) {
+                        // Find the follow-up for this option
+                        const followUp = currentRequest.followUps.find(fu => fu.triggerOnOptionIndex === index)
+                        if (followUp && config.followUpBoosts && config.followUpBoosts.length > 0) {
+                          // NOTE: Currently only displays the impact of the first boost.
+                          // In practice, events typically have only one boost per authority check.
+                          const boost = config.followUpBoosts[0]
+                          
+                          // Find the target candidate in the follow-up
+                          const targetCandidate = followUp.candidates.find(c => c.requestId === boost.targetRequestId)
+                          if (targetCandidate) {
+                            // Calculate base probability (no boost)
+                            const totalBaseWeight = followUp.candidates.reduce((sum, c) => sum + c.weight, 0)
+                            
+                            // Calculate boosted probability
+                            const commitRatio = config.maxCommit > 0 ? currentCommit / config.maxCommit : 0
+                            const weightIncrease = commitRatio * boost.boostValue
+                            const boostedWeight = targetCandidate.weight + weightIncrease
+                            const totalBoostedWeight = totalBaseWeight + weightIncrease
+                            const boostedProbability = (boostedWeight / totalBoostedWeight) * 100
+                            
+                            // Store the overall probability (not the increase)
+                            followUpProbability = boostedProbability
+                          }
+                        }
+                      }
                       
                       return (
                         <div key={index}>
@@ -413,8 +443,12 @@ function App() {
                             )}
                             {hasFollowUpBoosts && !hasImmediateEffects && (
                               <div className="commit-boost-info">
-                                {config.followUpBoosts?.map((boost, index) => (
-                                  <div key={`${boost.targetRequestId}-${index}`} className="boost-description">
+                                <div className="boost-impact">
+                                  <span className="impact-label">Outcome chance:</span>
+                                  <span className="impact-amount">{followUpProbability.toFixed(0)}%</span>
+                                </div>
+                                {config.followUpBoosts?.map((boost) => (
+                                  <div key={boost.targetRequestId} className="boost-description">
                                     {boost.description || `Affects follow-up: ${boost.targetRequestId}`}
                                   </div>
                                 ))}
