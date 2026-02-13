@@ -18,6 +18,19 @@ function App() {
   const maxAuthority = gameState.stats.authority
   const [authorityCommit, setAuthorityCommit] = useState(10)
   
+  // Authority modal state
+  const [authorityModalOpen, setAuthorityModalOpen] = useState<number | null>(null) // null or option index
+  const [authorityCommitments, setAuthorityCommitments] = useState<{ [optionIndex: number]: number }>({})
+  const [currentTick, setCurrentTick] = useState(gameState.tick)
+  
+  // Reset authority commitments when tick changes
+  useEffect(() => {
+    if (gameState.tick !== currentTick) {
+      setAuthorityCommitments({})
+      setCurrentTick(gameState.tick)
+    }
+  }, [gameState.tick, currentTick])
+  
   // Floating feedback for authority changes
   const [authorityFeedback, setAuthorityFeedback] = useState<Array<{ id: number; amount: number }>>([])
   const [previousAuthority, setPreviousAuthority] = useState(gameState.stats.authority)
@@ -75,11 +88,36 @@ function App() {
     if (currentRequest?.combat && optionIndex === 0) {
       dispatch({ type: 'CHOOSE_OPTION', optionIndex, combatCommit })
     } else if (option?.authorityCheck) {
-      // If option has authority check, pass authorityCommit
-      dispatch({ type: 'CHOOSE_OPTION', optionIndex, authorityCommit })
+      // If option has authority check, use the committed value from modal
+      const committedAmount = authorityCommitments[optionIndex] ?? 0
+      dispatch({ type: 'CHOOSE_OPTION', optionIndex, authorityCommit: committedAmount })
     } else {
       dispatch({ type: 'CHOOSE_OPTION', optionIndex })
     }
+  }
+  
+  const handleOpenAuthorityModal = (optionIndex: number) => {
+    const option = currentRequest?.options[optionIndex]
+    if (!option?.authorityCheck) return
+    
+    // Set initial slider value: previous commitment or minimum (0)
+    const previousCommit = authorityCommitments[optionIndex]
+    const initialValue = previousCommit ?? option.authorityCheck.minCommit
+    setAuthorityCommit(initialValue)
+    setAuthorityModalOpen(optionIndex)
+  }
+  
+  const handleConfirmAuthority = () => {
+    if (authorityModalOpen === null) return
+    
+    // Save the commitment for this option
+    setAuthorityCommitments(prev => ({
+      ...prev,
+      [authorityModalOpen]: authorityCommit
+    }))
+    
+    // Close modal
+    setAuthorityModalOpen(null)
   }
 
   // Get last 3 log entries
@@ -361,172 +399,6 @@ function App() {
                   </div>
                 )}
                 
-                {/* Authority Slider UI */}
-                {currentRequest.options.some(opt => opt.authorityCheck) && (
-                  <div className="authority-slider-container">
-                    {currentRequest.options.map((option, index) => {
-                      if (!option.authorityCheck) return null
-                      const config = option.authorityCheck
-                      const maxCommittable = Math.floor(maxAuthority)
-                      const currentCommit = Math.min(authorityCommit, maxCommittable)
-                      
-                      // Check if this authority check has immediate effects (onSuccess/onFailure)
-                      const hasImmediateEffects = !!(config.onSuccess || config.onFailure)
-                      const hasFollowUpBoosts = !!(config.followUpBoosts && config.followUpBoosts.length > 0)
-                      
-                      const threshold = config.threshold || 0
-                      const willSucceed = currentCommit >= threshold
-                      // Safely calculate success chance, handling 0 threshold edge case
-                      const successChance = threshold === 0 ? 100 : 
-                        (currentCommit >= threshold ? 100 : 
-                          Math.floor((currentCommit / threshold) * 100))
-                      
-                      // Calculate overall probability for follow-up boosts
-                      let followUpProbability = 0
-                      if (hasFollowUpBoosts && !hasImmediateEffects && currentRequest.followUps) {
-                        // Find the follow-up for this option
-                        const followUp = currentRequest.followUps.find(fu => fu.triggerOnOptionIndex === index)
-                        if (followUp && config.followUpBoosts && config.followUpBoosts.length > 0) {
-                          // NOTE: Currently only displays the impact of the first boost.
-                          // In practice, events typically have only one boost per authority check.
-                          const boost = config.followUpBoosts[0]
-                          
-                          // Find the target candidate in the follow-up
-                          const targetCandidate = followUp.candidates.find(c => c.requestId === boost.targetRequestId)
-                          if (targetCandidate) {
-                            // Calculate base probability (no boost)
-                            const totalBaseWeight = followUp.candidates.reduce((sum, c) => sum + c.weight, 0)
-                            
-                            // Calculate boosted probability
-                            const commitRatio = config.maxCommit > 0 ? currentCommit / config.maxCommit : 0
-                            const weightIncrease = commitRatio * boost.boostValue
-                            const boostedWeight = targetCandidate.weight + weightIncrease
-                            const totalBoostedWeight = totalBaseWeight + weightIncrease
-                            const boostedProbability = (boostedWeight / totalBoostedWeight) * 100
-                            
-                            // Store the overall probability (not the increase)
-                            followUpProbability = boostedProbability
-                          }
-                        }
-                      }
-                      
-                      return (
-                        <div key={index}>
-                          <div className="authority-header">
-                            <div className="authority-title">
-                              <span className="authority-icon">👑</span>
-                              <span>Authority Commitment</span>
-                            </div>
-                            {hasImmediateEffects && (
-                              <div className={`authority-outcome ${willSucceed ? 'success' : 'failure'}`}>
-                                {willSucceed ? '✓ SUCCESS' : '✗ UNCERTAIN'}
-                              </div>
-                            )}
-                          </div>
-                          
-                          <div className="authority-commit-display">
-                            <div className="commit-value">
-                              <span className="commit-label">Committing:</span>
-                              <span className="commit-amount">{currentCommit}</span>
-                            </div>
-                            {hasImmediateEffects && (
-                              <>
-                                <div className="commit-threshold">
-                                  <span className="threshold-label">Threshold:</span>
-                                  <span className="threshold-amount">{config.threshold}</span>
-                                </div>
-                                <div className={`commit-probability ${willSucceed ? 'success' : 'uncertain'}`}>
-                                  <span className="probability-label">Chance:</span>
-                                  <span className="probability-amount">{successChance}%</span>
-                                </div>
-                              </>
-                            )}
-                            {hasFollowUpBoosts && !hasImmediateEffects && (
-                              <div className="commit-boost-info">
-                                <div className="boost-impact">
-                                  <span className="impact-label">Outcome chance:</span>
-                                  <span className="impact-amount">{followUpProbability.toFixed(0)}%</span>
-                                </div>
-                                {config.followUpBoosts?.map((boost) => (
-                                  <div key={boost.targetRequestId} className="boost-description">
-                                    {boost.description || `Affects follow-up: ${boost.targetRequestId}`}
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                          
-                          <input
-                            type="range"
-                            min={config.minCommit}
-                            max={Math.min(config.maxCommit, maxCommittable)}
-                            value={currentCommit}
-                            onChange={(e) => setAuthorityCommit(Number(e.target.value))}
-                            className={`authority-slider ${willSucceed ? 'success' : 'uncertain'}`}
-                          />
-                          
-                          <div className="authority-range-labels">
-                            <span>{config.minCommit} min</span>
-                            <span>{Math.min(config.maxCommit, maxCommittable)} max</span>
-                          </div>
-                          
-                          {/* Fork Preview - only show when there are immediate effects */}
-                          {hasImmediateEffects && (
-                            <div className="authority-fork-preview">
-                              <div className="fork-section fork-success">
-                                <div className="fork-header">
-                                  <span className="fork-icon">✓</span>
-                                  <span className="fork-title">On Success:</span>
-                                </div>
-                                <div className="fork-effects">
-                                  {option.effects && Object.keys(option.effects).length > 0 && (
-                                    <span className="fork-effect">Base effects apply</span>
-                                  )}
-                                  {config.onSuccess && formatEffects(config.onSuccess).map((eff, i) => (
-                                    <span key={i} className={`fork-effect ${eff.isPositive ? 'positive' : 'negative'}`}>
-                                      {eff.label}: {eff.isFuzzy ? eff.value : (typeof eff.value === 'number' ? (eff.value > 0 ? '+' : '') + eff.value : eff.value)}
-                                    </span>
-                                  ))}
-                                  {config.refundOnSuccessPercent !== undefined && config.refundOnSuccessPercent > 0 && (
-                                    <span className="fork-effect positive">
-                                      Refund: {config.refundOnSuccessPercent}% ({Math.floor(currentCommit * config.refundOnSuccessPercent / 100)} authority)
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                              
-                              <div className="fork-section fork-failure">
-                                <div className="fork-header">
-                                  <span className="fork-icon">✗</span>
-                                  <span className="fork-title">On Failure:</span>
-                                </div>
-                                <div className="fork-effects">
-                                  {option.effects && Object.keys(option.effects).length > 0 && (
-                                    <span className="fork-effect">Base effects apply</span>
-                                  )}
-                                  {config.onFailure && formatEffects(config.onFailure).map((eff, i) => (
-                                    <span key={i} className={`fork-effect ${eff.isPositive ? 'positive' : 'negative'}`}>
-                                      {eff.label}: {eff.isFuzzy ? eff.value : (typeof eff.value === 'number' ? (eff.value > 0 ? '+' : '') + eff.value : eff.value)}
-                                    </span>
-                                  ))}
-                                  <span className="fork-effect negative">
-                                    Authority Lost: {currentCommit}
-                                  </span>
-                                  {config.extraLossOnFailure !== undefined && config.extraLossOnFailure > 0 && (
-                                    <span className="fork-effect negative">
-                                      Extra Loss: {config.extraLossOnFailure} authority
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
-                
                 <div className="options-container">
                   {currentRequest.options.map((option, index) => {
                     const effects = formatEffects(option.effects, true)
@@ -538,40 +410,52 @@ function App() {
                       reason = 'No land forces available'
                     }
                     
+                    const hasAuthorityCheck = !!option.authorityCheck
+                    const committedAmount = authorityCommitments[index]
+                    
                     return (
-                      <button
-                        key={index}
-                        className={`option-button ${disabled ? 'option-disabled' : ''}`}
-                        onClick={() => !disabled && handleOptionClick(index)}
-                        disabled={disabled}
-                      >
-                        <div className="option-text">{option.text}</div>
-                        {effects.length > 0 && (
-                          <div className="option-consequences">
-                            {effects.map((effect, i) => (
-                              <span 
-                                key={i} 
-                                className={`consequence ${effect.isFuzzy ? 'fuzzy-indicator' : ''} ${effect.isPositive ? 'positive' : 'negative'}`}
-                              >
-                                {effect.isFuzzy && effect.value !== '' && (
-                                  <>
-                                    {effect.label}: {effect.value}
-                                  </>
-                                )}
-                                {!effect.isFuzzy && typeof effect.value === 'number' && effect.value !== 0 && (
-                                  <>
-                                    {effect.label}: {effect.value > 0 ? '+' : ''}{effect.value}
-                                  </>
-                                )}
-                                {effect.value === '' && effect.label}
-                              </span>
-                            ))}
-                          </div>
+                      <div key={index} className="option-row">
+                        <button
+                          className={`option-button ${disabled ? 'option-disabled' : ''}`}
+                          onClick={() => !disabled && handleOptionClick(index)}
+                          disabled={disabled}
+                        >
+                          <div className="option-text">{option.text}</div>
+                          {effects.length > 0 && (
+                            <div className="option-consequences">
+                              {effects.map((effect, i) => (
+                                <span 
+                                  key={i} 
+                                  className={`consequence ${effect.isFuzzy ? 'fuzzy-indicator' : ''} ${effect.isPositive ? 'positive' : 'negative'}`}
+                                >
+                                  {effect.isFuzzy && effect.value !== '' && (
+                                    <>
+                                      {effect.label}: {effect.value}
+                                    </>
+                                  )}
+                                  {!effect.isFuzzy && typeof effect.value === 'number' && effect.value !== 0 && (
+                                    <>
+                                      {effect.label}: {effect.value > 0 ? '+' : ''}{effect.value}
+                                    </>
+                                  )}
+                                  {effect.value === '' && effect.label}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                          {disabled && reason && (
+                            <div className="option-disabled-reason">{reason}</div>
+                          )}
+                        </button>
+                        {hasAuthorityCheck && (
+                          <button
+                            className="authority-button"
+                            onClick={() => handleOpenAuthorityModal(index)}
+                          >
+                            {committedAmount !== undefined ? `👑 ${committedAmount}` : 'Use 👑'}
+                          </button>
                         )}
-                        {disabled && reason && (
-                          <div className="option-disabled-reason">{reason}</div>
-                        )}
-                      </button>
+                      </div>
                     )
                   })}
                 </div>
@@ -696,6 +580,184 @@ function App() {
             )}
           </div>
         </div>
+        
+        {/* Authority Commitment Modal */}
+        {authorityModalOpen !== null && currentRequest && (
+          <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && null}>
+            <div className="modal-content authority-modal">
+              {(() => {
+                const optionIndex = authorityModalOpen
+                const option = currentRequest.options[optionIndex]
+                if (!option?.authorityCheck) return null
+                
+                const config = option.authorityCheck
+                const maxCommittable = Math.floor(maxAuthority)
+                const currentCommit = Math.min(authorityCommit, maxCommittable)
+                
+                // Check if this authority check has immediate effects (onSuccess/onFailure)
+                const hasImmediateEffects = !!(config.onSuccess || config.onFailure)
+                const hasFollowUpBoosts = !!(config.followUpBoosts && config.followUpBoosts.length > 0)
+                
+                const threshold = config.threshold || 0
+                const willSucceed = currentCommit >= threshold
+                // Safely calculate success chance, handling 0 threshold edge case
+                const successChance = threshold === 0 ? 100 : 
+                  (currentCommit >= threshold ? 100 : 
+                    Math.floor((currentCommit / threshold) * 100))
+                
+                // Calculate overall probability for follow-up boosts
+                let followUpProbability = 0
+                if (hasFollowUpBoosts && !hasImmediateEffects && currentRequest.followUps) {
+                  // Find the follow-up for this option
+                  const followUp = currentRequest.followUps.find(fu => fu.triggerOnOptionIndex === optionIndex)
+                  if (followUp && config.followUpBoosts && config.followUpBoosts.length > 0) {
+                    // NOTE: Currently only displays the impact of the first boost.
+                    // In practice, events typically have only one boost per authority check.
+                    const boost = config.followUpBoosts[0]
+                    
+                    // Find the target candidate in the follow-up
+                    const targetCandidate = followUp.candidates.find(c => c.requestId === boost.targetRequestId)
+                    if (targetCandidate) {
+                      // Calculate base probability (no boost)
+                      const totalBaseWeight = followUp.candidates.reduce((sum, c) => sum + c.weight, 0)
+                      
+                      // Calculate boosted probability
+                      const commitRatio = config.maxCommit > 0 ? currentCommit / config.maxCommit : 0
+                      const weightIncrease = commitRatio * boost.boostValue
+                      const boostedWeight = targetCandidate.weight + weightIncrease
+                      const totalBoostedWeight = totalBaseWeight + weightIncrease
+                      const boostedProbability = (boostedWeight / totalBoostedWeight) * 100
+                      
+                      // Store the overall probability (not the increase)
+                      followUpProbability = boostedProbability
+                    }
+                  }
+                }
+                
+                return (
+                  <>
+                    <div className="authority-header">
+                      <div className="authority-title">
+                        <span className="authority-icon">👑</span>
+                        <span>Authority Commitment</span>
+                      </div>
+                      {hasImmediateEffects && (
+                        <div className={`authority-outcome ${willSucceed ? 'success' : 'failure'}`}>
+                          {willSucceed ? '✓ SUCCESS' : '✗ UNCERTAIN'}
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="authority-commit-display">
+                      <div className="commit-value">
+                        <span className="commit-label">Committing:</span>
+                        <span className="commit-amount">{currentCommit}</span>
+                      </div>
+                      {hasImmediateEffects && (
+                        <>
+                          <div className="commit-threshold">
+                            <span className="threshold-label">Threshold:</span>
+                            <span className="threshold-amount">{config.threshold}</span>
+                          </div>
+                          <div className={`commit-probability ${willSucceed ? 'success' : 'uncertain'}`}>
+                            <span className="probability-label">Chance:</span>
+                            <span className="probability-amount">{successChance}%</span>
+                          </div>
+                        </>
+                      )}
+                      {hasFollowUpBoosts && !hasImmediateEffects && (
+                        <div className="commit-boost-info">
+                          <div className="boost-impact">
+                            <span className="impact-label">Outcome chance:</span>
+                            <span className="impact-amount">{followUpProbability.toFixed(0)}%</span>
+                          </div>
+                          {config.followUpBoosts?.map((boost) => (
+                            <div key={boost.targetRequestId} className="boost-description">
+                              {boost.description || `Affects follow-up: ${boost.targetRequestId}`}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    
+                    <input
+                      type="range"
+                      min={config.minCommit}
+                      max={Math.min(config.maxCommit, maxCommittable)}
+                      value={currentCommit}
+                      onChange={(e) => setAuthorityCommit(Number(e.target.value))}
+                      className={`authority-slider ${willSucceed ? 'success' : 'uncertain'}`}
+                    />
+                    
+                    <div className="authority-range-labels">
+                      <span>{config.minCommit} min</span>
+                      <span>{Math.min(config.maxCommit, maxCommittable)} max</span>
+                    </div>
+                    
+                    {/* Fork Preview - only show when there are immediate effects */}
+                    {hasImmediateEffects && (
+                      <div className="authority-fork-preview">
+                        <div className="fork-section fork-success">
+                          <div className="fork-header">
+                            <span className="fork-icon">✓</span>
+                            <span className="fork-title">On Success:</span>
+                          </div>
+                          <div className="fork-effects">
+                            {option.effects && Object.keys(option.effects).length > 0 && (
+                              <span className="fork-effect">Base effects apply</span>
+                            )}
+                            {config.onSuccess && formatEffects(config.onSuccess).map((eff, i) => (
+                              <span key={i} className={`fork-effect ${eff.isPositive ? 'positive' : 'negative'}`}>
+                                {eff.label}: {eff.isFuzzy ? eff.value : (typeof eff.value === 'number' ? (eff.value > 0 ? '+' : '') + eff.value : eff.value)}
+                              </span>
+                            ))}
+                            {config.refundOnSuccessPercent !== undefined && config.refundOnSuccessPercent > 0 && (
+                              <span className="fork-effect positive">
+                                Refund: {config.refundOnSuccessPercent}% ({Math.floor(currentCommit * config.refundOnSuccessPercent / 100)} authority)
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="fork-section fork-failure">
+                          <div className="fork-header">
+                            <span className="fork-icon">✗</span>
+                            <span className="fork-title">On Failure:</span>
+                          </div>
+                          <div className="fork-effects">
+                            {option.effects && Object.keys(option.effects).length > 0 && (
+                              <span className="fork-effect">Base effects apply</span>
+                            )}
+                            {config.onFailure && formatEffects(config.onFailure).map((eff, i) => (
+                              <span key={i} className={`fork-effect ${eff.isPositive ? 'positive' : 'negative'}`}>
+                                {eff.label}: {eff.isFuzzy ? eff.value : (typeof eff.value === 'number' ? (eff.value > 0 ? '+' : '') + eff.value : eff.value)}
+                              </span>
+                            ))}
+                            <span className="fork-effect negative">
+                              Authority Lost: {currentCommit}
+                            </span>
+                            {config.extraLossOnFailure !== undefined && config.extraLossOnFailure > 0 && (
+                              <span className="fork-effect negative">
+                                Extra Loss: {config.extraLossOnFailure} authority
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <button 
+                      className="confirm-button"
+                      onClick={handleConfirmAuthority}
+                    >
+                      Confirm
+                    </button>
+                  </>
+                )
+              })()}
+            </div>
+          </div>
+        )}
         
         {/* Version display */}
         <div className="version-footer">
