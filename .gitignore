@@ -28,3 +28,4 @@ test-*.md
 *.sln
 *.sw?
 public/demo.html
+public/server.js
