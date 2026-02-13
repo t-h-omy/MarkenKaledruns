@@ -57,6 +57,7 @@ function App() {
   const [previousFarmers, setPreviousFarmers] = useState(gameState.stats.farmers)
   const [previousLandForces, setPreviousLandForces] = useState(gameState.stats.landForces)
   const [lastClickedOption, setLastClickedOption] = useState<{ index: number; rect: DOMRect } | null>(null)
+  const [previousCombatRound, setPreviousCombatRound] = useState(gameState.activeCombat?.round ?? -1)
   
   // Track stat changes and show flying feedback
   useEffect(() => {
@@ -181,9 +182,16 @@ function App() {
     
     // Check if request changed OR if we're in combat and the round changed
     const requestChanged = actualRequest?.id !== displayedRequest?.id
+    const currentCombatRound = gameState.activeCombat?.round ?? -1
     const combatRoundChanged = gameState.activeCombat && 
       displayedRequest?.id.startsWith('COMBAT_ROUND::') &&
-      actualRequest?.id === displayedRequest?.id
+      actualRequest?.id === displayedRequest?.id &&
+      currentCombatRound !== previousCombatRound
+    
+    // Update previous combat round
+    if (currentCombatRound !== previousCombatRound) {
+      setPreviousCombatRound(currentCombatRound)
+    }
     
     // If the request has changed or combat round progressed, show it after delay
     if (requestChanged || combatRoundChanged) {
