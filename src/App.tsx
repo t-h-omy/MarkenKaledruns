@@ -7,8 +7,12 @@ import { NEED_UNLOCK_THRESHOLDS } from './game/models'
 function App() {
   const [gameState, dispatch] = useReducer(gameReducer, undefined, initializeGame)
   const [bottomTab, setBottomTab] = useState<'needs' | 'log'>('needs')
+  
+  // Request display delay state
+  const [displayedRequest, setDisplayedRequest] = useState(getCurrentRequest(gameState))
+  const [isShowingFeedback, setIsShowingFeedback] = useState(false)
 
-  const currentRequest = getCurrentRequest(gameState)
+  const currentRequest = displayedRequest
 
   // Combat commit state for slider
   const maxForces = gameState.stats.landForces
@@ -35,7 +39,81 @@ function App() {
   const [authorityFeedback, setAuthorityFeedback] = useState<Array<{ id: number; amount: number }>>([])
   const [previousAuthority, setPreviousAuthority] = useState(gameState.stats.authority)
   
-  // Track authority changes and show floating feedback
+  // Universal flying feedback system for health, satisfaction, fireRisk (and authority)
+  type FlyingFeedback = {
+    id: number;
+    stat: 'health' | 'satisfaction' | 'fireRisk' | 'authority';
+    amount: number;
+    startX: number;
+    startY: number;
+  }
+  const [flyingFeedbacks, setFlyingFeedbacks] = useState<FlyingFeedback[]>([])
+  const [previousHealth, setPreviousHealth] = useState(gameState.stats.health)
+  const [previousSatisfaction, setPreviousSatisfaction] = useState(gameState.stats.satisfaction)
+  const [previousFireRisk, setPreviousFireRisk] = useState(gameState.stats.fireRisk)
+  const [lastClickedOption, setLastClickedOption] = useState<{ index: number; rect: DOMRect } | null>(null)
+  
+  // Track stat changes and show flying feedback
+  useEffect(() => {
+    const changes: Array<{ stat: 'health' | 'satisfaction' | 'fireRisk' | 'authority'; delta: number }> = []
+    
+    // Check health
+    const currentHealth = gameState.stats.health
+    const healthDelta = currentHealth - previousHealth
+    if (healthDelta !== 0 && previousHealth !== 0) {
+      changes.push({ stat: 'health', delta: healthDelta })
+    }
+    setPreviousHealth(currentHealth)
+    
+    // Check satisfaction
+    const currentSatisfaction = gameState.stats.satisfaction
+    const satisfactionDelta = currentSatisfaction - previousSatisfaction
+    if (satisfactionDelta !== 0 && previousSatisfaction !== 0) {
+      changes.push({ stat: 'satisfaction', delta: satisfactionDelta })
+    }
+    setPreviousSatisfaction(currentSatisfaction)
+    
+    // Check fireRisk
+    const currentFireRisk = gameState.stats.fireRisk
+    const fireRiskDelta = currentFireRisk - previousFireRisk
+    if (fireRiskDelta !== 0 && previousFireRisk !== 0) {
+      changes.push({ stat: 'fireRisk', delta: fireRiskDelta })
+    }
+    setPreviousFireRisk(currentFireRisk)
+    
+    // Check authority
+    const currentAuthority = gameState.stats.authority
+    const authorityDelta = currentAuthority - previousAuthority
+    if (authorityDelta !== 0 && previousAuthority !== 0) {
+      changes.push({ stat: 'authority', delta: authorityDelta })
+    }
+    setPreviousAuthority(currentAuthority)
+    
+    // Create flying feedback for all changes
+    if (changes.length > 0 && lastClickedOption) {
+      const startX = lastClickedOption.rect.left + lastClickedOption.rect.width / 2
+      const startY = lastClickedOption.rect.top + lastClickedOption.rect.height / 2
+      
+      const newFeedbacks = changes.map(change => ({
+        id: Date.now() + Math.random(),
+        stat: change.stat,
+        amount: change.delta,
+        startX,
+        startY
+      }))
+      
+      setFlyingFeedbacks(prev => [...prev, ...newFeedbacks])
+      
+      // Remove after 5 seconds (increased from 3s for better visibility)
+      newFeedbacks.forEach(feedback => {
+        setTimeout(() => {
+          setFlyingFeedbacks(prev => prev.filter(f => f.id !== feedback.id))
+        }, 5000)
+      })
+    }
+  }, [gameState.stats.health, gameState.stats.satisfaction, gameState.stats.fireRisk, gameState.stats.authority])
+  
+  // Track authority changes and show floating feedback (kept for backward compatibility)
   useEffect(() => {
     const currentAuthority = gameState.stats.authority
     const delta = currentAuthority - previousAuthority
@@ -52,6 +130,35 @@ function App() {
     
     setPreviousAuthority(currentAuthority)
   }, [gameState.stats.authority])
+
+  // Handle delayed request transitions (1.5s delay to see feedback)
+  useEffect(() => {
+    const actualRequest = getCurrentRequest(gameState)
+    
+    // If we're showing feedback, don't update the display immediately
+    if (isShowingFeedback) {
+      return
+    }
+    
+    // If the request has changed, show it after delay
+    if (actualRequest?.id !== displayedRequest?.id) {
+      // Only delay if coming from a previous request (not initial load)
+      if (displayedRequest !== null) {
+        setIsShowingFeedback(true)
+        
+        // After 1.5 seconds, show the new request
+        const timer = setTimeout(() => {
+          setDisplayedRequest(actualRequest)
+          setIsShowingFeedback(false)
+        }, 1500)
+        
+        return () => clearTimeout(timer)
+      } else {
+        // Initial load - show immediately
+        setDisplayedRequest(actualRequest)
+      }
+    }
+  }, [gameState.currentRequestId, gameState.tick])
 
   // Update combatCommit when maxForces changes or when a new request appears
   useEffect(() => {
@@ -81,8 +188,12 @@ function App() {
     }
   }, [maxAuthority, currentRequest?.id, authorityCommit, currentRequest?.options])
 
-  const handleOptionClick = (optionIndex: number) => {
+  const handleOptionClick = (optionIndex: number, event: React.MouseEvent<HTMLButtonElement>) => {
     const option = currentRequest?.options[optionIndex]
+    
+    // Capture button position for flying feedback
+    const buttonRect = event.currentTarget.getBoundingClientRect()
+    setLastClickedOption({ index: optionIndex, rect: buttonRect })
     
     // If combat request and Option A (index 0), pass combatCommit
     if (currentRequest?.combat && optionIndex === 0) {
@@ -221,8 +332,18 @@ function App() {
     }
   }
 
+  // Get stat icon for feedback
+  const getStatIcon = (stat: 'health' | 'satisfaction' | 'fireRisk' | 'authority'): string => {
+    switch (stat) {
+      case 'health': return '❤️'
+      case 'satisfaction': return '😊'
+      case 'fireRisk': return '🔥'
+      case 'authority': return '👑'
+    }
+  }
+
   // Format effects for display
-  const formatEffects = (effects: Effect, excludeAuthority = false): Array<{ label: string; value: number | string; isPositive: boolean; isFuzzy: boolean }> => {
+  const formatEffects = (effects: Effect, excludeAuthority = false, excludeFeedbackStats = false): Array<{ label: string; value: number | string; isPositive: boolean; isFuzzy: boolean }> => {
     const formatted: Array<{ label: string; value: number | string; isPositive: boolean; isFuzzy: boolean }> = []
     
     if (effects.gold !== undefined) {
@@ -233,7 +354,7 @@ function App() {
         isFuzzy: false
       })
     }
-    if (effects.satisfaction !== undefined) {
+    if (effects.satisfaction !== undefined && !excludeFeedbackStats) {
       formatted.push({ 
         label: 'Satisfaction', 
         value: getFuzzyIndicator(effects.satisfaction), 
@@ -241,7 +362,7 @@ function App() {
         isFuzzy: true
       })
     }
-    if (effects.health !== undefined) {
+    if (effects.health !== undefined && !excludeFeedbackStats) {
       formatted.push({ 
         label: 'Health', 
         value: getFuzzyIndicator(effects.health), 
@@ -249,7 +370,7 @@ function App() {
         isFuzzy: true
       })
     }
-    if (effects.fireRisk !== undefined) {
+    if (effects.fireRisk !== undefined && !excludeFeedbackStats) {
       formatted.push({ 
         label: 'Fire Risk', 
         value: getFuzzyIndicator(effects.fireRisk), 
@@ -298,31 +419,31 @@ function App() {
       <div className="game-container">
         {/* Top Compact Stats Bar */}
         <div className="stats-bar">
-          <div className="stat-compact">
+          <div className="stat-compact" data-stat="gold">
             <span className="stat-icon">💰</span>
             <span className="stat-value">{gameState.stats.gold}</span>
           </div>
-          <div className="stat-compact">
+          <div className="stat-compact" data-stat="satisfaction">
             <span className="stat-icon">😊</span>
             <span className="stat-value">{gameState.stats.satisfaction}</span>
           </div>
-          <div className="stat-compact">
+          <div className="stat-compact" data-stat="health">
             <span className="stat-icon">❤️</span>
             <span className="stat-value">{gameState.stats.health}</span>
           </div>
-          <div className="stat-compact stat-warning">
+          <div className="stat-compact stat-warning" data-stat="fireRisk">
             <span className="stat-icon">🔥</span>
             <span className="stat-value">{gameState.stats.fireRisk}</span>
           </div>
-          <div className="stat-compact">
+          <div className="stat-compact" data-stat="farmers">
             <span className="stat-icon">👨‍🌾</span>
             <span className="stat-value">{gameState.stats.farmers}</span>
           </div>
-          <div className="stat-compact">
+          <div className="stat-compact" data-stat="landForces">
             <span className="stat-icon">⚔️</span>
             <span className="stat-value">{gameState.stats.landForces}</span>
           </div>
-          <div className="stat-compact stat-authority">
+          <div className="stat-compact stat-authority" data-stat="authority">
             <span className="stat-icon">👑</span>
             <span className="stat-value">{Math.floor(gameState.stats.authority)}</span>
             {/* Floating Feedback for Authority Changes */}
@@ -336,6 +457,36 @@ function App() {
             ))}
           </div>
         </div>
+
+        {/* Flying Feedback Overlay */}
+        {flyingFeedbacks.map(feedback => {
+          // Get target stat element position
+          const targetElement = document.querySelector(`[data-stat="${feedback.stat}"]`)
+          const targetRect = targetElement?.getBoundingClientRect()
+          
+          if (!targetRect) return null
+          
+          const targetX = targetRect.left + targetRect.width / 2
+          const targetY = targetRect.top + targetRect.height / 2
+          
+          return (
+            <div
+              key={feedback.id}
+              className={`flying-feedback ${feedback.amount > 0 ? 'positive' : 'negative'}`}
+              style={{
+                '--start-x': `${feedback.startX}px`,
+                '--start-y': `${feedback.startY}px`,
+                '--end-x': `${targetX}px`,
+                '--end-y': `${targetY}px`,
+              } as React.CSSProperties}
+            >
+              <span className="feedback-icon">{getStatIcon(feedback.stat)}</span>
+              <span className="feedback-amount">
+                {feedback.amount > 0 ? '+' : ''}{Math.round(feedback.amount)}
+              </span>
+            </div>
+          )
+        })}
 
         {/* Bankruptcy Warning */}
         {showBankruptcyWarning && !gameState.gameOver && (
@@ -401,7 +552,7 @@ function App() {
                 
                 <div className="options-container">
                   {currentRequest.options.map((option, index) => {
-                    const effects = formatEffects(option.effects, true)
+                    const effects = formatEffects(option.effects, true, true)
                     let { disabled, reason } = isOptionDisabled(option.effects)
                     
                     // For combat requests, disable Option A if no forces available
@@ -417,7 +568,7 @@ function App() {
                       <div key={index} className="option-row">
                         <button
                           className={`option-button ${disabled ? 'option-disabled' : ''}`}
-                          onClick={() => !disabled && handleOptionClick(index)}
+                          onClick={(e) => !disabled && handleOptionClick(index, e)}
                           disabled={disabled}
                         >
                           <div className="option-text">{option.text}</div>
