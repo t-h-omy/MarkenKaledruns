@@ -185,6 +185,7 @@ function App() {
     const currentCombatRound = gameState.activeCombat?.round ?? -1
     const combatRoundChanged = gameState.activeCombat && 
       displayedRequest?.id.startsWith('COMBAT_ROUND::') &&
+      actualRequest?.id.startsWith('COMBAT_ROUND::') &&
       actualRequest?.id === displayedRequest?.id &&
       currentCombatRound !== previousCombatRound
     
