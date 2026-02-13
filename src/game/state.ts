@@ -656,11 +656,19 @@ function scheduleFollowUps(
     // Start with base candidate weights
     let candidates = followUp.candidates;
     
+    // Track which events were boosted by authority commit
+    const boostedRequestIds = new Set<string>();
+    
     // NEW: Apply authority boosts if authority was committed
     if (authorityCommit !== undefined && 
         authorityCommit > 0 && 
         option.authorityCheck?.followUpBoosts && 
         option.authorityCheck.followUpBoosts.length > 0) {
+      
+      // Track which request IDs are boosted
+      option.authorityCheck.followUpBoosts.forEach(boost => {
+        boostedRequestIds.add(boost.targetRequestId);
+      });
       
       candidates = applyAuthorityBoosts(
         followUp.candidates,
@@ -681,13 +689,16 @@ function scheduleFollowUps(
       const delayRange = followUp.delayMaxTicks - followUp.delayMinTicks;
       const delay = followUp.delayMinTicks + Math.floor(getRandomValue() * (delayRange + 1));
       
+      // Only attach authority commit context if the selected event was one of the boosted ones
+      const wasBoosted = boostedRequestIds.has(selectedCandidate.requestId);
+      
       // Schedule the event
       scheduledEvents.push({
         targetTick: currentTick + 1 + delay,
         requestId: selectedCandidate.requestId,
         scheduledAtTick: currentTick,
-        // NEW: Attach authority commit context for tracking/debugging
-        authorityCommitContext: authorityCommit !== undefined && authorityCommit > 0 ? {
+        // NEW: Attach authority commit context only for boosted events
+        authorityCommitContext: (authorityCommit !== undefined && authorityCommit > 0 && wasBoosted) ? {
           committed: authorityCommit,
           originRequestId: currentRequest.id,
         } : undefined,
@@ -844,17 +855,18 @@ function resolveAuthorityCheck(check: PendingAuthorityCheck): AuthorityCheckResu
   const committed = check.committed;
   
   // If there are no immediate effects (onSuccess/onFailure), then there's no success/failure
-  // In this case, just refund all authority and don't apply any effects
+  // Authority committed for follow-up boosts should NOT be refunded here.
+  // It will be refunded when the boosted follow-up event is shown to the player.
   const hasImmediateEffects = !!(config.onSuccess || config.onFailure);
   
   if (!hasImmediateEffects) {
     // No success/failure for follow-up-only boosts
-    // Refund all committed authority
+    // Do NOT refund authority - it will be refunded when the follow-up resolves
     return {
       success: true, // Not really applicable, but set to true for consistency
       committed,
-      refunded: committed, // Full refund
-      totalLoss: 0,
+      refunded: 0, // NO refund - authority stays committed until follow-up
+      totalLoss: 0, // Not a loss yet - authority is just held
       appliedEffects: undefined,
       feedbackRequestId: undefined,
     };
@@ -1803,6 +1815,30 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       scheduledCombats,
       pendingAuthorityChecks,
     });
+
+    // 4.5. Check if the picked request was a scheduled event with committed authority
+    // If so, refund the authority since the boosted follow-up was successfully shown
+    // Match using the same logic as pickNextRequest: find first event due for this tick
+    const dueScheduledEvents = scheduledEvents.filter(
+      event => event.requestId === nextRequest.id && event.targetTick <= state.tick + 1
+    );
+    
+    // Sort by scheduledAtTick (FIFO) to match picker behavior
+    dueScheduledEvents.sort((a, b) => {
+      if (a.scheduledAtTick === b.scheduledAtTick) {
+        return a.targetTick - b.targetTick;
+      }
+      return a.scheduledAtTick - b.scheduledAtTick;
+    });
+    
+    const scheduledEvent = dueScheduledEvents[0];
+    
+    if (scheduledEvent?.authorityCommitContext) {
+      const refundAmount = scheduledEvent.authorityCommitContext.committed;
+      console.log(`[Authority Refund] Refunding ${refundAmount} authority from successful follow-up: ${nextRequest.id}`);
+      stats.authority += refundAmount;
+      stats = clampStats(stats);
+    }
 
     // 5. Increment tick and update state
     return {
