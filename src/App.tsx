@@ -387,6 +387,8 @@ function App() {
                         // Find the follow-up for this option
                         const followUp = currentRequest.followUps.find(fu => fu.triggerOnOptionIndex === index)
                         if (followUp && config.followUpBoosts && config.followUpBoosts.length > 0) {
+                          // NOTE: Currently only displays the impact of the first boost.
+                          // In practice, events typically have only one boost per authority check.
                           const boost = config.followUpBoosts[0]
                           
                           // Find the target candidate in the follow-up
