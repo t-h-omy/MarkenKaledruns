@@ -374,11 +374,12 @@ function App() {
                       const hasImmediateEffects = !!(config.onSuccess || config.onFailure)
                       const hasFollowUpBoosts = !!(config.followUpBoosts && config.followUpBoosts.length > 0)
                       
-                      const willSucceed = currentCommit >= (config.threshold || 0)
+                      const threshold = config.threshold || 0
+                      const willSucceed = currentCommit >= threshold
                       // Safely calculate success chance, handling 0 threshold edge case
-                      const successChance = (config.threshold || 0) === 0 ? 100 : 
-                        (currentCommit >= config.threshold! ? 100 : 
-                          Math.floor((currentCommit / config.threshold!) * 100))
+                      const successChance = threshold === 0 ? 100 : 
+                        (currentCommit >= threshold ? 100 : 
+                          Math.floor((currentCommit / threshold) * 100))
                       
                       // Calculate percentage increase for follow-up boosts
                       let percentageIncrease = 0
@@ -445,8 +446,8 @@ function App() {
                                   <span className="impact-label">Future impact:</span>
                                   <span className="impact-amount">+{percentageIncrease.toFixed(0)}%</span>
                                 </div>
-                                {config.followUpBoosts?.map((boost, idx) => (
-                                  <div key={`${boost.targetRequestId}-${idx}`} className="boost-description">
+                                {config.followUpBoosts?.map((boost) => (
+                                  <div key={boost.targetRequestId} className="boost-description">
                                     {boost.description || `Affects follow-up: ${boost.targetRequestId}`}
                                   </div>
                                 ))}
