@@ -369,7 +369,7 @@ export const eventRequests: Request[] = [
         text: 'ALLOW',
         effects: {
           farmers: 6,
-          landForce: 2,
+          landForces: 2,
           fireRisk: 10,
           health: -5,
         },
@@ -740,7 +740,7 @@ export const eventRequests: Request[] = [
         text: 'MEDIATE',
         effects: {
           gold: -10,
-          authoriy: 1,
+          authority: 1,
         },
       },
       {
@@ -1032,7 +1032,7 @@ export const eventRequests: Request[] = [
     options: [
       { 
         text: 'STAND YOUR GROUND', 
-        effects: {fireRisk: 5 
+        effects: { fireRisk: 5 }
       },
       { 
         text: 'PAY TRIBUTE', 

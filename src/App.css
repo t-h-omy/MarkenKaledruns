@@ -98,6 +98,72 @@
   position: relative;
 }
 
+/* Universal Flying Feedback System */
+.flying-feedback {
+  position: fixed;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 1.5rem;
+  font-weight: bold;
+  pointer-events: none;
+  z-index: 2000;
+  animation: fly-to-target 5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  left: var(--start-x);
+  top: var(--start-y);
+  transform: translate(-50%, -50%);
+}
+
+.flying-feedback.positive .feedback-amount {
+  color: #4caf50;
+  text-shadow: 0 0 12px rgba(76, 175, 80, 0.8);
+}
+
+.flying-feedback.negative .feedback-amount {
+  color: #f44336;
+  text-shadow: 0 0 12px rgba(244, 67, 54, 0.8);
+}
+
+.flying-feedback .feedback-icon {
+  font-size: 1.8rem;
+  filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.5));
+}
+
+.flying-feedback .feedback-amount {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+@keyframes fly-to-target {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+  10% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+  20% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  70% {
+    opacity: 1;
+    left: var(--end-x);
+    top: var(--end-y);
+  }
+  100% {
+    opacity: 0;
+    left: var(--end-x);
+    top: var(--end-y);
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+}
+
+/* Make all stat elements position relative for targeting */
+.stat-compact {
+  position: relative;
+}
+
 /* Center Decision Panel */
 .panel {
   background: #2a2a2a;
