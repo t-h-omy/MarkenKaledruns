@@ -413,8 +413,8 @@ function App() {
                             )}
                             {hasFollowUpBoosts && !hasImmediateEffects && (
                               <div className="commit-boost-info">
-                                {config.followUpBoosts?.map((boost, i) => (
-                                  <div key={i} className="boost-description">
+                                {config.followUpBoosts?.map((boost) => (
+                                  <div key={boost.targetRequestId} className="boost-description">
                                     {boost.description || `Affects follow-up: ${boost.targetRequestId}`}
                                   </div>
                                 ))}
