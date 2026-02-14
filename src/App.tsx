@@ -1,4 +1,4 @@
-import { useReducer, useState, useEffect } from 'react'
+import { useReducer, useState, useEffect, useRef } from 'react'
 import './App.css'
 import { gameReducer, initializeGame, isNeedUnlocked, calculateRequiredBuildings, isNeedRequired, getCurrentRequest } from './game/state'
 import type { Effect, Needs } from './game/models'
@@ -50,6 +50,20 @@ function App() {
   const [previousFarmers, setPreviousFarmers] = useState(gameState.stats.farmers)
   const [previousLandForces, setPreviousLandForces] = useState(gameState.stats.landForces)
   const [previousCombatRound, setPreviousCombatRound] = useState(gameState.activeCombat?.round ?? -1)
+  
+  // Flying delta indicators state
+  type FlyingDelta = {
+    id: number;
+    resourceType: 'satisfaction' | 'health' | 'fireRisk' | 'authority';
+    value: number;
+    startX: number; // Starting X position (at option button)
+    startY: number; // Starting Y position (at option button)
+    targetX: number; // Target X position (aligned with resource bar)
+    timestamp: number;
+  }
+  const [flyingDeltas, setFlyingDeltas] = useState<FlyingDelta[]>([])
+  const optionButtonRefs = useRef<(HTMLButtonElement | null)[]>([])
+  const statsBarRef = useRef<HTMLDivElement>(null)
   
   // Track stat changes and trigger pulsating animations in resource bar
   useEffect(() => {
@@ -200,8 +214,65 @@ function App() {
     }
   }, [maxAuthority, currentRequest?.id, authorityCommit, currentRequest?.options])
 
+  // Function to spawn flying delta indicators
+  const spawnFlyingDeltas = (optionIndex: number, effects: Effect) => {
+    const buttonElement = optionButtonRefs.current[optionIndex]
+    const statsBar = statsBarRef.current
+    
+    if (!buttonElement || !statsBar) return
+    
+    const buttonRect = buttonElement.getBoundingClientRect()
+    const deltas: FlyingDelta[] = []
+    const timestamp = Date.now()
+    let deltaId = timestamp
+    
+    // Filter resources to only show satisfaction, health, fireRisk, authority
+    // Exclude: gold, farmers (population), landForces
+    const resourceTypes: Array<keyof Effect> = ['satisfaction', 'health', 'fireRisk', 'authority']
+    
+    resourceTypes.forEach((resourceType) => {
+      const value = effects[resourceType]
+      if (value === undefined || value === 0 || typeof value !== 'number') return
+      
+      // Find the corresponding stat element in the stats bar to get its X position
+      const statElement = statsBar.querySelector(`[data-stat="${resourceType}"]`)
+      if (!statElement) return
+      
+      const statRect = statElement.getBoundingClientRect()
+      
+      // Calculate positions
+      const startX = buttonRect.left + buttonRect.width / 2
+      const startY = buttonRect.top + buttonRect.height / 2
+      const targetX = statRect.left + statRect.width / 2
+      
+      deltas.push({
+        id: deltaId++,
+        resourceType: resourceType as 'satisfaction' | 'health' | 'fireRisk' | 'authority',
+        value: value as number,
+        startX,
+        startY,
+        targetX,
+        timestamp
+      })
+    })
+    
+    if (deltas.length > 0) {
+      setFlyingDeltas(prev => [...prev, ...deltas])
+      
+      // Remove deltas after 2 seconds (matching the CSS animation duration)
+      setTimeout(() => {
+        setFlyingDeltas(prev => prev.filter(d => d.timestamp !== timestamp))
+      }, 2000)
+    }
+  }
+
   const handleOptionClick = (optionIndex: number) => {
     const option = currentRequest?.options[optionIndex]
+    
+    // Spawn flying deltas for this option's effects
+    if (option) {
+      spawnFlyingDeltas(optionIndex, option.effects)
+    }
     
     // If combat request and Option A (index 0), pass combatCommit
     if (currentRequest?.combat && optionIndex === 0) {
@@ -428,7 +499,7 @@ function App() {
     <div className="app">
       <div className="game-container">
         {/* Top Compact Stats Bar */}
-        <div className="stats-bar">
+        <div className="stats-bar" ref={statsBarRef}>
           <div className={`stat-compact ${getStatAnimationClass('gold')}`} data-stat="gold">
             <span className="stat-icon">💰</span>
             <span className="stat-value">{gameState.stats.gold}</span>
@@ -538,6 +609,7 @@ function App() {
                     return (
                       <div key={index} className="option-row">
                         <button
+                          ref={(el) => { optionButtonRefs.current[index] = el }}
                           className={`option-button ${disabled ? 'option-disabled' : ''}`}
                           onClick={() => !disabled && handleOptionClick(index)}
                           disabled={disabled}
@@ -880,6 +952,33 @@ function App() {
             </div>
           </div>
         )}
+        
+        {/* Flying Delta Indicators */}
+        {flyingDeltas.map((delta) => {
+          // Format the delta value
+          const displayValue = isFuzzyStatKey(delta.resourceType) 
+            ? getFuzzyIndicator(delta.value) 
+            : `${delta.value > 0 ? '+' : ''}${delta.value}`
+          
+          // Determine if it's positive or negative (fireRisk is inverted)
+          const isPositive = delta.resourceType === 'fireRisk' 
+            ? delta.value < 0 
+            : delta.value > 0
+          
+          return (
+            <div
+              key={delta.id}
+              className={`flying-delta ${isPositive ? 'positive' : 'negative'} ${isFuzzyStatKey(delta.resourceType) ? 'fuzzy' : ''}`}
+              style={{
+                left: `${delta.startX}px`,
+                top: `${delta.startY}px`,
+                '--target-x': `${delta.targetX}px`
+              } as React.CSSProperties}
+            >
+              {displayValue}
+            </div>
+          )
+        })}
         
         {/* Version display */}
         <div className="version-footer">
