@@ -240,10 +240,11 @@ function App() {
       
       const statRect = statElement.getBoundingClientRect()
       
-      // Calculate positions
-      const startX = buttonRect.left + buttonRect.width / 2
+      // Calculate positions:
+      // - X: horizontally aligned with the resource in the resource bar
+      // - Y: at the option button's vertical position
+      const startX = statRect.left + statRect.width / 2
       const startY = buttonRect.top + buttonRect.height / 2
-      const targetX = statRect.left + statRect.width / 2
       
       deltas.push({
         id: deltaId++,
@@ -251,7 +252,7 @@ function App() {
         value: value as number,
         startX,
         startY,
-        targetX,
+        targetX: startX, // Keep same X position (already aligned)
         timestamp
       })
     })

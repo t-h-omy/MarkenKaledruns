@@ -1308,8 +1308,6 @@
   }
   100% {
     opacity: 0;
-    /* Move upwards by 80px while staying horizontally at target-x position */
-    left: var(--target-x);
     transform: translate(-50%, -50%) translateY(-80px) scale(0.8);
   }
 }
