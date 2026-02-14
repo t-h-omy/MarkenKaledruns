@@ -389,7 +389,7 @@ function App() {
 
   // Helper function to get icon for a resource type
   const getResourceIcon = (resourceType: 'satisfaction' | 'health' | 'fireRisk' | 'authority' | 'gold' | 'farmers' | 'landForces'): string => {
-    const iconMap = {
+    const iconMap: Record<typeof resourceType, string> = {
       gold: '💰',
       satisfaction: '😊',
       health: '❤️',
