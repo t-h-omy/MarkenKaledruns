@@ -382,104 +382,74 @@ function App() {
     return { disabled: false }
   }
 
-  // Configurable thresholds for effect tiers
-  const EFFECT_THRESHOLDS = {
-    small: 5,   // |delta| < 5: slight impact
-    medium: 15, // 5 <= |delta| < 15: medium impact
-    // |delta| >= 15: strong impact
-  }
-
-  // Check if a stat key should use fuzzy indicators
-  const isFuzzyStatKey = (key: string): boolean => {
-    return key === 'satisfaction' || key === 'health' || key === 'fireRisk'
-  }
-
-  // Convert numeric delta to fuzzy indicator (for satisfaction, health, fireRisk)
-  const getFuzzyIndicator = (delta: number): string => {
-    const absDelta = Math.abs(delta)
-    const isPositive = delta > 0
-    
-    if (absDelta === 0) return ''
-    
-    if (absDelta < EFFECT_THRESHOLDS.small) {
-      return isPositive ? '+' : '−'
-    } else if (absDelta < EFFECT_THRESHOLDS.medium) {
-      return isPositive ? '++' : '−−'
-    } else {
-      return isPositive ? '+++' : '−−−'
-    }
+  // Helper function to format numeric delta values
+  const formatDeltaValue = (delta: number): string => {
+    return `${delta > 0 ? '+' : ''}${delta}`
   }
 
   // Get stat icon for feedback
 
   // Format effects for display
-  const formatEffects = (effects: Effect, excludeAuthority = false, excludeFeedbackStats = false): Array<{ label: string; value: number | string; isPositive: boolean; isFuzzy: boolean }> => {
-    const formatted: Array<{ label: string; value: number | string; isPositive: boolean; isFuzzy: boolean }> = []
+  const formatEffects = (effects: Effect, excludeAuthority = false, excludeFeedbackStats = false): Array<{ label: string; value: number | string; isPositive: boolean }> => {
+    const formatted: Array<{ label: string; value: number | string; isPositive: boolean }> = []
     
     if (effects.gold !== undefined) {
       formatted.push({ 
         label: 'Gold', 
         value: effects.gold, 
-        isPositive: effects.gold > 0,
-        isFuzzy: false
+        isPositive: effects.gold > 0
       })
     }
     if (effects.satisfaction !== undefined && !excludeFeedbackStats) {
       formatted.push({ 
         label: 'Satisfaction', 
-        value: getFuzzyIndicator(effects.satisfaction), 
-        isPositive: effects.satisfaction > 0,
-        isFuzzy: true
+        value: effects.satisfaction, 
+        isPositive: effects.satisfaction > 0
       })
     }
     if (effects.health !== undefined && !excludeFeedbackStats) {
       formatted.push({ 
         label: 'Health', 
-        value: getFuzzyIndicator(effects.health), 
-        isPositive: effects.health > 0,
-        isFuzzy: true
+        value: effects.health, 
+        isPositive: effects.health > 0
       })
     }
     if (effects.fireRisk !== undefined && !excludeFeedbackStats) {
       formatted.push({ 
         label: 'Fire Risk', 
-        value: getFuzzyIndicator(effects.fireRisk), 
+        value: effects.fireRisk, 
         // For fire risk, lower is better
-        isPositive: effects.fireRisk < 0,
-        isFuzzy: true
+        isPositive: effects.fireRisk < 0
       })
     }
     if (effects.farmers !== undefined) {
       formatted.push({ 
         label: 'Farmers', 
         value: effects.farmers, 
-        isPositive: effects.farmers > 0,
-        isFuzzy: false
+        isPositive: effects.farmers > 0
       })
     }
     if (effects.landForces !== undefined) {
       formatted.push({ 
         label: 'Land Forces', 
         value: effects.landForces, 
-        isPositive: effects.landForces > 0,
-        isFuzzy: false
+        isPositive: effects.landForces > 0
       })
     }
     if (effects.authority !== undefined && !excludeAuthority) {
       formatted.push({ 
         label: 'Authority', 
         value: effects.authority, 
-        isPositive: effects.authority > 0,
-        isFuzzy: false
+        isPositive: effects.authority > 0
       })
     }
     
     // Add need fulfillment indicators
-    if (effects.marketplace) formatted.push({ label: '✓ Marketplace', value: '', isPositive: true, isFuzzy: false })
-    if (effects.bread) formatted.push({ label: '✓ Bread', value: '', isPositive: true, isFuzzy: false })
-    if (effects.beer) formatted.push({ label: '✓ Beer', value: '', isPositive: true, isFuzzy: false })
-    if (effects.firewood) formatted.push({ label: '✓ Firewood', value: '', isPositive: true, isFuzzy: false })
-    if (effects.well) formatted.push({ label: '✓ Well', value: '', isPositive: true, isFuzzy: false })
+    if (effects.marketplace) formatted.push({ label: '✓ Marketplace', value: '', isPositive: true })
+    if (effects.bread) formatted.push({ label: '✓ Bread', value: '', isPositive: true })
+    if (effects.beer) formatted.push({ label: '✓ Beer', value: '', isPositive: true })
+    if (effects.firewood) formatted.push({ label: '✓ Firewood', value: '', isPositive: true })
+    if (effects.well) formatted.push({ label: '✓ Well', value: '', isPositive: true })
     
     return formatted
   }
@@ -619,14 +589,9 @@ function App() {
                               {effects.map((effect, i) => (
                                 <span 
                                   key={i} 
-                                  className={`consequence ${effect.isFuzzy ? 'fuzzy-indicator' : ''} ${effect.isPositive ? 'positive' : 'negative'}`}
+                                  className={`consequence ${effect.isPositive ? 'positive' : 'negative'}`}
                                 >
-                                  {effect.isFuzzy && effect.value !== '' && (
-                                    <>
-                                      {effect.label}: {effect.value}
-                                    </>
-                                  )}
-                                  {!effect.isFuzzy && typeof effect.value === 'number' && effect.value !== 0 && (
+                                  {typeof effect.value === 'number' && effect.value !== 0 && (
                                     <>
                                       {effect.label}: {effect.value > 0 ? '+' : ''}{effect.value}
                                     </>
@@ -717,12 +682,12 @@ function App() {
                       </div>
                       <div className="log-deltas">
                         {Object.entries(entry.deltas).map(([key, value]) => {
-                          const displayValue = isFuzzyStatKey(key) ? getFuzzyIndicator(value) : `${value > 0 ? '+' : ''}${value}`
+                          const displayValue = formatDeltaValue(value)
                           
                           return (
                             <span
                               key={key}
-                              className={`delta ${isFuzzyStatKey(key) ? 'fuzzy-indicator' : ''} ${value > 0 ? 'positive' : 'negative'}`}
+                              className={`delta ${value > 0 ? 'positive' : 'negative'}`}
                             >
                               {key}: {displayValue}
                             </span>
@@ -747,9 +712,7 @@ function App() {
                             
                             const icon = needIcons[change.source] || '✨';
                             const label = needLabels[change.source] || change.source;
-                            const displayValue = isFuzzyStatKey(change.stat) 
-                              ? getFuzzyIndicator(change.amount) 
-                              : `${change.amount > 0 ? '+' : ''}${change.amount}`;
+                            const displayValue = formatDeltaValue(change.amount);
                             
                             return (
                               <div key={changeIndex} className="modifier-effect">
@@ -901,7 +864,7 @@ function App() {
                             )}
                             {config.onSuccess && formatEffects(config.onSuccess).map((eff, i) => (
                               <span key={i} className={`fork-effect ${eff.isPositive ? 'positive' : 'negative'}`}>
-                                {eff.label}: {eff.isFuzzy ? eff.value : (typeof eff.value === 'number' ? (eff.value > 0 ? '+' : '') + eff.value : eff.value)}
+                                {eff.label}: {typeof eff.value === 'number' ? (eff.value > 0 ? '+' : '') + eff.value : eff.value}
                               </span>
                             ))}
                             {config.refundOnSuccessPercent !== undefined && config.refundOnSuccessPercent > 0 && (
@@ -923,7 +886,7 @@ function App() {
                             )}
                             {config.onFailure && formatEffects(config.onFailure).map((eff, i) => (
                               <span key={i} className={`fork-effect ${eff.isPositive ? 'positive' : 'negative'}`}>
-                                {eff.label}: {eff.isFuzzy ? eff.value : (typeof eff.value === 'number' ? (eff.value > 0 ? '+' : '') + eff.value : eff.value)}
+                                {eff.label}: {typeof eff.value === 'number' ? (eff.value > 0 ? '+' : '') + eff.value : eff.value}
                               </span>
                             ))}
                             <span className="fork-effect negative">
@@ -954,10 +917,8 @@ function App() {
         
         {/* Flying Delta Indicators */}
         {flyingDeltas.map((delta) => {
-          // Format the delta value
-          const displayValue = isFuzzyStatKey(delta.resourceType) 
-            ? getFuzzyIndicator(delta.value) 
-            : `${delta.value > 0 ? '+' : ''}${delta.value}`
+          // Format the delta value - always use numeric format
+          const displayValue = formatDeltaValue(delta.value)
           
           // Determine if it's positive or negative (fireRisk is inverted)
           const isPositive = delta.resourceType === 'fireRisk' 
@@ -967,7 +928,7 @@ function App() {
           return (
             <div
               key={delta.id}
-              className={`flying-delta ${isPositive ? 'positive' : 'negative'} ${isFuzzyStatKey(delta.resourceType) ? 'fuzzy' : ''}`}
+              className={`flying-delta ${isPositive ? 'positive' : 'negative'}`}
               style={{
                 left: `${delta.startX}px`,
                 top: `${delta.startY}px`
