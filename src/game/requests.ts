@@ -1725,67 +1725,6 @@ export const eventRequests: Request[] = [
     ],
   },
   
-  // AUTHORITY SYSTEM TEST EVENTS
-  {
-    id: 'EVT_AUTHORITY_SIMPLE_TEST',
-    title: 'Diplomatic Victory',
-    text: 'Your diplomatic efforts have paid off. The neighboring lord recognizes your authority.',
-    options: [
-      {
-        text: 'ACCEPT RECOGNITION',
-        effects: {
-          authority: 3,
-          gold: 15,
-        },
-      },
-      {
-        text: 'REMAIN HUMBLE',
-        effects: {
-          satisfaction: 4,
-        },
-      },
-    ],
-  },
-  {
-    id: 'EVT_AUTHORITY_TEST',
-    title: 'Test of Authority',
-    text: 'A rival faction challenges your political influence. You can commit authority to maintain your position. Success will refund your commitment, failure will cost you dearly.',
-    authorityMin: 34,
-    authorityMax: 100,
-    options: [
-      {
-        text: 'ASSERT AUTHORITY',
-        effects: {
-          satisfaction: 5,
-        },
-        authorityCheck: {
-          minCommit: 0,
-          maxCommit: 20,
-          threshold: 20,
-          onSuccess: {
-            gold: 20,
-            authority: 1,
-          },
-          onFailure: {
-            gold: -10,
-            satisfaction: -10,
-          },
-          successFeedbackRequestId: 'INFO_AUTHORITY_SUCCESS',
-          failureFeedbackRequestId: 'INFO_AUTHORITY_FAILURE',
-          refundOnSuccessPercent: 100,
-          extraLossOnFailure: 8,
-        },
-      },
-      {
-        text: 'BACK DOWN',
-        effects: {
-          satisfaction: -5,
-          authority: -2,
-        },
-      },
-    ],
-  },
-  
   // LOW AUTHORITY EVENTS (authorityMin: 0, authorityMax: 33)
   // These events reflect weak leadership, disrespect, and vulnerability
   {
@@ -3491,32 +3430,6 @@ export const eventRequests: Request[] = [
  * Info-Requests for authority system feedback
  */
 export const authorityInfoRequests: Request[] = [
-  {
-    id: 'INFO_AUTHORITY_SUCCESS',
-    title: 'Authority Prevails',
-    text: 'Your show of political power has impressed the faction. They back down and offer tribute. Your authority is returned to you.',
-    advancesTick: false,
-    canTriggerRandomly: false,
-    options: [
-      {
-        text: 'ACCEPT',
-        effects: {},
-      },
-    ],
-  },
-  {
-    id: 'INFO_AUTHORITY_FAILURE',
-    title: 'Authority Challenged',
-    text: 'Your influence was insufficient. The rival faction gains ground, and your reputation suffers. Your committed authority is lost, and you face additional losses.',
-    advancesTick: false,
-    canTriggerRandomly: false,
-    options: [
-      {
-        text: 'ACKNOWLEDGE',
-        effects: {},
-      },
-    ],
-  },
   // Feedback events for authority commit scenarios
   {
     id: 'INFO_TRADE_SUCCESS',
