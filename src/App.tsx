@@ -273,29 +273,16 @@ function App() {
   }
   
   const handleConfirmAuthority = () => {
-    if (authorityModalOpen === null || !currentRequest) return
-    
-    const optionIndex = authorityModalOpen
-    const option = currentRequest.options[optionIndex]
-    
-    if (!option) return
+    if (authorityModalOpen === null) return
     
     // Save the commitment for this option
     setAuthorityCommitments(prev => ({
       ...prev,
-      [optionIndex]: authorityCommit
+      [authorityModalOpen]: authorityCommit
     }))
     
     // Close modal
     setAuthorityModalOpen(null)
-    
-    // Automatically trigger the option click
-    // Note: We can't capture the button rect here, so lastClickedOption will be null
-    // This means flying feedback won't originate from a button position
-    setLastClickedOption(null)
-    
-    // Dispatch the CHOOSE_OPTION action with the authority commitment
-    dispatch({ type: 'CHOOSE_OPTION', optionIndex, authorityCommit })
   }
 
   // Get last 3 log entries
