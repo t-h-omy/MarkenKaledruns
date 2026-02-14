@@ -1272,3 +1272,42 @@
     font-size: 0.7rem;
   }
 }
+
+/* Flying Delta Indicators */
+.flying-delta {
+  position: fixed;
+  pointer-events: none;
+  font-size: 1.2rem;
+  font-weight: bold;
+  z-index: 1500;
+  animation: flyDelta 2s ease-out forwards;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.8);
+}
+
+.flying-delta.positive {
+  color: #4ade80;
+}
+
+.flying-delta.negative {
+  color: #f87171;
+}
+
+.flying-delta.fuzzy {
+  font-family: monospace;
+  letter-spacing: 0.1em;
+  font-size: 1.4rem;
+}
+
+@keyframes flyDelta {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) translateY(0) scale(1);
+  }
+  20% {
+    transform: translate(-50%, -50%) translateY(-10px) scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translateY(-80px) scale(0.8);
+  }
+}

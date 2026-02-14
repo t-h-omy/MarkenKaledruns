@@ -1,4 +1,4 @@
-import { useReducer, useState, useEffect } from 'react'
+import { useReducer, useState, useEffect, useRef } from 'react'
 import './App.css'
 import { gameReducer, initializeGame, isNeedUnlocked, calculateRequiredBuildings, isNeedRequired, getCurrentRequest } from './game/state'
 import type { Effect, Needs } from './game/models'
@@ -50,6 +50,19 @@ function App() {
   const [previousFarmers, setPreviousFarmers] = useState(gameState.stats.farmers)
   const [previousLandForces, setPreviousLandForces] = useState(gameState.stats.landForces)
   const [previousCombatRound, setPreviousCombatRound] = useState(gameState.activeCombat?.round ?? -1)
+  
+  // Flying delta indicators state
+  type FlyingDelta = {
+    id: number;
+    resourceType: 'satisfaction' | 'health' | 'fireRisk' | 'authority';
+    value: number;
+    startX: number; // X position (horizontally aligned with resource bar)
+    startY: number; // Y position (at option button)
+    timestamp: number;
+  }
+  const [flyingDeltas, setFlyingDeltas] = useState<FlyingDelta[]>([])
+  const optionButtonRefs = useRef<(HTMLButtonElement | null)[]>([])
+  const statsBarRef = useRef<HTMLDivElement>(null)
   
   // Track stat changes and trigger pulsating animations in resource bar
   useEffect(() => {
@@ -200,8 +213,65 @@ function App() {
     }
   }, [maxAuthority, currentRequest?.id, authorityCommit, currentRequest?.options])
 
+  // Function to spawn flying delta indicators
+  const spawnFlyingDeltas = (optionIndex: number, effects: Effect) => {
+    const buttonElement = optionButtonRefs.current[optionIndex]
+    const statsBar = statsBarRef.current
+    
+    if (!buttonElement || !statsBar) return
+    
+    const buttonRect = buttonElement.getBoundingClientRect()
+    const deltas: FlyingDelta[] = []
+    const timestamp = Date.now()
+    let deltaId = timestamp
+    
+    // Filter resources to only show satisfaction, health, fireRisk, authority
+    // Exclude: gold, farmers (population), landForces
+    const resourceTypes: Array<keyof Effect> = ['satisfaction', 'health', 'fireRisk', 'authority']
+    
+    resourceTypes.forEach((resourceType) => {
+      const value = effects[resourceType]
+      if (value === undefined || value === 0 || typeof value !== 'number') return
+      
+      // Find the corresponding stat element in the stats bar to get its X position
+      const statElement = statsBar.querySelector(`[data-stat="${resourceType}"]`)
+      if (!statElement) return
+      
+      const statRect = statElement.getBoundingClientRect()
+      
+      // Calculate positions:
+      // - X: horizontally aligned with the resource in the resource bar
+      // - Y: at the option button's vertical position
+      const startX = statRect.left + statRect.width / 2
+      const startY = buttonRect.top + buttonRect.height / 2
+      
+      deltas.push({
+        id: deltaId++,
+        resourceType: resourceType as 'satisfaction' | 'health' | 'fireRisk' | 'authority',
+        value: value as number,
+        startX,
+        startY,
+        timestamp
+      })
+    })
+    
+    if (deltas.length > 0) {
+      setFlyingDeltas(prev => [...prev, ...deltas])
+      
+      // Remove deltas after 2 seconds (matching the CSS animation duration)
+      setTimeout(() => {
+        setFlyingDeltas(prev => prev.filter(d => d.timestamp !== timestamp))
+      }, 2000)
+    }
+  }
+
   const handleOptionClick = (optionIndex: number) => {
     const option = currentRequest?.options[optionIndex]
+    
+    // Spawn flying deltas for this option's effects
+    if (option) {
+      spawnFlyingDeltas(optionIndex, option.effects)
+    }
     
     // If combat request and Option A (index 0), pass combatCommit
     if (currentRequest?.combat && optionIndex === 0) {
@@ -312,104 +382,74 @@ function App() {
     return { disabled: false }
   }
 
-  // Configurable thresholds for effect tiers
-  const EFFECT_THRESHOLDS = {
-    small: 5,   // |delta| < 5: slight impact
-    medium: 15, // 5 <= |delta| < 15: medium impact
-    // |delta| >= 15: strong impact
-  }
-
-  // Check if a stat key should use fuzzy indicators
-  const isFuzzyStatKey = (key: string): boolean => {
-    return key === 'satisfaction' || key === 'health' || key === 'fireRisk'
-  }
-
-  // Convert numeric delta to fuzzy indicator (for satisfaction, health, fireRisk)
-  const getFuzzyIndicator = (delta: number): string => {
-    const absDelta = Math.abs(delta)
-    const isPositive = delta > 0
-    
-    if (absDelta === 0) return ''
-    
-    if (absDelta < EFFECT_THRESHOLDS.small) {
-      return isPositive ? '+' : '−'
-    } else if (absDelta < EFFECT_THRESHOLDS.medium) {
-      return isPositive ? '++' : '−−'
-    } else {
-      return isPositive ? '+++' : '−−−'
-    }
+  // Helper function to format numeric delta values
+  const formatDeltaValue = (delta: number): string => {
+    return `${delta > 0 ? '+' : ''}${delta}`
   }
 
   // Get stat icon for feedback
 
   // Format effects for display
-  const formatEffects = (effects: Effect, excludeAuthority = false, excludeFeedbackStats = false): Array<{ label: string; value: number | string; isPositive: boolean; isFuzzy: boolean }> => {
-    const formatted: Array<{ label: string; value: number | string; isPositive: boolean; isFuzzy: boolean }> = []
+  const formatEffects = (effects: Effect, excludeAuthority = false, excludeFeedbackStats = false): Array<{ label: string; value: number | string; isPositive: boolean }> => {
+    const formatted: Array<{ label: string; value: number | string; isPositive: boolean }> = []
     
     if (effects.gold !== undefined) {
       formatted.push({ 
         label: 'Gold', 
         value: effects.gold, 
-        isPositive: effects.gold > 0,
-        isFuzzy: false
+        isPositive: effects.gold > 0
       })
     }
     if (effects.satisfaction !== undefined && !excludeFeedbackStats) {
       formatted.push({ 
         label: 'Satisfaction', 
-        value: getFuzzyIndicator(effects.satisfaction), 
-        isPositive: effects.satisfaction > 0,
-        isFuzzy: true
+        value: effects.satisfaction, 
+        isPositive: effects.satisfaction > 0
       })
     }
     if (effects.health !== undefined && !excludeFeedbackStats) {
       formatted.push({ 
         label: 'Health', 
-        value: getFuzzyIndicator(effects.health), 
-        isPositive: effects.health > 0,
-        isFuzzy: true
+        value: effects.health, 
+        isPositive: effects.health > 0
       })
     }
     if (effects.fireRisk !== undefined && !excludeFeedbackStats) {
       formatted.push({ 
         label: 'Fire Risk', 
-        value: getFuzzyIndicator(effects.fireRisk), 
+        value: effects.fireRisk, 
         // For fire risk, lower is better
-        isPositive: effects.fireRisk < 0,
-        isFuzzy: true
+        isPositive: effects.fireRisk < 0
       })
     }
     if (effects.farmers !== undefined) {
       formatted.push({ 
         label: 'Farmers', 
         value: effects.farmers, 
-        isPositive: effects.farmers > 0,
-        isFuzzy: false
+        isPositive: effects.farmers > 0
       })
     }
     if (effects.landForces !== undefined) {
       formatted.push({ 
         label: 'Land Forces', 
         value: effects.landForces, 
-        isPositive: effects.landForces > 0,
-        isFuzzy: false
+        isPositive: effects.landForces > 0
       })
     }
     if (effects.authority !== undefined && !excludeAuthority) {
       formatted.push({ 
         label: 'Authority', 
         value: effects.authority, 
-        isPositive: effects.authority > 0,
-        isFuzzy: false
+        isPositive: effects.authority > 0
       })
     }
     
     // Add need fulfillment indicators
-    if (effects.marketplace) formatted.push({ label: '✓ Marketplace', value: '', isPositive: true, isFuzzy: false })
-    if (effects.bread) formatted.push({ label: '✓ Bread', value: '', isPositive: true, isFuzzy: false })
-    if (effects.beer) formatted.push({ label: '✓ Beer', value: '', isPositive: true, isFuzzy: false })
-    if (effects.firewood) formatted.push({ label: '✓ Firewood', value: '', isPositive: true, isFuzzy: false })
-    if (effects.well) formatted.push({ label: '✓ Well', value: '', isPositive: true, isFuzzy: false })
+    if (effects.marketplace) formatted.push({ label: '✓ Marketplace', value: '', isPositive: true })
+    if (effects.bread) formatted.push({ label: '✓ Bread', value: '', isPositive: true })
+    if (effects.beer) formatted.push({ label: '✓ Beer', value: '', isPositive: true })
+    if (effects.firewood) formatted.push({ label: '✓ Firewood', value: '', isPositive: true })
+    if (effects.well) formatted.push({ label: '✓ Well', value: '', isPositive: true })
     
     return formatted
   }
@@ -428,7 +468,7 @@ function App() {
     <div className="app">
       <div className="game-container">
         {/* Top Compact Stats Bar */}
-        <div className="stats-bar">
+        <div className="stats-bar" ref={statsBarRef}>
           <div className={`stat-compact ${getStatAnimationClass('gold')}`} data-stat="gold">
             <span className="stat-icon">💰</span>
             <span className="stat-value">{gameState.stats.gold}</span>
@@ -538,6 +578,7 @@ function App() {
                     return (
                       <div key={index} className="option-row">
                         <button
+                          ref={(el) => { optionButtonRefs.current[index] = el }}
                           className={`option-button ${disabled ? 'option-disabled' : ''}`}
                           onClick={() => !disabled && handleOptionClick(index)}
                           disabled={disabled}
@@ -548,14 +589,9 @@ function App() {
                               {effects.map((effect, i) => (
                                 <span 
                                   key={i} 
-                                  className={`consequence ${effect.isFuzzy ? 'fuzzy-indicator' : ''} ${effect.isPositive ? 'positive' : 'negative'}`}
+                                  className={`consequence ${effect.isPositive ? 'positive' : 'negative'}`}
                                 >
-                                  {effect.isFuzzy && effect.value !== '' && (
-                                    <>
-                                      {effect.label}: {effect.value}
-                                    </>
-                                  )}
-                                  {!effect.isFuzzy && typeof effect.value === 'number' && effect.value !== 0 && (
+                                  {typeof effect.value === 'number' && effect.value !== 0 && (
                                     <>
                                       {effect.label}: {effect.value > 0 ? '+' : ''}{effect.value}
                                     </>
@@ -646,12 +682,12 @@ function App() {
                       </div>
                       <div className="log-deltas">
                         {Object.entries(entry.deltas).map(([key, value]) => {
-                          const displayValue = isFuzzyStatKey(key) ? getFuzzyIndicator(value) : `${value > 0 ? '+' : ''}${value}`
+                          const displayValue = formatDeltaValue(value)
                           
                           return (
                             <span
                               key={key}
-                              className={`delta ${isFuzzyStatKey(key) ? 'fuzzy-indicator' : ''} ${value > 0 ? 'positive' : 'negative'}`}
+                              className={`delta ${value > 0 ? 'positive' : 'negative'}`}
                             >
                               {key}: {displayValue}
                             </span>
@@ -676,9 +712,7 @@ function App() {
                             
                             const icon = needIcons[change.source] || '✨';
                             const label = needLabels[change.source] || change.source;
-                            const displayValue = isFuzzyStatKey(change.stat) 
-                              ? getFuzzyIndicator(change.amount) 
-                              : `${change.amount > 0 ? '+' : ''}${change.amount}`;
+                            const displayValue = formatDeltaValue(change.amount);
                             
                             return (
                               <div key={changeIndex} className="modifier-effect">
@@ -830,7 +864,7 @@ function App() {
                             )}
                             {config.onSuccess && formatEffects(config.onSuccess).map((eff, i) => (
                               <span key={i} className={`fork-effect ${eff.isPositive ? 'positive' : 'negative'}`}>
-                                {eff.label}: {eff.isFuzzy ? eff.value : (typeof eff.value === 'number' ? (eff.value > 0 ? '+' : '') + eff.value : eff.value)}
+                                {eff.label}: {typeof eff.value === 'number' ? (eff.value > 0 ? '+' : '') + eff.value : eff.value}
                               </span>
                             ))}
                             {config.refundOnSuccessPercent !== undefined && config.refundOnSuccessPercent > 0 && (
@@ -852,7 +886,7 @@ function App() {
                             )}
                             {config.onFailure && formatEffects(config.onFailure).map((eff, i) => (
                               <span key={i} className={`fork-effect ${eff.isPositive ? 'positive' : 'negative'}`}>
-                                {eff.label}: {eff.isFuzzy ? eff.value : (typeof eff.value === 'number' ? (eff.value > 0 ? '+' : '') + eff.value : eff.value)}
+                                {eff.label}: {typeof eff.value === 'number' ? (eff.value > 0 ? '+' : '') + eff.value : eff.value}
                               </span>
                             ))}
                             <span className="fork-effect negative">
@@ -880,6 +914,30 @@ function App() {
             </div>
           </div>
         )}
+        
+        {/* Flying Delta Indicators */}
+        {flyingDeltas.map((delta) => {
+          // Format the delta value - always use numeric format
+          const displayValue = formatDeltaValue(delta.value)
+          
+          // Determine if it's positive or negative (fireRisk is inverted)
+          const isPositive = delta.resourceType === 'fireRisk' 
+            ? delta.value < 0 
+            : delta.value > 0
+          
+          return (
+            <div
+              key={delta.id}
+              className={`flying-delta ${isPositive ? 'positive' : 'negative'}`}
+              style={{
+                left: `${delta.startX}px`,
+                top: `${delta.startY}px`
+              }}
+            >
+              {displayValue}
+            </div>
+          )
+        })}
         
         {/* Version display */}
         <div className="version-footer">
