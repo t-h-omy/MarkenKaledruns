@@ -35,31 +35,23 @@ function App() {
     }
   }, [gameState.tick, currentTick])
   
-  // Floating feedback for authority changes
-  const [authorityFeedback, setAuthorityFeedback] = useState<Array<{ id: number; amount: number }>>([])
-  const [previousAuthority, setPreviousAuthority] = useState(gameState.stats.authority)
-  
-  // Universal flying feedback system for health, satisfaction, fireRisk, authority, gold, farmers (population), and landForces
-  type FlyingFeedback = {
-    id: number;
+  // Pulsating resource bar animation system
+  type StatAnimation = {
     stat: 'health' | 'satisfaction' | 'fireRisk' | 'authority' | 'gold' | 'farmers' | 'landForces';
-    amount: number;
-    startX: number;
-    startY: number;
-    targetX: number;
-    targetY: number;
+    delta: number;
+    timestamp: number;
   }
-  const [flyingFeedbacks, setFlyingFeedbacks] = useState<FlyingFeedback[]>([])
+  const [statAnimations, setStatAnimations] = useState<StatAnimation[]>([])
   const [previousHealth, setPreviousHealth] = useState(gameState.stats.health)
   const [previousSatisfaction, setPreviousSatisfaction] = useState(gameState.stats.satisfaction)
   const [previousFireRisk, setPreviousFireRisk] = useState(gameState.stats.fireRisk)
+  const [previousAuthority, setPreviousAuthority] = useState(gameState.stats.authority)
   const [previousGold, setPreviousGold] = useState(gameState.stats.gold)
   const [previousFarmers, setPreviousFarmers] = useState(gameState.stats.farmers)
   const [previousLandForces, setPreviousLandForces] = useState(gameState.stats.landForces)
-  const [lastClickedOption, setLastClickedOption] = useState<{ index: number; rect: DOMRect } | null>(null)
   const [previousCombatRound, setPreviousCombatRound] = useState(gameState.activeCombat?.round ?? -1)
   
-  // Track stat changes and show flying feedback
+  // Track stat changes and trigger pulsating animations in resource bar
   useEffect(() => {
     const changes: Array<{ stat: 'health' | 'satisfaction' | 'fireRisk' | 'authority' | 'gold' | 'farmers' | 'landForces'; delta: number }> = []
     
@@ -119,57 +111,23 @@ function App() {
     }
     setPreviousLandForces(currentLandForces)
     
-    // Create flying feedback for all changes
-    if (changes.length > 0 && lastClickedOption) {
-      const startX = lastClickedOption.rect.left + lastClickedOption.rect.width / 2
-      const startY = lastClickedOption.rect.top + lastClickedOption.rect.height / 2
+    // Add animations for all changes
+    if (changes.length > 0) {
+      const timestamp = Date.now()
+      const newAnimations = changes.map(change => ({
+        stat: change.stat,
+        delta: change.delta,
+        timestamp
+      }))
       
-      const newFeedbacks = changes.map(change => {
-        // Get target position immediately when creating feedback
-        const targetElement = document.querySelector(`[data-stat="${change.stat}"]`)
-        const targetRect = targetElement?.getBoundingClientRect()
-        const targetX = targetRect ? targetRect.left + targetRect.width / 2 : startX
-        const targetY = targetRect ? targetRect.top + targetRect.height / 2 : startY
-        
-        return {
-          id: Date.now() + Math.random(),
-          stat: change.stat,
-          amount: change.delta,
-          startX,
-          startY,
-          targetX,
-          targetY
-        }
-      })
+      setStatAnimations(prev => [...prev, ...newAnimations])
       
-      setFlyingFeedbacks(prev => [...prev, ...newFeedbacks])
-      
-      // Remove after 3 seconds
-      newFeedbacks.forEach(feedback => {
-        setTimeout(() => {
-          setFlyingFeedbacks(prev => prev.filter(f => f.id !== feedback.id))
-        }, 3000)
-      })
-    }
-  }, [gameState.stats.health, gameState.stats.satisfaction, gameState.stats.fireRisk, gameState.stats.authority, gameState.stats.gold, gameState.stats.farmers, gameState.stats.landForces, lastClickedOption, previousHealth, previousSatisfaction, previousFireRisk, previousAuthority, previousGold, previousFarmers, previousLandForces])
-  
-  // Track authority changes and show floating feedback (kept for backward compatibility)
-  useEffect(() => {
-    const currentAuthority = gameState.stats.authority
-    const delta = currentAuthority - previousAuthority
-    
-    if (delta !== 0 && previousAuthority !== 0) {
-      const feedbackId = Date.now()
-      setAuthorityFeedback(prev => [...prev, { id: feedbackId, amount: delta }])
-      
-      // Remove after 3 seconds
+      // Remove after animation completes (2 seconds)
       setTimeout(() => {
-        setAuthorityFeedback(prev => prev.filter(f => f.id !== feedbackId))
-      }, 3000)
+        setStatAnimations(prev => prev.filter(a => a.timestamp !== timestamp))
+      }, 2000)
     }
-    
-    setPreviousAuthority(currentAuthority)
-  }, [gameState.stats.authority])
+  }, [gameState.stats.health, gameState.stats.satisfaction, gameState.stats.fireRisk, gameState.stats.authority, gameState.stats.gold, gameState.stats.farmers, gameState.stats.landForces, previousHealth, previousSatisfaction, previousFireRisk, previousAuthority, previousGold, previousFarmers, previousLandForces])
 
   // Handle delayed request transitions (0.5s delay to see feedback)
   useEffect(() => {
@@ -242,12 +200,8 @@ function App() {
     }
   }, [maxAuthority, currentRequest?.id, authorityCommit, currentRequest?.options])
 
-  const handleOptionClick = (optionIndex: number, event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleOptionClick = (optionIndex: number) => {
     const option = currentRequest?.options[optionIndex]
-    
-    // Capture button position for flying feedback
-    const buttonRect = event.currentTarget.getBoundingClientRect()
-    setLastClickedOption({ index: optionIndex, rect: buttonRect })
     
     // If combat request and Option A (index 0), pass combatCommit
     if (currentRequest?.combat && optionIndex === 0) {
@@ -387,17 +341,6 @@ function App() {
   }
 
   // Get stat icon for feedback
-  const getStatIcon = (stat: 'health' | 'satisfaction' | 'fireRisk' | 'authority' | 'gold' | 'farmers' | 'landForces'): string => {
-    switch (stat) {
-      case 'health': return '❤️'
-      case 'satisfaction': return '😊'
-      case 'fireRisk': return '🔥'
-      case 'authority': return '👑'
-      case 'gold': return '💰'
-      case 'farmers': return '👤'
-      case 'landForces': return '⚔️'
-    }
-  }
 
   // Format effects for display
   const formatEffects = (effects: Effect, excludeAuthority = false, excludeFeedbackStats = false): Array<{ label: string; value: number | string; isPositive: boolean; isFuzzy: boolean }> => {
@@ -471,68 +414,50 @@ function App() {
     return formatted
   }
 
+  // Helper function to get animation class for a stat
+  const getStatAnimationClass = (statName: 'health' | 'satisfaction' | 'fireRisk' | 'authority' | 'gold' | 'farmers' | 'landForces') => {
+    const animation = statAnimations.find(a => a.stat === statName)
+    if (!animation) return ''
+    
+    // For fireRisk, the logic is inverted: increase is bad, decrease is good
+    const isWorsening = statName === 'fireRisk' ? animation.delta > 0 : animation.delta < 0
+    return isWorsening ? 'stat-animate-worse' : 'stat-animate-better'
+  }
+
   return (
     <div className="app">
       <div className="game-container">
         {/* Top Compact Stats Bar */}
         <div className="stats-bar">
-          <div className="stat-compact" data-stat="gold">
+          <div className={`stat-compact ${getStatAnimationClass('gold')}`} data-stat="gold">
             <span className="stat-icon">💰</span>
             <span className="stat-value">{gameState.stats.gold}</span>
           </div>
-          <div className="stat-compact" data-stat="satisfaction">
+          <div className={`stat-compact ${getStatAnimationClass('satisfaction')}`} data-stat="satisfaction">
             <span className="stat-icon">😊</span>
             <span className="stat-value">{gameState.stats.satisfaction}</span>
           </div>
-          <div className="stat-compact" data-stat="health">
+          <div className={`stat-compact ${getStatAnimationClass('health')}`} data-stat="health">
             <span className="stat-icon">❤️</span>
             <span className="stat-value">{gameState.stats.health}</span>
           </div>
-          <div className="stat-compact stat-warning" data-stat="fireRisk">
+          <div className={`stat-compact stat-warning ${getStatAnimationClass('fireRisk')}`} data-stat="fireRisk">
             <span className="stat-icon">🔥</span>
             <span className="stat-value">{gameState.stats.fireRisk}</span>
           </div>
-          <div className="stat-compact" data-stat="farmers">
+          <div className={`stat-compact ${getStatAnimationClass('farmers')}`} data-stat="farmers">
             <span className="stat-icon">👨‍🌾</span>
             <span className="stat-value">{gameState.stats.farmers}</span>
           </div>
-          <div className="stat-compact" data-stat="landForces">
+          <div className={`stat-compact ${getStatAnimationClass('landForces')}`} data-stat="landForces">
             <span className="stat-icon">⚔️</span>
             <span className="stat-value">{gameState.stats.landForces}</span>
           </div>
-          <div className="stat-compact stat-authority" data-stat="authority">
+          <div className={`stat-compact stat-authority ${getStatAnimationClass('authority')}`} data-stat="authority">
             <span className="stat-icon">👑</span>
             <span className="stat-value">{Math.floor(gameState.stats.authority)}</span>
-            {/* Floating Feedback for Authority Changes */}
-            {authorityFeedback.map(feedback => (
-              <div 
-                key={feedback.id} 
-                className={`authority-floating-feedback ${feedback.amount > 0 ? 'positive' : 'negative'}`}
-              >
-                {feedback.amount > 0 ? '+' : ''}{feedback.amount}
-              </div>
-            ))}
           </div>
         </div>
-
-        {/* Flying Feedback Overlay */}
-        {flyingFeedbacks.map(feedback => (
-          <div
-            key={feedback.id}
-            className={`flying-feedback ${feedback.amount > 0 ? 'positive' : 'negative'}`}
-            style={{
-              '--start-x': `${feedback.startX}px`,
-              '--start-y': `${feedback.startY}px`,
-              '--end-x': `${feedback.targetX}px`,
-              '--end-y': `${feedback.targetY}px`,
-            } as React.CSSProperties}
-          >
-            <span className="feedback-icon">{getStatIcon(feedback.stat)}</span>
-            <span className="feedback-amount">
-              {feedback.amount > 0 ? '+' : ''}{Math.round(feedback.amount)}
-            </span>
-          </div>
-        ))}
 
         {/* Bankruptcy Warning */}
         {showBankruptcyWarning && !gameState.gameOver && (
@@ -614,7 +539,7 @@ function App() {
                       <div key={index} className="option-row">
                         <button
                           className={`option-button ${disabled ? 'option-disabled' : ''}`}
-                          onClick={(e) => !disabled && handleOptionClick(index, e)}
+                          onClick={() => !disabled && handleOptionClick(index)}
                           disabled={disabled}
                         >
                           <div className="option-text">{option.text}</div>

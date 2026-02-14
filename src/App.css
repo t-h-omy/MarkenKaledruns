@@ -56,106 +56,44 @@
   color: #ffd700;
 }
 
-/* Floating feedback for authority changes */
-.authority-floating-feedback {
-  position: absolute;
-  top: -10px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 1.2rem;
-  font-weight: bold;
-  pointer-events: none;
-  animation: float-up 3s ease-out forwards;
-  z-index: 1000;
+/* Pulsating animation for stat changes */
+.stat-animate-better .stat-value {
+  animation: pulsate-better 2s ease-in-out;
+  color: #4caf50 !important;
 }
 
-.authority-floating-feedback.positive {
-  color: #4caf50;
-  text-shadow: 0 0 8px rgba(76, 175, 80, 0.6);
+.stat-animate-worse .stat-value {
+  animation: pulsate-worse 2s ease-in-out;
+  color: #f44336 !important;
 }
 
-.authority-floating-feedback.negative {
-  color: #f44336;
-  text-shadow: 0 0 8px rgba(244, 67, 54, 0.6);
-}
-
-@keyframes float-up {
+@keyframes pulsate-better {
   0% {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
+    transform: scale(1);
   }
-  70% {
-    opacity: 1;
+  15% {
+    transform: scale(1.4);
+  }
+  30% {
+    transform: scale(1);
   }
   100% {
-    opacity: 0;
-    transform: translateX(-50%) translateY(-60px);
+    transform: scale(1);
   }
 }
 
-/* Make stat-authority position relative for floating feedback */
-.stat-compact.stat-authority {
-  position: relative;
-}
-
-/* Universal Flying Feedback System */
-.flying-feedback {
-  position: fixed;
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  font-size: 1.5rem;
-  font-weight: bold;
-  pointer-events: none;
-  z-index: 2000;
-  animation: fly-to-target 5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-  left: var(--start-x);
-  top: var(--start-y);
-  transform: translate(-50%, -50%);
-}
-
-.flying-feedback.positive .feedback-amount {
-  color: #4caf50;
-  text-shadow: 0 0 12px rgba(76, 175, 80, 0.8);
-}
-
-.flying-feedback.negative .feedback-amount {
-  color: #f44336;
-  text-shadow: 0 0 12px rgba(244, 67, 54, 0.8);
-}
-
-.flying-feedback .feedback-icon {
-  font-size: 1.8rem;
-  filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.5));
-}
-
-.flying-feedback .feedback-amount {
-  font-size: 1.5rem;
-  font-weight: bold;
-}
-
-@keyframes fly-to-target {
+@keyframes pulsate-worse {
   0% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.5);
+    transform: scale(1);
   }
-  10% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1.2);
+  15% {
+    transform: scale(1.4);
   }
-  20% {
-    transform: translate(-50%, -50%) scale(1);
-  }
-  70% {
-    opacity: 1;
-    left: var(--end-x);
-    top: var(--end-y);
+  30% {
+    transform: scale(1);
   }
   100% {
-    opacity: 0;
-    left: var(--end-x);
-    top: var(--end-y);
-    transform: translate(-50%, -50%) scale(0.8);
+    transform: scale(1);
   }
 }
 
