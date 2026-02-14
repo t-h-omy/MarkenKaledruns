@@ -56,9 +56,8 @@ function App() {
     id: number;
     resourceType: 'satisfaction' | 'health' | 'fireRisk' | 'authority';
     value: number;
-    startX: number; // Starting X position (at option button)
-    startY: number; // Starting Y position (at option button)
-    targetX: number; // Target X position (aligned with resource bar)
+    startX: number; // X position (horizontally aligned with resource bar)
+    startY: number; // Y position (at option button)
     timestamp: number;
   }
   const [flyingDeltas, setFlyingDeltas] = useState<FlyingDelta[]>([])
@@ -252,7 +251,6 @@ function App() {
         value: value as number,
         startX,
         startY,
-        targetX: startX, // Keep same X position (already aligned)
         timestamp
       })
     })
@@ -972,9 +970,8 @@ function App() {
               className={`flying-delta ${isPositive ? 'positive' : 'negative'} ${isFuzzyStatKey(delta.resourceType) ? 'fuzzy' : ''}`}
               style={{
                 left: `${delta.startX}px`,
-                top: `${delta.startY}px`,
-                '--target-x': `${delta.targetX}px`
-              } as React.CSSProperties}
+                top: `${delta.startY}px`
+              }}
             >
               {displayValue}
             </div>
