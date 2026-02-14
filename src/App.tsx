@@ -387,6 +387,20 @@ function App() {
     return `${delta > 0 ? '+' : ''}${delta}`
   }
 
+  // Helper function to get icon for a resource type
+  const getResourceIcon = (resourceType: 'satisfaction' | 'health' | 'fireRisk' | 'authority' | 'gold' | 'farmers' | 'landForces'): string => {
+    const iconMap = {
+      gold: '💰',
+      satisfaction: '😊',
+      health: '❤️',
+      fireRisk: '🔥',
+      farmers: '👨‍🌾',
+      landForces: '⚔️',
+      authority: '👑'
+    }
+    return iconMap[resourceType]
+  }
+
   // Get stat icon for feedback
 
   // Format effects for display
@@ -917,6 +931,8 @@ function App() {
         
         {/* Flying Delta Indicators */}
         {flyingDeltas.map((delta) => {
+          // Get the icon for the resource type
+          const icon = getResourceIcon(delta.resourceType)
           // Format the delta value - always use numeric format
           const displayValue = formatDeltaValue(delta.value)
           
@@ -934,7 +950,7 @@ function App() {
                 top: `${delta.startY}px`
               }}
             >
-              {displayValue}
+              {icon} {displayValue}
             </div>
           )
         })}
