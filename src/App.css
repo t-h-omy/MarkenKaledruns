@@ -299,7 +299,8 @@
   border: 1px solid #4caf50;
 }
 
-.authority-outcome.failure {
+.authority-outcome.failure,
+.authority-outcome.uncertain {
   background: rgba(255, 152, 0, 0.2);
   color: #ff9800;
   border: 1px solid #ff9800;

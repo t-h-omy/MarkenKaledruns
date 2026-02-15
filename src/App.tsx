@@ -811,7 +811,7 @@ function App() {
                         <span>Authority Commitment</span>
                       </div>
                       {hasImmediateEffects && (
-                        <div className="authority-outcome failure">
+                        <div className="authority-outcome uncertain">
                           ✗ UNCERTAIN ({successChance}%)
                         </div>
                       )}
