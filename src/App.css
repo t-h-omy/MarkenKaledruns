@@ -1281,7 +1281,7 @@
   font-size: 1.2rem;
   font-weight: bold;
   z-index: 1500;
-  animation: flyDelta 2s ease-out forwards;
+  animation: flyDelta 4s ease-out forwards;
   text-shadow: 0 0 4px rgba(0, 0, 0, 0.8);
 }
 
