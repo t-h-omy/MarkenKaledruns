@@ -872,22 +872,14 @@ function resolveAuthorityCheck(check: PendingAuthorityCheck): AuthorityCheckResu
     };
   }
   
-  // Determine success based on threshold (default to 0 if not specified)
-  const threshold = config.threshold ?? 0;
-  
-  // Probabilistic success determination
-  let success: boolean;
-  if (committed >= threshold) {
-    // Committed enough - guaranteed success
-    success = true;
-  } else if (threshold === 0) {
-    // No threshold means automatic success
-    success = true;
-  } else {
-    // Below threshold - probabilistic outcome based on how much was committed
-    const successChance = committed / threshold;
-    success = Math.random() < successChance;
-  }
+  // Probabilistic success determination based on commitment ratio
+  // Base chance of 30% at 0 commitment, scaling up to max 85% at maxCommit
+  // This ensures there is always a chance (even at 0 commit) and always a risk (even at max commit)
+  const MIN_SUCCESS_CHANCE = 0.30;
+  const MAX_SUCCESS_CHANCE = 0.85;
+  const commitRatio = config.maxCommit > 0 ? committed / config.maxCommit : 0;
+  const successChance = MIN_SUCCESS_CHANCE + commitRatio * (MAX_SUCCESS_CHANCE - MIN_SUCCESS_CHANCE);
+  const success = Math.random() < successChance;
   
   // Calculate refund and loss
   const refundPercent = success ? (config.refundOnSuccessPercent ?? 100) : 0;

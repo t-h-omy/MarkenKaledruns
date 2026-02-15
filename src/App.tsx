@@ -768,12 +768,11 @@ function App() {
                 const hasImmediateEffects = !!(config.onSuccess || config.onFailure)
                 const hasFollowUpBoosts = !!(config.followUpBoosts && config.followUpBoosts.length > 0)
                 
-                const threshold = config.threshold || 0
-                const willSucceed = currentCommit >= threshold
-                // Safely calculate success chance, handling 0 threshold edge case
-                const successChance = threshold === 0 ? 100 : 
-                  (currentCommit >= threshold ? 100 : 
-                    Math.floor((currentCommit / threshold) * 100))
+                // Probabilistic success chance: 30% base at 0 commit, up to 85% at max commit
+                const MIN_SUCCESS_CHANCE = 30
+                const MAX_SUCCESS_CHANCE = 85
+                const commitRatio = config.maxCommit > 0 ? currentCommit / config.maxCommit : 0
+                const successChance = Math.floor(MIN_SUCCESS_CHANCE + commitRatio * (MAX_SUCCESS_CHANCE - MIN_SUCCESS_CHANCE))
                 
                 // Calculate overall probability for follow-up boosts
                 let followUpProbability = 0
@@ -812,8 +811,8 @@ function App() {
                         <span>Authority Commitment</span>
                       </div>
                       {hasImmediateEffects && (
-                        <div className={`authority-outcome ${willSucceed ? 'success' : 'failure'}`}>
-                          {willSucceed ? '✓ SUCCESS' : '✗ UNCERTAIN'}
+                        <div className="authority-outcome uncertain">
+                          ✗ UNCERTAIN ({successChance}%)
                         </div>
                       )}
                     </div>
@@ -824,16 +823,10 @@ function App() {
                         <span className="commit-amount">{currentCommit}</span>
                       </div>
                       {hasImmediateEffects && (
-                        <>
-                          <div className="commit-threshold">
-                            <span className="threshold-label">Threshold:</span>
-                            <span className="threshold-amount">{config.threshold}</span>
-                          </div>
-                          <div className={`commit-probability ${willSucceed ? 'success' : 'uncertain'}`}>
+                          <div className="commit-probability uncertain">
                             <span className="probability-label">Chance:</span>
                             <span className="probability-amount">{successChance}%</span>
                           </div>
-                        </>
                       )}
                       {hasFollowUpBoosts && !hasImmediateEffects && (
                         <div className="commit-boost-info">
@@ -856,7 +849,7 @@ function App() {
                       max={Math.min(config.maxCommit, maxCommittable)}
                       value={currentCommit}
                       onChange={(e) => setAuthorityCommit(Number(e.target.value))}
-                      className={`authority-slider ${willSucceed ? 'success' : 'uncertain'}`}
+                      className="authority-slider uncertain"
                     />
                     
                     <div className="authority-range-labels">
