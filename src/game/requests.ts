@@ -3660,15 +3660,13 @@ export const eventRequests: Request[] = [
 
   // =========================================================
   // CHAIN 2 – Merchant Guild
-  // Mechanics: option followUps, requirements (need:marketplace),
-  //            weighted candidates, chain-gating
+  // Mechanics: option followUps, weighted candidates, chain-gating
   // =========================================================
   {
     id: 'CHAIN_MERCHANT_GUILD_START',
     chainId: 'merchant_guild',
     chainRole: 'start',
     chainRestartCooldownTicks: 60,
-    requires: ['need:marketplace'],
     title: 'Guild Proposal',
     text: 'A delegation of merchants arrives at the marketplace. They propose forming a guild to regulate trade and share profits — for a founding fee.',
     options: [
@@ -3983,7 +3981,7 @@ export const eventRequests: Request[] = [
     chainId: 'noble_feud',
     chainRole: 'start',
     chainRestartCooldownTicks: 70,
-    authorityMin: 34,
+    authorityMin: 15,
     authorityMax: 100,
     title: 'The Rival Lord',
     text: 'Lord Alden of a neighboring fief has laid claim to a strip of borderland that your farmers work. He demands you yield or face consequences.',
@@ -4142,8 +4140,8 @@ export const eventRequests: Request[] = [
 
   // =========================================================
   // CHAIN 5 – Harvest Festival
-  // Mechanics: option followUps, requirements (need:beer),
-  //            maxTriggers, chain-gating, weighted candidates
+  // Mechanics: option followUps, maxTriggers, chain-gating,
+  //            weighted candidates
   // =========================================================
   {
     id: 'CHAIN_HARVEST_FEST_START',
@@ -4151,7 +4149,6 @@ export const eventRequests: Request[] = [
     chainRole: 'start',
     chainRestartCooldownTicks: 50,
     maxTriggers: 2,
-    requires: ['need:beer'],
     title: 'Festival Season',
     text: 'The harvest is in and the people want a grand festival. Brewers offer their finest ale if you fund the event.',
     options: [
