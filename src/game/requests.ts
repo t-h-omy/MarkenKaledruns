@@ -1,7 +1,7 @@
 /**
  * Request data for the Proof-of-Fun game.
  * Based on POF_SPEC.md specification.
- * Contains 5 need-requests and 103 event-requests (25 base + 44 Blackgeat chain + 34 new chains).
+ * Contains 5 need-requests and 130 event-requests (25 base + 44 Blackgeat chain + 34 chains 1-5 + 27 chains 6-10).
  */
 
 import type { Request } from './models';
@@ -4265,6 +4265,638 @@ export const eventRequests: Request[] = [
     options: [
       { text: 'CARRY ON', effects: { satisfaction: 1 } },
       { text: 'PROMISE A BETTER ONE', effects: { satisfaction: 2, authority: -1 } },
+    ],
+  },
+
+  // =========================================================
+  // CHAIN 6 – Disease Rumor
+  // Mechanics: option followUps, weighted candidates,
+  //            global crisis priority via health < 30
+  // =========================================================
+  {
+    id: 'CHAIN_DISEASE_RUMOR_START',
+    chainId: 'disease_rumor',
+    chainRole: 'start',
+    title: 'Feverish Whispers',
+    text: 'A peddler collapses at the gate, shivering with fever. The village healer warns that an unknown sickness may already be spreading among the traders\' carts.',
+    canTriggerRandomly: true,
+    options: [
+      { text: 'QUARANTINE EARLY', effects: { gold: -8, satisfaction: -2, health: 2 } },
+      { text: 'WAIT', effects: { health: -6 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 1,
+        delayMaxTicks: 2,
+        candidates: [
+          { requestId: 'CHAIN_DISEASE_CONTAINED', weight: 2 },
+          { requestId: 'CHAIN_DISEASE_SPREADS', weight: 1 },
+        ],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 1,
+        delayMaxTicks: 2,
+        candidates: [
+          { requestId: 'CHAIN_DISEASE_SPREADS', weight: 2 },
+          { requestId: 'CHAIN_DISEASE_FALSE_ALARM', weight: 1 },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_DISEASE_CONTAINED',
+    chainId: 'disease_rumor',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'Quarantine Holds',
+    text: 'Your swift action paid off. The sick have been isolated and the village healer reports no new cases. The people praise your foresight.',
+    options: [
+      { text: 'GOOD', effects: { authority: 1 } },
+      { text: 'STAY VIGILANT', effects: {} },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 1,
+        delayMaxTicks: 1,
+        candidates: [{ requestId: 'CHAIN_DISEASE_END', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_DISEASE_SPREADS',
+    chainId: 'disease_rumor',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'Plague Creeps In',
+    text: 'Despite efforts, the sickness has spread to several households. Coughing echoes through the streets and the healer begs for coin to set up treatment tents.',
+    options: [
+      { text: 'SET UP HEALERS', effects: { gold: -15, health: 4 } },
+      { text: 'DO NOTHING', effects: { health: -10, satisfaction: -3 } },
+    ],
+    // If health drops below 30 from this, EVT_CRISIS_DISEASE may be triggered globally by picker.ts.
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 1,
+        delayMaxTicks: 2,
+        candidates: [{ requestId: 'CHAIN_DISEASE_END', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_DISEASE_FALSE_ALARM',
+    chainId: 'disease_rumor',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'Just a Cold',
+    text: 'The healer examines the last patient and shrugs. "Seasonal sniffles, nothing more." The village breathes a sigh of relief, though some grumble about the wasted panic.',
+    options: [
+      { text: 'WHAT A RELIEF', effects: { satisfaction: -1 } },
+      { text: 'BETTER SAFE', effects: {} },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 1,
+        delayMaxTicks: 1,
+        candidates: [{ requestId: 'CHAIN_DISEASE_END', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_DISEASE_END',
+    chainId: 'disease_rumor',
+    chainRole: 'end',
+    canTriggerRandomly: false,
+    chainRestartCooldownTicks: 140,
+    title: 'The Fever Passes',
+    text: 'Whether by quarantine, treatment, or simple luck, the threat of disease has faded. Life returns to normal — for now.',
+    options: [
+      { text: 'MOVE ON', effects: {} },
+      { text: 'STOCK HERBS', effects: {} },
+    ],
+  },
+
+  // =========================================================
+  // CHAIN 7 – Palisade Upgrade
+  // Mechanics: option followUps, weighted candidates,
+  //            requires token gating (need:marketplace)
+  // =========================================================
+  {
+    id: 'CHAIN_PALISADE_START',
+    chainId: 'palisade',
+    chainRole: 'start',
+    title: 'Rotting Defenses',
+    text: 'The outer palisade has deteriorated badly. Gaps in the timber invite wolves and worse. Feldric urges an upgrade before the next raid season.',
+    canTriggerRandomly: true,
+    options: [
+      { text: 'INVEST IN PALISADE', effects: { gold: -25, authority: 1 } },
+      { text: 'DELAY', effects: { satisfaction: -1 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 1,
+        delayMaxTicks: 2,
+        candidates: [
+          // This follow-up requires need:marketplace to be unlocked (meetsRequirements).
+          { requestId: 'CHAIN_PALISADE_HIRE_CARPENTERS', weight: 1 },
+          { requestId: 'CHAIN_PALISADE_LOCAL_BUILD', weight: 2 },
+        ],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 1,
+        delayMaxTicks: 2,
+        candidates: [{ requestId: 'CHAIN_PALISADE_END', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_PALISADE_HIRE_CARPENTERS',
+    chainId: 'palisade',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    requires: ['need:marketplace'],
+    title: 'Guild Carpenters Available',
+    text: 'Thanks to the marketplace, a guild of skilled carpenters offers their services. Their work would be superior, but their rates are steep.',
+    options: [
+      { text: 'PAY GUILD', effects: { gold: -30, authority: 2 } },
+      { text: 'HAGGLE', effects: { satisfaction: -1 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 1,
+        delayMaxTicks: 1,
+        candidates: [{ requestId: 'CHAIN_PALISADE_END', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_PALISADE_LOCAL_BUILD',
+    chainId: 'palisade',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'Village Hands',
+    text: 'Without guild access, the villagers must do the work themselves. It will take longer and the result may not hold, but it costs nothing beyond sweat.',
+    options: [
+      { text: 'RALLY VILLAGERS', effects: { satisfaction: -2, authority: 1 } },
+      { text: 'PAY OVERTIME', effects: { gold: -10, satisfaction: -1 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 1,
+        delayMaxTicks: 1,
+        candidates: [{ requestId: 'CHAIN_PALISADE_END', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_PALISADE_END',
+    chainId: 'palisade',
+    chainRole: 'end',
+    canTriggerRandomly: false,
+    chainRestartCooldownTicks: 90,
+    title: 'Walls Stand Again',
+    text: 'The palisade is repaired — or at least patched. Whether it was guild craftsmanship or village grit, the settlement is a little safer tonight.',
+    options: [
+      { text: 'INSPECT THE WORK', effects: {} },
+      { text: 'POST SENTRIES', effects: {} },
+    ],
+  },
+
+  // =========================================================
+  // CHAIN 8 – Arkanat Inspector
+  // Mechanics: authority boosts weights (stepped), option followUps,
+  //            weighted candidates, authorityMin, advancesTick:false
+  // =========================================================
+  {
+    id: 'CHAIN_ARKANAT_INSPECTOR_START',
+    chainId: 'arkanat_inspector',
+    chainRole: 'start',
+    authorityMin: 12,
+    title: 'The Arkanat Arrives',
+    text: 'A stern official from the Arkanat — the regional council — dismounts at your gate. He carries sealed writs and a cold expression. "I am here to audit your governance."',
+    canTriggerRandomly: true,
+    options: [
+      {
+        text: 'ASSERT JURISDICTION',
+        effects: { satisfaction: -1 },
+        authorityCheck: {
+          minCommit: 0,
+          maxCommit: 15,
+          followUpBoosts: [
+            { targetRequestId: 'CHAIN_ARKANAT_BACKS_DOWN', boostType: 'stepped', boostValue: 2, steps: 3 },
+          ],
+        },
+      },
+      { text: 'COOPERATE', effects: { authority: -1, gold: -5 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 1,
+        delayMaxTicks: 2,
+        candidates: [
+          { requestId: 'CHAIN_ARKANAT_BACKS_DOWN', weight: 1 },
+          { requestId: 'CHAIN_ARKANAT_RETALIATES', weight: 2 },
+        ],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 1,
+        delayMaxTicks: 2,
+        candidates: [
+          { requestId: 'CHAIN_ARKANAT_DEMANDS_FEES', weight: 2 },
+          { requestId: 'CHAIN_ARKANAT_MUTUAL_RESPECT', weight: 1 },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_ARKANAT_BACKS_DOWN',
+    chainId: 'arkanat_inspector',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'Inspector Relents',
+    text: 'Faced with your firm stance and the weight of your authority, the Arkanat inspector folds his writs. "Very well. Your records appear... adequate." He mounts his horse without another word.',
+    options: [
+      { text: 'WELL DONE', effects: { authority: 2 } },
+      { text: 'SEE HIM OFF', effects: {} },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 0,
+        delayMaxTicks: 0,
+        candidates: [{ requestId: 'CHAIN_ARKANAT_DEBRIEF', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_ARKANAT_RETALIATES',
+    chainId: 'arkanat_inspector',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'Inspector Strikes Back',
+    text: 'The inspector was not bluffing. He produces a decree stripping you of certain privileges and levies a fine. "The Arkanat does not forget defiance."',
+    options: [
+      { text: 'ACCEPT THE BLOW', effects: { authority: -3, satisfaction: -2 } },
+      { text: 'PROTEST', effects: {} },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 0,
+        delayMaxTicks: 0,
+        candidates: [{ requestId: 'CHAIN_ARKANAT_DEBRIEF', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_ARKANAT_DEMANDS_FEES',
+    chainId: 'arkanat_inspector',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'Administrative Fees',
+    text: 'The inspector smiles thinly. "Your cooperation is noted. However, administrative fees are still due." He slides a ledger across the table with an exorbitant sum circled in red.',
+    options: [
+      { text: 'PAY', effects: { gold: -20 } },
+      { text: 'REFUSE', effects: { authority: 1, satisfaction: -1 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 0,
+        delayMaxTicks: 0,
+        candidates: [{ requestId: 'CHAIN_ARKANAT_DEBRIEF', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_ARKANAT_MUTUAL_RESPECT',
+    chainId: 'arkanat_inspector',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'Mutual Understanding',
+    text: 'Your willingness to cooperate impresses the inspector. Over ale, he shares useful information about regional trade routes and promises to speak well of you to the council.',
+    options: [
+      { text: 'A GOOD OUTCOME', effects: { authority: 1 } },
+      { text: 'THANK HIM', effects: {} },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 0,
+        delayMaxTicks: 0,
+        candidates: [{ requestId: 'CHAIN_ARKANAT_DEBRIEF', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_ARKANAT_DEBRIEF',
+    chainId: 'arkanat_inspector',
+    chainRole: 'end',
+    canTriggerRandomly: false,
+    advancesTick: false,
+    chainRestartCooldownTicks: 200,
+    title: 'Arkanat Debrief',
+    text: 'The inspector is gone. Feldric summarizes: the Arkanat will return eventually — they always do. But for now, the matter is settled.',
+    options: [
+      { text: 'NOTED', effects: {} },
+      { text: 'PREPARE FOR NEXT TIME', effects: {} },
+    ],
+  },
+
+  // =========================================================
+  // CHAIN 9 – Ego Test: Public Insult
+  // Mechanics: option followUps, weighted candidates,
+  //            maxTriggers=1 (once per game run)
+  // =========================================================
+  {
+    id: 'CHAIN_EGO_INSULT_START',
+    chainId: 'ego_insult',
+    chainRole: 'start',
+    title: 'A Voice from the Crowd',
+    text: 'During a public address, a villager shouts: "You call yourself a leader? My goat governs better!" Laughter ripples through the crowd. All eyes turn to you.',
+    canTriggerRandomly: true,
+    maxTriggers: 1,
+    options: [
+      { text: 'PUNISH', effects: { authority: 1, satisfaction: -2 } },
+      { text: 'LAUGH IT OFF', effects: { satisfaction: 1 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 1,
+        delayMaxTicks: 2,
+        candidates: [
+          { requestId: 'CHAIN_EGO_PUNISH_BACKLASH', weight: 2 },
+          { requestId: 'CHAIN_EGO_PUNISH_RESPECT', weight: 1 },
+        ],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 1,
+        delayMaxTicks: 2,
+        candidates: [
+          { requestId: 'CHAIN_EGO_LAUGH_EMBOLDENED', weight: 2 },
+          { requestId: 'CHAIN_EGO_LAUGH_RESPECT', weight: 1 },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_EGO_PUNISH_BACKLASH',
+    chainId: 'ego_insult',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'Heavy Hand Backfires',
+    text: 'The heckler is dragged away, but the crowd murmurs darkly. "He only spoke what we all think." Your show of force has made things worse.',
+    options: [
+      { text: 'UNFORTUNATE', effects: { authority: -2 } },
+      { text: 'STAND FIRM', effects: {} },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 1,
+        delayMaxTicks: 1,
+        candidates: [{ requestId: 'CHAIN_EGO_END', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_EGO_PUNISH_RESPECT',
+    chainId: 'ego_insult',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'Order Restored',
+    text: 'The crowd falls silent after your swift response. A few nod approvingly — a leader who tolerates no disrespect commands a certain gravitas.',
+    options: [
+      { text: 'AS IT SHOULD BE', effects: { authority: 1 } },
+      { text: 'MOVE ON', effects: {} },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 1,
+        delayMaxTicks: 1,
+        candidates: [{ requestId: 'CHAIN_EGO_END', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_EGO_LAUGH_EMBOLDENED',
+    chainId: 'ego_insult',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'Mockery Spreads',
+    text: 'Your good humor emboldens others. Soon "the goat lord" becomes a tavern joke. Children bleat at you in the streets. Your authority takes a quiet hit.',
+    options: [
+      { text: 'IGNORE IT', effects: { authority: -1 } },
+      { text: 'SHRUG', effects: {} },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 1,
+        delayMaxTicks: 1,
+        candidates: [{ requestId: 'CHAIN_EGO_END', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_EGO_LAUGH_RESPECT',
+    chainId: 'ego_insult',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'Grace Under Fire',
+    text: 'Your laughter disarms the moment entirely. The heckler himself grins sheepishly. "Fair enough, my lord." The crowd warms to you — a leader who can take a joke is a leader worth following.',
+    options: [
+      { text: 'WELL HANDLED', effects: { satisfaction: 1 } },
+      { text: 'BUY HIM AN ALE', effects: {} },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 1,
+        delayMaxTicks: 1,
+        candidates: [{ requestId: 'CHAIN_EGO_END', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_EGO_END',
+    chainId: 'ego_insult',
+    chainRole: 'end',
+    canTriggerRandomly: false,
+    chainRestartCooldownTicks: 9999,
+    title: 'The Incident Fades',
+    text: 'Weeks pass and the incident is mostly forgotten — though some still smirk when they think you are not looking. Such is the burden of leadership.',
+    options: [
+      { text: 'LET IT GO', effects: {} },
+      { text: 'MOVE FORWARD', effects: {} },
+    ],
+  },
+
+  // =========================================================
+  // CHAIN 10 – River Pirates
+  // Mechanics: combat outcome, option followUps, weighted candidates,
+  //            authority boosts weights (linear)
+  // =========================================================
+  {
+    id: 'CHAIN_RIVER_PIRATES_START',
+    chainId: 'river_pirates',
+    chainRole: 'start',
+    title: 'Sails on the River',
+    text: 'Black-flagged longboats have been spotted on the river. A pirate fleet demands tribute or threatens to burn your docks and seize your grain stores.',
+    canTriggerRandomly: true,
+    combat: {
+      enemyForces: 16,
+      prepDelayMinTicks: 0,
+      prepDelayMaxTicks: 2,
+      onWin: { gold: 20, authority: 2, satisfaction: 2 },
+      onLose: { gold: -30, farmers: -6, authority: -3, satisfaction: -4 },
+      followUpsOnWin: [
+        {
+          triggerOnOptionIndex: 0,
+          delayMinTicks: 1,
+          delayMaxTicks: 2,
+          candidates: [{ requestId: 'CHAIN_RIVER_PIRATES_AFTER_WIN', weight: 1 }],
+        },
+      ],
+      followUpsOnLose: [
+        {
+          triggerOnOptionIndex: 0,
+          delayMinTicks: 1,
+          delayMaxTicks: 2,
+          candidates: [{ requestId: 'CHAIN_RIVER_PIRATES_AFTER_LOSE', weight: 1 }],
+        },
+      ],
+    },
+    options: [
+      { text: 'FIGHT', effects: {} },
+      {
+        text: 'PAY TRIBUTE',
+        effects: { gold: -18, authority: -1 },
+        authorityCheck: {
+          minCommit: 0,
+          maxCommit: 10,
+          followUpBoosts: [
+            { targetRequestId: 'CHAIN_RIVER_PIRATES_TRIBUTE_LEAVES', boostType: 'linear', boostValue: 4 },
+          ],
+        },
+      },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 1,
+        delayMaxTicks: 2,
+        candidates: [
+          { requestId: 'CHAIN_RIVER_PIRATES_TRIBUTE_LEAVES', weight: 1 },
+          { requestId: 'CHAIN_RIVER_PIRATES_TRIBUTE_RETURNS', weight: 2 },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_RIVER_PIRATES_AFTER_WIN',
+    chainId: 'river_pirates',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'River Cleared',
+    text: 'The pirate fleet burns on the riverbank. Your soldiers recover stolen goods from the wreckage. Word of the victory spreads downstream.',
+    options: [
+      { text: 'SALVAGE WHAT WE CAN', effects: {} },
+      { text: 'CELEBRATE', effects: {} },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 1,
+        delayMaxTicks: 1,
+        candidates: [{ requestId: 'CHAIN_RIVER_PIRATES_END', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_RIVER_PIRATES_AFTER_LOSE',
+    chainId: 'river_pirates',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'Docks in Flames',
+    text: 'The pirates overwhelmed your defenses. Smoke rises from the docks and grain stores lie empty. The villagers stare in stunned silence at the devastation.',
+    options: [
+      { text: 'BEGIN REPAIRS', effects: {} },
+      { text: 'MOURN THE LOSSES', effects: {} },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 1,
+        delayMaxTicks: 1,
+        candidates: [{ requestId: 'CHAIN_RIVER_PIRATES_END', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_RIVER_PIRATES_TRIBUTE_LEAVES',
+    chainId: 'river_pirates',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'Pirates Withdraw',
+    text: 'The pirate captain counts the tribute and nods. "Wise choice." The black sails disappear downriver. Perhaps your show of authority convinced them to seek easier prey.',
+    options: [
+      { text: 'GOOD RIDDANCE', effects: { satisfaction: 1 } },
+      { text: 'WATCH THEM GO', effects: {} },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 1,
+        delayMaxTicks: 1,
+        candidates: [{ requestId: 'CHAIN_RIVER_PIRATES_END', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_RIVER_PIRATES_TRIBUTE_RETURNS',
+    chainId: 'river_pirates',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'They Want More',
+    text: 'The pirates took the tribute — and came back for more. "You paid once, you will pay again." The crew jeers from the deck as their captain extends an open palm.',
+    options: [
+      { text: 'CURSE THEM', effects: { authority: -2, satisfaction: -2 } },
+      { text: 'ENDURE', effects: {} },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 1,
+        delayMaxTicks: 1,
+        candidates: [{ requestId: 'CHAIN_RIVER_PIRATES_END', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_RIVER_PIRATES_END',
+    chainId: 'river_pirates',
+    chainRole: 'end',
+    canTriggerRandomly: false,
+    chainRestartCooldownTicks: 120,
+    title: 'The River Quiets',
+    text: 'Whether by blade or coin, the river pirate threat has passed. Fishermen cautiously return to their boats, and trade barges resume their routes.',
+    options: [
+      { text: 'REBUILD', effects: {} },
+      { text: 'PATROL THE RIVER', effects: {} },
     ],
   },
 ];
