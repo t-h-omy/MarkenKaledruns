@@ -2009,8 +2009,7 @@ export const eventRequests: Request[] = [
         effects: {},
         authorityCheck: {
           minCommit: 0,
-          maxCommit: 30,
-          threshold: 15,
+          maxCommit: 10,
           onSuccess: {
             gold: 25,
             satisfaction: 8,
@@ -2046,8 +2045,7 @@ export const eventRequests: Request[] = [
         effects: {},
         authorityCheck: {
           minCommit: 0,
-          maxCommit: 25,
-          threshold: 12,
+          maxCommit: 10,
           onSuccess: {
             landForces: 3,
             authority: 4,
@@ -2083,8 +2081,7 @@ export const eventRequests: Request[] = [
         effects: {},
         authorityCheck: {
           minCommit: 0,
-          maxCommit: 30,
-          threshold: 18,
+          maxCommit: 10,
           onSuccess: {
             satisfaction: 12,
             authority: 5,
@@ -2123,8 +2120,7 @@ export const eventRequests: Request[] = [
         },
         authorityCheck: {
           minCommit: 0,
-          maxCommit: 28,
-          threshold: 16,
+          maxCommit: 10,
           onSuccess: {
             gold: 15,
             authority: 3,
@@ -2417,8 +2413,7 @@ export const eventRequests: Request[] = [
         },
         authorityCheck: {
           minCommit: 0,
-          maxCommit: 40,
-          threshold: 25,
+          maxCommit: 20,
           onSuccess: {
             gold: 30,
             satisfaction: 5,
@@ -2453,8 +2448,7 @@ export const eventRequests: Request[] = [
         effects: {},
         authorityCheck: {
           minCommit: 0,
-          maxCommit: 50,
-          threshold: 30,
+          maxCommit: 25,
           onSuccess: {
             satisfaction: 15,
             authority: 5,
@@ -2492,8 +2486,7 @@ export const eventRequests: Request[] = [
         effects: {},
         authorityCheck: {
           minCommit: 0,
-          maxCommit: 45,
-          threshold: 28,
+          maxCommit: 20,
           onSuccess: {
             gold: 20,
             satisfaction: 10,
@@ -2529,8 +2522,7 @@ export const eventRequests: Request[] = [
         effects: {},
         authorityCheck: {
           minCommit: 0,
-          maxCommit: 60,
-          threshold: 40,
+          maxCommit: 35,
           onSuccess: {
             landForces: 10,
             authority: 8,
@@ -2566,8 +2558,7 @@ export const eventRequests: Request[] = [
         effects: {},
         authorityCheck: {
           minCommit: 0,
-          maxCommit: 55,
-          threshold: 35,
+          maxCommit: 25,
           onSuccess: {
             landForces: 8,
             satisfaction: -5,
@@ -2603,8 +2594,7 @@ export const eventRequests: Request[] = [
         effects: {},
         authorityCheck: {
           minCommit: 0,
-          maxCommit: 50,
-          threshold: 32,
+          maxCommit: 20,
           onSuccess: {
             gold: 35,
             satisfaction: 8,
@@ -2640,8 +2630,7 @@ export const eventRequests: Request[] = [
         effects: {},
         authorityCheck: {
           minCommit: 0,
-          maxCommit: 55,
-          threshold: 38,
+          maxCommit: 30,
           onSuccess: {
             satisfaction: 15,
             authority: 10,
@@ -2677,8 +2666,7 @@ export const eventRequests: Request[] = [
         effects: {},
         authorityCheck: {
           minCommit: 0,
-          maxCommit: 65,
-          threshold: 45,
+          maxCommit: 40,
           onSuccess: {
             farmers: 8,
             gold: 25,
@@ -2715,8 +2703,7 @@ export const eventRequests: Request[] = [
         effects: {},
         authorityCheck: {
           minCommit: 0,
-          maxCommit: 50,
-          threshold: 33,
+          maxCommit: 20,
           onSuccess: {
             gold: 25,
             satisfaction: 12,
@@ -2755,8 +2742,7 @@ export const eventRequests: Request[] = [
         effects: {},
         authorityCheck: {
           minCommit: 0,
-          maxCommit: 70,
-          threshold: 50,
+          maxCommit: 40,
           onSuccess: {
             gold: 40,
             landForces: 12,
@@ -2793,8 +2779,7 @@ export const eventRequests: Request[] = [
         effects: {},
         authorityCheck: {
           minCommit: 0,
-          maxCommit: 45,
-          threshold: 30,
+          maxCommit: 15,
           onSuccess: {
             gold: 30,
             satisfaction: 8,
@@ -2830,8 +2815,7 @@ export const eventRequests: Request[] = [
         effects: {},
         authorityCheck: {
           minCommit: 0,
-          maxCommit: 60,
-          threshold: 42,
+          maxCommit: 35,
           onSuccess: {
             gold: 35,
             authority: 12,
@@ -2868,8 +2852,7 @@ export const eventRequests: Request[] = [
         effects: {},
         authorityCheck: {
           minCommit: 0,
-          maxCommit: 70,
-          threshold: 50,
+          maxCommit: 40,
           onSuccess: {
             farmers: 12,
             satisfaction: 20,
@@ -2907,8 +2890,7 @@ export const eventRequests: Request[] = [
         effects: {},
         authorityCheck: {
           minCommit: 0,
-          maxCommit: 55,
-          threshold: 38,
+          maxCommit: 30,
           onSuccess: {
             satisfaction: 15,
             health: 8,
@@ -2945,8 +2927,7 @@ export const eventRequests: Request[] = [
         effects: {},
         authorityCheck: {
           minCommit: 0,
-          maxCommit: 48,
-          threshold: 32,
+          maxCommit: 20,
           onSuccess: {
             gold: 28,
             landForces: 6,
@@ -2981,8 +2962,7 @@ export const eventRequests: Request[] = [
         effects: {},
         authorityCheck: {
           minCommit: 0,
-          maxCommit: 62,
-          threshold: 44,
+          maxCommit: 35,
           onSuccess: {
             gold: 45,
             landForces: 10,
