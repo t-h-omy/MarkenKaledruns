@@ -3703,7 +3703,7 @@ export const eventRequests: Request[] = [
     title: 'Thriving Commerce',
     text: 'The guild is running smoothly. Goods flow, prices stabilize, and the treasury benefits. The guild master asks to expand operations.',
     options: [
-      { text: 'EXPAND', effects: { gold: -15, farmers: 5 } },
+      { text: 'EXPAND', effects: { gold: -15, satisfaction: 5 } },
       { text: 'KEEP CURRENT SIZE', effects: { gold: 10 } },
     ],
     followUps: [
