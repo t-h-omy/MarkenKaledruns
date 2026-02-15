@@ -1,7 +1,7 @@
 /**
  * Request data for the Proof-of-Fun game.
  * Based on POF_SPEC.md specification.
- * Contains 5 need-requests and 69 event-requests (25 base + 44 Blackgeat chain).
+ * Contains 5 need-requests and 103 event-requests (25 base + 44 Blackgeat chain + 34 new chains).
  */
 
 import type { Request } from './models';
@@ -3422,6 +3422,849 @@ export const eventRequests: Request[] = [
           authority: 2,
         },
       },
+    ],
+  },
+
+  // =========================================================
+  // CHAIN 1 – Bandit Toll
+  // Mechanics: combat outcome, option followUps, weighted random,
+  //            chain-gating, maxTriggers
+  // =========================================================
+  {
+    id: 'CHAIN_BANDIT_TOLL_START',
+    chainId: 'bandit_toll',
+    chainRole: 'start',
+    chainRestartCooldownTicks: 80,
+    maxTriggers: 3,
+    title: 'Blocked Road',
+    text: 'A band of armed men has set up a barricade across the only trade road. Their leader steps forward: "Toll is ten gold per cart. Pay or fight."',
+    options: [
+      { text: 'FIGHT THEM', effects: {} },
+      { text: 'PAY THE TOLL', effects: { gold: -10, authority: -1 } },
+    ],
+    combat: {
+      enemyForces: 5,
+      prepDelayMinTicks: 2,
+      prepDelayMaxTicks: 4,
+      onWin: {
+        gold: 15,
+        authority: 2,
+      },
+      onLose: {
+        gold: -5,
+        satisfaction: -3,
+        authority: -2,
+      },
+      followUpsOnWin: [
+        {
+          triggerOnOptionIndex: 0,
+          delayMinTicks: 2,
+          delayMaxTicks: 4,
+          candidates: [
+            { requestId: 'CHAIN_BANDIT_TOLL_LOOT', weight: 3 },
+            { requestId: 'CHAIN_BANDIT_TOLL_SURVIVOR', weight: 2 },
+          ],
+        },
+      ],
+      followUpsOnLose: [
+        {
+          triggerOnOptionIndex: 0,
+          delayMinTicks: 2,
+          delayMaxTicks: 4,
+          candidates: [
+            { requestId: 'CHAIN_BANDIT_TOLL_REGROUP', weight: 1 },
+          ],
+        },
+      ],
+    },
+    followUps: [
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 4,
+        delayMaxTicks: 8,
+        candidates: [
+          { requestId: 'CHAIN_BANDIT_TOLL_RETURN', weight: 3 },
+          { requestId: 'CHAIN_BANDIT_TOLL_END_PEACE', weight: 1 },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_BANDIT_TOLL_LOOT',
+    chainId: 'bandit_toll',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'Spoils of Battle',
+    text: 'The bandits are routed. Among their belongings your soldiers find stolen trade goods and a rough map of their hideout.',
+    options: [
+      { text: 'RAID THE HIDEOUT', effects: { gold: 20, landForces: -2 } },
+      { text: 'BURN THE MAP', effects: { satisfaction: 3 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 3,
+        delayMaxTicks: 5,
+        candidates: [{ requestId: 'CHAIN_BANDIT_TOLL_END_VICTORY', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 3,
+        delayMaxTicks: 5,
+        candidates: [{ requestId: 'CHAIN_BANDIT_TOLL_END_PEACE', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_BANDIT_TOLL_SURVIVOR',
+    chainId: 'bandit_toll',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'A Bandit Speaks',
+    text: 'One of the bandits survived. He offers information about a larger gang in exchange for his life.',
+    options: [
+      { text: 'SPARE HIM', effects: { authority: -1, satisfaction: 2 } },
+      { text: 'EXECUTE HIM', effects: { authority: 1, satisfaction: -2 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 4,
+        delayMaxTicks: 6,
+        candidates: [
+          { requestId: 'CHAIN_BANDIT_TOLL_END_PEACE', weight: 2 },
+          { requestId: 'CHAIN_BANDIT_TOLL_END_VICTORY', weight: 1 },
+        ],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 3,
+        delayMaxTicks: 5,
+        candidates: [{ requestId: 'CHAIN_BANDIT_TOLL_END_VICTORY', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_BANDIT_TOLL_REGROUP',
+    chainId: 'bandit_toll',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'Licking Wounds',
+    text: 'The bandits defeated your men but did not press the attack. Feldric advises rebuilding strength before they return.',
+    options: [
+      { text: 'RECRUIT MORE', effects: { gold: -10, landForces: 4 } },
+      { text: 'NEGOTIATE PEACE', effects: { gold: -15, authority: -2 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 5,
+        delayMaxTicks: 8,
+        candidates: [{ requestId: 'CHAIN_BANDIT_TOLL_RETURN', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 3,
+        delayMaxTicks: 5,
+        candidates: [{ requestId: 'CHAIN_BANDIT_TOLL_END_PEACE', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_BANDIT_TOLL_RETURN',
+    chainId: 'bandit_toll',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'They Are Back',
+    text: 'The bandits have returned with reinforcements. This time they demand double the toll or blood.',
+    options: [
+      { text: 'FIGHT AGAIN', effects: {} },
+      { text: 'PAY DOUBLE', effects: { gold: -20, authority: -2 } },
+    ],
+    combat: {
+      enemyForces: 8,
+      prepDelayMinTicks: 2,
+      prepDelayMaxTicks: 3,
+      onWin: {
+        gold: 25,
+        authority: 3,
+        satisfaction: 3,
+      },
+      onLose: {
+        gold: -15,
+        satisfaction: -5,
+        authority: -3,
+      },
+      followUpsOnWin: [
+        {
+          triggerOnOptionIndex: 0,
+          delayMinTicks: 1,
+          delayMaxTicks: 2,
+          candidates: [{ requestId: 'CHAIN_BANDIT_TOLL_END_VICTORY', weight: 1 }],
+        },
+      ],
+      followUpsOnLose: [
+        {
+          triggerOnOptionIndex: 0,
+          delayMinTicks: 1,
+          delayMaxTicks: 2,
+          candidates: [{ requestId: 'CHAIN_BANDIT_TOLL_END_DEFEAT', weight: 1 }],
+        },
+      ],
+    },
+    followUps: [
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 3,
+        delayMaxTicks: 5,
+        candidates: [{ requestId: 'CHAIN_BANDIT_TOLL_END_PEACE', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_BANDIT_TOLL_END_VICTORY',
+    chainId: 'bandit_toll',
+    chainRole: 'end',
+    canTriggerRandomly: false,
+    title: 'Road Secured',
+    text: 'The trade road is clear at last. Merchants return, and the village prospers from renewed commerce.',
+    options: [
+      { text: 'CELEBRATE', effects: { satisfaction: 5, gold: 10 } },
+      { text: 'FORTIFY THE ROAD', effects: { gold: -10, landForces: 3 } },
+    ],
+  },
+  {
+    id: 'CHAIN_BANDIT_TOLL_END_PEACE',
+    chainId: 'bandit_toll',
+    chainRole: 'end',
+    canTriggerRandomly: false,
+    title: 'Uneasy Truce',
+    text: 'The bandits move on to easier prey. The road reopens, though travelers remain wary.',
+    options: [
+      { text: 'POST GUARDS', effects: { landForces: -1, satisfaction: 3 } },
+      { text: 'MOVE ON', effects: { satisfaction: 1 } },
+    ],
+  },
+  {
+    id: 'CHAIN_BANDIT_TOLL_END_DEFEAT',
+    chainId: 'bandit_toll',
+    chainRole: 'end',
+    canTriggerRandomly: false,
+    title: 'A Costly Lesson',
+    text: 'The bandits control the road now. Trade slows to a trickle and your people grow restless.',
+    options: [
+      { text: 'SEEK ALLIES', effects: { gold: -5, authority: 1 } },
+      { text: 'ENDURE', effects: { satisfaction: -5 } },
+    ],
+  },
+
+  // =========================================================
+  // CHAIN 2 – Merchant Guild
+  // Mechanics: option followUps, requirements (need:marketplace),
+  //            weighted candidates, chain-gating
+  // =========================================================
+  {
+    id: 'CHAIN_MERCHANT_GUILD_START',
+    chainId: 'merchant_guild',
+    chainRole: 'start',
+    chainRestartCooldownTicks: 60,
+    requires: ['need:marketplace'],
+    title: 'Guild Proposal',
+    text: 'A delegation of merchants arrives at the marketplace. They propose forming a guild to regulate trade and share profits — for a founding fee.',
+    options: [
+      { text: 'ACCEPT', effects: { gold: -25 } },
+      { text: 'REJECT', effects: { satisfaction: -3 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 3,
+        delayMaxTicks: 6,
+        candidates: [
+          { requestId: 'CHAIN_MERCHANT_GUILD_PROSPEROUS', weight: 3 },
+          { requestId: 'CHAIN_MERCHANT_GUILD_CORRUPT', weight: 2 },
+        ],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 5,
+        delayMaxTicks: 8,
+        candidates: [
+          { requestId: 'CHAIN_MERCHANT_GUILD_SMUGGLERS', weight: 1 },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_MERCHANT_GUILD_PROSPEROUS',
+    chainId: 'merchant_guild',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'Thriving Commerce',
+    text: 'The guild is running smoothly. Goods flow, prices stabilize, and the treasury benefits. The guild master asks to expand operations.',
+    options: [
+      { text: 'EXPAND', effects: { gold: -15, farmers: 5 } },
+      { text: 'KEEP CURRENT SIZE', effects: { gold: 10 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 4,
+        delayMaxTicks: 7,
+        candidates: [{ requestId: 'CHAIN_MERCHANT_GUILD_END_WEALTH', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 4,
+        delayMaxTicks: 7,
+        candidates: [{ requestId: 'CHAIN_MERCHANT_GUILD_END_STABLE', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_MERCHANT_GUILD_CORRUPT',
+    chainId: 'merchant_guild',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'Shady Dealings',
+    text: 'Reports surface that guild members are price-fixing and skimming profits. The guild master denies it flatly.',
+    options: [
+      { text: 'INVESTIGATE', effects: { gold: -5, authority: 1 } },
+      { text: 'TURN A BLIND EYE', effects: { gold: 5, satisfaction: -5 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 3,
+        delayMaxTicks: 5,
+        candidates: [
+          { requestId: 'CHAIN_MERCHANT_GUILD_END_REFORM', weight: 2 },
+          { requestId: 'CHAIN_MERCHANT_GUILD_END_STABLE', weight: 1 },
+        ],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 4,
+        delayMaxTicks: 6,
+        candidates: [{ requestId: 'CHAIN_MERCHANT_GUILD_END_STABLE', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_MERCHANT_GUILD_SMUGGLERS',
+    chainId: 'merchant_guild',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'Black Market',
+    text: 'Without a guild, smugglers fill the void. Cheap goods appear but quality is terrible and crime rises.',
+    options: [
+      { text: 'CRACK DOWN', effects: { gold: -10, authority: 2 } },
+      { text: 'TOLERATE IT', effects: { gold: 5, health: -3, satisfaction: -3 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 3,
+        delayMaxTicks: 5,
+        candidates: [{ requestId: 'CHAIN_MERCHANT_GUILD_END_REFORM', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 3,
+        delayMaxTicks: 5,
+        candidates: [{ requestId: 'CHAIN_MERCHANT_GUILD_END_STABLE', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_MERCHANT_GUILD_END_WEALTH',
+    chainId: 'merchant_guild',
+    chainRole: 'end',
+    canTriggerRandomly: false,
+    title: 'Golden Age of Trade',
+    text: 'The expanded guild brings prosperity. Merchants from distant lands flock to your marketplace.',
+    options: [
+      { text: 'HOST A TRADE FAIR', effects: { gold: 15, satisfaction: 5 } },
+      { text: 'TAX THE PROFITS', effects: { gold: 20, satisfaction: -2 } },
+    ],
+  },
+  {
+    id: 'CHAIN_MERCHANT_GUILD_END_STABLE',
+    chainId: 'merchant_guild',
+    chainRole: 'end',
+    canTriggerRandomly: false,
+    title: 'Steady Trade',
+    text: 'Trade continues at a modest pace. The guild — or lack thereof — has settled into a routine.',
+    options: [
+      { text: 'GOOD ENOUGH', effects: { satisfaction: 2 } },
+      { text: 'INVEST MORE', effects: { gold: -10, satisfaction: 4 } },
+    ],
+  },
+  {
+    id: 'CHAIN_MERCHANT_GUILD_END_REFORM',
+    chainId: 'merchant_guild',
+    chainRole: 'end',
+    canTriggerRandomly: false,
+    title: 'A Fresh Start',
+    text: 'With the corrupt elements removed, honest merchants return. The marketplace is cleaner and more trustworthy.',
+    options: [
+      { text: 'CELEBRATE', effects: { satisfaction: 5, authority: 1 } },
+      { text: 'STAY VIGILANT', effects: { authority: 2 } },
+    ],
+  },
+
+  // =========================================================
+  // CHAIN 3 – Plague Rumors
+  // Mechanics: option followUps, authority pool-gating
+  //            (authorityMin/authorityMax), weighted candidates
+  // =========================================================
+  {
+    id: 'CHAIN_PLAGUE_RUMORS_START',
+    chainId: 'plague_rumors',
+    chainRole: 'start',
+    chainRestartCooldownTicks: 90,
+    authorityMin: 20,
+    authorityMax: 100,
+    title: 'Dark Whispers',
+    text: 'Travelers speak of a sickness spreading through neighboring settlements. Your healers urge precautions before it reaches your lands.',
+    options: [
+      { text: 'QUARANTINE BORDERS', effects: { gold: -15, satisfaction: -3 } },
+      { text: 'DISMISS THE RUMORS', effects: {} },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 4,
+        delayMaxTicks: 7,
+        candidates: [
+          { requestId: 'CHAIN_PLAGUE_RUMORS_CONTAINED', weight: 3 },
+          { requestId: 'CHAIN_PLAGUE_RUMORS_BREACH', weight: 1 },
+        ],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 3,
+        delayMaxTicks: 5,
+        candidates: [
+          { requestId: 'CHAIN_PLAGUE_RUMORS_OUTBREAK', weight: 3 },
+          { requestId: 'CHAIN_PLAGUE_RUMORS_NOTHING', weight: 2 },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_PLAGUE_RUMORS_CONTAINED',
+    chainId: 'plague_rumors',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'Quarantine Holds',
+    text: 'The border quarantine is working. Sickness has not reached your village, but trade has slowed to a crawl.',
+    options: [
+      { text: 'MAINTAIN QUARANTINE', effects: { gold: -10, health: 5 } },
+      { text: 'REOPEN BORDERS', effects: { gold: 10, health: -3 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 4,
+        delayMaxTicks: 6,
+        candidates: [{ requestId: 'CHAIN_PLAGUE_RUMORS_END_SAFE', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 3,
+        delayMaxTicks: 5,
+        candidates: [
+          { requestId: 'CHAIN_PLAGUE_RUMORS_END_SAFE', weight: 2 },
+          { requestId: 'CHAIN_PLAGUE_RUMORS_END_SICK', weight: 1 },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_PLAGUE_RUMORS_BREACH',
+    chainId: 'plague_rumors',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'Quarantine Breached',
+    text: 'Despite your efforts, a merchant slipped through the quarantine. Several villagers have fallen ill.',
+    options: [
+      { text: 'TREAT THE SICK', effects: { gold: -20, health: 3 } },
+      { text: 'ISOLATE THEM', effects: { satisfaction: -5, health: 1 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 3,
+        delayMaxTicks: 5,
+        candidates: [{ requestId: 'CHAIN_PLAGUE_RUMORS_END_SAFE', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 3,
+        delayMaxTicks: 5,
+        candidates: [{ requestId: 'CHAIN_PLAGUE_RUMORS_END_SICK', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_PLAGUE_RUMORS_OUTBREAK',
+    chainId: 'plague_rumors',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'Plague Arrives',
+    text: 'The sickness has reached your village. People are falling ill rapidly. The healers plead for resources.',
+    options: [
+      { text: 'FUND HEALERS', effects: { gold: -25, health: 5 } },
+      { text: 'PRAY FOR THE BEST', effects: { health: -8, farmers: -5 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 3,
+        delayMaxTicks: 6,
+        candidates: [
+          { requestId: 'CHAIN_PLAGUE_RUMORS_END_SAFE', weight: 2 },
+          { requestId: 'CHAIN_PLAGUE_RUMORS_END_SICK', weight: 1 },
+        ],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 3,
+        delayMaxTicks: 5,
+        candidates: [{ requestId: 'CHAIN_PLAGUE_RUMORS_END_SICK', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_PLAGUE_RUMORS_NOTHING',
+    chainId: 'plague_rumors',
+    chainRole: 'end',
+    canTriggerRandomly: false,
+    title: 'False Alarm',
+    text: 'The rumors were overblown. No plague materialized and life continues as before.',
+    options: [
+      { text: 'RELIEF', effects: { satisfaction: 3 } },
+      { text: 'STAY CAUTIOUS', effects: { authority: 1 } },
+    ],
+  },
+  {
+    id: 'CHAIN_PLAGUE_RUMORS_END_SAFE',
+    chainId: 'plague_rumors',
+    chainRole: 'end',
+    canTriggerRandomly: false,
+    title: 'Crisis Averted',
+    text: 'The sickness passes without major casualties. Your village emerges stronger and more resilient.',
+    options: [
+      { text: 'CELEBRATE SURVIVAL', effects: { satisfaction: 5, health: 3 } },
+      { text: 'BUILD AN INFIRMARY', effects: { gold: -15, health: 8 } },
+    ],
+  },
+  {
+    id: 'CHAIN_PLAGUE_RUMORS_END_SICK',
+    chainId: 'plague_rumors',
+    chainRole: 'end',
+    canTriggerRandomly: false,
+    title: 'Scars of Sickness',
+    text: 'The plague has taken its toll. Empty homes stand as reminders. Recovery will take time.',
+    options: [
+      { text: 'MOURN AND REBUILD', effects: { satisfaction: -3, farmers: -5 } },
+      { text: 'BURN THE DEAD', effects: { health: 3, satisfaction: -5 } },
+    ],
+  },
+
+  // =========================================================
+  // CHAIN 4 – Noble Feud
+  // Mechanics: authority check with followUpBoosts (linear boost),
+  //            combat outcome, weighted candidates, chain-gating
+  // =========================================================
+  {
+    id: 'CHAIN_NOBLE_FEUD_START',
+    chainId: 'noble_feud',
+    chainRole: 'start',
+    chainRestartCooldownTicks: 70,
+    authorityMin: 34,
+    authorityMax: 100,
+    title: 'The Rival Lord',
+    text: 'Lord Alden of a neighboring fief has laid claim to a strip of borderland that your farmers work. He demands you yield or face consequences.',
+    options: [
+      {
+        text: 'ASSERT YOUR CLAIM',
+        effects: {},
+        authorityCheck: {
+          minCommit: 0,
+          maxCommit: 20,
+          followUpBoosts: [
+            {
+              targetRequestId: 'CHAIN_NOBLE_FEUD_DIPLOMACY',
+              boostType: 'linear',
+              boostValue: 4.0,
+              description: 'Increases chance of diplomatic resolution',
+            },
+          ],
+        },
+      },
+      { text: 'YIELD THE LAND', effects: { farmers: -3, satisfaction: -4, authority: -2 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 3,
+        delayMaxTicks: 5,
+        candidates: [
+          { requestId: 'CHAIN_NOBLE_FEUD_DIPLOMACY', weight: 2 },
+          { requestId: 'CHAIN_NOBLE_FEUD_ESCALATE', weight: 3 },
+        ],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 4,
+        delayMaxTicks: 7,
+        candidates: [{ requestId: 'CHAIN_NOBLE_FEUD_END_YIELDED', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_NOBLE_FEUD_DIPLOMACY',
+    chainId: 'noble_feud',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'A Reasonable Man',
+    text: 'Lord Alden agrees to meet. Surprisingly, he is open to negotiation. Perhaps this can be settled without bloodshed.',
+    options: [
+      { text: 'OFFER COMPROMISE', effects: { gold: -10, authority: 1 } },
+      { text: 'DEMAND FULL RIGHTS', effects: { authority: 2 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 3,
+        delayMaxTicks: 5,
+        candidates: [{ requestId: 'CHAIN_NOBLE_FEUD_END_PEACE', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 3,
+        delayMaxTicks: 5,
+        candidates: [
+          { requestId: 'CHAIN_NOBLE_FEUD_END_PEACE', weight: 1 },
+          { requestId: 'CHAIN_NOBLE_FEUD_ESCALATE', weight: 2 },
+        ],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_NOBLE_FEUD_ESCALATE',
+    chainId: 'noble_feud',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'Swords Drawn',
+    text: 'Lord Alden has gathered his men. His banners appear on the borderland. Feldric readies the militia: "This is no bluff."',
+    options: [
+      { text: 'DEFEND THE BORDER', effects: {} },
+      { text: 'OFFER TRIBUTE', effects: { gold: -20, authority: -3 } },
+    ],
+    combat: {
+      enemyForces: 6,
+      prepDelayMinTicks: 2,
+      prepDelayMaxTicks: 4,
+      onWin: {
+        authority: 3,
+        satisfaction: 3,
+      },
+      onLose: {
+        farmers: -4,
+        satisfaction: -4,
+        authority: -3,
+      },
+      followUpsOnWin: [
+        {
+          triggerOnOptionIndex: 0,
+          delayMinTicks: 2,
+          delayMaxTicks: 4,
+          candidates: [{ requestId: 'CHAIN_NOBLE_FEUD_END_TRIUMPH', weight: 1 }],
+        },
+      ],
+      followUpsOnLose: [
+        {
+          triggerOnOptionIndex: 0,
+          delayMinTicks: 2,
+          delayMaxTicks: 4,
+          candidates: [{ requestId: 'CHAIN_NOBLE_FEUD_END_YIELDED', weight: 1 }],
+        },
+      ],
+    },
+    followUps: [
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 3,
+        delayMaxTicks: 5,
+        candidates: [{ requestId: 'CHAIN_NOBLE_FEUD_END_YIELDED', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_NOBLE_FEUD_END_PEACE',
+    chainId: 'noble_feud',
+    chainRole: 'end',
+    canTriggerRandomly: false,
+    title: 'Neighborly Accord',
+    text: 'You and Lord Alden reach a fair agreement. The border is settled and both fiefs benefit from cooperation.',
+    options: [
+      { text: 'TOAST TO PEACE', effects: { satisfaction: 4, gold: 5 } },
+      { text: 'FORMALIZE THE PACT', effects: { authority: 2 } },
+    ],
+  },
+  {
+    id: 'CHAIN_NOBLE_FEUD_END_TRIUMPH',
+    chainId: 'noble_feud',
+    chainRole: 'end',
+    canTriggerRandomly: false,
+    title: 'The Border Stands',
+    text: 'Lord Alden retreats in defeat. The borderland remains yours. Your people cheer their victory.',
+    options: [
+      { text: 'REWARD THE MILITIA', effects: { gold: -10, landForces: 3, satisfaction: 5 } },
+      { text: 'FORTIFY THE BORDER', effects: { gold: -15, landForces: 5 } },
+    ],
+  },
+  {
+    id: 'CHAIN_NOBLE_FEUD_END_YIELDED',
+    chainId: 'noble_feud',
+    chainRole: 'end',
+    canTriggerRandomly: false,
+    title: 'Land Lost',
+    text: 'The borderland now belongs to Lord Alden. Your farmers must find new fields, and your authority has suffered.',
+    options: [
+      { text: 'ACCEPT THE LOSS', effects: { satisfaction: -3 } },
+      { text: 'PLAN REVENGE', effects: { authority: 1, satisfaction: -1 } },
+    ],
+  },
+
+  // =========================================================
+  // CHAIN 5 – Harvest Festival
+  // Mechanics: option followUps, requirements (need:beer),
+  //            maxTriggers, chain-gating, weighted candidates
+  // =========================================================
+  {
+    id: 'CHAIN_HARVEST_FEST_START',
+    chainId: 'harvest_fest',
+    chainRole: 'start',
+    chainRestartCooldownTicks: 50,
+    maxTriggers: 2,
+    requires: ['need:beer'],
+    title: 'Festival Season',
+    text: 'The harvest is in and the people want a grand festival. Brewers offer their finest ale if you fund the event.',
+    options: [
+      { text: 'FUND THE FESTIVAL', effects: { gold: -20 } },
+      { text: 'CANCEL IT', effects: { satisfaction: -8 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [
+          { requestId: 'CHAIN_HARVEST_FEST_GREAT', weight: 3 },
+          { requestId: 'CHAIN_HARVEST_FEST_TROUBLE', weight: 2 },
+        ],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 3,
+        delayMaxTicks: 5,
+        candidates: [{ requestId: 'CHAIN_HARVEST_FEST_END_QUIET', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_HARVEST_FEST_GREAT',
+    chainId: 'harvest_fest',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'Joy and Ale',
+    text: 'The festival is a roaring success! Music, dancing, and barrels of ale. But the crowd wants even more entertainment.',
+    options: [
+      { text: 'HIRE PERFORMERS', effects: { gold: -10, satisfaction: 8 } },
+      { text: 'LET THEM ENJOY', effects: { satisfaction: 5 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 2,
+        delayMaxTicks: 3,
+        candidates: [{ requestId: 'CHAIN_HARVEST_FEST_END_GLORY', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 2,
+        delayMaxTicks: 3,
+        candidates: [{ requestId: 'CHAIN_HARVEST_FEST_END_GOOD', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_HARVEST_FEST_TROUBLE',
+    chainId: 'harvest_fest',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'Drunken Brawl',
+    text: 'Too much ale has led to a brawl between farmers. Fists fly and tables break. The festival could turn ugly.',
+    options: [
+      { text: 'RESTORE ORDER', effects: { authority: 2, satisfaction: -2 } },
+      { text: 'LET THEM FIGHT', effects: { health: -3, satisfaction: 1 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 2,
+        delayMaxTicks: 3,
+        candidates: [
+          { requestId: 'CHAIN_HARVEST_FEST_END_GOOD', weight: 2 },
+          { requestId: 'CHAIN_HARVEST_FEST_END_QUIET', weight: 1 },
+        ],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 2,
+        delayMaxTicks: 3,
+        candidates: [{ requestId: 'CHAIN_HARVEST_FEST_END_QUIET', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_HARVEST_FEST_END_GLORY',
+    chainId: 'harvest_fest',
+    chainRole: 'end',
+    canTriggerRandomly: false,
+    title: 'A Festival to Remember',
+    text: 'Songs are written about this festival. The people are united, and word of your generosity spreads far.',
+    options: [
+      { text: 'BASK IN GLORY', effects: { satisfaction: 5, authority: 2 } },
+      { text: 'PREPARE NEXT YEAR', effects: { gold: -5, satisfaction: 3 } },
+    ],
+  },
+  {
+    id: 'CHAIN_HARVEST_FEST_END_GOOD',
+    chainId: 'harvest_fest',
+    chainRole: 'end',
+    canTriggerRandomly: false,
+    title: 'Fond Memories',
+    text: 'The festival winds down peacefully. People head home with warm bellies and good cheer.',
+    options: [
+      { text: 'REST WELL', effects: { satisfaction: 3, health: 2 } },
+      { text: 'CLEAN UP', effects: { satisfaction: 1 } },
+    ],
+  },
+  {
+    id: 'CHAIN_HARVEST_FEST_END_QUIET',
+    chainId: 'harvest_fest',
+    chainRole: 'end',
+    canTriggerRandomly: false,
+    title: 'Back to Work',
+    text: 'Festival or not, the work continues. The village settles back into its daily routine.',
+    options: [
+      { text: 'CARRY ON', effects: { satisfaction: 1 } },
+      { text: 'PROMISE A BETTER ONE', effects: { satisfaction: 2, authority: -1 } },
     ],
   },
 ];
