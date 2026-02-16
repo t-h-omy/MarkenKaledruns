@@ -67,6 +67,31 @@ function ConstructionScreen({
     return 'fulfilled'
   }
   
+  // Sort buildings by urgency/status priority
+  const getSortedBuildings = () => {
+    // Define status priority (lower number = higher priority)
+    const statusPriority: Record<BuildingStatus, number> = {
+      'needed': 1,      // Most urgent - needs building and can afford
+      'no-gold': 2,     // Urgent but can't afford
+      'available': 3,   // Can build but not urgent
+      'fulfilled': 4,   // Requirements met
+      'locked': 5       // Not yet unlocked
+    }
+    
+    // Create array of buildings with their status
+    const buildingsWithStatus = BUILDING_DEFINITIONS.map(def => ({
+      definition: def,
+      status: getBuildingStatus(def)
+    }))
+    
+    // Sort by status priority, then by original sortOrder for ties
+    return buildingsWithStatus.sort((a, b) => {
+      const priorityDiff = statusPriority[a.status] - statusPriority[b.status]
+      if (priorityDiff !== 0) return priorityDiff
+      return a.definition.sortOrder - b.definition.sortOrder
+    })
+  }
+  
   if (!isOpen) return null
   
   return (
@@ -88,11 +113,10 @@ function ConstructionScreen({
         
         {/* Building Cards */}
         <div className="construction-content">
-          {BUILDING_DEFINITIONS.map((def) => {
+          {getSortedBuildings().map(({ definition: def, status }) => {
             const tracking = buildingTracking[def.id]
             if (!tracking) return null
             
-            const status = getBuildingStatus(def)
             const required = calculateRequiredBuildings(def, farmers)
             const isHighlighted = highlightedBuilding === def.id
             
