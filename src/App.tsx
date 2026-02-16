@@ -4,10 +4,14 @@ import { gameReducer, initializeGame, getCurrentRequest } from './game/state'
 import type { Effect } from './game/models'
 import { BUILDING_DEFINITIONS, calculateRequiredBuildings } from './game/buildings'
 import type { BuildingDefinition } from './game/buildings'
+import ConstructionScreen from './ConstructionScreen'
 
 function App() {
   const [gameState, dispatch] = useReducer(gameReducer, undefined, initializeGame)
   const [bottomTab, setBottomTab] = useState<'build' | 'log'>('build')
+  
+  // Construction screen state
+  const [constructionScreenOpen, setConstructionScreenOpen] = useState(false)
   
   // Request display delay state
   const [displayedRequest, setDisplayedRequest] = useState(getCurrentRequest(gameState))
@@ -641,6 +645,12 @@ function App() {
             >
               Log
             </button>
+            <button
+              className="toggle-btn"
+              onClick={() => setConstructionScreenOpen(true)}
+            >
+              🏗️ Construction
+            </button>
           </div>
 
           <div className="bottom-content">
@@ -971,6 +981,12 @@ function App() {
             </div>
           )
         })}
+        
+        {/* Construction Screen Overlay */}
+        <ConstructionScreen 
+          isOpen={constructionScreenOpen}
+          onClose={() => setConstructionScreenOpen(false)}
+        />
         
         {/* Version display */}
         <div className="version-footer">
