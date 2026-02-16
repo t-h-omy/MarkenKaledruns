@@ -12,6 +12,7 @@ interface BuildingCardProps {
   status: BuildingStatus;
   isHighlighted?: boolean;
   onBuild: (buildingId: string) => void;
+  onBuildMultiple?: (buildingId: string) => void;
 }
 
 function BuildingCard({
@@ -22,7 +23,8 @@ function BuildingCard({
   requiredCount,
   status,
   isHighlighted = false,
-  onBuild
+  onBuild,
+  onBuildMultiple
 }: BuildingCardProps) {
   const built = tracking.buildingCount
   const shortage = Math.max(0, requiredCount - built)
@@ -117,6 +119,15 @@ function BuildingCard({
             >
               BUILD {definition.displayName.toUpperCase()}
             </button>
+            {shortage > 1 && onBuildMultiple && (
+              <button
+                className="building-build-multiple-button"
+                disabled={!canBuild}
+                onClick={() => onBuildMultiple(definition.id)}
+              >
+                BUILD MULTIPLE...
+              </button>
+            )}
           </div>
         </>
       )}

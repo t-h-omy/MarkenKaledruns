@@ -205,6 +205,8 @@
 /* Build Actions */
 .building-card-actions {
   display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
   justify-content: center;
   margin-top: 1rem;
   padding-top: 1rem;
@@ -237,6 +239,39 @@
 }
 
 .building-build-button:disabled {
+  background: #3a3a3a;
+  color: #6b7280;
+  cursor: not-allowed;
+  opacity: 0.6;
+  box-shadow: none;
+}
+
+.building-build-multiple-button {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 1.5rem;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.building-build-multiple-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.building-build-multiple-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.building-build-multiple-button:disabled {
   background: #3a3a3a;
   color: #6b7280;
   cursor: not-allowed;

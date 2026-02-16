@@ -1,8 +1,9 @@
-import { useEffect, useRef, useMemo } from 'react'
+import { useEffect, useRef, useMemo, useState } from 'react'
 import './ConstructionScreen.css'
 import BuildingCard from './BuildingCard'
+import BuildMultipleModal from './BuildMultipleModal'
 import type { BuildingStatus } from './BuildingCard'
-import { BUILDING_DEFINITIONS, calculateRequiredBuildings } from './game/buildings'
+import { BUILDING_DEFINITIONS, calculateRequiredBuildings, getBuildingDef } from './game/buildings'
 import type { BuildingDefinition, BuildingTracking } from './game/buildings'
 
 interface ConstructionScreenProps {
@@ -25,6 +26,16 @@ function ConstructionScreen({
   onBuild 
 }: ConstructionScreenProps) {
   const highlightedBuildingRef = useRef<HTMLDivElement>(null)
+  const [buildMultipleModalOpen, setBuildMultipleModalOpen] = useState(false)
+  const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null)
+  
+  // Get selected building definition and data
+  const selectedBuilding = selectedBuildingId ? getBuildingDef(selectedBuildingId) : null
+  const selectedTracking = selectedBuildingId ? buildingTracking[selectedBuildingId] : null
+  const selectedRequired = selectedBuilding ? calculateRequiredBuildings(selectedBuilding, farmers) : 0
+  const selectedShortage = selectedTracking 
+    ? Math.max(0, selectedRequired - selectedTracking.buildingCount) 
+    : 0
   
   // Handle Escape key to close
   useEffect(() => {
@@ -49,6 +60,24 @@ function ConstructionScreen({
       }, 100)
     }
   }, [isOpen, highlightedBuilding])
+  
+  // Handlers for build multiple
+  const handleOpenBuildMultiple = (buildingId: string) => {
+    setSelectedBuildingId(buildingId)
+    setBuildMultipleModalOpen(true)
+  }
+  
+  const handleCloseBuildMultiple = () => {
+    setBuildMultipleModalOpen(false)
+    setSelectedBuildingId(null)
+  }
+  
+  const handleConfirmBuildMultiple = (buildingId: string, quantity: number) => {
+    // Dispatch multiple BUILD_BUILDING actions
+    for (let i = 0; i < quantity; i++) {
+      onBuild(buildingId)
+    }
+  }
   
   // Calculate building status
   const getBuildingStatus = (def: BuildingDefinition): BuildingStatus => {
@@ -135,12 +164,23 @@ function ConstructionScreen({
                   status={status}
                   isHighlighted={isHighlighted}
                   onBuild={onBuild}
+                  onBuildMultiple={handleOpenBuildMultiple}
                 />
               </div>
             )
           })}
         </div>
       </div>
+      
+      {/* Build Multiple Modal */}
+      <BuildMultipleModal
+        isOpen={buildMultipleModalOpen}
+        onClose={handleCloseBuildMultiple}
+        building={selectedBuilding}
+        currentGold={gold}
+        shortage={selectedShortage}
+        onConfirm={handleConfirmBuildMultiple}
+      />
     </div>
   )
 }

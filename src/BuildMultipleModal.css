@@ -1,0 +1,229 @@
+/* Build Multiple Modal Styles */
+
+.build-multiple-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 4000; /* Above construction screen */
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.build-multiple-modal {
+  background: #1a1a1a;
+  border-radius: 12px;
+  border: 2px solid #3b82f6;
+  padding: 2rem;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  animation: slideIn 0.3s ease;
+  position: relative;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.build-multiple-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  padding: 0;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.build-multiple-close:hover {
+  color: #fff;
+}
+
+.build-multiple-title {
+  color: #fbbf24;
+  font-size: 1.3rem;
+  margin: 0 0 1.5rem 0;
+  text-align: center;
+}
+
+.build-multiple-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.build-multiple-question {
+  color: #d1d5db;
+  text-align: center;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+/* Stepper Controls */
+.build-multiple-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.stepper-button {
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  width: 3rem;
+  height: 3rem;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stepper-button:hover:not(:disabled) {
+  background: #2563eb;
+  transform: scale(1.1);
+}
+
+.stepper-button:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.stepper-button:disabled {
+  background: #3a3a3a;
+  color: #6b7280;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.stepper-value {
+  color: #fff;
+  font-size: 2rem;
+  font-weight: 700;
+  min-width: 4rem;
+  text-align: center;
+}
+
+/* Cost Preview */
+.build-multiple-cost {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid #3b82f6;
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.cost-line {
+  display: flex;
+  justify-content: space-between;
+  color: #d1d5db;
+  font-size: 0.95rem;
+}
+
+.cost-value {
+  color: #fbbf24;
+  font-weight: 600;
+}
+
+/* Warning */
+.build-multiple-warning {
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  padding: 0.75rem;
+  color: #fbbf24;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+/* Action Buttons */
+.build-multiple-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.confirm-button,
+.cancel-button {
+  flex: 1;
+  padding: 0.75rem 1.5rem;
+  font-weight: 700;
+  font-size: 0.9rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.confirm-button {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.confirm-button:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.confirm-button:active {
+  transform: translateY(0);
+}
+
+.cancel-button {
+  background: #3a3a3a;
+  color: #d1d5db;
+  border: 1px solid #555;
+}
+
+.cancel-button:hover {
+  background: #4a4a4a;
+  color: #fff;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .build-multiple-modal {
+    padding: 1.5rem;
+  }
+  
+  .build-multiple-title {
+    font-size: 1.1rem;
+  }
+  
+  .stepper-value {
+    font-size: 1.5rem;
+  }
+}
