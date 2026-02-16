@@ -9,8 +9,10 @@ interface ConstructionScreenProps {
 function ConstructionScreen({ isOpen, onClose }: ConstructionScreenProps) {
   // Handle Escape key to close
   useEffect(() => {
+    if (!isOpen) return
+    
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
+      if (e.key === 'Escape') {
         onClose()
       }
     }
@@ -36,7 +38,7 @@ function ConstructionScreen({ isOpen, onClose }: ConstructionScreenProps) {
         
         {/* Placeholder for construction content */}
         <div className="construction-content">
-          <p style={{ color: '#aaa', textAlign: 'center', padding: '2rem' }}>
+          <p className="construction-placeholder">
             Construction content coming soon...
           </p>
         </div>

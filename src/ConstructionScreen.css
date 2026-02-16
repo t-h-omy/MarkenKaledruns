@@ -78,6 +78,12 @@
   padding: 1.5rem 2rem;
 }
 
+.construction-placeholder {
+  color: #aaa;
+  text-align: center;
+  padding: 2rem;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .construction-screen-overlay {
