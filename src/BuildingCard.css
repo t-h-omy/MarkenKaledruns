@@ -1,0 +1,281 @@
+/* Building Card Component Styles */
+
+.building-card {
+  background: #1a1a1a;
+  border-radius: 12px;
+  border-left: 4px solid #555;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+/* Status-based border colors */
+.building-card.building-locked {
+  border-left-color: #6b7280;
+  opacity: 0.7;
+}
+
+.building-card.building-available {
+  border-left-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.building-card.building-needed {
+  border-left-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.1);
+  animation: building-pulse 2s ease-in-out infinite;
+}
+
+.building-card.building-no-gold {
+  border-left-color: #ef4444;
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.building-card.building-fulfilled {
+  border-left-color: #10b981;
+  background: rgba(16, 185, 129, 0.05);
+}
+
+/* Highlighted state (for deep-linking from reminders) */
+.building-card.building-highlighted {
+  animation: building-highlight 1.5s ease-in-out 3;
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+}
+
+@keyframes building-pulse {
+  0%, 100% { background: rgba(245, 158, 11, 0.1); }
+  50% { background: rgba(245, 158, 11, 0.2); }
+}
+
+@keyframes building-highlight {
+  0%, 100% { 
+    transform: scale(1);
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+  }
+  50% { 
+    transform: scale(1.02);
+    box-shadow: 0 0 30px rgba(245, 158, 11, 0.6);
+  }
+}
+
+/* Card Header */
+.building-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.building-card-name {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* Status Badge */
+.building-status-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.25rem 0.6rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.building-status-badge.status-locked {
+  color: #9ca3af;
+  background: rgba(156, 163, 175, 0.2);
+  border: 1px solid #6b7280;
+}
+
+.building-status-badge.status-available {
+  color: #60a5fa;
+  background: rgba(59, 130, 246, 0.2);
+  border: 1px solid #3b82f6;
+}
+
+.building-status-badge.status-needed {
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.2);
+  border: 1px solid #f59e0b;
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+.building-status-badge.status-no-gold {
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid #ef4444;
+}
+
+.building-status-badge.status-fulfilled {
+  color: #4ade80;
+  background: rgba(16, 185, 129, 0.2);
+  border: 1px solid #10b981;
+}
+
+@keyframes status-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Description */
+.building-card-description {
+  color: #9ca3af;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-bottom: 1rem;
+  font-style: italic;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+/* Locked Message */
+.building-locked-message {
+  color: #9ca3af;
+  font-size: 0.95rem;
+  text-align: center;
+  padding: 1rem;
+  margin: 0.5rem 0;
+  background: rgba(107, 114, 128, 0.1);
+  border-radius: 6px;
+}
+
+/* Stats Section */
+.building-card-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.building-stat {
+  font-size: 0.9rem;
+  color: #d1d5db;
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.shortage-indicator {
+  color: #f59e0b;
+  font-weight: 600;
+  margin-left: 0.5rem;
+}
+
+/* Progress Bar Section */
+.building-progress-section {
+  margin: 1rem 0;
+}
+
+.building-progress-bar {
+  height: 1rem;
+  background: #2a2a2a;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #3a3a3a;
+  margin-bottom: 0.5rem;
+}
+
+.building-progress-fill {
+  height: 100%;
+  transition: width 0.5s ease, background 0.3s ease;
+  border-radius: 8px;
+  position: relative;
+}
+
+.building-progress-fill.progress-low {
+  background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+}
+
+.building-progress-fill.progress-medium {
+  background: linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%);
+}
+
+.building-progress-fill.progress-high {
+  background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+}
+
+.building-progress-label {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  text-align: center;
+}
+
+/* Build Actions */
+.building-card-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #2a2a2a;
+}
+
+.building-build-button {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 2rem;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
+}
+
+.building-build-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.4);
+}
+
+.building-build-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.building-build-button:disabled {
+  background: #3a3a3a;
+  color: #6b7280;
+  cursor: not-allowed;
+  opacity: 0.6;
+  box-shadow: none;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .building-card {
+    padding: 1rem;
+  }
+  
+  .building-card-name {
+    font-size: 1.1rem;
+  }
+  
+  .building-card-description {
+    font-size: 0.85rem;
+  }
+  
+  .building-build-button {
+    padding: 0.6rem 1.5rem;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-height: 600px) and (orientation: landscape) {
+  .building-card {
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .building-card-description {
+    font-size: 0.8rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .building-progress-section {
+    margin: 0.75rem 0;
+  }
+}

@@ -1,12 +1,29 @@
 import { useEffect } from 'react'
 import './ConstructionScreen.css'
+import BuildingCard from './BuildingCard'
+import type { BuildingStatus } from './BuildingCard'
+import { BUILDING_DEFINITIONS, calculateRequiredBuildings } from './game/buildings'
+import type { BuildingDefinition, BuildingTracking } from './game/buildings'
 
 interface ConstructionScreenProps {
   isOpen: boolean;
   onClose: () => void;
+  farmers: number;
+  gold: number;
+  buildingTracking: Record<string, BuildingTracking>;
+  highlightedBuilding?: string;
+  onBuild: (buildingId: string) => void;
 }
 
-function ConstructionScreen({ isOpen, onClose }: ConstructionScreenProps) {
+function ConstructionScreen({ 
+  isOpen, 
+  onClose, 
+  farmers, 
+  gold, 
+  buildingTracking, 
+  highlightedBuilding,
+  onBuild 
+}: ConstructionScreenProps) {
   // Handle Escape key to close
   useEffect(() => {
     if (!isOpen) return
@@ -21,6 +38,23 @@ function ConstructionScreen({ isOpen, onClose }: ConstructionScreenProps) {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isOpen, onClose])
   
+  // Calculate building status
+  const getBuildingStatus = (def: BuildingDefinition): BuildingStatus => {
+    const tracking = buildingTracking[def.id]
+    if (!tracking) return 'locked'
+
+    if (farmers < def.unlockThreshold) return 'locked'
+
+    const required = calculateRequiredBuildings(def, farmers)
+    const built = tracking.buildingCount
+
+    if (built < required) {
+      return gold >= def.cost ? 'needed' : 'no-gold'
+    }
+
+    return gold >= def.cost ? 'fulfilled' : 'fulfilled'
+  }
+  
   if (!isOpen) return null
   
   return (
@@ -34,13 +68,36 @@ function ConstructionScreen({ isOpen, onClose }: ConstructionScreenProps) {
         {/* Header */}
         <div className="construction-header">
           <h2>🏗️ Settlement Construction</h2>
+          <div className="construction-stats">
+            <span>👨‍🌾 Farmers: {farmers}</span>
+            <span>💰 Gold: {gold}</span>
+          </div>
         </div>
         
-        {/* Placeholder for construction content */}
+        {/* Building Cards */}
         <div className="construction-content">
-          <p className="construction-placeholder">
-            Construction content coming soon...
-          </p>
+          {BUILDING_DEFINITIONS.map((def) => {
+            const tracking = buildingTracking[def.id]
+            if (!tracking) return null
+            
+            const status = getBuildingStatus(def)
+            const required = calculateRequiredBuildings(def, farmers)
+            const isHighlighted = highlightedBuilding === def.id
+            
+            return (
+              <BuildingCard
+                key={def.id}
+                definition={def}
+                tracking={tracking}
+                farmers={farmers}
+                gold={gold}
+                requiredCount={required}
+                status={status}
+                isHighlighted={isHighlighted}
+                onBuild={onBuild}
+              />
+            )
+          })}
         </div>
       </div>
     </div>

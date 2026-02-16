@@ -986,6 +986,10 @@ function App() {
         <ConstructionScreen 
           isOpen={constructionScreenOpen}
           onClose={() => setConstructionScreenOpen(false)}
+          farmers={gameState.stats.farmers}
+          gold={gameState.stats.gold}
+          buildingTracking={gameState.buildingTracking}
+          onBuild={(buildingId) => dispatch({ type: 'BUILD_BUILDING', buildingId })}
         />
         
         {/* Version display */}
