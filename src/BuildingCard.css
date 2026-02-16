@@ -43,6 +43,16 @@
   box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
 }
 
+/* Build success flash animation */
+.building-card.building-success-flash {
+  animation: success-flash 1s ease-out;
+}
+
+/* Build error shake animation */
+.building-card.building-error-shake {
+  animation: error-shake 0.6s ease-out;
+}
+
 @keyframes building-pulse {
   0%, 100% { background: rgba(245, 158, 11, 0.1); }
   50% { background: rgba(245, 158, 11, 0.2); }
@@ -56,6 +66,37 @@
   50% { 
     transform: scale(1.02);
     box-shadow: 0 0 30px rgba(245, 158, 11, 0.6);
+  }
+}
+
+@keyframes success-flash {
+  0% { 
+    background: rgba(16, 185, 129, 0.05);
+    box-shadow: 0 0 0 rgba(16, 185, 129, 0);
+  }
+  15% { 
+    background: rgba(16, 185, 129, 0.3);
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+    border-left-color: #10b981;
+  }
+  100% { 
+    background: rgba(16, 185, 129, 0.05);
+    box-shadow: 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+@keyframes error-shake {
+  0%, 100% { 
+    transform: translateX(0);
+    background: rgba(239, 68, 68, 0.05);
+  }
+  10%, 30%, 50%, 70%, 90% { 
+    transform: translateX(-5px);
+    background: rgba(239, 68, 68, 0.15);
+  }
+  20%, 40%, 60%, 80% { 
+    transform: translateX(5px);
+    background: rgba(239, 68, 68, 0.15);
   }
 }
 
@@ -179,21 +220,31 @@
 
 .building-progress-fill {
   height: 100%;
-  transition: width 0.5s ease, background 0.3s ease;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease;
   border-radius: 8px;
   position: relative;
+  animation: progress-shimmer 2s infinite;
 }
 
 .building-progress-fill.progress-low {
   background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
 }
 
 .building-progress-fill.progress-medium {
   background: linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%);
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
 }
 
 .building-progress-fill.progress-high {
   background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+}
+
+@keyframes progress-shimmer {
+  0% { opacity: 1; }
+  50% { opacity: 0.9; }
+  100% { opacity: 1; }
 }
 
 .building-progress-label {
@@ -228,21 +279,30 @@
   box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
 }
 
-.building-build-button:hover:not(:disabled) {
+.building-build-button:hover {
   background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(251, 191, 36, 0.4);
 }
 
-.building-build-button:active:not(:disabled) {
-  transform: translateY(0);
+.building-build-button:active {
+  transform: translateY(0) scale(0.98);
 }
 
-.building-build-button:disabled {
+/* Disabled state styling (when locked or insufficient gold) */
+.building-locked .building-build-button,
+.building-no-gold .building-build-button {
   background: #3a3a3a;
   color: #6b7280;
   cursor: not-allowed;
   opacity: 0.6;
+  box-shadow: none;
+}
+
+.building-locked .building-build-button:hover,
+.building-no-gold .building-build-button:hover {
+  background: #3a3a3a;
+  transform: none;
   box-shadow: none;
 }
 
@@ -261,21 +321,29 @@
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
-.building-build-multiple-button:hover:not(:disabled) {
+.building-build-multiple-button:hover {
   background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
 }
 
-.building-build-multiple-button:active:not(:disabled) {
-  transform: translateY(0);
+.building-build-multiple-button:active {
+  transform: translateY(0) scale(0.98);
 }
 
-.building-build-multiple-button:disabled {
+.building-locked .building-build-multiple-button,
+.building-no-gold .building-build-multiple-button {
   background: #3a3a3a;
   color: #6b7280;
   cursor: not-allowed;
   opacity: 0.6;
+  box-shadow: none;
+}
+
+.building-locked .building-build-multiple-button:hover,
+.building-no-gold .building-build-multiple-button:hover {
+  background: #3a3a3a;
+  transform: none;
   box-shadow: none;
 }
 

@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from 'react'
 import './BuildingCard.css'
 import type { BuildingDefinition, BuildingTracking } from './game/buildings'
 
@@ -30,6 +31,20 @@ function BuildingCard({
   const shortage = Math.max(0, requiredCount - built)
   const canBuild = status !== 'locked' && gold >= definition.cost
   
+  // Animation states
+  const [showBuildSuccess, setShowBuildSuccess] = useState(false)
+  const [showBuildError, setShowBuildError] = useState(false)
+  const prevBuiltRef = useRef(built)
+  
+  // Detect successful build (building count increased)
+  useEffect(() => {
+    if (built > prevBuiltRef.current) {
+      setShowBuildSuccess(true)
+      setTimeout(() => setShowBuildSuccess(false), 1000)
+    }
+    prevBuiltRef.current = built
+  }, [built])
+  
   // Calculate progress percentage for the progress bar
   const progressPercentage = requiredCount > 0 ? (built / requiredCount) * 100 : 100
   
@@ -51,8 +66,38 @@ function BuildingCard({
     return 'progress-high'
   }
   
+  // Handle build button click with error feedback
+  const handleBuildClick = () => {
+    if (canBuild) {
+      onBuild(definition.id)
+    } else {
+      // Show error animation when trying to build without enough gold or when locked
+      setShowBuildError(true)
+      setTimeout(() => setShowBuildError(false), 600)
+    }
+  }
+  
+  const handleBuildMultipleClick = () => {
+    if (canBuild && onBuildMultiple) {
+      onBuildMultiple(definition.id)
+    } else {
+      // Show error animation
+      setShowBuildError(true)
+      setTimeout(() => setShowBuildError(false), 600)
+    }
+  }
+  
+  // Build animation class names
+  const cardClasses = [
+    'building-card',
+    `building-${status}`,
+    isHighlighted ? 'building-highlighted' : '',
+    showBuildSuccess ? 'building-success-flash' : '',
+    showBuildError ? 'building-error-shake' : ''
+  ].filter(Boolean).join(' ')
+  
   return (
-    <div className={`building-card building-${status}${isHighlighted ? ' building-highlighted' : ''}`}>
+    <div className={cardClasses}>
       {/* Header: Icon, Name, Status Badge */}
       <div className="building-card-header">
         <span className="building-card-name">
@@ -114,16 +159,14 @@ function BuildingCard({
           <div className="building-card-actions">
             <button
               className="building-build-button"
-              disabled={!canBuild}
-              onClick={() => onBuild(definition.id)}
+              onClick={handleBuildClick}
             >
               BUILD {definition.displayName.toUpperCase()}
             </button>
             {shortage > 1 && onBuildMultiple && (
               <button
                 className="building-build-multiple-button"
-                disabled={!canBuild}
-                onClick={() => onBuildMultiple(definition.id)}
+                onClick={handleBuildMultipleClick}
               >
                 BUILD MULTIPLE...
               </button>
