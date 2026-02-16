@@ -3,11 +3,12 @@
  * Based on POF_SPEC.md specification.
  */
 
-import type { Stats, Needs, Effect, NeedsTracking, Request, FollowUp, AuthorityCheck, AuthorityCheckResult, WeightedCandidate, AuthorityFollowUpBoost } from './models';
-import { DECLINE_COOLDOWN_TICKS, NEED_UNLOCK_THRESHOLDS, NEED_CONFIGS, NEED_INFO_REQUEST_MAP } from './models';
-import { needRequests, infoRequests, authorityInfoRequests, eventRequests } from './requests';
+import type { Stats, Effect, Request, FollowUp, AuthorityCheck, AuthorityCheckResult, WeightedCandidate, AuthorityFollowUpBoost } from './models';
+import { infoRequests, authorityInfoRequests, eventRequests } from './requests';
 import { pickNextRequest, selectWeightedCandidate, getRandomValue, resetRandom } from './picker';
 import { needModifiers } from './modifiers';
+import type { BuildingTracking } from './buildings';
+import { BUILDING_DEFINITIONS, isBuildingActive, calculateRequiredBuildings, getBuildingDef, createInitialBuildingTracking } from './buildings';
 
 /**
  * Represents a single applied change to a stat
@@ -30,7 +31,7 @@ export interface LogEntry {
   tick: number;
   requestId: string;
   optionText: string;
-  source: 'Request Decision' | 'Tax Income' | 'Population Growth' | 'Combat Commit';
+  source: 'Request Decision' | 'Tax Income' | 'Population Growth' | 'Combat Commit' | 'Overcrowding' | 'Building Constructed';
   deltas: {
     gold?: number;
     satisfaction?: number;
@@ -151,9 +152,10 @@ export interface PendingAuthorityCheck {
 export interface GameState {
   tick: number;
   stats: Stats;
-  needs: Needs;
-  needsTracking: NeedsTracking;
-  newlyUnlockedNeed: keyof Needs | null;
+  /** Building tracking data keyed by building ID */
+  buildingTracking: Record<string, BuildingTracking>;
+  /** ID of a building that was just unlocked this tick (for UI notification) */
+  newlyUnlockedBuilding: string | null;
   currentRequestId: string;
   lastRequestId: string;
   log: LogEntry[];
@@ -177,14 +179,19 @@ export interface GameState {
 /**
  * Action types for the state reducer
  */
-export type GameAction = {
-  type: 'CHOOSE_OPTION';
-  optionIndex: number;
-  /** Optional number of land forces to commit to combat (only used for combat requests) */
-  combatCommit?: number;
-  /** Optional amount of authority to commit (only used for options with authority checks) */
-  authorityCommit?: number;
-};
+export type GameAction =
+  | {
+      type: 'CHOOSE_OPTION';
+      optionIndex: number;
+      /** Optional number of land forces to commit to combat (only used for combat requests) */
+      combatCommit?: number;
+      /** Optional amount of authority to commit (only used for options with authority checks) */
+      authorityCommit?: number;
+    }
+  | {
+      type: 'BUILD_BUILDING';
+      buildingId: string;
+    };
 
 /**
  * Initial game state with starting values from POF_SPEC.md
@@ -200,21 +207,8 @@ export const initialState: GameState = {
     landForces: 5,
     authority: 20,
   },
-  needs: {
-    marketplace: false,
-    bread: false,
-    beer: false,
-    firewood: false,
-    well: false,
-  },
-  needsTracking: {
-    marketplace: { buildingCount: 0, nextEligibleTick: 0 },
-    bread: { buildingCount: 0, nextEligibleTick: 0 },
-    beer: { buildingCount: 0, nextEligibleTick: 0 },
-    firewood: { buildingCount: 0, nextEligibleTick: 0 },
-    well: { buildingCount: 0, nextEligibleTick: 0 },
-  },
-  newlyUnlockedNeed: null,
+  buildingTracking: createInitialBuildingTracking(),
+  newlyUnlockedBuilding: null,
   currentRequestId: '',
   lastRequestId: '',
   log: [],
@@ -240,7 +234,7 @@ function clamp(value: number, min: number, max: number): number {
  * @returns The request's title, or a fallback string if not found
  */
 function getRequestTitleFromId(requestId: string): string {
-  const allRequests = [...needRequests, ...infoRequests, ...authorityInfoRequests, ...eventRequests];
+  const allRequests = [...infoRequests, ...authorityInfoRequests, ...eventRequests];
   const request = allRequests.find(r => r.id === requestId);
   
   if (!request) {
@@ -282,11 +276,10 @@ function clampStats(stats: Stats): Stats {
 }
 
 /**
- * Applies effects from an option to the current state
+ * Applies stat effects from an option to the current stats
  */
-function applyEffects(stats: Stats, needs: Needs, effects: Effect): { stats: Stats; needs: Needs } {
+function applyEffects(stats: Stats, effects: Effect): Stats {
   const newStats = { ...stats };
-  const newNeeds = { ...needs };
 
   // Apply stat changes
   if (effects.gold !== undefined) newStats.gold += effects.gold;
@@ -297,14 +290,7 @@ function applyEffects(stats: Stats, needs: Needs, effects: Effect): { stats: Sta
   if (effects.landForces !== undefined) newStats.landForces += effects.landForces;
   if (effects.authority !== undefined) newStats.authority += effects.authority;
 
-  // Apply need flags
-  if (effects.marketplace !== undefined) newNeeds.marketplace = effects.marketplace;
-  if (effects.bread !== undefined) newNeeds.bread = effects.bread;
-  if (effects.beer !== undefined) newNeeds.beer = effects.beer;
-  if (effects.firewood !== undefined) newNeeds.firewood = effects.firewood;
-  if (effects.well !== undefined) newNeeds.well = effects.well;
-
-  return { stats: newStats, needs: newNeeds };
+  return newStats;
 }
 
 /**
@@ -322,35 +308,35 @@ export type ModifierHook = (
 /**
  * Applies an option's effects with modifier hooks
  * This is the main entry point for effect application with the modification pipeline
- * 
+ *
  * @param state Current game state
  * @param request The request being responded to
  * @param optionIndex The chosen option index
- * @param modifiers Array of modifier hooks to run (currently empty, for future use)
- * @returns Object with updated stats, needs, and list of all applied changes
+ * @param modifiers Array of modifier hooks to run
+ * @returns Object with updated stats and list of all applied changes
  */
 export function applyOptionWithModifiers(
   state: GameState,
   request: Request,
   optionIndex: number,
   modifiers: ModifierHook[] = []
-): { stats: Stats; needs: Needs; appliedChanges: AppliedChange[] } {
+): { stats: Stats; appliedChanges: AppliedChange[] } {
   const option = request.options[optionIndex];
-  
+
   // 1. Compute base delta from option
   let delta = { ...option.effects };
   const appliedChanges: AppliedChange[] = [];
-  
-  // 2. Run modifier hooks (currently empty)
+
+  // 2. Run modifier hooks
   for (const modifier of modifiers) {
     const result = modifier(state, request, optionIndex, delta, appliedChanges);
     delta = result.delta;
     appliedChanges.push(...result.extraChanges);
   }
-  
+
   // 3. Apply final delta to stats
-  const { stats: statsAfterEffects, needs } = applyEffects(state.stats, state.needs, delta);
-  
+  const statsAfterEffects = applyEffects(state.stats, delta);
+
   // Record base changes from the delta
   const statKeys: Array<keyof Stats> = ['gold', 'satisfaction', 'health', 'fireRisk', 'farmers', 'landForces', 'authority'];
   for (const key of statKeys) {
@@ -362,81 +348,11 @@ export function applyOptionWithModifiers(
       });
     }
   }
-  
+
   // 4. Apply clamping
   const stats = clampStats(statsAfterEffects);
-  
-  return { stats, needs, appliedChanges };
-}
 
-/**
- * Checks if a need is unlocked based on farmer population
- */
-export function isNeedUnlocked(needKey: keyof Needs, farmers: number): boolean {
-  const unlockThreshold = NEED_UNLOCK_THRESHOLDS[needKey];
-  return farmers >= unlockThreshold;
-}
-
-/**
- * Calculates the number of buildings required for a need based on population
- * Formula:
- * - If farmers < unlockThreshold: requiredBuildings = 0
- * - Else: requiredBuildings = 1 + floor((farmers - unlockThreshold) / populationPerBuilding)
- */
-export function calculateRequiredBuildings(needKey: keyof Needs, farmers: number): number {
-  const config = NEED_CONFIGS[needKey];
-  
-  if (farmers < config.unlockThreshold) {
-    return 0; // Not unlocked yet
-  }
-  
-  return 1 + Math.floor((farmers - config.unlockThreshold) / config.populationPerBuilding);
-}
-
-/**
- * Checks if a need is currently required (more buildings needed)
- */
-export function isNeedRequired(
-  needKey: keyof Needs,
-  farmers: number,
-  buildingCount: number
-): boolean {
-  const requiredBuildings = calculateRequiredBuildings(needKey, farmers);
-  return buildingCount < requiredBuildings;
-}
-
-/**
- * Checks if a need is on cooldown
- */
-export function isNeedOnCooldown(tick: number, nextEligibleTick: number): boolean {
-  return tick < nextEligibleTick;
-}
-
-/**
- * Detects newly unlocked needs by comparing farmers before and after
- */
-export function detectNewlyUnlockedNeeds(
-  farmersBefore: number,
-  farmersAfter: number,
-  needs: Needs
-): keyof Needs | null {
-  const needKeys: Array<keyof Needs> = ['marketplace', 'bread', 'beer', 'firewood', 'well'];
-  
-  for (const needKey of needKeys) {
-    // Skip if already fulfilled (legacy boolean flag)
-    if (needs[needKey]) {
-      continue;
-    }
-    
-    const wasUnlocked = isNeedUnlocked(needKey, farmersBefore);
-    const isUnlocked = isNeedUnlocked(needKey, farmersAfter);
-    
-    if (!wasUnlocked && isUnlocked) {
-      return needKey; // This need just unlocked
-    }
-  }
-  
-  return null;
+  return { stats, appliedChanges };
 }
 
 /**
@@ -454,34 +370,168 @@ export function meetsRequirements(state: GameState, request: Request): boolean {
   if (!request.requires || request.requires.length === 0) {
     return true;
   }
-  
+
   // All required tokens must be present
   return request.requires.every(token => hasUnlock(state, token));
 }
 
 /**
- * Synchronizes need-based unlock tokens with the current needs state.
- * Sets tokens for fulfilled needs, removes tokens for unfulfilled needs.
- * Currently syncs: "need:marketplace" and "need:beer"
+ * Synchronizes building-based unlock tokens with the current building tracking state.
+ * Sets tokens for buildings that have been built, removes tokens for buildings that haven't.
  */
-export function syncNeedUnlockTokens(needs: Needs, unlocks: Record<string, true>): Record<string, true> {
+export function syncBuildingUnlockTokens(
+  buildingTracking: Record<string, BuildingTracking>,
+  unlocks: Record<string, true>
+): Record<string, true> {
   const newUnlocks = { ...unlocks };
-  
-  // Sync marketplace need token
-  if (needs.marketplace) {
-    newUnlocks['need:marketplace'] = true;
-  } else {
-    delete newUnlocks['need:marketplace'];
+
+  // Sync unlock tokens for all buildings that define one
+  for (const def of BUILDING_DEFINITIONS) {
+    if (def.unlockToken) {
+      if (isBuildingActive(buildingTracking, def.id)) {
+        newUnlocks[def.unlockToken] = true;
+      } else {
+        delete newUnlocks[def.unlockToken];
+      }
+    }
   }
-  
-  // Sync beer need token
-  if (needs.beer) {
-    newUnlocks['need:beer'] = true;
-  } else {
-    delete newUnlocks['need:beer'];
-  }
-  
+
   return newUnlocks;
+}
+
+/**
+ * Detects newly unlocked buildings by comparing farmers before and after a tick.
+ * Returns the first building ID that was just unlocked, or null.
+ */
+function detectNewlyUnlockedBuildings(
+  farmersBefore: number,
+  farmersAfter: number
+): string | null {
+  for (const def of BUILDING_DEFINITIONS) {
+    const wasUnlocked = farmersBefore >= def.unlockThreshold;
+    const isUnlocked = farmersAfter >= def.unlockThreshold;
+
+    if (!wasUnlocked && isUnlocked) {
+      return def.id;
+    }
+  }
+  return null;
+}
+
+/**
+ * Applies overcrowding penalties when farmers exceed farmstead capacity.
+ * Tier 1 (1-10 overflow):  health -1, satisfaction -1, fireRisk +1
+ * Tier 2 (11-25 overflow): health -2, satisfaction -2, fireRisk +2
+ * Tier 3 (26+ overflow):   health -3, satisfaction -3, fireRisk +3
+ */
+function applyOvercrowdingPenalties(
+  stats: Stats,
+  buildingTracking: Record<string, BuildingTracking>
+): { stats: Stats; changes: AppliedChange[] } {
+  const farmsteadCount = buildingTracking['farmstead']?.buildingCount ?? 0;
+  const capacity = farmsteadCount * 20;
+  const overflow = Math.max(0, stats.farmers - capacity);
+
+  if (overflow === 0) {
+    return { stats, changes: [] };
+  }
+
+  // Determine tier
+  let healthPenalty: number;
+  let satisfactionPenalty: number;
+  let fireRiskIncrease: number;
+
+  if (overflow <= 10) {
+    healthPenalty = -1;
+    satisfactionPenalty = -1;
+    fireRiskIncrease = 1;
+  } else if (overflow <= 25) {
+    healthPenalty = -2;
+    satisfactionPenalty = -2;
+    fireRiskIncrease = 2;
+  } else {
+    healthPenalty = -3;
+    satisfactionPenalty = -3;
+    fireRiskIncrease = 3;
+  }
+
+  const newStats = {
+    ...stats,
+    health: stats.health + healthPenalty,
+    satisfaction: stats.satisfaction + satisfactionPenalty,
+    fireRisk: stats.fireRisk + fireRiskIncrease,
+  };
+
+  const changes: AppliedChange[] = [
+    { stat: 'health', amount: healthPenalty, source: 'overcrowding', note: `${overflow} farmers in makeshift camps` },
+    { stat: 'satisfaction', amount: satisfactionPenalty, source: 'overcrowding', note: `${overflow} farmers in makeshift camps` },
+    { stat: 'fireRisk', amount: fireRiskIncrease, source: 'overcrowding', note: `${overflow} farmers in makeshift camps` },
+  ];
+
+  return { stats: newStats, changes };
+}
+
+/**
+ * Checks if any building reminders should be scheduled.
+ * Called at end of each normal tick.
+ */
+function checkBuildingReminders(
+  tick: number,
+  stats: Stats,
+  buildingTracking: Record<string, BuildingTracking>,
+  scheduledEvents: ScheduledEvent[]
+): { buildingTracking: Record<string, BuildingTracking>; scheduledEvents: ScheduledEvent[] } {
+  const newTracking = { ...buildingTracking };
+  const newScheduledEvents = [...scheduledEvents];
+
+  for (const def of BUILDING_DEFINITIONS) {
+    if (!def.reminderRequestId) continue;
+
+    const tracking = newTracking[def.id];
+    if (!tracking) continue;
+
+    // Check if building is unlocked
+    if (stats.farmers < def.unlockThreshold) continue;
+
+    // Check if there's a deficit
+    const required = calculateRequiredBuildings(def, stats.farmers);
+    if (tracking.buildingCount >= required) {
+      // No deficit — reset reminder state
+      newTracking[def.id] = { ...tracking, reminderScheduled: false };
+      continue;
+    }
+
+    // Update lastRequirementTick if not set
+    if (tracking.lastRequirementTick === undefined) {
+      newTracking[def.id] = { ...tracking, lastRequirementTick: tick };
+      continue; // Start delay timer from now
+    }
+
+    // Check if already scheduled this cycle
+    if (tracking.reminderScheduled) continue;
+
+    // Check cooldown
+    if (tick < tracking.reminderCooldownUntil) continue;
+
+    // Check delay elapsed
+    if (tick - tracking.lastRequirementTick < def.reminderDelayTicks) continue;
+
+    // All conditions met — schedule reminder
+    newScheduledEvents.push({
+      targetTick: tick + 1,
+      requestId: def.reminderRequestId,
+      scheduledAtTick: tick,
+      priority: 'normal',
+    });
+
+    newTracking[def.id] = {
+      ...tracking,
+      reminderScheduled: true,
+      reminderCooldownUntil: tick + 15, // 15-tick cooldown after shown
+    };
+  }
+
+  return { buildingTracking: newTracking, scheduledEvents: newScheduledEvents };
 }
 
 /**
@@ -1046,20 +1096,17 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         
         const statsBefore = { ...state.stats };
         let stats = { ...state.stats };
-        let needs = { ...state.needs };
         let scheduledEvents = [...state.scheduledEvents];
-        
+
         // Return remaining forces to landForces (only if > 0 to avoid edge cases)
         if (combat.committedRemaining > 0) {
           stats.landForces += combat.committedRemaining;
           console.log(`[Combat Withdraw] Returned ${combat.committedRemaining} forces to landForces. New total: ${stats.landForces}`);
         }
-        
+
         // Apply lose effects if any
         if (combat.onLose) {
-          const result = applyEffects(stats, needs, combat.onLose);
-          stats = result.stats;
-          needs = result.needs;
+          stats = applyEffects(stats, combat.onLose);
         }
         
         // Clamp stats
@@ -1097,25 +1144,23 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           ...state,
           tick: state.tick,
           stats,
-          needs,
           activeCombat: undefined,
           scheduledEvents,
         });
-        
+
         const newState = {
           ...state,
           tick: state.tick, // Same tick - combat is tickless
           stats,
-          needs,
           currentRequestId: nextRequest.id,
           lastRequestId: state.currentRequestId,
           activeCombat: undefined,
           scheduledEvents,
         };
-        
+
         // Validate force accounting after withdrawal
         validateForceAccounting(newState, `After Combat Withdraw (${combat.combatId})`, state);
-        
+
         return newState;
       }
       
@@ -1170,7 +1215,6 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         // Combat is over - apply win/lose effects
         const statsBefore = { ...state.stats };
         let stats = { ...state.stats };
-        let needs = { ...state.needs };
         let scheduledEvents = [...state.scheduledEvents];
         
         // Update combat state with final force counts for report
@@ -1195,9 +1239,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           
           // Apply win effects if any
           if (combat.onWin) {
-            const result = applyEffects(stats, needs, combat.onWin);
-            stats = result.stats;
-            needs = result.needs;
+            stats = applyEffects(stats, combat.onWin);
           }
           
           // Schedule follow-up events on win if any
@@ -1226,11 +1268,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           
           // Apply lose effects if any
           if (combat.onLose) {
-            const result = applyEffects(stats, needs, combat.onLose);
-            stats = result.stats;
-            needs = result.needs;
+            stats = applyEffects(stats, combat.onLose);
           }
-          
+
           // Schedule follow-up events on lose if any
           if (combat.followUpsOnLose) {
             for (const followUp of combat.followUpsOnLose) {
@@ -1266,25 +1306,23 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           ...state,
           tick: state.tick,
           stats,
-          needs,
           activeCombat: undefined,
           scheduledEvents,
         });
-        
+
         const newState = {
           ...state,
           tick: state.tick, // Same tick - combat is tickless
           stats,
-          needs,
           currentRequestId: nextRequest.id,
           lastRequestId: state.currentRequestId,
           activeCombat: undefined,
           scheduledEvents,
         };
-        
+
         // Validate force accounting after combat end
         validateForceAccounting(newState, `After Combat End (${combat.combatId})`, state);
-        
+
         return newState;
       } else {
         // Combat continues - update active combat state
@@ -1317,7 +1355,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
     
     // Find the current request (non-synthetic)
-    const currentRequest = [...needRequests, ...infoRequests, ...authorityInfoRequests, ...eventRequests].find(
+    const currentRequest = [...infoRequests, ...authorityInfoRequests, ...eventRequests].find(
       (r) => r.id === state.currentRequestId
     );
 
@@ -1339,7 +1377,6 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     // Handle combat commit for Option A (fight) when combat exists
     const scheduledCombats = [...state.scheduledCombats];
     let stats = { ...state.stats };
-    let needs = { ...state.needs };
     let appliedChanges: AppliedChange[] = [];
     
     // Determine modifiers to use (only for event requests)
@@ -1398,14 +1435,13 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       // Apply option effects for combat commits in addition to scheduling combat
       // Both option effects and combat resolution effects (onWin/onLose) will be applied
       const result = applyOptionWithModifiers(
-        state, 
-        currentRequest, 
+        state,
+        currentRequest,
         action.optionIndex,
         modifiersToUse
       );
       // Use result stats but preserve the combat commitment to landForces
       stats = { ...result.stats, landForces: reservedLandForces };
-      needs = result.needs;
       appliedChanges = result.appliedChanges;
     } else if (option.authorityCheck && action.authorityCommit !== undefined) {
       // Handle authority check
@@ -1444,14 +1480,13 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       
       // Apply option effects
       const result = applyOptionWithModifiers(
-        state, 
-        currentRequest, 
+        state,
+        currentRequest,
         action.optionIndex,
         modifiersToUse
       );
       // Use result stats but preserve the authority commitment
       stats = { ...result.stats, authority: reservedAuthority };
-      needs = result.needs;
       appliedChanges = result.appliedChanges;
       
       // Update state to include pending checks before advancing
@@ -1459,22 +1494,18 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     } else {
       // Normal path: Apply option effects using the pipeline
       const result = applyOptionWithModifiers(
-        state, 
-        currentRequest, 
+        state,
+        currentRequest,
         action.optionIndex,
         modifiersToUse
       );
       stats = result.stats;
-      needs = result.needs;
       appliedChanges = result.appliedChanges;
     }
 
-    // Sync need-based unlock tokens with current needs state
-    const unlocks = syncNeedUnlockTokens(needs, state.unlocks);
+    // Sync building-based unlock tokens
+    const unlocks = syncBuildingUnlockTokens(state.buildingTracking, state.unlocks);
 
-    // Track need fulfillment and cooldowns
-    const needsTracking = { ...state.needsTracking };
-    
     // Track chain state and request trigger counts
     const chainStatus = { ...state.chainStatus };
     const requestTriggerCounts = { ...state.requestTriggerCounts };
@@ -1493,51 +1524,6 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       }
     }
     
-    // Determine which need this request relates to (if any)
-    const needIdMap: Record<string, keyof Needs> = {
-      'NEED_MARKETPLACE': 'marketplace',
-      'NEED_BREAD': 'bread',
-      'NEED_BEER': 'beer',
-      'NEED_FIREWOOD': 'firewood',
-      'NEED_WELL': 'well',
-    };
-    
-    const needKey = needIdMap[state.currentRequestId];
-    let needFulfilledThisTick = false;
-    let needFulfilledKey: keyof Needs | null = null;
-    
-    if (needKey) {
-      // Check if this option fulfills the need
-      const fulfillsNeed = option.effects[needKey] === true;
-      
-      if (fulfillsNeed) {
-        // Calculate required buildings before incrementing
-        const oldBuildingCount = needsTracking[needKey].buildingCount;
-        const requiredBuildings = calculateRequiredBuildings(needKey, stats.farmers);
-        const wasFulfilled = oldBuildingCount >= requiredBuildings;
-        
-        // Increment building count (persistent, never decreases)
-        const newBuildingCount = oldBuildingCount + 1;
-        needsTracking[needKey] = {
-          ...needsTracking[needKey],
-          buildingCount: newBuildingCount,
-        };
-        
-        // Detect rising edge: was not fulfilled, now is fulfilled
-        const isFulfilled = newBuildingCount >= requiredBuildings;
-        if (!wasFulfilled && isFulfilled) {
-          needFulfilledThisTick = true;
-          needFulfilledKey = needKey;
-        }
-      } else {
-        // Declined the need - set cooldown
-        needsTracking[needKey] = {
-          ...needsTracking[needKey],
-          nextEligibleTick: state.tick + 1 + DECLINE_COOLDOWN_TICKS,
-        };
-      }
-    }
-
     // Create log entry for request decision (skip for combat commits as they have their own log)
     if (!(currentRequest.combat && action.optionIndex === 0)) {
       // Filter appliedChanges to only include need modifiers (not base effects)
@@ -1571,33 +1557,6 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     // Remove the current request from scheduled events if it was scheduled
     scheduledEvents = removeScheduledEvent(scheduledEvents, state.currentRequestId, state.tick);
-    
-    // If a need was fulfilled this tick, schedule the corresponding info request
-    // Only schedule on FIRST fulfillment (buildingCount === 1)
-    if (needFulfilledThisTick && needFulfilledKey) {
-      const newBuildingCount = needsTracking[needFulfilledKey].buildingCount;
-      
-      // Only schedule info request for first fulfillment
-      if (newBuildingCount === 1) {
-        const infoRequestId = NEED_INFO_REQUEST_MAP[needFulfilledKey];
-        
-        // Only schedule if info request ID exists and isn't already scheduled for next tick
-        if (infoRequestId) {
-          const alreadyScheduled = scheduledEvents.some(
-            event => event.requestId === infoRequestId && event.targetTick === state.tick + 1
-          );
-          
-          if (!alreadyScheduled) {
-            scheduledEvents.push({
-              targetTick: state.tick + 1,
-              requestId: infoRequestId,
-              scheduledAtTick: state.tick,
-              priority: "info",
-            });
-          }
-        }
-      }
-    }
 
     // Check for bankruptcy after option effects (before baseline)
     // This prevents players from escaping bankruptcy via positive baseline income
@@ -1605,9 +1564,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return {
         tick: state.tick + 1,
         stats,
-        needs,
-        needsTracking,
-        newlyUnlockedNeed: null,
+        buildingTracking: state.buildingTracking,
+        newlyUnlockedBuilding: null,
         currentRequestId: state.currentRequestId,
         lastRequestId: state.currentRequestId,
         log: [...state.log, ...newLog],
@@ -1622,16 +1580,15 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       };
     }
 
-    // Check if this is a tickless request (e.g., info requests)
+    // Check if this is a tickless request (e.g., info requests, reminders)
     if (currentRequest.advancesTick === false) {
       // Tickless path: no baseline, no tick increment
       // Pick next request using the SAME tick
       const nextRequest = pickNextRequest({
         tick: state.tick,
         stats,
-        needs,
-        needsTracking,
-        newlyUnlockedNeed: null,
+        buildingTracking: state.buildingTracking,
+        newlyUnlockedBuilding: null,
         currentRequestId: state.currentRequestId,
         lastRequestId: state.currentRequestId,
         log: state.log,
@@ -1644,13 +1601,12 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         pendingAuthorityChecks: state.pendingAuthorityChecks,
       });
 
-      // Return state with same tick, updated stats/needs/unlocks/log, new request
+      // Return state with same tick, updated stats/unlocks/log, new request
       return {
         tick: state.tick, // Same tick
         stats,
-        needs,
-        needsTracking,
-        newlyUnlockedNeed: null,
+        buildingTracking: state.buildingTracking,
+        newlyUnlockedBuilding: null,
         currentRequestId: nextRequest.id,
         lastRequestId: state.currentRequestId,
         log: [...state.log, ...newLog],
@@ -1672,8 +1628,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     stats = clampStats(stats);
     const farmersAfter = stats.farmers;
 
-    // Detect newly unlocked needs
-    const newlyUnlockedNeed = detectNewlyUnlockedNeeds(farmersBefore, farmersAfter, needs);
+    // Detect newly unlocked buildings
+    const newlyUnlockedBuilding = detectNewlyUnlockedBuildings(farmersBefore, farmersAfter);
 
     // Create separate log entries for tax income and population growth
     const goldIncome = stats.gold - beforeBaseline.gold;
@@ -1701,30 +1657,67 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       ));
     }
 
-    // 2b. Apply bread need effect (10% chance for +1 farmer growth)
-    if (needs.bread && Math.random() < 0.10) {
-      const beforeBread = { ...stats };
+    // 2b. Apply bakery building effect (10% chance for +1 farmer growth)
+    if (isBuildingActive(state.buildingTracking, 'bakery') && Math.random() < 0.10) {
+      const beforeBakery = { ...stats };
       stats.farmers += 1;
       stats = clampStats(stats);
-      
-      // Log the bread need effect if it actually increased farmers
-      if (stats.farmers > beforeBread.farmers) {
-        const breadChange: AppliedChange = {
+
+      // Log the bakery effect if it actually increased farmers
+      if (stats.farmers > beforeBakery.farmers) {
+        const bakeryChange: AppliedChange = {
           stat: 'farmers',
           amount: 1,
-          source: 'need:bread',
-          note: 'Bread supply boosted population growth',
+          source: 'building:bakery',
+          note: 'Bakery boosted population growth',
         };
-        
+
         newLog.push(createLogEntry(
           state.tick,
           state.currentRequestId,
           '',
           'Population Growth',
-          beforeBread,
+          beforeBakery,
           stats,
-          [breadChange] // Include the bread effect as an applied change
+          [bakeryChange]
         ));
+      }
+    }
+
+    // 2c. Apply overcrowding penalties
+    const beforeOvercrowding = { ...stats };
+    const overcrowdingResult = applyOvercrowdingPenalties(stats, state.buildingTracking);
+    stats = clampStats(overcrowdingResult.stats);
+
+    if (overcrowdingResult.changes.length > 0) {
+      newLog.push(createLogEntry(
+        state.tick,
+        state.currentRequestId,
+        '',
+        'Overcrowding',
+        beforeOvercrowding,
+        stats,
+        overcrowdingResult.changes
+      ));
+    }
+
+    // Update building tracking (detect newly required buildings, etc.)
+    let buildingTracking = { ...state.buildingTracking };
+    // Update unlockedAtTick for newly unlocked buildings
+    if (newlyUnlockedBuilding) {
+      const tracking = buildingTracking[newlyUnlockedBuilding];
+      if (tracking && tracking.unlockedAtTick === undefined) {
+        buildingTracking[newlyUnlockedBuilding] = { ...tracking, unlockedAtTick: state.tick + 1 };
+      }
+    }
+    // Update lastRequirementTick when required buildings increase
+    for (const def of BUILDING_DEFINITIONS) {
+      const tracking = buildingTracking[def.id];
+      if (!tracking) continue;
+      const requiredBefore = calculateRequiredBuildings(def, farmersBefore);
+      const requiredAfter = calculateRequiredBuildings(def, farmersAfter);
+      if (requiredAfter > requiredBefore && requiredAfter > tracking.buildingCount) {
+        buildingTracking[def.id] = { ...tracking, lastRequirementTick: state.tick + 1 };
       }
     }
 
@@ -1733,9 +1726,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return {
         tick: state.tick + 1,
         stats,
-        needs,
-        needsTracking,
-        newlyUnlockedNeed,
+        buildingTracking,
+        newlyUnlockedBuilding,
         currentRequestId: state.currentRequestId,
         lastRequestId: state.currentRequestId,
         log: [...state.log, ...newLog],
@@ -1769,9 +1761,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       
       // Apply success/failure effects if any
       if (result.appliedEffects) {
-        const effectsResult = applyEffects(stats, needs, result.appliedEffects);
-        stats = clampStats(effectsResult.stats);
-        needs = effectsResult.needs;
+        stats = clampStats(applyEffects(stats, result.appliedEffects));
       }
       
       // Schedule feedback event if provided
@@ -1789,13 +1779,17 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       pendingAuthorityChecks = pendingAuthorityChecks.filter(c => c.checkId !== check.checkId);
     }
 
-    // 4. Pick next request (passing needs tracking for cooldown check)
+    // Check building reminders before picking next request
+    const reminderResult = checkBuildingReminders(state.tick + 1, stats, buildingTracking, scheduledEvents);
+    buildingTracking = reminderResult.buildingTracking;
+    scheduledEvents = reminderResult.scheduledEvents;
+
+    // 4. Pick next request
     const nextRequest = pickNextRequest({
       tick: state.tick + 1,
       stats,
-      needs,
-      needsTracking,
-      newlyUnlockedNeed,
+      buildingTracking,
+      newlyUnlockedBuilding,
       currentRequestId: state.currentRequestId,
       lastRequestId: state.currentRequestId,
       log: state.log,
@@ -1836,9 +1830,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     return {
       tick: state.tick + 1,
       stats,
-      needs,
-      needsTracking,
-      newlyUnlockedNeed,
+      buildingTracking,
+      newlyUnlockedBuilding,
       currentRequestId: nextRequest.id,
       lastRequestId: state.currentRequestId,
       log: [...state.log, ...newLog],
@@ -1849,6 +1842,89 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       unlocks,
       scheduledCombats,
       pendingAuthorityChecks,
+    };
+  }
+
+  // Handle BUILD_BUILDING action
+  if (action.type === 'BUILD_BUILDING') {
+    if (state.gameOver) return state;
+
+    const def = getBuildingDef(action.buildingId);
+    if (!def) {
+      console.error('Unknown building ID:', action.buildingId);
+      return state;
+    }
+
+    // Validate: building unlocked
+    if (state.stats.farmers < def.unlockThreshold) {
+      console.error('Building not unlocked:', action.buildingId, 'Need', def.unlockThreshold, 'farmers, have', state.stats.farmers);
+      return state;
+    }
+
+    // Validate: enough gold
+    if (state.stats.gold < def.cost) {
+      console.error('Not enough gold for:', action.buildingId, 'Need', def.cost, 'have', state.stats.gold);
+      return state;
+    }
+
+    // Deduct gold
+    const newStats = clampStats({ ...state.stats, gold: state.stats.gold - def.cost });
+
+    // Increment building count
+    const oldTracking = state.buildingTracking[action.buildingId] ?? {
+      buildingCount: 0,
+      reminderScheduled: false,
+      reminderCooldownUntil: 0,
+    };
+    const wasFirstBuild = oldTracking.buildingCount === 0;
+    const newTracking = {
+      ...oldTracking,
+      buildingCount: oldTracking.buildingCount + 1,
+      reminderScheduled: false, // Reset reminder state
+    };
+
+    const buildingTracking = {
+      ...state.buildingTracking,
+      [action.buildingId]: newTracking,
+    };
+
+    // Schedule info request on first build
+    const scheduledEvents = [...state.scheduledEvents];
+    if (wasFirstBuild && def.firstBuildInfoRequestId) {
+      const alreadyScheduled = scheduledEvents.some(
+        event => event.requestId === def.firstBuildInfoRequestId && event.targetTick === state.tick + 1
+      );
+      if (!alreadyScheduled) {
+        scheduledEvents.push({
+          targetTick: state.tick + 1,
+          requestId: def.firstBuildInfoRequestId,
+          scheduledAtTick: state.tick,
+          priority: 'info',
+        });
+      }
+    }
+
+    // Sync unlock tokens
+    const unlocks = syncBuildingUnlockTokens(buildingTracking, state.unlocks);
+
+    // Create log entry
+    const beforeStats = state.stats;
+    const logEntry = createLogEntry(
+      state.tick,
+      `BUILD_${action.buildingId.toUpperCase()}`,
+      `Built ${def.displayName}`,
+      'Building Constructed',
+      beforeStats,
+      newStats
+    );
+
+    return {
+      ...state,
+      stats: newStats,
+      buildingTracking,
+      unlocks,
+      scheduledEvents,
+      log: [...state.log, logEntry],
     };
   }
 
@@ -2007,7 +2083,7 @@ export function getCurrentRequest(state: GameState): Request | null {
   }
   
   // Regular request - look it up in the arrays
-  return [...needRequests, ...infoRequests, ...authorityInfoRequests, ...eventRequests].find(
+  return [...infoRequests, ...authorityInfoRequests, ...eventRequests].find(
     (r) => r.id === state.currentRequestId
   ) || null;
 }

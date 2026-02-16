@@ -4,9 +4,9 @@
  */
 
 import type { GameState } from './state';
-import type { Stats, Needs, Request, NeedsTracking } from './models';
-import { needRequests, infoRequests, authorityInfoRequests, eventRequests } from './requests';
-import { isNeedUnlocked, isNeedRequired, isNeedOnCooldown, meetsRequirements } from './state';
+import type { Stats, Request } from './models';
+import { infoRequests, authorityInfoRequests, eventRequests } from './requests';
+import { meetsRequirements } from './state';
 
 /**
  * Helper function to get a request's title by ID
@@ -14,7 +14,7 @@ import { isNeedUnlocked, isNeedRequired, isNeedOnCooldown, meetsRequirements } f
  * @returns The request's title, or a fallback string if not found
  */
 function getRequestTitle(requestId: string): string {
-  const allRequests = [...needRequests, ...infoRequests, ...authorityInfoRequests, ...eventRequests];
+  const allRequests = [...infoRequests, ...authorityInfoRequests, ...eventRequests];
   const request = allRequests.find(r => r.id === requestId);
   
   if (!request) {
@@ -180,17 +180,16 @@ function isEligibleByAuthority(request: Request, authority: number): boolean {
  * Filters out chain starts if chain is active or on cooldown (unless scheduled as follow-up).
  */
 export function pickNextRequest(state: GameState): Request;
-export function pickNextRequest(stats: Stats, _needs: Needs, lastRequestId: string): Request;
+export function pickNextRequest(stats: Stats, _unused: unknown, lastRequestId: string): Request;
 export function pickNextRequest(
   stateOrStats: GameState | Stats,
-  _needs?: Needs,
+  _unused?: unknown,
   lastRequestId?: string
 ): Request {
   // Handle both function signatures
   let stats: Stats;
   let actualLastRequestId: string;
   let tick: number = 0;
-  let needsTracking: NeedsTracking | null = null;
   let scheduledEvents: Array<{ targetTick: number; requestId: string; scheduledAtTick: number; priority?: "info" | "normal" }> = [];
   let chainStatus: Record<string, { active: boolean; completedTick?: number }> = {};
   let requestTriggerCounts: Record<string, number> = {};
@@ -201,7 +200,6 @@ export function pickNextRequest(
     stats = stateOrStats.stats;
     actualLastRequestId = stateOrStats.lastRequestId;
     tick = stateOrStats.tick;
-    needsTracking = stateOrStats.needsTracking;
     scheduledEvents = stateOrStats.scheduledEvents || [];
     chainStatus = stateOrStats.chainStatus || {};
     requestTriggerCounts = stateOrStats.requestTriggerCounts || {};
@@ -398,7 +396,7 @@ export function pickNextRequest(
           }
         }
         
-        const scheduledRequest = [...needRequests, ...infoRequests, ...authorityInfoRequests, ...eventRequests].find(
+        const scheduledRequest = [...infoRequests, ...authorityInfoRequests, ...eventRequests].find(
           (r) => r.id === dueEvent.requestId
         );
         
@@ -509,45 +507,6 @@ export function pickNextRequest(
   const crisisRequest = getEligibleCrisis();
   if (crisisRequest) {
     return crisisRequest;
-  }
-
-  // Check for required needs using the new cycle-based system
-  const eligibleNeeds: Request[] = [];
-  const needKeys: Array<keyof Needs> = ['marketplace', 'bread', 'beer', 'firewood', 'well'];
-  const needIdMap: Record<keyof Needs, string> = {
-    marketplace: 'NEED_MARKETPLACE',
-    bread: 'NEED_BREAD',
-    beer: 'NEED_BEER',
-    firewood: 'NEED_FIREWOOD',
-    well: 'NEED_WELL',
-  };
-
-  for (const needKey of needKeys) {
-    // Check if need is unlocked
-    if (!isNeedUnlocked(needKey, stats.farmers)) {
-      continue; // Skip locked needs
-    }
-
-    // Check if need is on cooldown
-    if (needsTracking && isNeedOnCooldown(tick, needsTracking[needKey].nextEligibleTick)) {
-      continue; // Skip needs on cooldown
-    }
-
-    // Check if need is required for current cycle
-    const buildingCount = needsTracking ? needsTracking[needKey].buildingCount : 0;
-    if (isNeedRequired(needKey, stats.farmers, buildingCount)) {
-      const req = needRequests.find((r) => r.id === needIdMap[needKey]);
-      if (req) eligibleNeeds.push(req);
-    }
-  }
-
-  if (eligibleNeeds.length > 0) {
-    // Filter out last request if it's in the list
-    const availableNeeds = eligibleNeeds.filter((r) => r.id !== actualLastRequestId);
-    if (availableNeeds.length > 0) {
-      return availableNeeds[rng.nextInt(availableNeeds.length)];
-    }
-    // If all eligible needs were last request, fall through to random events
   }
 
   // Pick random event request (excluding last request and crisis events)
