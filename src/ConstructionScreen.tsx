@@ -38,6 +38,19 @@ function ConstructionScreen({
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isOpen, onClose])
   
+  // Scroll to highlighted building when screen opens
+  useEffect(() => {
+    if (isOpen && highlightedBuilding) {
+      // Small delay to ensure DOM is rendered
+      setTimeout(() => {
+        const element = document.getElementById(`building-card-${highlightedBuilding}`)
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }
+      }, 100)
+    }
+  }, [isOpen, highlightedBuilding])
+  
   // Calculate building status
   const getBuildingStatus = (def: BuildingDefinition): BuildingStatus => {
     const tracking = buildingTracking[def.id]
@@ -85,17 +98,18 @@ function ConstructionScreen({
             const isHighlighted = highlightedBuilding === def.id
             
             return (
-              <BuildingCard
-                key={def.id}
-                definition={def}
-                tracking={tracking}
-                farmers={farmers}
-                gold={gold}
-                requiredCount={required}
-                status={status}
-                isHighlighted={isHighlighted}
-                onBuild={onBuild}
-              />
+              <div key={def.id} id={`building-card-${def.id}`}>
+                <BuildingCard
+                  definition={def}
+                  tracking={tracking}
+                  farmers={farmers}
+                  gold={gold}
+                  requiredCount={required}
+                  status={status}
+                  isHighlighted={isHighlighted}
+                  onBuild={onBuild}
+                />
+              </div>
             )
           })}
         </div>

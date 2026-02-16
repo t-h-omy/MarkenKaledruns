@@ -12,6 +12,7 @@ function App() {
   
   // Construction screen state
   const [constructionScreenOpen, setConstructionScreenOpen] = useState(false)
+  const [highlightedBuildingId, setHighlightedBuildingId] = useState<string | null>(null)
   
   // Request display delay state
   const [displayedRequest, setDisplayedRequest] = useState(getCurrentRequest(gameState))
@@ -39,6 +40,19 @@ function App() {
       setCurrentTick(gameState.tick)
     }
   }, [gameState.tick, currentTick])
+  
+  // Lock body scroll when construction screen is open
+  useEffect(() => {
+    if (constructionScreenOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [constructionScreenOpen])
   
   // Pulsating resource bar animation system
   type StatAnimation = {
@@ -312,6 +326,17 @@ function App() {
     
     // Close modal
     setAuthorityModalOpen(null)
+  }
+
+  // Construction screen handlers
+  const openConstructionScreen = (buildingId?: string) => {
+    setConstructionScreenOpen(true)
+    setHighlightedBuildingId(buildingId ?? null)
+  }
+
+  const closeConstructionScreen = () => {
+    setConstructionScreenOpen(false)
+    setHighlightedBuildingId(null)
   }
 
   // Get last 3 log entries
@@ -622,6 +647,27 @@ function App() {
                       </div>
                     )
                   })}
+                  
+                  {/* Add "Go to Construction" button for reminder requests */}
+                  {currentRequest.id.startsWith('REMINDER_') && (() => {
+                    // Extract building ID from reminder request ID (e.g., REMINDER_FARMSTEAD -> farmstead)
+                    const buildingId = currentRequest.id.replace('REMINDER_', '').toLowerCase()
+                    return (
+                      <div className="option-row">
+                        <button
+                          className="option-button"
+                          onClick={() => {
+                            // Dismiss the request first
+                            dispatch({ type: 'CHOOSE_OPTION', optionIndex: 0 })
+                            // Then open construction screen with highlighted building
+                            openConstructionScreen(buildingId)
+                          }}
+                        >
+                          <div className="option-text">🏗️ Go to Construction</div>
+                        </button>
+                      </div>
+                    )
+                  })()}
                 </div>
               </>
             ) : (
@@ -647,7 +693,7 @@ function App() {
             </button>
             <button
               className="toggle-btn"
-              onClick={() => setConstructionScreenOpen(true)}
+              onClick={() => openConstructionScreen()}
             >
               🏗️ Construction
             </button>
@@ -985,10 +1031,11 @@ function App() {
         {/* Construction Screen Overlay */}
         <ConstructionScreen 
           isOpen={constructionScreenOpen}
-          onClose={() => setConstructionScreenOpen(false)}
+          onClose={closeConstructionScreen}
           farmers={gameState.stats.farmers}
           gold={gameState.stats.gold}
           buildingTracking={gameState.buildingTracking}
+          highlightedBuilding={highlightedBuildingId ?? undefined}
           onBuild={(buildingId) => dispatch({ type: 'BUILD_BUILDING', buildingId })}
         />
         
