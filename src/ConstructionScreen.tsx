@@ -52,7 +52,7 @@ function ConstructionScreen({
       return gold >= def.cost ? 'needed' : 'no-gold'
     }
 
-    return gold >= def.cost ? 'fulfilled' : 'fulfilled'
+    return 'fulfilled'
   }
   
   if (!isOpen) return null

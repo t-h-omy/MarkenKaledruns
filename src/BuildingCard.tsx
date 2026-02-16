@@ -75,9 +75,9 @@ function BuildingCard({
         <>
           {/* Stats Section */}
           <div className="building-card-stats">
-            {definition.id === 'farmstead' ? (
+            {definition.id === 'farmstead' && definition.populationPerBuilding ? (
               <div className="building-stat">
-                📊 Capacity: {built * 20} / {farmers} farmers
+                📊 Capacity: {built * definition.populationPerBuilding} / {farmers} farmers
               </div>
             ) : (
               <div className="building-stat">
