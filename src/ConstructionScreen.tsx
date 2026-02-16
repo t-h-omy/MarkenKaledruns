@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useMemo } from 'react'
 import './ConstructionScreen.css'
 import BuildingCard from './BuildingCard'
 import type { BuildingStatus } from './BuildingCard'
@@ -67,8 +67,8 @@ function ConstructionScreen({
     return 'fulfilled'
   }
   
-  // Sort buildings by urgency/status priority
-  const getSortedBuildings = () => {
+  // Sort buildings by urgency/status priority (memoized to avoid recalculating on every render)
+  const sortedBuildings = useMemo(() => {
     // Define status priority (lower number = higher priority)
     const statusPriority: Record<BuildingStatus, number> = {
       'needed': 1,      // Most urgent - needs building and can afford
@@ -85,12 +85,12 @@ function ConstructionScreen({
     }))
     
     // Sort by status priority, then by original sortOrder for ties
-    return buildingsWithStatus.sort((a, b) => {
+    return [...buildingsWithStatus].sort((a, b) => {
       const priorityDiff = statusPriority[a.status] - statusPriority[b.status]
       if (priorityDiff !== 0) return priorityDiff
       return a.definition.sortOrder - b.definition.sortOrder
     })
-  }
+  }, [buildingTracking, farmers, gold])
   
   if (!isOpen) return null
   
@@ -113,7 +113,7 @@ function ConstructionScreen({
         
         {/* Building Cards */}
         <div className="construction-content">
-          {getSortedBuildings().map(({ definition: def, status }) => {
+          {sortedBuildings.map(({ definition: def, status }) => {
             const tracking = buildingTracking[def.id]
             if (!tracking) return null
             
