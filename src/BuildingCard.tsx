@@ -4,6 +4,10 @@ import type { BuildingDefinition, BuildingTracking } from './game/buildings'
 
 export type BuildingStatus = 'locked' | 'available' | 'needed' | 'no-gold' | 'fulfilled'
 
+// Animation duration constants (in milliseconds)
+const SUCCESS_ANIMATION_DURATION_MS = 1000
+const ERROR_ANIMATION_DURATION_MS = 600
+
 interface BuildingCardProps {
   definition: BuildingDefinition;
   tracking: BuildingTracking;
@@ -40,7 +44,7 @@ function BuildingCard({
   useEffect(() => {
     if (built > prevBuiltRef.current) {
       setShowBuildSuccess(true)
-      setTimeout(() => setShowBuildSuccess(false), 1000)
+      setTimeout(() => setShowBuildSuccess(false), SUCCESS_ANIMATION_DURATION_MS)
     }
     prevBuiltRef.current = built
   }, [built])
@@ -73,7 +77,7 @@ function BuildingCard({
     } else {
       // Show error animation when trying to build without enough gold or when locked
       setShowBuildError(true)
-      setTimeout(() => setShowBuildError(false), 600)
+      setTimeout(() => setShowBuildError(false), ERROR_ANIMATION_DURATION_MS)
     }
   }
   
@@ -83,7 +87,7 @@ function BuildingCard({
     } else {
       // Show error animation
       setShowBuildError(true)
-      setTimeout(() => setShowBuildError(false), 600)
+      setTimeout(() => setShowBuildError(false), ERROR_ANIMATION_DURATION_MS)
     }
   }
   
