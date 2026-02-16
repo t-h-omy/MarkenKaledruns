@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import './ConstructionScreen.css'
 import BuildingCard from './BuildingCard'
 import type { BuildingStatus } from './BuildingCard'
@@ -24,6 +24,8 @@ function ConstructionScreen({
   highlightedBuilding,
   onBuild 
 }: ConstructionScreenProps) {
+  const highlightedBuildingRef = useRef<HTMLDivElement>(null)
+  
   // Handle Escape key to close
   useEffect(() => {
     if (!isOpen) return
@@ -40,13 +42,10 @@ function ConstructionScreen({
   
   // Scroll to highlighted building when screen opens
   useEffect(() => {
-    if (isOpen && highlightedBuilding) {
+    if (isOpen && highlightedBuilding && highlightedBuildingRef.current) {
       // Small delay to ensure DOM is rendered
       setTimeout(() => {
-        const element = document.getElementById(`building-card-${highlightedBuilding}`)
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' })
-        }
+        highlightedBuildingRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       }, 100)
     }
   }, [isOpen, highlightedBuilding])
@@ -98,7 +97,11 @@ function ConstructionScreen({
             const isHighlighted = highlightedBuilding === def.id
             
             return (
-              <div key={def.id} id={`building-card-${def.id}`}>
+              <div 
+                key={def.id} 
+                id={`building-card-${def.id}`}
+                ref={isHighlighted ? highlightedBuildingRef : null}
+              >
                 <BuildingCard
                   definition={def}
                   tracking={tracking}

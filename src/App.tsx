@@ -652,6 +652,14 @@ function App() {
                   {currentRequest.id.startsWith('REMINDER_') && (() => {
                     // Extract building ID from reminder request ID (e.g., REMINDER_FARMSTEAD -> farmstead)
                     const buildingId = currentRequest.id.replace('REMINDER_', '').toLowerCase()
+                    // Validate that the building ID exists
+                    const buildingExists = BUILDING_DEFINITIONS.some(def => def.id === buildingId)
+                    
+                    if (!buildingExists) {
+                      console.warn(`Building ID "${buildingId}" extracted from reminder "${currentRequest.id}" does not exist`)
+                      return null
+                    }
+                    
                     return (
                       <div className="option-row">
                         <button
