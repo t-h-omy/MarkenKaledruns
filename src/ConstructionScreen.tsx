@@ -74,9 +74,12 @@ function ConstructionScreen({
   
   const handleConfirmBuildMultiple = (buildingId: string, quantity: number) => {
     // Dispatch multiple BUILD_BUILDING actions
+    // Note: Each action validates gold availability, so failed builds are prevented
     for (let i = 0; i < quantity; i++) {
       onBuild(buildingId)
     }
+    // Close modal after batch build
+    handleCloseBuildMultiple()
   }
   
   // Calculate building status
