@@ -1,12 +1,13 @@
 import { useReducer, useState, useEffect, useRef } from 'react'
 import './App.css'
-import { gameReducer, initializeGame, isNeedUnlocked, calculateRequiredBuildings, isNeedRequired, getCurrentRequest } from './game/state'
-import type { Effect, Needs } from './game/models'
-import { NEED_UNLOCK_THRESHOLDS } from './game/models'
+import { gameReducer, initializeGame, getCurrentRequest } from './game/state'
+import type { Effect } from './game/models'
+import { BUILDING_DEFINITIONS, calculateRequiredBuildings } from './game/buildings'
+import type { BuildingDefinition } from './game/buildings'
 
 function App() {
   const [gameState, dispatch] = useReducer(gameReducer, undefined, initializeGame)
-  const [bottomTab, setBottomTab] = useState<'needs' | 'log'>('needs')
+  const [bottomTab, setBottomTab] = useState<'build' | 'log'>('build')
   
   // Request display delay state
   const [displayedRequest, setDisplayedRequest] = useState(getCurrentRequest(gameState))
@@ -318,52 +319,45 @@ function App() {
   // Check if gold is negative (bankruptcy warning)
   const showBankruptcyWarning = gameState.stats.gold < 0 && gameState.stats.gold > -50
 
-  // Get need display state (locked, fulfilled, or required)
-  const getNeedState = (needKey: keyof Needs) => {
-    const unlocked = isNeedUnlocked(needKey, gameState.stats.farmers)
-    
-    if (!unlocked) {
-      return {
-        status: 'locked' as const,
-        label: `Locked until ${NEED_UNLOCK_THRESHOLDS[needKey]} farmers`,
-      }
+  // Get building display status
+  type BuildingStatus = 'locked' | 'available' | 'needed' | 'no-gold' | 'fulfilled'
+  const getBuildingStatus = (def: BuildingDefinition): BuildingStatus => {
+    const tracking = gameState.buildingTracking[def.id]
+    if (!tracking) return 'locked'
+
+    if (gameState.stats.farmers < def.unlockThreshold) return 'locked'
+
+    const required = calculateRequiredBuildings(def, gameState.stats.farmers)
+    const built = tracking.buildingCount
+
+    if (built < required) {
+      return gameState.stats.gold >= def.cost ? 'needed' : 'no-gold'
     }
-    
-    const tracking = gameState.needsTracking[needKey]
-    const builtBuildings = tracking.buildingCount
-    const requiredBuildings = calculateRequiredBuildings(needKey, gameState.stats.farmers)
-    const required = isNeedRequired(needKey, gameState.stats.farmers, builtBuildings)
-    
-    if (required) {
-      return {
-        status: 'required' as const,
-        label: `Built: ${builtBuildings} / Required: ${requiredBuildings}`,
-      }
-    } else {
-      return {
-        status: 'fulfilled' as const,
-        label: `Built: ${builtBuildings} / Required: ${requiredBuildings}`,
-      }
+
+    return gameState.stats.gold >= def.cost ? 'fulfilled' : 'fulfilled'
+  }
+
+  const getBuildingStatusLabel = (status: BuildingStatus): string => {
+    switch (status) {
+      case 'locked': return 'LOCKED'
+      case 'available': return 'AVAILABLE'
+      case 'needed': return 'NEEDED!'
+      case 'no-gold': return 'NO GOLD'
+      case 'fulfilled': return 'FULFILLED'
     }
   }
 
-  // Need display names
-  const needDisplayNames: Record<keyof Needs, string> = {
-    marketplace: 'Marketplace',
-    bread: 'Bread',
-    beer: 'Beer',
-    firewood: 'Firewood',
-    well: 'Well',
+  // Calculate overcrowding info
+  const farmsteadCount = gameState.buildingTracking['farmstead']?.buildingCount ?? 0
+  const farmsteadCapacity = farmsteadCount * 20
+  const farmsteadOverflow = Math.max(0, gameState.stats.farmers - farmsteadCapacity)
+  const getOvercrowdingTier = (overflow: number) => {
+    if (overflow === 0) return 0
+    if (overflow <= 10) return 1
+    if (overflow <= 25) return 2
+    return 3
   }
-
-  // Need effect descriptions
-  const needEffectDescriptions: Record<keyof Needs, string> = {
-    marketplace: 'Unlocks event "Market Day"',
-    bread: '10% chance per tick for +1 farmer growth',
-    beer: 'Unlocks event "Feierabend in der Kneipe"',
-    firewood: '25% chance to halve fireRisk increases from events',
-    well: '50% chance to gain +1 extra health when an event grants health',
-  }
+  const overcrowdingTier = getOvercrowdingTier(farmsteadOverflow)
 
   // Check if an option would cause invalid state (negative farmers or landForces)
   const isOptionDisabled = (effects: Effect): { disabled: boolean; reason?: string } => {
@@ -499,9 +493,9 @@ function App() {
             <span className="stat-icon">🔥</span>
             <span className="stat-value">{gameState.stats.fireRisk}</span>
           </div>
-          <div className={`stat-compact ${getStatAnimationClass('farmers')}`} data-stat="farmers">
+          <div className={`stat-compact ${getStatAnimationClass('farmers')}${farmsteadOverflow > 0 ? ' farmer-overflow' : ''}`} data-stat="farmers">
             <span className="stat-icon">👨‍🌾</span>
-            <span className="stat-value">{gameState.stats.farmers}</span>
+            <span className="stat-value">{farmsteadOverflow > 0 ? `${gameState.stats.farmers}/${farmsteadCapacity}` : gameState.stats.farmers}</span>
           </div>
           <div className={`stat-compact ${getStatAnimationClass('landForces')}`} data-stat="landForces">
             <span className="stat-icon">⚔️</span>
@@ -641,40 +635,74 @@ function App() {
         {/* Bottom Bar with Toggle */}
         <div className="bottom-bar">
           <div className="toggle-buttons">
-            <button 
-              className={`toggle-btn ${bottomTab === 'needs' ? 'active' : ''}`}
-              onClick={() => setBottomTab('needs')}
+            <button
+              className={`toggle-btn ${bottomTab === 'build' ? 'active' : ''}${gameState.newlyUnlockedBuilding && bottomTab !== 'build' ? ' toggle-btn-notify' : ''}`}
+              onClick={() => setBottomTab('build')}
             >
-              Needs
+              Build
             </button>
-            <button 
+            <button
               className={`toggle-btn ${bottomTab === 'log' ? 'active' : ''}`}
               onClick={() => setBottomTab('log')}
             >
               Log
             </button>
           </div>
-          
+
           <div className="bottom-content">
-            {bottomTab === 'needs' ? (
-              <div className="needs-panel">
-                {gameState.newlyUnlockedNeed && (
+            {bottomTab === 'build' ? (
+              <div className="build-panel">
+                {gameState.newlyUnlockedBuilding && (
                   <div className="need-unlock-message">
-                    🎉 New need unlocked: {needDisplayNames[gameState.newlyUnlockedNeed]}!
+                    {(() => { const d = BUILDING_DEFINITIONS.find(b => b.id === gameState.newlyUnlockedBuilding); return d ? `${d.icon} New building unlocked: ${d.displayName}!` : '' })()}
                   </div>
                 )}
-                {(['marketplace', 'bread', 'beer', 'firewood', 'well'] as Array<keyof Needs>).map((needKey) => {
-                  const state = getNeedState(needKey)
+                {farmsteadOverflow > 0 && (
+                  <div className="overcrowding-banner">
+                    <strong>OVERCROWDING: {farmsteadOverflow} farmer{farmsteadOverflow !== 1 ? 's' : ''} in makeshift camps!</strong>
+                    <span className="overcrowding-penalties">
+                      Per tick: Health {overcrowdingTier > 0 ? `-${overcrowdingTier}` : '0'}, Satisfaction {overcrowdingTier > 0 ? `-${overcrowdingTier}` : '0'}, Fire Risk {overcrowdingTier > 0 ? `+${overcrowdingTier}` : '0'}
+                    </span>
+                  </div>
+                )}
+                {BUILDING_DEFINITIONS.map((def) => {
+                  const status = getBuildingStatus(def)
+                  const tracking = gameState.buildingTracking[def.id]
+                  const built = tracking?.buildingCount ?? 0
+                  const required = calculateRequiredBuildings(def, gameState.stats.farmers)
+                  const canBuild = status !== 'locked' && gameState.stats.gold >= def.cost
+
                   return (
-                    <div 
-                      key={needKey} 
-                      className={`need-item need-${state.status}`}
+                    <div
+                      key={def.id}
+                      className={`building-card building-${status}`}
                     >
-                      <div className="need-header">
-                        <span className="need-name">{needDisplayNames[needKey]}</span>
-                        <span className="need-status">{state.label}</span>
+                      <div className="building-header">
+                        <span className="building-name">{def.icon} {def.displayName}</span>
+                        <span className={`status-badge status-${status}`}>{getBuildingStatusLabel(status)}</span>
                       </div>
-                      <div className="need-effect">Effect: {needEffectDescriptions[needKey]}</div>
+                      {status === 'locked' ? (
+                        <div className="building-info building-locked-info">Unlocks at {def.unlockThreshold} farmers</div>
+                      ) : (
+                        <>
+                          {def.id === 'farmstead' ? (
+                            <div className="building-info">Capacity: {built * 20} / {gameState.stats.farmers} farmers</div>
+                          ) : (
+                            <div className="building-info">Built: {built} / Required: {required}</div>
+                          )}
+                          <div className="building-benefit">Benefit: {def.benefitDescription}</div>
+                          <div className="building-actions">
+                            <span className="building-cost">Cost: {def.cost} Gold</span>
+                            <button
+                              className="build-button"
+                              disabled={!canBuild}
+                              onClick={() => dispatch({ type: 'BUILD_BUILDING', buildingId: def.id })}
+                            >
+                              BUILD
+                            </button>
+                          </div>
+                        </>
+                      )}
                     </div>
                   )
                 })}
@@ -708,24 +736,26 @@ function App() {
                           )
                         })}
                       </div>
-                      {/* Display need modifier effects */}
+                      {/* Display building modifier effects */}
                       {entry.appliedChanges && entry.appliedChanges.length > 0 && (
                         <div className="log-modifiers">
                           {entry.appliedChanges.map((change, changeIndex) => {
                             // Map source to icon and label
-                            const needIcons: Record<string, string> = {
-                              'need:firewood': '🪵',
-                              'need:well': '💧',
-                              'need:bread': '🍞',
+                            const buildingIcons: Record<string, string> = {
+                              'building:firewood': '\u{1FAB5}',
+                              'building:well': '\u{1F4A7}',
+                              'building:bakery': '\u{1F35E}',
+                              'overcrowding': '\u{26FA}',
                             };
-                            const needLabels: Record<string, string> = {
-                              'need:firewood': 'Firewood',
-                              'need:well': 'Well',
-                              'need:bread': 'Bread',
+                            const buildingLabels: Record<string, string> = {
+                              'building:firewood': 'Firewood',
+                              'building:well': 'Well',
+                              'building:bakery': 'Bakery',
+                              'overcrowding': 'Overcrowding',
                             };
-                            
-                            const icon = needIcons[change.source] || '✨';
-                            const label = needLabels[change.source] || change.source;
+
+                            const icon = buildingIcons[change.source] || '\u{2728}';
+                            const label = buildingLabels[change.source] || change.source;
                             const displayValue = formatDeltaValue(change.amount);
                             
                             return (

@@ -1685,7 +1685,7 @@ export const eventRequests: Request[] = [
     id: 'EVENT_MARKET_DAY',
     title: 'Market Day',
     text: 'The marketplace is bustling with traders from distant lands. Will you focus on steady profits or take a riskier approach for greater gains?',
-    requires: ['need:marketplace'],
+    requires: ['building:marketplace'],
     options: [
       {
         text: 'STEADY TRADE',
@@ -1707,7 +1707,7 @@ export const eventRequests: Request[] = [
     id: 'EVENT_TAVERN_AFTER_WORK',
     title: 'Feierabend in der Kneipe',
     text: 'After a long day of labor, the villagers gather at the tavern. Should you subsidize their drinks to boost morale, or let them enjoy at their own expense?',
-    requires: ['need:beer'],
+    requires: ['building:brewery'],
     options: [
       {
         text: 'LET THEM PAY',
@@ -3640,7 +3640,7 @@ export const eventRequests: Request[] = [
 
   // =========================================================
   // CHAIN 2 – Merchant Guild
-  // Mechanics: option followUps, requirements (need:marketplace),
+  // Mechanics: option followUps, requirements (building:marketplace),
   //            weighted candidates, chain-gating
   // =========================================================
   {
@@ -3648,7 +3648,7 @@ export const eventRequests: Request[] = [
     chainId: 'merchant_guild',
     chainRole: 'start',
     chainRestartCooldownTicks: 60,
-    requires: ['need:marketplace'],
+    requires: ['building:marketplace'],
     title: 'Guild Proposal',
     text: 'A delegation of merchants arrives at the marketplace. They propose forming a guild to regulate trade and share profits — for a founding fee.',
     options: [
@@ -4131,7 +4131,7 @@ export const eventRequests: Request[] = [
     chainRole: 'start',
     chainRestartCooldownTicks: 50,
     maxTriggers: 2,
-    requires: ['need:beer'],
+    requires: ['building:brewery'],
     title: 'Festival Season',
     text: 'The harvest is in and the people want a grand festival. Brewers offer their finest ale if you fund the event.',
     options: [
@@ -4363,7 +4363,7 @@ export const eventRequests: Request[] = [
   // =========================================================
   // CHAIN 7 – Palisade Upgrade
   // Mechanics: option followUps, weighted candidates,
-  //            requires token gating (need:marketplace)
+  //            requires token gating (building:marketplace)
   // =========================================================
   {
     id: 'CHAIN_PALISADE_START',
@@ -4382,7 +4382,7 @@ export const eventRequests: Request[] = [
         delayMinTicks: 1,
         delayMaxTicks: 2,
         candidates: [
-          // This follow-up requires need:marketplace to be unlocked (meetsRequirements).
+          // This follow-up requires building:marketplace to be unlocked (meetsRequirements).
           { requestId: 'CHAIN_PALISADE_HIRE_CARPENTERS', weight: 1 },
           { requestId: 'CHAIN_PALISADE_LOCAL_BUILD', weight: 2 },
         ],
@@ -4400,7 +4400,7 @@ export const eventRequests: Request[] = [
     chainId: 'palisade',
     chainRole: 'member',
     canTriggerRandomly: false,
-    requires: ['need:marketplace'],
+    requires: ['building:marketplace'],
     title: 'Guild Carpenters Available',
     text: 'Thanks to the marketplace, a guild of skilled carpenters offers their services. Their work would be superior, but their rates are steep.',
     options: [
@@ -5223,6 +5223,60 @@ export const authorityInfoRequests: Request[] = [
     canTriggerRandomly: false,
     options: [{ text: 'EMBARRASSED', effects: {} }],
   },
+
+  // =========================================================
+  // BUILDING REMINDER REQUESTS (6)
+  // Tickless, no penalty, single "Understood" option.
+  // Scheduled by checkBuildingReminders() when buildings are needed.
+  // =========================================================
+  {
+    id: 'REMINDER_FARMSTEAD',
+    title: 'The Bailiff Urges: Housing',
+    text: 'Your bailiff steps forward with a worried expression: "My lord, our farmers are living in makeshift camps. The camps are a fire hazard and disease is spreading. We desperately need more farmsteads!"',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'Understood', effects: {} }],
+  },
+  {
+    id: 'REMINDER_MARKETPLACE',
+    title: 'The Bailiff Suggests: Marketplace',
+    text: 'Your bailiff approaches you respectfully: "My lord, the settlement has grown beyond what informal trade can sustain. A proper marketplace would bring order to commerce and attract new merchants."',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'Understood', effects: {} }],
+  },
+  {
+    id: 'REMINDER_BAKERY',
+    title: 'The Bailiff Suggests: Bakery',
+    text: 'Your bailiff raises a concern: "My lord, our growing population needs a reliable food supply. A bakery would not only feed our people but draw settlers who seek the comfort of fresh bread."',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'Understood', effects: {} }],
+  },
+  {
+    id: 'REMINDER_BREWERY',
+    title: 'The Bailiff Suggests: Brewery',
+    text: 'Your bailiff clears his throat: "My lord, the workers toil hard and their morale suffers without proper leisure. A brewery would lift spirits and give them a reason to stay."',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'Understood', effects: {} }],
+  },
+  {
+    id: 'REMINDER_FIREWOOD',
+    title: 'The Bailiff Warns: Firewood',
+    text: 'Your bailiff speaks with urgency: "My lord, without an organized firewood supply, people are collecting wood haphazardly. The fire risk is growing — one spark could burn down the entire settlement!"',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'Understood', effects: {} }],
+  },
+  {
+    id: 'REMINDER_WELL',
+    title: 'The Bailiff Warns: Sanitation',
+    text: 'Your bailiff approaches with grave concern: "My lord, the people are drinking from stagnant ponds and muddy streams. Without a proper central well, disease will spread unchecked through our settlement."',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    options: [{ text: 'Understood', effects: {} }],
+  },
 ];
 
 /**
@@ -5231,7 +5285,7 @@ export const authorityInfoRequests: Request[] = [
  * Throws errors if validation fails.
  */
 export function validateRequests(): void {
-  const allRequests = [...needRequests, ...infoRequests, ...authorityInfoRequests, ...eventRequests];
+  const allRequests = [...infoRequests, ...authorityInfoRequests, ...eventRequests];
   const errors: string[] = [];
 
   // Collect all request IDs
@@ -5239,9 +5293,9 @@ export function validateRequests(): void {
   const duplicateIds: string[] = [];
 
   for (const request of allRequests) {
-    // Check 1: Info requests must have exactly 1 option, all others must have exactly 2
-    const isInfoRequest = request.id.startsWith('INFO_');
-    const expectedOptions = isInfoRequest ? 1 : 2;
+    // Check 1: Info and reminder requests must have exactly 1 option, all others must have exactly 2
+    const isSingleOptionRequest = request.id.startsWith('INFO_') || request.id.startsWith('REMINDER_');
+    const expectedOptions = isSingleOptionRequest ? 1 : 2;
     if (request.options.length !== expectedOptions) {
       errors.push(
         `Request "${request.id}" has ${request.options.length} options, expected exactly ${expectedOptions}`

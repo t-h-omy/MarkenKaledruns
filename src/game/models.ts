@@ -1,6 +1,6 @@
 /**
- * TypeScript models for the Proof-of-Fun game.
- * Based on POF_SPEC.md specification.
+ * TypeScript models for Die Marken Kaledruns.
+ * Core type definitions for the game engine.
  */
 
 /**
@@ -25,95 +25,8 @@ export interface Stats {
 }
 
 /**
- * Boolean flags representing village needs.
- * Each need can be fulfilled once per 100 farmers via its need-request.
- */
-export interface Needs {
-  /** Whether marketplace has been built */
-  marketplace: boolean;
-  /** Whether bread production is supported */
-  bread: boolean;
-  /** Whether beer production is allowed */
-  beer: boolean;
-  /** Whether firewood supply is organized */
-  firewood: boolean;
-  /** Whether well has been built */
-  well: boolean;
-}
-
-/**
- * Tracking data for need progression system with persistent building counts
- */
-export interface NeedTracking {
-  /** Number of buildings built for this need (persistent, never decreases) */
-  buildingCount: number;
-  /** Next tick when this need becomes eligible again after being declined */
-  nextEligibleTick: number;
-}
-
-/**
- * All need tracking data keyed by need name
- */
-export interface NeedsTracking {
-  marketplace: NeedTracking;
-  bread: NeedTracking;
-  beer: NeedTracking;
-  firewood: NeedTracking;
-  well: NeedTracking;
-}
-
-/**
- * Need configuration including unlock thresholds and population scaling
- */
-export interface NeedConfig {
-  /** Population required to unlock the first building */
-  unlockThreshold: number;
-  /** Population increase required for each additional building after the first */
-  populationPerBuilding: number;
-}
-
-/**
- * Configuration for each need with unlock threshold and population scaling
- */
-export const NEED_CONFIGS: Record<keyof Needs, NeedConfig> = {
-  marketplace: { unlockThreshold: 30, populationPerBuilding: 100 },
-  bread: { unlockThreshold: 60, populationPerBuilding: 120 },
-  beer: { unlockThreshold: 100, populationPerBuilding: 150 },
-  firewood: { unlockThreshold: 170, populationPerBuilding: 180 },
-  well: { unlockThreshold: 250, populationPerBuilding: 200 },
-};
-
-/**
- * Need unlock thresholds (farmers population required) - for backward compatibility
- */
-export const NEED_UNLOCK_THRESHOLDS: Record<keyof Needs, number> = {
-  marketplace: NEED_CONFIGS.marketplace.unlockThreshold,
-  bread: NEED_CONFIGS.bread.unlockThreshold,
-  beer: NEED_CONFIGS.beer.unlockThreshold,
-  firewood: NEED_CONFIGS.firewood.unlockThreshold,
-  well: NEED_CONFIGS.well.unlockThreshold,
-};
-
-/**
- * Decline cooldown duration in ticks
- */
-export const DECLINE_COOLDOWN_TICKS = 5;
-
-/**
- * Mapping from need ID to corresponding info request ID
- * Info requests are scheduled when a need is fulfilled for the first time
- */
-export const NEED_INFO_REQUEST_MAP: Record<keyof Needs, string> = {
-  marketplace: 'INFO_NEED_MARKETPLACE',
-  bread: 'INFO_NEED_BREAD',
-  beer: 'INFO_NEED_BEER',
-  firewood: 'INFO_NEED_FIREWOOD',
-  well: 'INFO_NEED_WELL',
-};
-
-/**
- * Represents changes to game state (stats or needs).
- * Each property is optional and represents a delta or assignment.
+ * Represents changes to game state (stat deltas).
+ * Each property is optional and represents a delta.
  */
 export interface Effect {
   /** Change in gold amount */
@@ -130,16 +43,6 @@ export interface Effect {
   landForces?: number;
   /** Change in authority level */
   authority?: number;
-  /** Set marketplace need flag */
-  marketplace?: boolean;
-  /** Set bread need flag */
-  bread?: boolean;
-  /** Set beer need flag */
-  beer?: boolean;
-  /** Set firewood need flag */
-  firewood?: boolean;
-  /** Set well need flag */
-  well?: boolean;
 }
 
 /**
@@ -197,43 +100,43 @@ export interface FollowUp {
  * making them more likely to occur.
  */
 export interface AuthorityFollowUpBoost {
-  /** 
+  /**
    * Target follow-up request ID whose probability should be increased.
    * This should match a requestId in the followUps.candidates array.
    */
   targetRequestId: string;
-  
-  /** 
+
+  /**
    * Boost type determines how authority commitment affects probability:
    * - "linear": weight increases linearly with authority committed
    *   Formula: weight += (committed / maxCommit) * boostValue
    *   Example: boostValue=2 means +2 weight at max commit, +1 at 50% commit
-   * 
+   *
    * - "threshold": weight increases if commitment crosses threshold
    *   Formula: weight += boostValue if committed >= threshold, else +0
    *   Example: boostValue=3 means +3 weight only if threshold met
-   * 
+   *
    * - "stepped": weight increases in discrete steps
    *   Formula: weight += floor((committed / maxCommit) * steps) * boostValue
    *   Example: steps=3, boostValue=1 means +0/+1/+2/+3 at 0%/33%/66%/100%
    */
   boostType: "linear" | "threshold" | "stepped";
-  
-  /** 
+
+  /**
    * Boost value interpretation depends on boostType:
    * - linear: maximum weight increase at 100% commitment
    * - threshold: fixed weight increase when threshold crossed
    * - stepped: weight increase per step
    */
   boostValue: number;
-  
+
   /**
    * For "stepped" boostType: number of discrete steps (default: 3)
    * Ignored for other types.
    */
   steps?: number;
-  
-  /** 
+
+  /**
    * Optional description shown to player explaining what this boost affects.
    * Example: "Increases chance traveler is helpful"
    */
@@ -264,7 +167,7 @@ export interface AuthorityCheck {
   refundOnSuccessPercent?: number;
   /** Extra authority loss on failure as a fixed whole number (default: 0) */
   extraLossOnFailure?: number;
-  /** Follow-up probability boosts (NEW: influences future event probabilities) */
+  /** Follow-up probability boosts (influences future event probabilities) */
   followUpBoosts?: AuthorityFollowUpBoost[];
 }
 
