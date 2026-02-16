@@ -1,117 +1,11 @@
 /**
  * Request data for the Proof-of-Fun game.
  * Based on POF_SPEC.md specification.
- * Contains 5 need-requests and 130 event-requests (25 base + 44 Blackgeat chain + 34 chains 1-5 + 27 chains 6-10).
+ * Contains 130 event-requests (25 base + 44 Blackgeat chain + 34 chains 1-5 + 27 chains 6-10).
  */
 
 import type { Request } from './models';
 
-/**
- * Need-Requests (5)
- * These requests appear when village needs are unfulfilled.
- */
-export const needRequests: Request[] = [
-  {
-    id: 'NEED_MARKETPLACE',
-    title: 'A Hub for Trade',
-    text: 'The settlement is growing, and door-to-door bartering is no longer sufficient. The citizens demand a central marketplace to unlock the next tier of prosperity.',
-    options: [
-      {
-        text: 'BUILD',
-        effects: {
-          gold: -20,
-          marketplace: true,
-        },
-      },
-      {
-        text: 'DECLINE',
-        effects: {
-          satisfaction: -5,
-        },
-      },
-    ],
-  },
-  {
-    id: 'NEED_BREAD',
-    title: 'Essential Sustenance',
-    text: 'A sophisticated village requires a stable food chain. The people are calling for an organized bakery to elevate their diet and support further growth.',
-    options: [
-      {
-        text: 'SUPPORT BAKERY',
-        effects: {
-          gold: -40,
-          bread: true,
-        },
-      },
-      {
-        text: 'IGNORE',
-        effects: {
-          health: -5,
-        },
-      },
-    ],
-  },
-  {
-    id: 'NEED_BEER',
-    title: 'Culture & Brewing',
-    text: 'As wealth increases, so does the desire for leisure. A local brewery is now required to maintain high satisfaction and reach the next level of social standing.',
-    options: [
-      {
-        text: 'ALLOW',
-        effects: {
-          gold: -70,
-          beer: true,
-        },
-      },
-      {
-        text: 'FORBID',
-        effects: {
-          satisfaction: -10,
-        },
-      },
-    ],
-  },
-  {
-    id: 'NEED_FIREWOOD',
-    title: 'Firewood',
-    text: 'Random foraging is too inefficient for a town of this size. The population demands a professional firewood supply as a baseline standard for their homes.',
-    options: [
-      {
-        text: 'ORGANIZE',
-        effects: {
-          gold: -200,
-          firewood: true,
-        },
-      },
-      {
-        text: 'DO NOTHING',
-        effects: {
-          fireRisk: 15,
-        },
-      },
-    ],
-  },
-  {
-    id: 'NEED_WELL',
-    title: 'Sanitary Standards',
-    text: "To support a denser population safely, a central well is non-negotiable. Without this hygienic upgrade, the village's expansion will stagnate.",
-    options: [
-      {
-        text: 'BUILD',
-        effects: {
-          gold: -300,
-          well: true,
-        },
-      },
-      {
-        text: 'DECLINE',
-        effects: {
-          health: -15,
-        },
-      },
-    ],
-  },
-];
 
 /**
  * Info/System Requests (5)

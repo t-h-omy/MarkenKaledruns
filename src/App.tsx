@@ -452,12 +452,6 @@ function App() {
       })
     }
     
-    // Add need fulfillment indicators
-    if (effects.marketplace) formatted.push({ label: '✓ Marketplace', value: '', isPositive: true })
-    if (effects.bread) formatted.push({ label: '✓ Bread', value: '', isPositive: true })
-    if (effects.beer) formatted.push({ label: '✓ Beer', value: '', isPositive: true })
-    if (effects.firewood) formatted.push({ label: '✓ Firewood', value: '', isPositive: true })
-    if (effects.well) formatted.push({ label: '✓ Well', value: '', isPositive: true })
     
     return formatted
   }
