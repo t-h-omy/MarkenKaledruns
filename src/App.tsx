@@ -4,10 +4,18 @@ import { gameReducer, initializeGame, getCurrentRequest } from './game/state'
 import type { Effect } from './game/models'
 import { BUILDING_DEFINITIONS, calculateRequiredBuildings } from './game/buildings'
 import type { BuildingDefinition } from './game/buildings'
+import ConstructionScreen from './ConstructionScreen'
+import LogScreen from './LogScreen'
 
 function App() {
   const [gameState, dispatch] = useReducer(gameReducer, undefined, initializeGame)
-  const [bottomTab, setBottomTab] = useState<'build' | 'log'>('build')
+  
+  // Construction screen state
+  const [constructionScreenOpen, setConstructionScreenOpen] = useState(false)
+  const [highlightedBuildingId, setHighlightedBuildingId] = useState<string | null>(null)
+  
+  // Log screen state
+  const [logScreenOpen, setLogScreenOpen] = useState(false)
   
   // Request display delay state
   const [displayedRequest, setDisplayedRequest] = useState(getCurrentRequest(gameState))
@@ -35,6 +43,19 @@ function App() {
       setCurrentTick(gameState.tick)
     }
   }, [gameState.tick, currentTick])
+  
+  // Lock body scroll when construction screen is open
+  useEffect(() => {
+    if (constructionScreenOpen || logScreenOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [constructionScreenOpen, logScreenOpen])
   
   // Pulsating resource bar animation system
   type StatAnimation = {
@@ -310,8 +331,24 @@ function App() {
     setAuthorityModalOpen(null)
   }
 
-  // Get last 3 log entries
-  const recentLogs = gameState.log.slice(-3).reverse()
+  // Construction screen handlers
+  const openConstructionScreen = (buildingId?: string) => {
+    setConstructionScreenOpen(true)
+    setHighlightedBuildingId(buildingId ?? null)
+  }
+
+  const closeConstructionScreen = () => {
+    setConstructionScreenOpen(false)
+    setHighlightedBuildingId(null)
+  }
+
+  const openLogScreen = () => {
+    setLogScreenOpen(true)
+  }
+
+  const closeLogScreen = () => {
+    setLogScreenOpen(false)
+  }
 
   // Check if current request is a crisis event
   const isCrisis = currentRequest?.id.startsWith('EVT_CRISIS_') ?? false
@@ -337,27 +374,29 @@ function App() {
     return gameState.stats.gold >= def.cost ? 'fulfilled' : 'fulfilled'
   }
 
-  const getBuildingStatusLabel = (status: BuildingStatus): string => {
-    switch (status) {
-      case 'locked': return 'LOCKED'
-      case 'available': return 'AVAILABLE'
-      case 'needed': return 'NEEDED!'
-      case 'no-gold': return 'NO GOLD'
-      case 'fulfilled': return 'FULFILLED'
+  // Calculate buildings needing attention (consolidate filtering)
+  const buildingsNeedingAttentionList = BUILDING_DEFINITIONS.filter(def => {
+    const status = getBuildingStatus(def)
+    return status === 'needed' || status === 'no-gold'
+  }).map(def => {
+    const tracking = gameState.buildingTracking[def.id]
+    const built = tracking?.buildingCount ?? 0
+    const required = calculateRequiredBuildings(def, gameState.stats.farmers)
+    const shortage = Math.max(0, required - built)
+    return {
+      id: def.id,
+      name: def.displayName,
+      icon: def.icon,
+      shortage
     }
-  }
+  })
 
-  // Calculate overcrowding info
+  const buildingsNeedingAttention = buildingsNeedingAttentionList.length
+
+  // Calculate overcrowding info (removed build panel, overcrowding tier not needed here)
   const farmsteadCount = gameState.buildingTracking['farmstead']?.buildingCount ?? 0
   const farmsteadCapacity = farmsteadCount * 20
   const farmsteadOverflow = Math.max(0, gameState.stats.farmers - farmsteadCapacity)
-  const getOvercrowdingTier = (overflow: number) => {
-    if (overflow === 0) return 0
-    if (overflow <= 10) return 1
-    if (overflow <= 25) return 2
-    return 3
-  }
-  const overcrowdingTier = getOvercrowdingTier(farmsteadOverflow)
 
   // Check if an option would cause invalid state (negative farmers or landForces)
   const isOptionDisabled = (effects: Effect): { disabled: boolean; reason?: string } => {
@@ -508,6 +547,23 @@ function App() {
           </div>
         )}
 
+        {/* Building Shortage Mini-Banner */}
+        {buildingsNeedingAttention > 0 && !gameState.gameOver && !constructionScreenOpen && (
+          <div className="building-shortage-banner" onClick={() => openConstructionScreen()}>
+            <span className="shortage-icon">⚠️</span>
+            <span className="shortage-text">
+              {buildingsNeedingAttentionList.map((b, i) => (
+                <span key={b.id}>
+                  {i > 0 && ', '}
+                  {b.shortage} {b.icon} {b.name}
+                </span>
+              ))}
+              {' needed'}
+            </span>
+            <span className="shortage-action">→ Click to build</span>
+          </div>
+        )}
+
         {/* Game Over Screen */}
         {gameState.gameOver ? (
           <div className="panel game-over-panel">
@@ -618,6 +674,35 @@ function App() {
                       </div>
                     )
                   })}
+                  
+                  {/* Add "Go to Construction" button for reminder requests */}
+                  {currentRequest.id.startsWith('REMINDER_') && (() => {
+                    // Extract building ID from reminder request ID (e.g., REMINDER_FARMSTEAD -> farmstead)
+                    const buildingId = currentRequest.id.replace('REMINDER_', '').toLowerCase()
+                    // Validate that the building ID exists
+                    const buildingExists = BUILDING_DEFINITIONS.some(def => def.id === buildingId)
+                    
+                    if (!buildingExists) {
+                      console.warn(`Building ID "${buildingId}" extracted from reminder "${currentRequest.id}" does not exist`)
+                      return null
+                    }
+                    
+                    return (
+                      <div className="option-row">
+                        <button
+                          className="option-button"
+                          onClick={() => {
+                            // Dismiss the request first
+                            dispatch({ type: 'CHOOSE_OPTION', optionIndex: 0 })
+                            // Then open construction screen with highlighted building
+                            openConstructionScreen(buildingId)
+                          }}
+                        >
+                          <div className="option-text">🏗️ Go to Construction</div>
+                        </button>
+                      </div>
+                    )
+                  })()}
                 </div>
               </>
             ) : (
@@ -626,152 +711,24 @@ function App() {
           </div>
         )}
 
-        {/* Bottom Bar with Toggle */}
+        {/* Bottom Bar with Buttons Only */}
         <div className="bottom-bar">
           <div className="toggle-buttons">
             <button
-              className={`toggle-btn ${bottomTab === 'build' ? 'active' : ''}${gameState.newlyUnlockedBuilding && bottomTab !== 'build' ? ' toggle-btn-notify' : ''}`}
-              onClick={() => setBottomTab('build')}
+              className="toggle-btn"
+              onClick={openLogScreen}
             >
-              Build
+              📜 Log
             </button>
             <button
-              className={`toggle-btn ${bottomTab === 'log' ? 'active' : ''}`}
-              onClick={() => setBottomTab('log')}
+              className={`toggle-btn${buildingsNeedingAttention > 0 ? ' toggle-btn-notify' : ''}`}
+              onClick={() => openConstructionScreen()}
             >
-              Log
+              🏗️ Construction
+              {buildingsNeedingAttention > 0 && (
+                <span className="notification-badge">{buildingsNeedingAttention}</span>
+              )}
             </button>
-          </div>
-
-          <div className="bottom-content">
-            {bottomTab === 'build' ? (
-              <div className="build-panel">
-                {gameState.newlyUnlockedBuilding && (
-                  <div className="need-unlock-message">
-                    {(() => { const d = BUILDING_DEFINITIONS.find(b => b.id === gameState.newlyUnlockedBuilding); return d ? `${d.icon} New building unlocked: ${d.displayName}!` : '' })()}
-                  </div>
-                )}
-                {farmsteadOverflow > 0 && (
-                  <div className="overcrowding-banner">
-                    <strong>OVERCROWDING: {farmsteadOverflow} farmer{farmsteadOverflow !== 1 ? 's' : ''} in makeshift camps!</strong>
-                    <span className="overcrowding-penalties">
-                      Per tick: Health {overcrowdingTier > 0 ? `-${overcrowdingTier}` : '0'}, Satisfaction {overcrowdingTier > 0 ? `-${overcrowdingTier}` : '0'}, Fire Risk {overcrowdingTier > 0 ? `+${overcrowdingTier}` : '0'}
-                    </span>
-                  </div>
-                )}
-                {BUILDING_DEFINITIONS.map((def) => {
-                  const status = getBuildingStatus(def)
-                  const tracking = gameState.buildingTracking[def.id]
-                  const built = tracking?.buildingCount ?? 0
-                  const required = calculateRequiredBuildings(def, gameState.stats.farmers)
-                  const canBuild = status !== 'locked' && gameState.stats.gold >= def.cost
-
-                  return (
-                    <div
-                      key={def.id}
-                      className={`building-card building-${status}`}
-                    >
-                      <div className="building-header">
-                        <span className="building-name">{def.icon} {def.displayName}</span>
-                        <span className={`status-badge status-${status}`}>{getBuildingStatusLabel(status)}</span>
-                      </div>
-                      {status === 'locked' ? (
-                        <div className="building-info building-locked-info">Unlocks at {def.unlockThreshold} farmers</div>
-                      ) : (
-                        <>
-                          {def.id === 'farmstead' ? (
-                            <div className="building-info">Capacity: {built * 20} / {gameState.stats.farmers} farmers</div>
-                          ) : (
-                            <div className="building-info">Built: {built} / Required: {required}</div>
-                          )}
-                          <div className="building-benefit">Benefit: {def.benefitDescription}</div>
-                          <div className="building-actions">
-                            <span className="building-cost">Cost: {def.cost} Gold</span>
-                            <button
-                              className="build-button"
-                              disabled={!canBuild}
-                              onClick={() => dispatch({ type: 'BUILD_BUILDING', buildingId: def.id })}
-                            >
-                              BUILD
-                            </button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            ) : (
-              <div className="log-compact">
-                {recentLogs.length === 0 ? (
-                  <p className="log-empty">No decisions yet</p>
-                ) : (
-                  recentLogs.map((entry, index) => (
-                    <div key={`${entry.tick}-${entry.source}-${index}`} className="log-entry">
-                      <div className="log-header">
-                        <span className={`log-source log-source-${entry.source.toLowerCase().replace(/\s+/g, '-')}`}>
-                          {entry.source}
-                        </span>
-                        {entry.optionText && (
-                          <span className="log-option">{entry.optionText}</span>
-                        )}
-                      </div>
-                      <div className="log-deltas">
-                        {Object.entries(entry.deltas).map(([key, value]) => {
-                          const displayValue = formatDeltaValue(value)
-                          
-                          return (
-                            <span
-                              key={key}
-                              className={`delta ${value > 0 ? 'positive' : 'negative'}`}
-                            >
-                              {key}: {displayValue}
-                            </span>
-                          )
-                        })}
-                      </div>
-                      {/* Display building modifier effects */}
-                      {entry.appliedChanges && entry.appliedChanges.length > 0 && (
-                        <div className="log-modifiers">
-                          {entry.appliedChanges.map((change, changeIndex) => {
-                            // Map source to icon and label
-                            const buildingIcons: Record<string, string> = {
-                              'building:firewood': '\u{1FAB5}',
-                              'building:well': '\u{1F4A7}',
-                              'building:bakery': '\u{1F35E}',
-                              'overcrowding': '\u{26FA}',
-                            };
-                            const buildingLabels: Record<string, string> = {
-                              'building:firewood': 'Firewood',
-                              'building:well': 'Well',
-                              'building:bakery': 'Bakery',
-                              'overcrowding': 'Overcrowding',
-                            };
-
-                            const icon = buildingIcons[change.source] || '\u{2728}';
-                            const label = buildingLabels[change.source] || change.source;
-                            const displayValue = formatDeltaValue(change.amount);
-                            
-                            return (
-                              <div key={changeIndex} className="modifier-effect">
-                                <span className="modifier-icon">{icon}</span>
-                                <span className="modifier-label">{label}:</span>
-                                <span className={`modifier-value ${change.amount > 0 ? 'positive' : 'negative'}`}>
-                                  {change.stat}: {displayValue}
-                                </span>
-                                {change.note && (
-                                  <span className="modifier-note" title={change.note}>ℹ️</span>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
           </div>
         </div>
         
@@ -971,6 +928,24 @@ function App() {
             </div>
           )
         })}
+        
+        {/* Construction Screen Overlay */}
+        <ConstructionScreen 
+          isOpen={constructionScreenOpen}
+          onClose={closeConstructionScreen}
+          farmers={gameState.stats.farmers}
+          gold={gameState.stats.gold}
+          buildingTracking={gameState.buildingTracking}
+          highlightedBuilding={highlightedBuildingId ?? undefined}
+          onBuild={(buildingId) => dispatch({ type: 'BUILD_BUILDING', buildingId })}
+        />
+        
+        {/* Log Screen Overlay */}
+        <LogScreen 
+          isOpen={logScreenOpen}
+          onClose={closeLogScreen}
+          log={gameState.log}
+        />
         
         {/* Version display */}
         <div className="version-footer">
