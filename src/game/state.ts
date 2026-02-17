@@ -927,8 +927,8 @@ function resolveAuthorityCheck(check: PendingAuthorityCheck): AuthorityCheckResu
   if (config.minSuccessChance === undefined || config.maxSuccessChance === undefined) {
     console.error('Authority check missing required minSuccessChance/maxSuccessChance:', check.originRequestId);
   }
-  const MIN_SUCCESS_CHANCE = config.minSuccessChance ?? 0;
-  const MAX_SUCCESS_CHANCE = config.maxSuccessChance ?? 1;
+  const MIN_SUCCESS_CHANCE = config.minSuccessChance ?? 0.5;
+  const MAX_SUCCESS_CHANCE = config.maxSuccessChance ?? 0.5;
   const effectiveMaxCommit = config.maxPossibleCommit ?? config.maxCommit;
   const commitRatio = effectiveMaxCommit > 0 ? committed / effectiveMaxCommit : 0;
   const successChance = MIN_SUCCESS_CHANCE + commitRatio * (MAX_SUCCESS_CHANCE - MIN_SUCCESS_CHANCE);
