@@ -376,14 +376,8 @@ function App() {
     }
   }
 
-  // Calculate count of buildings needing attention
-  const buildingsNeedingAttention = BUILDING_DEFINITIONS.filter(def => {
-    const status = getBuildingStatus(def)
-    return status === 'needed' || status === 'no-gold'
-  }).length
-
-  // Get list of buildings that need attention for mini-banner
-  const neededBuildingsList = BUILDING_DEFINITIONS.filter(def => {
+  // Calculate buildings needing attention (consolidate filtering)
+  const buildingsNeedingAttentionList = BUILDING_DEFINITIONS.filter(def => {
     const status = getBuildingStatus(def)
     return status === 'needed' || status === 'no-gold'
   }).map(def => {
@@ -392,11 +386,14 @@ function App() {
     const required = calculateRequiredBuildings(def, gameState.stats.farmers)
     const shortage = Math.max(0, required - built)
     return {
+      id: def.id,
       name: def.displayName,
       icon: def.icon,
       shortage
     }
   })
+
+  const buildingsNeedingAttention = buildingsNeedingAttentionList.length
 
   // Calculate overcrowding info
   const farmsteadCount = gameState.buildingTracking['farmstead']?.buildingCount ?? 0
@@ -564,8 +561,8 @@ function App() {
           <div className="building-shortage-banner" onClick={() => openConstructionScreen()}>
             <span className="shortage-icon">⚠️</span>
             <span className="shortage-text">
-              {neededBuildingsList.map((b, i) => (
-                <span key={b.name}>
+              {buildingsNeedingAttentionList.map((b, i) => (
+                <span key={b.id}>
                   {i > 0 && ', '}
                   {b.shortage} {b.icon} {b.name}
                 </span>
