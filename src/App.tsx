@@ -382,6 +382,22 @@ function App() {
     return status === 'needed' || status === 'no-gold'
   }).length
 
+  // Get list of buildings that need attention for mini-banner
+  const neededBuildingsList = BUILDING_DEFINITIONS.filter(def => {
+    const status = getBuildingStatus(def)
+    return status === 'needed' || status === 'no-gold'
+  }).map(def => {
+    const tracking = gameState.buildingTracking[def.id]
+    const built = tracking?.buildingCount ?? 0
+    const required = calculateRequiredBuildings(def, gameState.stats.farmers)
+    const shortage = Math.max(0, required - built)
+    return {
+      name: def.displayName,
+      icon: def.icon,
+      shortage
+    }
+  })
+
   // Calculate overcrowding info
   const farmsteadCount = gameState.buildingTracking['farmstead']?.buildingCount ?? 0
   const farmsteadCapacity = farmsteadCount * 20
@@ -540,6 +556,23 @@ function App() {
         {showBankruptcyWarning && !gameState.gameOver && (
           <div className="bankruptcy-warning">
             ⚠️ Bankruptcy imminent ⚠️
+          </div>
+        )}
+
+        {/* Building Shortage Mini-Banner */}
+        {buildingsNeedingAttention > 0 && !gameState.gameOver && !constructionScreenOpen && (
+          <div className="building-shortage-banner" onClick={() => openConstructionScreen()}>
+            <span className="shortage-icon">⚠️</span>
+            <span className="shortage-text">
+              {neededBuildingsList.map((b, i) => (
+                <span key={b.name}>
+                  {i > 0 && ', '}
+                  {b.shortage} {b.icon} {b.name}
+                </span>
+              ))}
+              {' needed'}
+            </span>
+            <span className="shortage-action">→ Click to build</span>
           </div>
         )}
 

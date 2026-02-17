@@ -669,6 +669,69 @@
   letter-spacing: 1px;
 }
 
+/* Building Shortage Mini-Banner */
+.building-shortage-banner {
+  background: linear-gradient(135deg, rgba(251, 146, 60, 0.95) 0%, rgba(249, 115, 22, 0.95) 100%);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: center;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(251, 146, 60, 0.5);
+  animation: shortage-pulse 2s ease-in-out infinite;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.building-shortage-banner:hover {
+  background: linear-gradient(135deg, rgba(251, 146, 60, 1) 0%, rgba(249, 115, 22, 1) 100%);
+  box-shadow: 0 2px 12px rgba(251, 146, 60, 0.7);
+  transform: translateY(-1px);
+}
+
+.shortage-icon {
+  font-size: 1.2rem;
+  animation: icon-bounce 1s ease-in-out infinite;
+}
+
+.shortage-text {
+  flex: 1;
+  font-weight: bold;
+}
+
+.shortage-action {
+  font-size: 0.85rem;
+  opacity: 0.9;
+  font-weight: normal;
+}
+
+@keyframes shortage-pulse {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 2px 8px rgba(251, 146, 60, 0.5);
+  }
+  50% {
+    opacity: 0.95;
+    box-shadow: 0 2px 12px rgba(251, 146, 60, 0.7);
+  }
+}
+
+@keyframes icon-bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+
 @keyframes warning-pulse {
   0%, 100% {
     opacity: 1;
