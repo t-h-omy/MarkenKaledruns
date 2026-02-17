@@ -30,7 +30,7 @@ function ConstructionScreen({
   const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null)
   
   // Get selected building definition and data
-  const selectedBuilding = selectedBuildingId ? getBuildingDef(selectedBuildingId) : null
+  const selectedBuilding = selectedBuildingId ? (getBuildingDef(selectedBuildingId) ?? null) : null
   const selectedTracking = selectedBuildingId ? buildingTracking[selectedBuildingId] : null
   const selectedRequired = selectedBuilding ? calculateRequiredBuildings(selectedBuilding, farmers) : 0
   const selectedShortage = selectedTracking 
