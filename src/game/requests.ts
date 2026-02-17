@@ -4499,7 +4499,6 @@ export const eventRequests: Request[] = [
     title: 'A Voice from the Crowd',
     text: 'During a public address, a villager shouts: "You call yourself a leader? My goat governs better!" Laughter ripples through the crowd. All eyes turn to you.',
     canTriggerRandomly: true,
-    maxTriggers: 1,
     options: [
       { text: 'PUNISH', effects: { authority: 1, satisfaction: -2 } },
       { text: 'LAUGH IT OFF', effects: { satisfaction: 1 } },
@@ -4510,7 +4509,7 @@ export const eventRequests: Request[] = [
         delayMinTicks: 1,
         delayMaxTicks: 2,
         candidates: [
-          { requestId: 'CHAIN_EGO_PUNISH_BACKLASH', weight: 2 },
+          { requestId: 'CHAIN_EGO_PUNISH_BACKLASH', weight: 1 },
           { requestId: 'CHAIN_EGO_PUNISH_RESPECT', weight: 1 },
         ],
       },
@@ -4519,7 +4518,7 @@ export const eventRequests: Request[] = [
         delayMinTicks: 1,
         delayMaxTicks: 2,
         candidates: [
-          { requestId: 'CHAIN_EGO_LAUGH_EMBOLDENED', weight: 2 },
+          { requestId: 'CHAIN_EGO_LAUGH_EMBOLDENED', weight: 1 },
           { requestId: 'CHAIN_EGO_LAUGH_RESPECT', weight: 1 },
         ],
       },
@@ -4533,14 +4532,14 @@ export const eventRequests: Request[] = [
     title: 'Heavy Hand Backfires',
     text: 'The heckler is dragged away, but the crowd murmurs darkly. "He only spoke what we all think." Your show of force has made things worse.',
     options: [
-      { text: 'UNFORTUNATE', effects: { authority: -2 } },
-      { text: 'STAND FIRM', effects: {} },
+      { text: 'LEAVE THE SQUARE', effects: { authority: -1 } },
+      { text: 'DISPERSE THE CROWD', effects: {satisfaction: -2, authority: 1} },
     ],
     followUps: [
       {
         triggerOnOptionIndex: 0,
-        delayMinTicks: 1,
-        delayMaxTicks: 1,
+        delayMinTicks: 3,
+        delayMaxTicks: 5,
         candidates: [{ requestId: 'CHAIN_EGO_END', weight: 1 }],
       },
     ],
@@ -4551,16 +4550,16 @@ export const eventRequests: Request[] = [
     chainRole: 'member',
     canTriggerRandomly: false,
     title: 'Order Restored',
-    text: 'The crowd falls silent after your swift response. A few nod approvingly — a leader who tolerates no disrespect commands a certain gravitas.',
+    text: 'The crowd falls silent at first. Then a loud voice rings out: “All hail!” It isn’t long before the whole square erupts in applause. Whether out of fear or awe, you cannot say.'
     options: [
-      { text: 'AS IT SHOULD BE', effects: { authority: 1 } },
-      { text: 'MOVE ON', effects: {} },
+      { text: 'AS IT SHOULD BE', effects: { authority: 1, } },
+      { text: 'DEAL OUT COINS', effects: {gold: -5,} },
     ],
     followUps: [
       {
         triggerOnOptionIndex: 0,
-        delayMinTicks: 1,
-        delayMaxTicks: 1,
+        delayMinTicks: 3,
+        delayMaxTicks: 5,
         candidates: [{ requestId: 'CHAIN_EGO_END', weight: 1 }],
       },
     ],
@@ -4571,10 +4570,10 @@ export const eventRequests: Request[] = [
     chainRole: 'member',
     canTriggerRandomly: false,
     title: 'Mockery Spreads',
-    text: 'Your good humor emboldens others. Soon "the goat lord" becomes a tavern joke. Children bleat at you in the streets. Your authority takes a quiet hit.',
+    text: 'Your good humor emboldens others. Soon "the goat lord" becomes a street joke. Children bleat at you in the streets.',
     options: [
       { text: 'IGNORE IT', effects: { authority: -1 } },
-      { text: 'SHRUG', effects: {} },
+      { text: 'IMPRISON THEM', effects: {satisfaction: -5, farmers: -3, authority: 1 } },
     ],
     followUps: [
       {
@@ -4594,13 +4593,13 @@ export const eventRequests: Request[] = [
     text: 'Your laughter disarms the moment entirely. The heckler himself grins sheepishly. "Fair enough, my lord." The crowd warms to you — a leader who can take a joke is a leader worth following.',
     options: [
       { text: 'WELL HANDLED', effects: { satisfaction: 1 } },
-      { text: 'BUY HIM AN ALE', effects: {} },
+      { text: 'BUY HIM AN ALE', effects: {gold: -5, satisfaction: 1} },
     ],
     followUps: [
       {
         triggerOnOptionIndex: 0,
-        delayMinTicks: 1,
-        delayMaxTicks: 1,
+        delayMinTicks: 3,
+        delayMaxTicks: 5,
         candidates: [{ requestId: 'CHAIN_EGO_END', weight: 1 }],
       },
     ],
@@ -4610,11 +4609,10 @@ export const eventRequests: Request[] = [
     chainId: 'ego_insult',
     chainRole: 'end',
     canTriggerRandomly: false,
-    chainRestartCooldownTicks: 9999,
+    chainRestartCooldownTicks: 100,
     title: 'The Incident Fades',
     text: 'Weeks pass and the incident is mostly forgotten — though some still smirk when they think you are not looking. Such is the burden of leadership.',
     options: [
-      { text: 'LET IT GO', effects: {} },
       { text: 'MOVE FORWARD', effects: {} },
     ],
   },
@@ -4631,6 +4629,7 @@ export const eventRequests: Request[] = [
     title: 'Sails on the River',
     text: 'Black-flagged longboats have been spotted on the river. A pirate fleet demands tribute or threatens to burn your docks and seize your coin.',
     canTriggerRandomly: true,
+    chainRestartCooldownTicks: 80,
     combat: {
       enemyForces: 10,
       prepDelayMinTicks: 3,
