@@ -4629,14 +4629,14 @@ export const eventRequests: Request[] = [
     chainId: 'river_pirates',
     chainRole: 'start',
     title: 'Sails on the River',
-    text: 'Black-flagged longboats have been spotted on the river. A pirate fleet demands tribute or threatens to burn your docks and seize your grain stores.',
+    text: 'Black-flagged longboats have been spotted on the river. A pirate fleet demands tribute or threatens to burn your docks and seize your coin.',
     canTriggerRandomly: true,
     combat: {
-      enemyForces: 16,
-      prepDelayMinTicks: 0,
-      prepDelayMaxTicks: 2,
-      onWin: { gold: 20, authority: 2, satisfaction: 2 },
-      onLose: { gold: -30, farmers: -6, authority: -3, satisfaction: -4 },
+      enemyForces: 10,
+      prepDelayMinTicks: 3,
+      prepDelayMaxTicks: 6,
+      onWin: { authority: 2,},
+      onLose: { authority: -2,},
       followUpsOnWin: [
         {
           triggerOnOptionIndex: 0,
@@ -4658,10 +4658,10 @@ export const eventRequests: Request[] = [
       { text: 'FIGHT', effects: {} },
       {
         text: 'PAY TRIBUTE',
-        effects: { gold: -18, authority: -1 },
+        effects: { gold: -15, authority: -1 },
         authorityCheck: {
           minCommit: 0,
-          maxCommit: 10,
+          maxCommit: 15,
           followUpBoosts: [
             { targetRequestId: 'CHAIN_RIVER_PIRATES_TRIBUTE_LEAVES', boostType: 'linear', boostValue: 4 },
           ],
@@ -4671,8 +4671,8 @@ export const eventRequests: Request[] = [
     followUps: [
       {
         triggerOnOptionIndex: 1,
-        delayMinTicks: 1,
-        delayMaxTicks: 2,
+        delayMinTicks: 2,
+        delayMaxTicks: 3,
         candidates: [
           { requestId: 'CHAIN_RIVER_PIRATES_TRIBUTE_LEAVES', weight: 1 },
           { requestId: 'CHAIN_RIVER_PIRATES_TRIBUTE_RETURNS', weight: 2 },
@@ -4688,8 +4688,8 @@ export const eventRequests: Request[] = [
     title: 'River Cleared',
     text: 'The pirate fleet burns on the riverbank. Your soldiers recover stolen goods from the wreckage. Word of the victory spreads downstream.',
     options: [
-      { text: 'SALVAGE WHAT WE CAN', effects: {} },
-      { text: 'CELEBRATE', effects: {} },
+      { text: 'SALVAGE WHAT WE CAN', effects: {gold: 15,} },
+      { text: 'CELEBRATE', effects: {satisfaction: 3,} },
     ],
     followUps: [
       {
@@ -4706,10 +4706,10 @@ export const eventRequests: Request[] = [
     chainRole: 'member',
     canTriggerRandomly: false,
     title: 'Docks in Flames',
-    text: 'The pirates overwhelmed your defenses. Smoke rises from the docks and grain stores lie empty. The villagers stare in stunned silence at the devastation.',
+    text: 'The pirates overwhelmed your defenses and march towards your treasury. Your villagers try to flee.',
     options: [
-      { text: 'BEGIN REPAIRS', effects: {} },
-      { text: 'MOURN THE LOSSES', effects: {} },
+      { text: 'PEASANTS, DEFEND MY TREASURY!', effects: {farmers: -10, satisfaction: -3,} },
+      { text: 'RUN FOR YOUR LIVES!', effects: {gold: -20, satisfaction: 2,} },
     ],
     followUps: [
       {
@@ -4728,8 +4728,8 @@ export const eventRequests: Request[] = [
     title: 'Pirates Withdraw',
     text: 'The pirate captain counts the tribute and nods. "Wise choice." The black sails disappear downriver. Perhaps your show of authority convinced them to seek easier prey.',
     options: [
-      { text: 'GOOD RIDDANCE', effects: { satisfaction: 1 } },
-      { text: 'WATCH THEM GO', effects: {} },
+      { text: 'BRAG ABOUT IT', effects: { satisfaction: -2, authority: 1,} },
+      { text: 'SECURE THE RIVER', effects: {gold: -10, landforces: 3} },
     ],
     followUps: [
       {
@@ -4746,14 +4746,20 @@ export const eventRequests: Request[] = [
     chainRole: 'member',
     canTriggerRandomly: false,
     title: 'They Want More',
-    text: 'The pirates took the tribute — and came back for more. "You paid once, you will pay again." The crew jeers from the deck as their captain extends an open palm.',
+    text: 'The pirates took the tribute — and came back for more. "give us your coin or we take your wives!" The crew jeers from the deck as their captain extends an open palm.',
     options: [
-      { text: 'CURSE THEM', effects: { authority: -2, satisfaction: -2 } },
-      { text: 'ENDURE', effects: {} },
+      { text: 'GIVE COIN', effects: { gold: -10 } },
+      { text: 'GIVE UP WIVES', effects: {farmers: -5, satisfaction: -5,} },
     ],
     followUps: [
       {
         triggerOnOptionIndex: 0,
+        delayMinTicks: 1,
+        delayMaxTicks: 1,
+        candidates: [{ requestId: 'CHAIN_RIVER_PIRATES_END', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
         delayMinTicks: 1,
         delayMaxTicks: 1,
         candidates: [{ requestId: 'CHAIN_RIVER_PIRATES_END', weight: 1 }],
@@ -4765,12 +4771,12 @@ export const eventRequests: Request[] = [
     chainId: 'river_pirates',
     chainRole: 'end',
     canTriggerRandomly: false,
-    chainRestartCooldownTicks: 120,
+    chainRestartCooldownTicks: 100,
     title: 'The River Quiets',
-    text: 'Whether by blade or coin, the river pirate threat has passed. Fishermen cautiously return to their boats, and trade barges resume their routes.',
+    text: 'The river pirate threat has passed. Fishermen cautiously return to their boats, and trade barges resume their routes.',
     options: [
-      { text: 'REBUILD', effects: {} },
-      { text: 'PATROL THE RIVER', effects: {} },
+      { text: 'CURSE PIRATES', effects: {satisfaction: 2, authority: -1} },
+      { text: 'SCOLD YOUR SOLDIERS', effects: {satisfaction: -2, authority: 1} },
     ],
   },
 ];
