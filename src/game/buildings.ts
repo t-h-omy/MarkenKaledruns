@@ -61,12 +61,12 @@ export const BUILDING_DEFINITIONS: BuildingDefinition[] = [
     id: 'farmstead',
     displayName: 'Farmstead',
     icon: '\u{1F3E0}',
-    description: 'A sturdy homestead that houses up to 20 farmers. Without enough farmsteads, excess population resorts to makeshift camps.',
+    description: 'A sturdy homestead that houses farmers. Without enough farmsteads, excess population resorts to makeshift camps.',
     unlockThreshold: 0,
-    cost: 15,
+    cost: 10,
     populationPerBuilding: 20,
     benefitId: 'farmstead',
-    benefitDescription: 'Houses 20 farmers',
+    benefitDescription: 'Houses farmers',
     reminderRequestId: 'REMINDER_FARMSTEAD',
     reminderDelayTicks: 8,
     sortOrder: 0,
@@ -180,13 +180,13 @@ export function getBuildingDef(buildingId: string): BuildingDefinition | undefin
 
 /**
  * Create initial building tracking state for all buildings.
- * Farmstead starts with 1 built (to match starting farmer count of 20).
+ * Farmstead starts with 2 built (to match starting farmer count of 20).
  */
 export function createInitialBuildingTracking(): Record<string, BuildingTracking> {
   const tracking: Record<string, BuildingTracking> = {};
   for (const def of BUILDING_DEFINITIONS) {
     tracking[def.id] = {
-      buildingCount: def.id === 'farmstead' ? 1 : 0,
+      buildingCount: def.id === 'farmstead' ? 2 : 0,
       reminderScheduled: false,
       reminderCooldownUntil: 0,
     };
