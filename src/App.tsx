@@ -376,6 +376,12 @@ function App() {
     }
   }
 
+  // Calculate count of buildings needing attention
+  const buildingsNeedingAttention = BUILDING_DEFINITIONS.filter(def => {
+    const status = getBuildingStatus(def)
+    return status === 'needed' || status === 'no-gold'
+  }).length
+
   // Calculate overcrowding info
   const farmsteadCount = gameState.buildingTracking['farmstead']?.buildingCount ?? 0
   const farmsteadCapacity = farmsteadCount * 20
@@ -700,10 +706,13 @@ function App() {
               Log
             </button>
             <button
-              className="toggle-btn"
+              className={`toggle-btn${buildingsNeedingAttention > 0 ? ' toggle-btn-notify' : ''}`}
               onClick={() => openConstructionScreen()}
             >
               🏗️ Construction
+              {buildingsNeedingAttention > 0 && (
+                <span className="notification-badge">{buildingsNeedingAttention}</span>
+              )}
             </button>
           </div>
 
