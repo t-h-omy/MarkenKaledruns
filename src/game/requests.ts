@@ -1917,6 +1917,8 @@ export const eventRequests: Request[] = [
           failureFeedbackRequestId: 'INFO_LOW_PLEA_FAILURE',
           refundOnSuccessPercent: 100,
           extraLossOnFailure: 5,
+          minSuccessChance: 0.30,
+          maxSuccessChance: 0.85,
         },
       },
       {
@@ -1952,6 +1954,8 @@ export const eventRequests: Request[] = [
           failureFeedbackRequestId: 'INFO_LOW_GUARD_FAILURE',
           refundOnSuccessPercent: 90,
           extraLossOnFailure: 5,
+          minSuccessChance: 0.25,
+          maxSuccessChance: 0.80,
         },
       },
       {
@@ -1989,6 +1993,8 @@ export const eventRequests: Request[] = [
           failureFeedbackRequestId: 'INFO_LOW_RESPECT_FAILURE',
           refundOnSuccessPercent: 100,
           extraLossOnFailure: 6,
+          minSuccessChance: 0.30,
+          maxSuccessChance: 0.85,
         },
       },
       {
@@ -2027,6 +2033,8 @@ export const eventRequests: Request[] = [
           failureFeedbackRequestId: 'INFO_LOW_DEBT_FAILURE',
           refundOnSuccessPercent: 100,
           extraLossOnFailure: 7,
+          minSuccessChance: 0.25,
+          maxSuccessChance: 0.80,
         },
       },
       {
@@ -2319,6 +2327,8 @@ export const eventRequests: Request[] = [
           failureFeedbackRequestId: 'INFO_TRADE_FAILURE',
           refundOnSuccessPercent: 100,
           extraLossOnFailure: 6,
+          minSuccessChance: 0.30,
+          maxSuccessChance: 0.85,
         },
       },
       {
@@ -2356,6 +2366,8 @@ export const eventRequests: Request[] = [
           failureFeedbackRequestId: 'INFO_RIOT_FAILURE',
           refundOnSuccessPercent: 80,
           extraLossOnFailure: 10,
+          minSuccessChance: 0.20,
+          maxSuccessChance: 0.75,
         },
       },
       {
@@ -2393,6 +2405,8 @@ export const eventRequests: Request[] = [
           failureFeedbackRequestId: 'INFO_JUSTICE_FAILURE',
           refundOnSuccessPercent: 100,
           extraLossOnFailure: 8,
+          minSuccessChance: 0.30,
+          maxSuccessChance: 0.85,
         },
       },
       {
@@ -2429,6 +2443,8 @@ export const eventRequests: Request[] = [
           failureFeedbackRequestId: 'INFO_REFORM_FAILURE',
           refundOnSuccessPercent: 90,
           extraLossOnFailure: 10,
+          minSuccessChance: 0.20,
+          maxSuccessChance: 0.80,
         },
       },
       {
@@ -2465,6 +2481,8 @@ export const eventRequests: Request[] = [
           failureFeedbackRequestId: 'INFO_BANDIT_FAILURE',
           refundOnSuccessPercent: 100,
           extraLossOnFailure: 12,
+          minSuccessChance: 0.15,
+          maxSuccessChance: 0.75,
         },
       },
       {
@@ -2501,6 +2519,8 @@ export const eventRequests: Request[] = [
           failureFeedbackRequestId: 'INFO_TAX_FAILURE',
           refundOnSuccessPercent: 100,
           extraLossOnFailure: 7,
+          minSuccessChance: 0.30,
+          maxSuccessChance: 0.85,
         },
       },
       {
@@ -2537,6 +2557,8 @@ export const eventRequests: Request[] = [
           failureFeedbackRequestId: 'INFO_RELIGIOUS_FAILURE',
           refundOnSuccessPercent: 100,
           extraLossOnFailure: 9,
+          minSuccessChance: 0.20,
+          maxSuccessChance: 0.80,
         },
       },
       {
@@ -2574,6 +2596,8 @@ export const eventRequests: Request[] = [
           failureFeedbackRequestId: 'INFO_BORDER_FAILURE',
           refundOnSuccessPercent: 90,
           extraLossOnFailure: 10,
+          minSuccessChance: 0.15,
+          maxSuccessChance: 0.75,
         },
       },
       {
@@ -2612,6 +2636,8 @@ export const eventRequests: Request[] = [
           failureFeedbackRequestId: 'INFO_CORRUPT_FAILURE',
           refundOnSuccessPercent: 100,
           extraLossOnFailure: 10,
+          minSuccessChance: 0.25,
+          maxSuccessChance: 0.80,
         },
       },
       {
@@ -2651,6 +2677,8 @@ export const eventRequests: Request[] = [
           failureFeedbackRequestId: 'INFO_SUCCESSION_FAILURE',
           refundOnSuccessPercent: 80,
           extraLossOnFailure: 12,
+          minSuccessChance: 0.10,
+          maxSuccessChance: 0.70,
         },
       },
       {
@@ -2686,6 +2714,8 @@ export const eventRequests: Request[] = [
           failureFeedbackRequestId: 'INFO_GUILD_FAILURE',
           refundOnSuccessPercent: 100,
           extraLossOnFailure: 8,
+          minSuccessChance: 0.30,
+          maxSuccessChance: 0.85,
         },
       },
       {
@@ -2723,6 +2753,8 @@ export const eventRequests: Request[] = [
           failureFeedbackRequestId: 'INFO_ENVOY_FAILURE',
           refundOnSuccessPercent: 100,
           extraLossOnFailure: 6,
+          minSuccessChance: 0.20,
+          maxSuccessChance: 0.80,
         },
       },
       {
@@ -2761,6 +2793,8 @@ export const eventRequests: Request[] = [
           failureFeedbackRequestId: 'INFO_LAND_FAILURE',
           refundOnSuccessPercent: 85,
           extraLossOnFailure: 10,
+          minSuccessChance: 0.15,
+          maxSuccessChance: 0.75,
         },
       },
       {
@@ -2798,6 +2832,8 @@ export const eventRequests: Request[] = [
           failureFeedbackRequestId: 'INFO_TRADITION_FAILURE',
           refundOnSuccessPercent: 100,
           extraLossOnFailure: 10,
+          minSuccessChance: 0.20,
+          maxSuccessChance: 0.80,
         },
       },
       {
@@ -2834,6 +2870,8 @@ export const eventRequests: Request[] = [
           failureFeedbackRequestId: 'INFO_PIRATE_FAILURE',
           refundOnSuccessPercent: 100,
           extraLossOnFailure: 8,
+          minSuccessChance: 0.25,
+          maxSuccessChance: 0.80,
         },
       },
       {
@@ -2871,6 +2909,8 @@ export const eventRequests: Request[] = [
           failureFeedbackRequestId: 'INFO_MARRIAGE_FAILURE',
           refundOnSuccessPercent: 90,
           extraLossOnFailure: 10,
+          minSuccessChance: 0.15,
+          maxSuccessChance: 0.75,
         },
       },
       {

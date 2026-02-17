@@ -923,10 +923,12 @@ function resolveAuthorityCheck(check: PendingAuthorityCheck): AuthorityCheckResu
   }
   
   // Probabilistic success determination based on commitment ratio
-  // Base chance at 0 commitment, scaling up to max at maxCommit (or maxPossibleCommit if defined)
-  // This ensures there is always a chance (even at 0 commit) and always a risk (even at max commit)
-  const MIN_SUCCESS_CHANCE = config.minSuccessChance ?? 0.30;
-  const MAX_SUCCESS_CHANCE = config.maxSuccessChance ?? 0.85;
+  // Each authority check must define its own min/max success chance
+  if (config.minSuccessChance === undefined || config.maxSuccessChance === undefined) {
+    console.error('Authority check missing required minSuccessChance/maxSuccessChance:', check.originRequestId);
+  }
+  const MIN_SUCCESS_CHANCE = config.minSuccessChance ?? 0;
+  const MAX_SUCCESS_CHANCE = config.maxSuccessChance ?? 1;
   const effectiveMaxCommit = config.maxPossibleCommit ?? config.maxCommit;
   const commitRatio = effectiveMaxCommit > 0 ? committed / effectiveMaxCommit : 0;
   const successChance = MIN_SUCCESS_CHANCE + commitRatio * (MAX_SUCCESS_CHANCE - MIN_SUCCESS_CHANCE);
