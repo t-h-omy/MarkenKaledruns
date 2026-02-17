@@ -4550,7 +4550,7 @@ export const eventRequests: Request[] = [
     chainRole: 'member',
     canTriggerRandomly: false,
     title: 'Order Restored',
-    text: 'The crowd falls silent at first. Then a loud voice rings out: “All hail!” It isn’t long before the whole square erupts in applause. Whether out of fear or awe, you cannot say.'
+    text: 'The crowd falls silent at first. Then a loud voice rings out: “All hail!” It isn’t long before the whole square erupts in applause. Whether out of fear or awe, you cannot say.',
     options: [
       { text: 'AS IT SHOULD BE', effects: { authority: 1, } },
       { text: 'DEAL OUT COINS', effects: {gold: -5,} },
@@ -4728,7 +4728,7 @@ export const eventRequests: Request[] = [
     text: 'The pirate captain counts the tribute and nods. "Wise choice." The black sails disappear downriver. Perhaps your show of authority convinced them to seek easier prey.',
     options: [
       { text: 'BRAG ABOUT IT', effects: { satisfaction: -2, authority: 1,} },
-      { text: 'SECURE THE RIVER', effects: {gold: -10, landforces: 3} },
+      { text: 'SECURE THE RIVER', effects: {gold: -10, landForces: 3} },
     ],
     followUps: [
       {
