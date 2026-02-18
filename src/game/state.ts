@@ -931,8 +931,8 @@ function resolveAuthorityCheck(check: PendingAuthorityCheck): AuthorityCheckResu
     ].filter(Boolean).join(', ');
     console.error(`Authority check missing ${missing}:`, check.originRequestId);
   }
-  const MIN_SUCCESS_CHANCE = config.minSuccessChance ?? 0.5;
-  const MAX_SUCCESS_CHANCE = config.maxSuccessChance ?? 0.5;
+  const MIN_SUCCESS_CHANCE = (config.minSuccessChance ?? 50) / 100;
+  const MAX_SUCCESS_CHANCE = (config.maxSuccessChance ?? 50) / 100;
   const commitRatio = config.maxCommit > 0 ? committed / config.maxCommit : 0;
   const successChance = MIN_SUCCESS_CHANCE + commitRatio * (MAX_SUCCESS_CHANCE - MIN_SUCCESS_CHANCE);
   const success = Math.random() < successChance;
