@@ -371,7 +371,7 @@ The game uses React's `useReducer` with an immutable update pattern (spread oper
 
 ### Request Types
 
-The game has **~233 request definitions** split into three arrays:
+The game has **~233 request definitions** (approximate — update when adding/removing requests) split into three arrays:
 
 | Array | Count | Purpose |
 |-------|-------|---------|
@@ -670,7 +670,7 @@ In development mode (`import.meta.env.DEV`), `validateRequests()` runs on startu
 
 ### GitHub Pages (via GitHub Actions)
 
-**Workflow**: `.github/workflows/pages.yml.disabled` (currently disabled)
+**Workflow**: `.github/workflows/pages.yml.disabled` (disabled as of Feb 2026 — verify file status if deployment is needed)
 
 When enabled:
 - **Trigger**: Push to any branch
