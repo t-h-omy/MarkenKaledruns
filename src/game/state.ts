@@ -925,7 +925,11 @@ function resolveAuthorityCheck(check: PendingAuthorityCheck): AuthorityCheckResu
   // Probabilistic success determination based on commitment ratio
   // Each authority check should define its own min/max success chance
   if (config.minSuccessChance === undefined || config.maxSuccessChance === undefined) {
-    console.error('Authority check missing required minSuccessChance/maxSuccessChance:', check.originRequestId);
+    const missing = [
+      config.minSuccessChance === undefined ? 'minSuccessChance' : '',
+      config.maxSuccessChance === undefined ? 'maxSuccessChance' : '',
+    ].filter(Boolean).join(', ');
+    console.error(`Authority check missing ${missing}:`, check.originRequestId);
   }
   const MIN_SUCCESS_CHANCE = config.minSuccessChance ?? 0.5;
   const MAX_SUCCESS_CHANCE = config.maxSuccessChance ?? 0.5;

@@ -169,9 +169,9 @@ export interface AuthorityCheck {
   extraLossOnFailure?: number;
   /** Follow-up probability boosts (influences future event probabilities) */
   followUpBoosts?: AuthorityFollowUpBoost[];
-  /** Minimum success chance (0-1) for authority checks with direct win/loss effects (default: 0.30) */
+  /** Minimum success chance (0-1) for authority checks with direct win/loss effects. Required when onSuccess/onFailure are defined. Falls back to 0.5 if missing. */
   minSuccessChance?: number;
-  /** Maximum success chance (0-1) for authority checks with direct win/loss effects (default: 0.85) */
+  /** Maximum success chance (0-1) for authority checks with direct win/loss effects. Required when onSuccess/onFailure are defined. Falls back to 0.5 if missing. */
   maxSuccessChance?: number;
 }
 
