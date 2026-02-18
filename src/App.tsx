@@ -749,9 +749,9 @@ function App() {
                 const hasImmediateEffects = !!(config.onSuccess || config.onFailure)
                 const hasFollowUpBoosts = !!(config.followUpBoosts && config.followUpBoosts.length > 0)
                 
-                // Probabilistic success chance: 30% base at 0 commit, up to 85% at max commit
-                const MIN_SUCCESS_CHANCE = 30
-                const MAX_SUCCESS_CHANCE = 85
+                // Probabilistic success chance: each authority check defines its own min/max
+                const MIN_SUCCESS_CHANCE = Math.floor((config.minSuccessChance ?? 0.5) * 100)
+                const MAX_SUCCESS_CHANCE = Math.floor((config.maxSuccessChance ?? 0.5) * 100)
                 const commitRatio = config.maxCommit > 0 ? currentCommit / config.maxCommit : 0
                 const successChance = Math.floor(MIN_SUCCESS_CHANCE + commitRatio * (MAX_SUCCESS_CHANCE - MIN_SUCCESS_CHANCE))
                 
