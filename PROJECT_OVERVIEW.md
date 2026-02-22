@@ -23,6 +23,7 @@
 15. [Development Commands](#15-development-commands)
 16. [Deployment](#16-deployment)
 17. [Existing Documentation Index](#17-existing-documentation-index)
+18. [Fire System V3](#18-fire-system-v3)
 
 ---
 
@@ -112,18 +113,18 @@ MarkenKaledruns/
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| `src/game/requests.ts` | ~5300 | All event/request definitions |
-| `src/game/state.ts` | ~2100 | Reducer, game loop, all game logic |
-| `src/App.tsx` | ~960 | Main UI component |
-| `src/App.css` | ~1525 | All main game styles |
+| `src/game/requests.ts` | ~5380 | All event/request definitions (incl. 40 fire chain requests) |
+| `src/game/state.ts` | ~2670 | Reducer, game loop, all game logic (incl. fire system engine) |
+| `src/App.tsx` | ~990 | Main UI component (incl. fire chain tag/context) |
+| `src/App.css` | ~1550 | All main game styles (incl. fire chain info styles) |
 | `src/game/picker.ts` | ~560 | Request selection & RNG |
-| `src/BuildingCard.css` | ~385 | Building card styles |
+| `src/BuildingCard.css` | ~455 | Building card styles (incl. fire state action styles) |
+| `src/game/models.ts` | ~330 | Core type definitions (incl. fire types) |
 | `src/LogScreen.css` | ~275 | Log screen styles |
-| `src/game/models.ts` | ~240 | Core type definitions |
 | `src/BuildMultipleModal.css` | ~230 | Modal styles |
-| `src/game/buildings.ts` | ~195 | Building system |
-| `src/ConstructionScreen.tsx` | ~190 | Construction UI |
-| `src/BuildingCard.tsx` | ~185 | Building card UI |
+| `src/BuildingCard.tsx` | ~230 | Building card UI (incl. state action buttons) |
+| `src/game/buildings.ts` | ~220 | Building system (incl. effective count helpers) |
+| `src/ConstructionScreen.tsx` | ~200 | Construction UI |
 | `src/ConstructionScreen.css` | ~145 | Construction styles |
 | `src/LogScreen.tsx` | ~135 | Log viewer UI |
 | `src/BuildMultipleModal.tsx` | ~125 | Bulk build modal UI |
@@ -159,10 +160,10 @@ main.tsx (entry point)
 | File | Key Exports |
 |------|-------------|
 | `models.ts` | `Stats`, `Effect`, `Request`, `Option`, `AuthorityCheck`, `AuthorityCheckResult`, `CombatSpec`, `FollowUp`, `WeightedCandidate`, `AuthorityFollowUpBoost` |
-| `state.ts` | `GameState`, `GameAction`, `gameReducer`, `initializeGame`, `getCurrentRequest`, `initialState`, `AppliedChange`, `LogEntry`, `ScheduledEvent`, `ScheduledCombat`, `ActiveCombat`, `PendingAuthorityCheck`, `ModifierHook`, `applyOptionWithModifiers`, `hasUnlock`, `meetsRequirements`, `syncBuildingUnlockTokens` |
-| `requests.ts` | `infoRequests`, `eventRequests`, `authorityInfoRequests`, `validateRequests` |
+| `state.ts` | `GameState`, `GameAction`, `gameReducer`, `initializeGame`, `getCurrentRequest`, `initialState`, `AppliedChange`, `LogEntry`, `ScheduledEvent`, `ScheduledCombat`, `ActiveCombat`, `PendingAuthorityCheck`, `ModifierHook`, `applyOptionWithModifiers`, `hasUnlock`, `meetsRequirements`, `syncBuildingUnlockTokens`, `FIRE_SYSTEM_CONFIG` |
+| `requests.ts` | `infoRequests`, `eventRequests`, `authorityInfoRequests`, `fireChainRequests`, `validateRequests` |
 | `picker.ts` | `pickNextRequest`, `selectWeightedCandidate`, `seedRandom`, `resetRandom`, `getRandomValue` |
-| `buildings.ts` | `BUILDING_DEFINITIONS`, `BuildingDefinition`, `BuildingTracking`, `isBuildingActive`, `calculateRequiredBuildings`, `getBuildingDef`, `createInitialBuildingTracking` |
+| `buildings.ts` | `BUILDING_DEFINITIONS`, `BuildingDefinition`, `BuildingTracking`, `isBuildingActive`, `calculateRequiredBuildings`, `getBuildingDef`, `createInitialBuildingTracking`, `getEffectiveBuildingCount`, `hasAnyBuildingState` |
 | `modifiers.ts` | `firewoodModifier`, `wellModifier`, `needModifiers` |
 
 ---
@@ -182,6 +183,7 @@ main.tsx (entry point)
    ├─ Handle combat commitment (if request has combat spec)
    ├─ Process follow-up events (schedule for future ticks)
    ├─ Update chain status (activate/complete chains)
+   ├─ Fire END cleanup (if FIRE_SX_END: remove initialOnFireApplied, deactivate slot)
    ├─ Increment request trigger counts
    ├─ IF request.advancesTick !== false:
    │   ├─ Apply baseline income:
@@ -189,6 +191,9 @@ main.tsx (entry point)
    │   │   └─ Farmers: floor((health - 25) / 20)
    │   ├─ Apply bakery bonus (10% chance +1 farmer if bakery active)
    │   ├─ Apply overcrowding penalties (if farmers > building capacity)
+   │   ├─ Apply fire spread & destroy (seeded RNG per burning unit)
+   │   ├─ Attempt fire chain start (linear probability + slot activation)
+   │   ├─ Convert fire pending info queue → scheduled tickless events
    │   ├─ Update building requirements & schedule reminders
    │   ├─ Sync building unlock tokens
    │   ├─ Resolve pending authority checks (from previous tick)
@@ -199,18 +204,24 @@ main.tsx (entry point)
    └─ Pick next request
 
 3. BUILDING (action: BUILD_BUILDING)
+   ├─ Validate no active building state (build lock)
    ├─ Deduct gold cost
    ├─ Increment building count
    ├─ Set unlock token (if first build)
    ├─ Schedule info request (if first build and defined)
    └─ Log the construction
 
-4. COMBAT (synthetic requests handled in reducer)
+4. FIRE ACTIONS (reducer-only)
+   ├─ EXTINGUISH_ONE → validate onFireCount > 0, apply cost, decrement
+   │   └─ If global onFireCount reaches 0: abort all chains + queue info
+   └─ REPAIR_ONE → validate destroyedCount > 0, apply 75% build cost, decrement
+
+5. COMBAT (synthetic requests handled in reducer)
    ├─ COMBAT_START → activate combat from scheduled combats
    ├─ COMBAT_ROUND → roll dice, apply casualties
    └─ COMBAT_REPORT → display results (tickless)
 
-5. END CONDITIONS
+6. END CONDITIONS
    └─ Gold reaches -50 → BANKRUPTCY (gameOver = true)
 ```
 
@@ -268,13 +279,13 @@ When farmers exceed farmstead capacity (each farmstead houses 20 farmers), overc
 
 Crises trigger automatically when thresholds are crossed:
 
-| Crisis | Trigger Condition | Request ID |
-|--------|------------------|------------|
-| Fire Danger | `fireRisk > 70` | `EVT_CRISIS_FIRE` |
-| Disease Wave | `health < 30` | `EVT_CRISIS_DISEASE` |
-| Unrest | `satisfaction < 30` | `EVT_CRISIS_UNREST` |
+| Crisis | Trigger Condition | Request ID | Status |
+|--------|------------------|------------|--------|
+| ~~Fire Danger~~ | ~~`fireRisk > 70`~~ | ~~`EVT_CRISIS_FIRE`~~ | **Replaced by Fire System V3** |
+| Disease Wave | `health < 30` | `EVT_CRISIS_DISEASE` | Active |
+| Unrest | `satisfaction < 30` | `EVT_CRISIS_UNREST` | Active |
 
-Priority order: Fire > Disease > Unrest.
+Priority order: Disease > Unrest. Fire crises are now handled by the slot-based Fire System V3 (see §18).
 
 ### 6.5 Game Over
 
@@ -310,7 +321,7 @@ main.tsx
 |-----------|------|-------------|
 | `App` | `App.tsx` | Main game component. Manages all game state via `useReducer`. Renders stats, requests, options, combat UI, modals. Contains animation logic for stat changes and flying deltas. |
 | `ConstructionScreen` | `ConstructionScreen.tsx` | Full-screen overlay showing all buildings as a grid. Opened via a button in the main UI. Shows building states (locked/unlocked/built/deficit). |
-| `BuildingCard` | `BuildingCard.tsx` | Individual card displaying one building type: icon, name, description, cost, progress (built/required). Supports single build and opening bulk-build modal. |
+| `BuildingCard` | `BuildingCard.tsx` | Individual card displaying one building type: icon, name, description, cost, progress (built/required). When building has no active state: shows build buttons. When building has active state (fire/destroyed/strike): hides build controls and shows state action button (extinguish/repair) with state counts and effective count display. |
 | `BuildMultipleModal` | `BuildMultipleModal.tsx` | Modal dialog for building multiple instances at once. Shows cost calculation and gold validation. |
 | `LogScreen` | `LogScreen.tsx` | Full-screen overlay listing all past decisions in reverse chronological order. Shows tick, source, option chosen, and stat deltas. Closeable with Escape key. |
 
@@ -351,6 +362,7 @@ interface GameState {
   scheduledCombats: ScheduledCombat[];   // Future battles
   activeCombat?: ActiveCombat;           // In-progress battle
   pendingAuthorityChecks: PendingAuthorityCheck[];  // Authority checks resolving next tick
+  fire: FireState;                       // Fire System V3 runtime state
 }
 ```
 
@@ -360,6 +372,8 @@ interface GameState {
 |--------|--------|-------------|
 | `CHOOSE_OPTION` | `optionIndex`, `combatCommit?`, `authorityCommit?` | Player selects an event option |
 | `BUILD_BUILDING` | `buildingId` | Player constructs a building |
+| `EXTINGUISH_ONE` | `buildingId` | Extinguish one burning building unit (costs gold + satisfaction) |
+| `REPAIR_ONE` | `buildingId` | Repair one destroyed building unit (costs 75% of build cost) |
 
 ### State Update Pattern
 
@@ -371,13 +385,14 @@ The game uses React's `useReducer` with an immutable update pattern (spread oper
 
 ### Request Types
 
-The game has **~233 request definitions** (approximate — update when adding/removing requests) split into three arrays:
+The game has **~273 request definitions** (approximate — update when adding/removing requests) split into four arrays:
 
 | Array | Count | Purpose |
 |-------|-------|---------|
 | `infoRequests` | ~11 | Tickless information/tutorial screens (building unlocks, reminders) |
 | `eventRequests` | ~190+ | Main gameplay events, chains, authority events |
 | `authorityInfoRequests` | ~32 | Authority check feedback (success/failure info screens) |
+| `fireChainRequests` | 40 | Fire System V3 slot chain requests (10 slots × 4 per slot) |
 
 ### Request Interface
 
@@ -425,6 +440,7 @@ interface Request {
 | `ARKANAT_INSPECTOR` | `CHAIN_ARKANAT_INSPECTOR_START` | ~6 events | Inspector encounter chain |
 | `EGO_INSULT` | `CHAIN_EGO_INSULT_START` | ~6 events | Authority ego test chain |
 | `RIVER_PIRATES` | `CHAIN_RIVER_PIRATES_START` | ~6 events | River pirates chain |
+| `CHAIN_FIRE_SLOT_1..10` | `FIRE_S{n}_START` | 4 per slot (×10 = 40) | Fire System V3 chain slots (see §18) |
 
 **Authority Events:**
 - Low authority (0–33): `EVT_LOW_AUTHORITY`, `EVT_LOW_GUARD_INSUBORDINATION`, `EVT_LOW_SABOTAGE`, `EVT_LOW_PETITION_DENIED`, `EVT_LOW_DEBT_COLLECTOR`, `EVT_LOW_COUNCIL_REVOLT`, `EVT_LOW_BANDITS_MOCK`, `EVT_LOW_FARMERS_LEAVE`, `EVT_LOW_MERCHANT_EXTORTION`, `EVT_LOW_AUTHORITY_CRISIS`
@@ -439,7 +455,7 @@ Priority order:
 1. **Active Combat** → return synthetic combat round request
 2. **Scheduled Events** (targetTick ≤ current tick, FIFO order, info priority first)
 3. **Due Combats** → return synthetic combat start request (crisis still takes priority over combat start)
-4. **Crisis Events** (Fire Risk > 70 → Disease → Unrest)
+4. **Crisis Events** (Disease → Unrest; fire crises replaced by Fire System V3 chain slots)
 5. **Random Event** from eligible pool (excludes: last request, crisis IDs, `canTriggerRandomly: false`, maxTriggers reached, locked chains, unmet requirements, authority range mismatch)
 6. **Fallback**: any non-crisis event → any event → error
 
@@ -478,12 +494,17 @@ Each building has persistent runtime tracking:
 ```typescript
 interface BuildingTracking {
   buildingCount: number;        // Built count (never decreases)
+  onFireCount: number;          // Currently burning units (Fire System V3)
+  destroyedCount: number;       // Destroyed units (Fire System V3)
+  onStrikeCount: number;        // Units on strike (reserved for future use)
   unlockedAtTick?: number;      // When first unlocked
   lastRequirementTick?: number; // When last required
   reminderScheduled: boolean;   // Reminder scheduling flag
   reminderCooldownUntil: number; // Earliest next reminder tick
 }
 ```
+
+**Effective Count**: `effectiveCount = buildingCount - onFireCount - destroyedCount - onStrikeCount`. Only effective buildings count toward requirements and capacity. Buildings with any active state cannot have more built until all states are cleared (**build lock**).
 
 ---
 
@@ -713,4 +734,140 @@ The app registers a service worker via `vite-plugin-pwa`:
 | `TESTING.md` | Testing approach documentation |
 | `VERIFICATION.md` | Verification procedures |
 | `designs/CONSTRUCTION_SCREEN_DESIGN.md` | Construction screen UI/UX design spec |
+| `designs/fire-design-v3.md` | Fire System V3 design specification |
 | `designs/requests_updated.ts` | Staging file for candidate request updates |
+
+---
+
+## 18. Fire System V3
+
+### Overview
+
+Fire System V3 replaces the old threshold-based `EVT_CRISIS_FIRE` (fireRisk > 70 trigger) with a deterministic, slot-based fire system. It uses 10 fixed chain slots, count-based building states, seeded RNG, and communicates all state changes through synthetic tickless info requests (no silent damage).
+
+**Design spec**: `designs/fire-design-v3.md`
+
+### Architecture
+
+All fire logic runs in the reducer pipeline (`src/game/state.ts`) using the existing seeded RNG (`src/game/picker.ts`). No external state or side effects.
+
+### Fire State
+
+```typescript
+interface FireState {
+  slots: FireChainSlotState[];       // Exactly 10 fixed slots (slotIndex 1..10)
+  pendingInfoQueue: FireInfoMessage[]; // Queued info messages for next tick
+}
+
+type FireTier = 'minor' | 'major' | 'catastrophic';
+
+interface FireChainSlotState {
+  slotIndex: number;                   // Fixed 1..10
+  active: boolean;                     // Is this slot currently running a fire chain?
+  tier?: FireTier;                     // Fire severity tier
+  targetBuildingId?: string;           // Which building type is affected
+  startedTick?: number;                // When the chain started
+  initialOnFireApplied?: number;       // How many buildings were initially set on fire
+  abortedByManualExtinguish?: boolean; // Aborted by player extinguishing all fires
+}
+
+interface FireInfoMessage {
+  type: 'SPREAD_OR_DESTROY' | 'ALL_EXTINGUISHED_ABORT';
+  newOnFireByBuildingId?: Record<string, number>;
+  newDestroyedByBuildingId?: Record<string, number>;
+}
+```
+
+### Fire System Config (`FIRE_SYSTEM_CONFIG`)
+
+| Parameter | Value | Description |
+|-----------|-------|-------------|
+| `baseOffset` | -10 | Offset for linear chance calculation |
+| `factor` | 0.5 | Multiplier for chance calculation |
+| `chanceMin` | 0 | Minimum fire start chance (%) |
+| `chanceMax` | 40 | Maximum fire start chance (%) |
+| `spreadChancePerBurningBuilding` | 0.10 | 10% spread chance per burning unit per tick |
+| `destroyChancePerBurningBuilding` | 0.08 | 8% destroy chance per burning unit per tick |
+| `extinguishCost` | `{ gold: -15, satisfaction: -3 }` | Cost to extinguish one fire |
+| `repairCostPercentOfBuildCost` | 0.75 | Repair cost = 75% of building's build cost |
+| `chainSlots` | 10 | Fixed number of fire chain slots |
+
+**Max concurrent chains by fireRisk:**
+
+| fireRisk Range | Max Chains |
+|---------------|------------|
+| 0–30 | 1 |
+| 31–60 | 2 |
+| 61–80 | 3 |
+| 81–100 | 5 |
+
+**Tier rules:**
+
+| Tier | fireRisk Range | Weight | Initial On-Fire |
+|------|---------------|--------|-----------------|
+| minor | 0–100 | 60 | 1–2 |
+| major | 30–100 | 30 | 2–4 |
+| catastrophic | 60–100 | 10 | 3–6 |
+
+### Tick Pipeline (Fire Steps)
+
+Each tick advance (after overcrowding, before game-over check):
+
+1. **Spread & Destroy** (`applyFireSpreadAndDestroy`): For each burning unit, rolls for spread (to random eligible building) and destroy (on-fire → destroyed). Tracks all deltas.
+2. **Chain Start** (`attemptFireChainStart`): Linear probability check, concurrency limit, tier selection, target selection, applies initial on-fire damage, activates lowest free slot.
+3. **Info Queue → Scheduled Events**: Converts `pendingInfoQueue` entries into `FIRE_INFO::` synthetic events for next tick, then clears the queue.
+
+### Fire Chain Requests (40 total)
+
+For each slot n=1..10, four requests:
+
+| Request ID | Chain Role | advancesTick |
+|------------|-----------|--------------|
+| `FIRE_S{n}_START` | start | false |
+| `FIRE_S{n}_DECISION` | member | false |
+| `FIRE_S{n}_ESCALATE` | member | false |
+| `FIRE_S{n}_END` | end | true |
+
+**END options (each slot):**
+- **Option A** ("Standard cleanup"): `{ fireRisk: -10 }`
+- **Option B** ("Invest in prevention"): `{ fireRisk: -20, gold: -30 }`
+
+### END Cleanup Rule
+
+When any `FIRE_SX_END` is resolved (regardless of option chosen):
+1. Read slot's `targetBuildingId` and `initialOnFireApplied`
+2. Reduce `onFireCount[target]` by `min(onFireCount, initialOnFireApplied)`
+3. Spread fires from other ticks remain untouched
+4. Deactivate slot: `{ slotIndex, active: false }`
+
+### Manual Actions
+
+| Action | Validation | Cost | Effect |
+|--------|-----------|------|--------|
+| `EXTINGUISH_ONE` | `onFireCount > 0`, sufficient gold | `{ gold: -15, satisfaction: -3 }` | `onFireCount -= 1` |
+| `REPAIR_ONE` | `destroyedCount > 0`, sufficient gold | `ceil(buildCost × 0.75)` gold | `destroyedCount -= 1` |
+
+**Global Chain Abort**: If `EXTINGUISH_ONE` reduces global `Σ(onFireCount)` to 0, all active fire chain slots are immediately deactivated and an `ALL_EXTINGUISHED_ABORT` info message is queued.
+
+### Synthetic Info Requests
+
+Two types of fire info requests shown as tickless events:
+
+| Type | Title | Content |
+|------|-------|---------|
+| `SPREAD_OR_DESTROY` | "Das Feuer greift um sich" | Lists exact building-type deltas (new fires + newly destroyed) |
+| `ALL_EXTINGUISHED_ABORT` | "Die Lage beruhigt sich" | Explains fires extinguished and all chains ended |
+
+Both include a "Zum Bau-Menü" option that opens the construction overlay.
+
+### UI Integration
+
+**Fire Chain Tag** (App.tsx): When current request matches `FIRE_S{n}_(START|DECISION|ESCALATE|END)`:
+- Shows `🔥 Brand (Slot X)` tag above request title
+- Shows context line: `Betroffen: {icon} {name} | 🔥 {onFireCount} | 🧱 {destroyedCount}`
+
+**Building Cards** (BuildingCard.tsx): When `hasAnyBuildingState(tracking)` is true:
+- Build button hidden (build lock enforced in UI and reducer)
+- State status tags shown: `🔥 {n}`, `🧱 {m}`, `⚑ {k}`
+- Effective count display: `Wirksam: {effective} / {buildingCount}`
+- Priority action button: extinguish (fire) → repair (destroyed) → strike (disabled)
