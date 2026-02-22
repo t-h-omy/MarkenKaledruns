@@ -2362,7 +2362,8 @@ function buildSyntheticFireInfoRequest(requestId: string): Request {
         ],
         advancesTick: false,
       };
-    } catch {
+    } catch (error) {
+      console.error('Failed to parse fire info request:', error);
       return {
         id: requestId,
         title: '🔥 Das Feuer greift um sich',
