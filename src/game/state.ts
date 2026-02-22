@@ -1812,6 +1812,38 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         chainStatus[currentRequest.chainId] = { active: false, completedTick: state.tick };
       }
     }
+
+    // Fire END cleanup: when a FIRE_SX_END request is resolved, clean up the slot
+    let updatedBuildingTracking = state.buildingTracking;
+    let updatedFire = state.fire;
+    const fireEndMatch = state.currentRequestId.match(/^FIRE_S(\d+)_END$/);
+    if (fireEndMatch) {
+      const slotIndex = parseInt(fireEndMatch[1], 10);
+      const slot = state.fire.slots.find(s => s.slotIndex === slotIndex);
+      if (slot && slot.active && slot.targetBuildingId && slot.initialOnFireApplied) {
+        // Remove at least initialOnFireApplied from target onFireCount (spread fires remain)
+        const newTracking = { ...state.buildingTracking };
+        const target = newTracking[slot.targetBuildingId];
+        if (target) {
+          const reduction = Math.min(target.onFireCount, slot.initialOnFireApplied);
+          newTracking[slot.targetBuildingId] = {
+            ...target,
+            onFireCount: target.onFireCount - reduction,
+          };
+        }
+        updatedBuildingTracking = newTracking;
+
+        // Deactivate the slot (clear tier/target/initial data)
+        updatedFire = {
+          ...state.fire,
+          slots: state.fire.slots.map(s =>
+            s.slotIndex === slotIndex
+              ? { slotIndex, active: false }
+              : s
+          ),
+        };
+      }
+    }
     
     // Create log entry for request decision (skip for combat commits as they have their own log)
     if (!(currentRequest.combat && action.optionIndex === 0)) {
@@ -1853,7 +1885,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return {
         tick: state.tick + 1,
         stats,
-        buildingTracking: state.buildingTracking,
+        buildingTracking: updatedBuildingTracking,
         newlyUnlockedBuilding: null,
         currentRequestId: state.currentRequestId,
         lastRequestId: state.currentRequestId,
@@ -1866,7 +1898,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         unlocks,
         scheduledCombats,
         pendingAuthorityChecks: state.pendingAuthorityChecks,
-        fire: state.fire,
+        fire: updatedFire,
       };
     }
 
@@ -1877,7 +1909,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const nextRequest = pickNextRequest({
         tick: state.tick,
         stats,
-        buildingTracking: state.buildingTracking,
+        buildingTracking: updatedBuildingTracking,
         newlyUnlockedBuilding: null,
         currentRequestId: state.currentRequestId,
         lastRequestId: state.currentRequestId,
@@ -1889,14 +1921,14 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         unlocks,
         scheduledCombats,
         pendingAuthorityChecks: state.pendingAuthorityChecks,
-        fire: state.fire,
+        fire: updatedFire,
       });
 
       // Return state with same tick, updated stats/unlocks/log, new request
       return {
         tick: state.tick, // Same tick
         stats,
-        buildingTracking: state.buildingTracking,
+        buildingTracking: updatedBuildingTracking,
         newlyUnlockedBuilding: null,
         currentRequestId: nextRequest.id,
         lastRequestId: state.currentRequestId,
@@ -1908,7 +1940,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         unlocks,
         scheduledCombats,
         pendingAuthorityChecks: state.pendingAuthorityChecks,
-        fire: state.fire,
+        fire: updatedFire,
       };
     }
 
@@ -1950,7 +1982,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     // 2b. Apply bakery building effect (10% chance for +1 farmer growth)
-    if (isBuildingActive(state.buildingTracking, 'bakery') && Math.random() < 0.10) {
+    if (isBuildingActive(updatedBuildingTracking, 'bakery') && Math.random() < 0.10) {
       const beforeBakery = { ...stats };
       stats.farmers += 1;
       stats = clampStats(stats);
@@ -1978,7 +2010,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     // 2c. Apply overcrowding penalties
     const beforeOvercrowding = { ...stats };
-    const overcrowdingResult = applyOvercrowdingPenalties(stats, state.buildingTracking);
+    const overcrowdingResult = applyOvercrowdingPenalties(stats, updatedBuildingTracking);
     stats = clampStats(overcrowdingResult.stats);
 
     if (overcrowdingResult.changes.length > 0) {
@@ -1994,7 +2026,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     // Update building tracking (detect newly required buildings, etc.)
-    let buildingTracking = { ...state.buildingTracking };
+    let buildingTracking = { ...updatedBuildingTracking };
     // Update unlockedAtTick for newly unlocked buildings
     if (newlyUnlockedBuilding) {
       const tracking = buildingTracking[newlyUnlockedBuilding];
@@ -2014,7 +2046,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     // 2d. Apply fire spread and destroy (before game-over check)
-    let fireState = applyFireSpreadAndDestroy(buildingTracking, state.fire, FIRE_SYSTEM_CONFIG);
+    let fireState = applyFireSpreadAndDestroy(buildingTracking, updatedFire, FIRE_SYSTEM_CONFIG);
 
     // 2e. Attempt to start a new fire chain (after spread/destroy)
     const chainStartResult = attemptFireChainStart(
