@@ -629,6 +629,132 @@ function applyFireSpreadAndDestroy(
 }
 
 /**
+ * Attempts to start a new fire chain during tick advance.
+ * Uses linear probability based on fireRisk, respects concurrency limits,
+ * selects tier and target building, applies initial on-fire damage,
+ * activates the first free slot, and schedules the START request.
+ *
+ * Called after spread/destroy in the tick pipeline.
+ */
+function attemptFireChainStart(
+  buildingTracking: Record<string, BuildingTracking>,
+  fireState: FireState,
+  scheduledEvents: ScheduledEvent[],
+  config: FireSystemConfig,
+  fireRisk: number,
+  currentTick: number
+): { fireState: FireState; scheduledEvents: ScheduledEvent[] } {
+  // 1. Count active chains
+  const activeChains = fireState.slots.filter(s => s.active).length;
+
+  // 2. Determine allowed max concurrent chains for current fireRisk
+  const band = config.maxConcurrentChainsByRisk.find(
+    b => fireRisk >= b.minRisk && fireRisk <= b.maxRisk
+  );
+  const allowedMaxChains = band ? band.maxChains : 0;
+
+  // Guard: don't exceed allowed concurrent chains
+  if (activeChains >= allowedMaxChains) {
+    return { fireState, scheduledEvents };
+  }
+
+  // 3. Find first free slot (lowest slotIndex)
+  const freeSlot = fireState.slots.find(s => !s.active);
+  if (!freeSlot) {
+    return { fireState, scheduledEvents };
+  }
+
+  // 4. Find eligible target building types (effectiveCount > 0)
+  const eligibleTargets = BUILDING_DEFINITIONS.filter(def => {
+    const t = buildingTracking[def.id];
+    return t && getEffectiveBuildingCount(t) > 0;
+  });
+
+  if (eligibleTargets.length === 0) {
+    return { fireState, scheduledEvents };
+  }
+
+  // 5. Compute linear chance and roll
+  const chancePercent = Math.max(
+    config.chanceMin,
+    Math.min(config.chanceMax, (fireRisk + config.baseOffset) * config.factor)
+  );
+  const roll = getRandomValue() * 100;
+  if (roll >= chancePercent) {
+    return { fireState, scheduledEvents };
+  }
+
+  // 6. Select tier from tierRules (filtered by fireRisk, weighted by weight)
+  const eligibleTiers = config.tierRules.filter(
+    rule => fireRisk >= rule.minFireRisk && fireRisk <= rule.maxFireRisk
+  );
+  if (eligibleTiers.length === 0) {
+    return { fireState, scheduledEvents };
+  }
+  const selectedTier = selectWeightedCandidate(eligibleTiers);
+  if (!selectedTier) {
+    return { fireState, scheduledEvents };
+  }
+
+  // 7. Select target building type (weighted by effectiveCount)
+  const targetCandidates = eligibleTargets.map(def => ({
+    def,
+    weight: getEffectiveBuildingCount(buildingTracking[def.id]),
+  }));
+  const selectedTarget = selectWeightedCandidate(targetCandidates);
+  if (!selectedTarget) {
+    return { fireState, scheduledEvents };
+  }
+
+  const targetDef = selectedTarget.def;
+  const targetTracking = buildingTracking[targetDef.id];
+  const effectiveCount = getEffectiveBuildingCount(targetTracking);
+
+  // 8. Determine k = randomInt(initialOnFireMin..initialOnFireMax), clamp to effectiveCount
+  const range = selectedTier.initialOnFireMax - selectedTier.initialOnFireMin + 1;
+  let k = selectedTier.initialOnFireMin + Math.floor(getRandomValue() * range);
+  k = Math.min(k, effectiveCount);
+  if (k <= 0) {
+    return { fireState, scheduledEvents };
+  }
+
+  // 9. Apply target.onFireCount += k
+  buildingTracking[targetDef.id] = {
+    ...targetTracking,
+    onFireCount: targetTracking.onFireCount + k,
+  };
+
+  // 10. Activate the slot
+  const newSlots = fireState.slots.map(s =>
+    s.slotIndex === freeSlot.slotIndex
+      ? {
+          ...s,
+          active: true,
+          tier: selectedTier.tier,
+          targetBuildingId: targetDef.id,
+          startedTick: currentTick,
+          initialOnFireApplied: k,
+          abortedByManualExtinguish: false,
+        }
+      : s
+  );
+
+  // 11. Schedule the corresponding slot START request
+  const startRequestId = `FIRE_S${freeSlot.slotIndex}_START`;
+  const newScheduledEvents = [...scheduledEvents, {
+    targetTick: currentTick + 1,
+    requestId: startRequestId,
+    scheduledAtTick: currentTick,
+    priority: 'normal' as const,
+  }];
+
+  return {
+    fireState: { ...fireState, slots: newSlots },
+    scheduledEvents: newScheduledEvents,
+  };
+}
+
+/**
  * Checks if any building reminders should be scheduled.
  * Called at end of each normal tick.
  */
@@ -1889,6 +2015,14 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     // 2d. Apply fire spread and destroy (before game-over check)
     let fireState = applyFireSpreadAndDestroy(buildingTracking, state.fire, FIRE_SYSTEM_CONFIG);
+
+    // 2e. Attempt to start a new fire chain (after spread/destroy)
+    const chainStartResult = attemptFireChainStart(
+      buildingTracking, fireState, scheduledEvents, FIRE_SYSTEM_CONFIG,
+      stats.fireRisk, state.tick
+    );
+    fireState = chainStartResult.fireState;
+    scheduledEvents = chainStartResult.scheduledEvents;
 
     // 3. Check for game over condition
     if (stats.gold <= -50) {
