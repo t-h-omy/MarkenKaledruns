@@ -240,7 +240,7 @@ export const eventRequests: Request[] = [
       {
         text: 'COMPENSATE',
         effects: {
-          gold: -15,
+          gold: -10,
           authority: 1,
         },
       },
@@ -291,7 +291,7 @@ export const eventRequests: Request[] = [
       {
         text: 'IGNORE',
         effects: {
-          farmers: -5,
+          farmers: -7,
         },
       },
     ],
@@ -324,14 +324,14 @@ export const eventRequests: Request[] = [
       {
         text: 'HIRE',
         effects: {
-          gold: -20,
+          gold: -15,
           farmers: 5,
         },
       },
       {
         text: 'DO NOTHING',
         effects: {
-          health: -6,
+          health: -4,
         },
       },
     ],
@@ -348,7 +348,7 @@ export const eventRequests: Request[] = [
         effects: {
           gold: -40,
           satisfaction: 20,
-          authority: -8,
+          authority: -4,
         },
       },
       {
@@ -356,6 +356,7 @@ export const eventRequests: Request[] = [
         effects: {
           landForces: -5,
           farmers: -10,
+          satisfaction: 15,
           authority: 2,
         },
       },
@@ -367,40 +368,17 @@ export const eventRequests: Request[] = [
     text: 'Warning: Low Health! Due to poor sanitary conditions, a sickness is spreading rapidly. We must fund a healer now before the population collapses.',
     options: [
       {
-        text: 'HEALER',
+        text: 'HIRE A HEALER',
         effects: {
           gold: -40,
           health: 20,
         },
       },
       {
-        text: 'IGNORE',
+        text: 'SORT OUT THE SICK',
         effects: {
           farmers: -15,
-        },
-      },
-    ],
-  },
-  {
-    id: 'EVT_CRISIS_FIRE',
-    title: 'The Ember Alert',
-    text: 'Warning: High Fire Risk! Neglect has made the village a tinderbox. A single spark could be fatal. We must implement emergency fire safety measures immediately.',
-    // Disabled: replaced by Fire System V3 chain-based fire logic
-    canTriggerRandomly: false,
-    options: [
-      {
-        text: 'PREPARE',
-        effects: {
-          gold: -40,
-          fireRisk: -20,
-        },
-      },
-      {
-        text: 'DO NOTHING',
-        effects: {
-          farmers: -10,
-          health: -5,
-          authority: -8,
+          health: 15,
         },
       },
     ],
@@ -535,13 +513,14 @@ export const eventRequests: Request[] = [
       {
         text: 'FIGHT THE FIRE',
         effects: {
-          health: -5,
+          gold: -5,
+          health: -2,
         },
       },
       {
         text: 'DO NOTHING',
         effects: {
-          fireRisk: 15,
+          fireRisk: 10,
         },
       },
     ],
@@ -554,13 +533,13 @@ export const eventRequests: Request[] = [
       {
         text: 'QUARANTINE',
         effects: {
-          satisfaction: -6,
+          satisfaction: -4,
         },
       },
       {
         text: 'IGNORE',
         effects: {
-          health: -7,
+          health: -5,
         },
       },
     ],
@@ -601,8 +580,8 @@ export const eventRequests: Request[] = [
       {
         text: 'DO NOTHING',
         effects: {
-          satisfaction: -6,
-          farmers: -3,
+          satisfaction: -4,
+          farmers: -4,
         },
       },
     ],
@@ -621,8 +600,8 @@ export const eventRequests: Request[] = [
       {
         text: 'IGNORE',
         effects: {
-          fireRisk: 10,
-          health: -4,
+          fireRisk: 6,
+          health: -3,
         },
       },
     ],
@@ -636,11 +615,11 @@ export const eventRequests: Request[] = [
         text: 'MEDIATE',
         effects: {
           gold: -10,
-          authority: 1,
+          satisfaction: 1,
         },
       },
       {
-        text: 'IGNORE',
+        text: 'NOT MY PROBLEM',
         effects: {
           farmers: -4,
         },
@@ -796,8 +775,8 @@ export const eventRequests: Request[] = [
     text: 'Brimwulf returns after the Battle of Aescweald. "Wulfham remembers who stood with us. We will not forget." Feldric mutters, "Blackgeat will come back — count on it."',
     canTriggerRandomly: false,
     options: [
-      { text: 'CONSOLIDATE', effects: { satisfaction: 5 } },
-      { text: 'PRESS THE ADVANTAGE', effects: { gold: 30 } },
+      { text: 'RETURN HOME TRIUMPHANT', effects: { authority: 3, satisfaction: 3 } },
+      { text: 'LOOT THE BATTLEFIELD', effects: { gold: 25 } },
     ],
     followUps: [
       {
@@ -823,8 +802,8 @@ export const eventRequests: Request[] = [
     text: 'Following the Aescweald battle, Hrycgwulf of Blackgeat arrives with a message. "You are capable. Pay a border tribute and we turn our army elsewhere." Feldric adds quietly, "This is their next move after Aescweald."',
     canTriggerRandomly: false,
     options: [
-      { text: 'PAY', effects: { gold: -15, authority: -2 } },
-      { text: 'REFUSE', effects: { authority: 1 } },
+      { text: 'PAY FOR PIECE', effects: { gold: -15, authority: -2 } },
+      { text: 'THROW HIM OUT', effects: { authority: 1 } },
     ],
     followUps: [
       {
@@ -4072,7 +4051,7 @@ export const eventRequests: Request[] = [
     text: 'The harvest is in and the people want a grand festival. Brewers offer their finest ale if you fund the event.',
     options: [
       { text: 'FUND THE FESTIVAL', effects: { gold: -20 } },
-      { text: 'CANCEL IT', effects: { satisfaction: -8 } },
+      { text: 'CANCEL IT', effects: { satisfaction: -3 } },
     ],
     followUps: [
       {
@@ -4100,7 +4079,7 @@ export const eventRequests: Request[] = [
     title: 'Joy and Ale',
     text: 'The festival is a roaring success! Music, dancing, and barrels of ale. But the crowd wants even more entertainment.',
     options: [
-      { text: 'HIRE PERFORMERS', effects: { gold: -10, satisfaction: 8 } },
+      { text: 'HIRE PERFORMERS', effects: { gold: -15, satisfaction: 3 } },
       { text: 'LET THEM ENJOY', effects: { satisfaction: 5 } },
     ],
     followUps: [
@@ -4247,10 +4226,10 @@ export const eventRequests: Request[] = [
     chainRole: 'member',
     canTriggerRandomly: false,
     title: 'Plague Creeps In',
-    text: 'Despite efforts, the sickness has spread to several households. Coughing echoes through the streets and the healer begs for coin to set up treatment tents.',
+    text: 'The sickness has spread to several households. Coughing echoes through the streets and the healer begs for coin to set up treatment tents.',
     options: [
       { text: 'SET UP HEALERS', effects: { gold: -15, health: 4 } },
-      { text: 'DO NOTHING', effects: { health: -10, satisfaction: -3 } },
+      { text: 'DO NOTHING', effects: { health: -5, satisfaction: -2 } },
     ],
     // If health drops below 30 from this, EVT_CRISIS_DISEASE may be triggered globally by picker.ts.
     followUps: [
@@ -4309,7 +4288,7 @@ export const eventRequests: Request[] = [
     text: 'The outer palisade has deteriorated badly. Gaps in the timber invite wolves and worse. Feldric urges an upgrade before the next raid season.',
     canTriggerRandomly: true,
     options: [
-      { text: 'INVEST IN PALISADE', effects: { gold: -25, authority: 1 } },
+      { text: 'INVEST IN PALISADE', effects: { gold: -15, authority: 1 } },
       { text: 'DELAY', effects: { satisfaction: -1 } },
     ],
     followUps: [
@@ -4340,7 +4319,7 @@ export const eventRequests: Request[] = [
     title: 'Guild Carpenters Available',
     text: 'Thanks to the marketplace, a guild of skilled carpenters offers their services. Their work would be superior, but their rates are steep.',
     options: [
-      { text: 'PAY GUILD', effects: { gold: -30, authority: 2 } },
+      { text: 'PAY GUILD', effects: { gold: -15, authority: 2 } },
       { text: 'HAGGLE', effects: { satisfaction: -1 } },
     ],
     followUps: [
@@ -4373,6 +4352,7 @@ export const eventRequests: Request[] = [
     ],
   },
   {
+    // WIP: This doesn't make sense. When the player does nothing, this request is also shown and it says the palisade is repaired.
     id: 'CHAIN_PALISADE_END',
     chainId: 'palisade',
     chainRole: 'end',
@@ -4395,17 +4375,17 @@ export const eventRequests: Request[] = [
     id: 'CHAIN_ARKANAT_INSPECTOR_START',
     chainId: 'arkanat_inspector',
     chainRole: 'start',
-    authorityMin: 12,
+    authorityMin: 20,
     title: 'The Arkanat Arrives',
-    text: 'A stern official from the Arkanat — the regional council — dismounts at your gate. He carries sealed writs and a cold expression. "I am here to audit your governance."',
+    text: 'A stern official from the Arkanat — the regional mage council — dismounts at your gate. He carries sealed writs and a cold expression. "I am here to audit your governance."',
     canTriggerRandomly: true,
     options: [
       {
         text: 'ASSERT JURISDICTION',
-        effects: { satisfaction: -1 },
+        effects: { },
         authorityCheck: {
           minCommit: 0,
-          maxCommit: 15,
+          maxCommit: 25,
           followUpBoosts: [
             { targetRequestId: 'CHAIN_ARKANAT_BACKS_DOWN', boostType: 'stepped', boostValue: 2, steps: 3 },
           ],
@@ -4442,8 +4422,7 @@ export const eventRequests: Request[] = [
     title: 'Inspector Relents',
     text: 'Faced with your firm stance and the weight of your authority, the Arkanat inspector folds his writs. "Very well. Your records appear... adequate." He mounts his horse without another word.',
     options: [
-      { text: 'WELL DONE', effects: { authority: 2 } },
-      { text: 'SEE HIM OFF', effects: {} },
+      { text: 'SEE HIM OUT', effects: { authority: 1 } },
     ],
     followUps: [
       {
@@ -4525,7 +4504,6 @@ export const eventRequests: Request[] = [
     text: 'The inspector is gone. Feldric summarizes: the Arkanat will return eventually — they always do. But for now, the matter is settled.',
     options: [
       { text: 'NOTED', effects: {} },
-      { text: 'PREPARE FOR NEXT TIME', effects: {} },
     ],
   },
 
@@ -4702,7 +4680,7 @@ export const eventRequests: Request[] = [
         effects: { gold: -15, authority: -1 },
         authorityCheck: {
           minCommit: 0,
-          maxCommit: 15,
+          maxCommit: 25,
           followUpBoosts: [
             { targetRequestId: 'CHAIN_RIVER_PIRATES_TRIBUTE_LEAVES', boostType: 'linear', boostValue: 4 },
           ],
@@ -4750,7 +4728,7 @@ export const eventRequests: Request[] = [
     text: 'The pirates overwhelmed your defenses and march towards your treasury. Your villagers try to flee.',
     options: [
       { text: 'PEASANTS, DEFEND MY TREASURY!', effects: {farmers: -10, satisfaction: -3,} },
-      { text: 'RUN FOR YOUR LIVES!', effects: {gold: -20, satisfaction: 2,} },
+      { text: 'RUN FOR YOUR LIVES!', effects: {gold: -20, satisfaction: 3,} },
     ],
     followUps: [
       {
@@ -4769,7 +4747,7 @@ export const eventRequests: Request[] = [
     title: 'Pirates Withdraw',
     text: 'The pirate captain counts the tribute and nods. "Wise choice." The black sails disappear downriver. Perhaps your show of authority convinced them to seek easier prey.',
     options: [
-      { text: 'BRAG ABOUT IT', effects: { satisfaction: -2, authority: 1,} },
+      { text: 'BRAG ABOUT IT', effects: { satisfaction: -1, authority: 1,} },
       { text: 'SECURE THE RIVER', effects: {gold: -10, landForces: 3} },
     ],
     followUps: [
