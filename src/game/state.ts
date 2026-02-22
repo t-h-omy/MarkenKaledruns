@@ -3,12 +3,12 @@
  * Based on POF_SPEC.md specification.
  */
 
-import type { Stats, Effect, Request, FollowUp, AuthorityCheck, AuthorityCheckResult, WeightedCandidate, AuthorityFollowUpBoost } from './models';
-import { infoRequests, authorityInfoRequests, eventRequests } from './requests';
+import type { Stats, Effect, Request, FollowUp, AuthorityCheck, AuthorityCheckResult, WeightedCandidate, AuthorityFollowUpBoost, FireState, FireChainSlotState, FireSystemConfig } from './models';
+import { infoRequests, authorityInfoRequests, eventRequests, fireChainRequests } from './requests';
 import { pickNextRequest, selectWeightedCandidate, getRandomValue, resetRandom } from './picker';
 import { needModifiers } from './modifiers';
 import type { BuildingTracking } from './buildings';
-import { BUILDING_DEFINITIONS, isBuildingActive, calculateRequiredBuildings, getBuildingDef, createInitialBuildingTracking } from './buildings';
+import { BUILDING_DEFINITIONS, isBuildingActive, calculateRequiredBuildings, getBuildingDef, createInitialBuildingTracking, hasAnyBuildingState } from './buildings';
 
 /**
  * Represents a single applied change to a stat
@@ -174,6 +174,8 @@ export interface GameState {
   activeCombat?: ActiveCombat;
   /** Pending authority checks to resolve at future ticks */
   pendingAuthorityChecks: PendingAuthorityCheck[];
+  /** Fire system runtime state (slots and pending info queue) */
+  fire: FireState;
 }
 
 /**
@@ -191,7 +193,60 @@ export type GameAction =
   | {
       type: 'BUILD_BUILDING';
       buildingId: string;
+    }
+  | {
+      /** Extinguish one on-fire unit of a building type. Applies FIRE_SYSTEM_CONFIG.extinguishCost. */
+      type: 'EXTINGUISH_ONE';
+      buildingId: string;
+    }
+  | {
+      /** Repair one destroyed unit of a building type. Costs ceil(buildCost * config.repairCostPercentOfBuildCost). */
+      type: 'REPAIR_ONE';
+      buildingId: string;
     };
+
+/**
+ * Create the initial fire chain slot states (10 slots, all inactive).
+ */
+function createInitialFireSlots(): FireChainSlotState[] {
+  return Array.from({ length: 10 }, (_, i) => ({
+    slotIndex: i + 1,
+    active: false,
+  }));
+}
+
+/**
+ * Default configuration for Fire System V3.
+ * Balancing values — can be adjusted without code changes.
+ */
+export const FIRE_SYSTEM_CONFIG: FireSystemConfig = {
+  baseOffset: -10,
+  factor: 0.5,
+  chanceMin: 0,
+  chanceMax: 40,
+
+  maxConcurrentChainsByRisk: [
+    { minRisk: 0,  maxRisk: 30,  maxChains: 1 },
+    { minRisk: 31, maxRisk: 60,  maxChains: 2 },
+    { minRisk: 61, maxRisk: 80,  maxChains: 3 },
+    { minRisk: 81, maxRisk: 100, maxChains: 5 },
+  ],
+
+  spreadChancePerBurningBuilding: 0.10,
+  destroyChancePerBurningBuilding: 0.08,
+
+  repairCostPercentOfBuildCost: 0.75,
+
+  extinguishCost: { gold: -15, satisfaction: -3 },
+
+  chainSlots: 10,
+
+  tierRules: [
+    { tier: 'minor',        minFireRisk: 0,  maxFireRisk: 40,  weight: 6, initialOnFireMin: 1, initialOnFireMax: 1 },
+    { tier: 'major',        minFireRisk: 30, maxFireRisk: 75,  weight: 3, initialOnFireMin: 1, initialOnFireMax: 2 },
+    { tier: 'catastrophic', minFireRisk: 60, maxFireRisk: 100, weight: 1, initialOnFireMin: 2, initialOnFireMax: 3 },
+  ],
+};
 
 /**
  * Initial game state with starting values from POF_SPEC.md
@@ -219,6 +274,10 @@ export const initialState: GameState = {
   unlocks: {},
   scheduledCombats: [],
   pendingAuthorityChecks: [],
+  fire: {
+    slots: createInitialFireSlots(),
+    pendingInfoQueue: [],
+  },
 };
 
 /**
@@ -234,7 +293,7 @@ function clamp(value: number, min: number, max: number): number {
  * @returns The request's title, or a fallback string if not found
  */
 function getRequestTitleFromId(requestId: string): string {
-  const allRequests = [...infoRequests, ...authorityInfoRequests, ...eventRequests];
+  const allRequests = [...infoRequests, ...authorityInfoRequests, ...eventRequests, ...fireChainRequests];
   const request = allRequests.find(r => r.id === requestId);
   
   if (!request) {
@@ -1361,7 +1420,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
     
     // Find the current request (non-synthetic)
-    const currentRequest = [...infoRequests, ...authorityInfoRequests, ...eventRequests].find(
+    const currentRequest = [...infoRequests, ...authorityInfoRequests, ...eventRequests, ...fireChainRequests].find(
       (r) => r.id === state.currentRequestId
     );
 
@@ -1583,6 +1642,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         unlocks,
         scheduledCombats,
         pendingAuthorityChecks: state.pendingAuthorityChecks,
+        fire: state.fire,
       };
     }
 
@@ -1605,6 +1665,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         unlocks,
         scheduledCombats,
         pendingAuthorityChecks: state.pendingAuthorityChecks,
+        fire: state.fire,
       });
 
       // Return state with same tick, updated stats/unlocks/log, new request
@@ -1623,6 +1684,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         unlocks,
         scheduledCombats,
         pendingAuthorityChecks: state.pendingAuthorityChecks,
+        fire: state.fire,
       };
     }
 
@@ -1745,6 +1807,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         unlocks,
         scheduledCombats,
         pendingAuthorityChecks: state.pendingAuthorityChecks,
+        fire: state.fire,
       };
     }
 
@@ -1790,6 +1853,31 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     buildingTracking = reminderResult.buildingTracking;
     scheduledEvents = reminderResult.scheduledEvents;
 
+    // 3.7. Convert fire pendingInfoQueue into scheduled synthetic info requests (FIFO)
+    let fireState = { ...state.fire };
+    if (fireState.pendingInfoQueue.length > 0) {
+      for (const infoMsg of fireState.pendingInfoQueue) {
+        let syntheticId: string;
+        if (infoMsg.type === 'SPREAD_OR_DESTROY') {
+          const payload = {
+            newOnFireByBuildingId: infoMsg.newOnFireByBuildingId || {},
+            newDestroyedByBuildingId: infoMsg.newDestroyedByBuildingId || {},
+          };
+          syntheticId = `FIRE_INFO::SPREAD_OR_DESTROY::${encodeURIComponent(JSON.stringify(payload))}`;
+        } else {
+          syntheticId = `FIRE_INFO::ALL_EXTINGUISHED_ABORT`;
+        }
+        scheduledEvents.push({
+          targetTick: state.tick + 1,
+          requestId: syntheticId,
+          scheduledAtTick: state.tick,
+          priority: 'info',
+        });
+      }
+      // Clear the queue so messages don't repeat
+      fireState = { ...fireState, pendingInfoQueue: [] };
+    }
+
     // 4. Pick next request
     const nextRequest = pickNextRequest({
       tick: state.tick + 1,
@@ -1806,6 +1894,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       unlocks,
       scheduledCombats,
       pendingAuthorityChecks,
+      fire: fireState,
     });
 
     // 4.5. Check if the picked request was a scheduled event with committed authority
@@ -1848,6 +1937,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       unlocks,
       scheduledCombats,
       pendingAuthorityChecks,
+      fire: fireState,
     };
   }
 
@@ -1867,6 +1957,17 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return state;
     }
 
+    // Validate: build lock — cannot build if building has any active state (on fire, destroyed, on strike)
+    const existingTracking = state.buildingTracking[action.buildingId];
+    if (existingTracking && hasAnyBuildingState(existingTracking)) {
+      console.error('Build locked: building has active state:', action.buildingId, {
+        onFireCount: existingTracking.onFireCount,
+        destroyedCount: existingTracking.destroyedCount,
+        onStrikeCount: existingTracking.onStrikeCount,
+      });
+      return state;
+    }
+
     // Validate: enough gold
     if (state.stats.gold < def.cost) {
       console.error('Not enough gold for:', action.buildingId, 'Need', def.cost, 'have', state.stats.gold);
@@ -1879,6 +1980,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     // Increment building count
     const oldTracking = state.buildingTracking[action.buildingId] ?? {
       buildingCount: 0,
+      onFireCount: 0,
+      destroyedCount: 0,
+      onStrikeCount: 0,
       reminderScheduled: false,
       reminderCooldownUntil: 0,
     };
@@ -1931,6 +2035,115 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       unlocks,
       scheduledEvents,
       log: [...state.log, logEntry],
+    };
+  }
+
+  // Handle EXTINGUISH_ONE action
+  if (action.type === 'EXTINGUISH_ONE') {
+    if (state.gameOver) return state;
+
+    const tracking = state.buildingTracking[action.buildingId];
+    if (!tracking || tracking.onFireCount <= 0) {
+      console.error('Cannot extinguish: no on-fire units for', action.buildingId);
+      return state;
+    }
+
+    // Apply extinguish cost (e.g. gold, satisfaction)
+    const costEffect = FIRE_SYSTEM_CONFIG.extinguishCost;
+
+    // Validate: enough gold for extinguish cost
+    if (costEffect.gold !== undefined && state.stats.gold < Math.abs(costEffect.gold)) {
+      console.error('Not enough gold to extinguish:', action.buildingId, 'Need', Math.abs(costEffect.gold), 'have', state.stats.gold);
+      return state;
+    }
+
+    const newStats = clampStats(applyEffects(state.stats, costEffect));
+
+    // Reduce onFireCount by 1
+    const newTracking = { ...tracking, onFireCount: tracking.onFireCount - 1 };
+    const buildingTracking = {
+      ...state.buildingTracking,
+      [action.buildingId]: newTracking,
+    };
+
+    // Check global sum of onFireCount
+    const globalOnFireCount = Object.values(buildingTracking).reduce(
+      (sum, t) => sum + t.onFireCount, 0
+    );
+
+    let fire = { ...state.fire };
+
+    // If global onFire is now 0: abort all active chains and queue info
+    if (globalOnFireCount === 0) {
+      fire = {
+        ...fire,
+        slots: fire.slots.map(s => s.active
+          ? { ...s, active: false, abortedByManualExtinguish: true }
+          : s
+        ),
+        pendingInfoQueue: [
+          ...fire.pendingInfoQueue,
+          { type: 'ALL_EXTINGUISHED_ABORT' as const },
+        ],
+      };
+    }
+
+    return {
+      ...state,
+      stats: newStats,
+      buildingTracking,
+      fire,
+    };
+  }
+
+  // Handle REPAIR_ONE action
+  if (action.type === 'REPAIR_ONE') {
+    if (state.gameOver) return state;
+
+    const tracking = state.buildingTracking[action.buildingId];
+    if (!tracking || tracking.destroyedCount <= 0) {
+      console.error('Cannot repair: no destroyed units for', action.buildingId);
+      return state;
+    }
+
+    // Calculate repair cost
+    let newStats: Stats;
+    if (FIRE_SYSTEM_CONFIG.repairCostOverride) {
+      // Validate: enough gold for override cost
+      const overrideGold = FIRE_SYSTEM_CONFIG.repairCostOverride.gold;
+      if (overrideGold !== undefined && state.stats.gold < Math.abs(overrideGold)) {
+        console.error('Not enough gold to repair:', action.buildingId, 'Need', Math.abs(overrideGold), 'have', state.stats.gold);
+        return state;
+      }
+      // Use override effect if defined
+      newStats = clampStats(applyEffects(state.stats, FIRE_SYSTEM_CONFIG.repairCostOverride));
+    } else {
+      // Default: ceil(buildCost * repairCostPercentOfBuildCost)
+      const def = getBuildingDef(action.buildingId);
+      if (!def) {
+        console.error('Unknown building ID for repair:', action.buildingId);
+        return state;
+      }
+      const goldCost = Math.ceil(def.cost * FIRE_SYSTEM_CONFIG.repairCostPercentOfBuildCost);
+      // Validate: enough gold
+      if (state.stats.gold < goldCost) {
+        console.error('Not enough gold to repair:', action.buildingId, 'Need', goldCost, 'have', state.stats.gold);
+        return state;
+      }
+      newStats = clampStats(applyEffects(state.stats, { gold: -goldCost }));
+    }
+
+    // Reduce destroyedCount by 1
+    const newTracking = { ...tracking, destroyedCount: tracking.destroyedCount - 1 };
+    const buildingTracking = {
+      ...state.buildingTracking,
+      [action.buildingId]: newTracking,
+    };
+
+    return {
+      ...state,
+      stats: newStats,
+      buildingTracking,
     };
   }
 
@@ -2088,10 +2301,93 @@ export function getCurrentRequest(state: GameState): Request | null {
     }
   }
   
+  // Check if this is a synthetic fire info request
+  if (state.currentRequestId.startsWith('FIRE_INFO::')) {
+    return buildSyntheticFireInfoRequest(state.currentRequestId);
+  }
+
   // Regular request - look it up in the arrays
-  return [...infoRequests, ...authorityInfoRequests, ...eventRequests].find(
+  return [...infoRequests, ...authorityInfoRequests, ...eventRequests, ...fireChainRequests].find(
     (r) => r.id === state.currentRequestId
   ) || null;
+}
+
+/**
+ * Build a synthetic Request object from a FIRE_INFO:: encoded request ID.
+ * Two types are supported:
+ *  - FIRE_INFO::SPREAD_OR_DESTROY::{json} — lists newly on-fire and destroyed buildings
+ *  - FIRE_INFO::ALL_EXTINGUISHED_ABORT — all fires manually extinguished
+ */
+function buildSyntheticFireInfoRequest(requestId: string): Request {
+  const parts = requestId.split('::');
+  const infoType = parts[1]; // 'SPREAD_OR_DESTROY' or 'ALL_EXTINGUISHED_ABORT'
+
+  if (infoType === 'SPREAD_OR_DESTROY') {
+    try {
+      const data = JSON.parse(decodeURIComponent(parts[2] || '{}'));
+      const newOnFire: Record<string, number> = data.newOnFireByBuildingId || {};
+      const newDestroyed: Record<string, number> = data.newDestroyedByBuildingId || {};
+
+      // Build text listing exact deltas per building type
+      const lines: string[] = [];
+
+      const onFireEntries = Object.entries(newOnFire).filter(([, count]) => count > 0);
+      if (onFireEntries.length > 0) {
+        lines.push('Neue Brände:');
+        for (const [buildingId, count] of onFireEntries) {
+          const def = getBuildingDef(buildingId);
+          const name = def ? `${def.icon} ${def.displayName}` : buildingId;
+          lines.push(`  🔥 ${name}: ${count}`);
+        }
+      }
+
+      const destroyedEntries = Object.entries(newDestroyed).filter(([, count]) => count > 0);
+      if (destroyedEntries.length > 0) {
+        if (lines.length > 0) lines.push('');
+        lines.push('Neu zerstört:');
+        for (const [buildingId, count] of destroyedEntries) {
+          const def = getBuildingDef(buildingId);
+          const name = def ? `${def.icon} ${def.displayName}` : buildingId;
+          lines.push(`  🧱 ${name}: ${count}`);
+        }
+      }
+
+      return {
+        id: requestId,
+        title: '🔥 Das Feuer greift um sich',
+        text: lines.length > 0 ? lines.join('\n') : 'Das Feuer wütet weiter.',
+        options: [
+          { text: 'Zum Bau-Menü', effects: {} },
+          { text: 'Weiter', effects: {} },
+        ],
+        advancesTick: false,
+      };
+    } catch (error) {
+      console.error('Failed to parse fire info request:', error);
+      return {
+        id: requestId,
+        title: '🔥 Das Feuer greift um sich',
+        text: 'Das Feuer wütet weiter.',
+        options: [
+          { text: 'Zum Bau-Menü', effects: {} },
+          { text: 'Weiter', effects: {} },
+        ],
+        advancesTick: false,
+      };
+    }
+  }
+
+  // ALL_EXTINGUISHED_ABORT
+  return {
+    id: requestId,
+    title: 'Die Lage beruhigt sich',
+    text: 'Alle Brände wurden manuell gelöscht. Sämtliche Brandketten wurden beendet.',
+    options: [
+      { text: 'OK', effects: {} },
+      { text: 'Zum Bau-Menü', effects: {} },
+    ],
+    advancesTick: false,
+  };
 }
 
 /**

@@ -5,7 +5,7 @@
 
 import type { GameState } from './state';
 import type { Stats, Request } from './models';
-import { infoRequests, authorityInfoRequests, eventRequests } from './requests';
+import { infoRequests, authorityInfoRequests, eventRequests, fireChainRequests } from './requests';
 import { meetsRequirements } from './state';
 
 /**
@@ -14,7 +14,7 @@ import { meetsRequirements } from './state';
  * @returns The request's title, or a fallback string if not found
  */
 function getRequestTitle(requestId: string): string {
-  const allRequests = [...infoRequests, ...authorityInfoRequests, ...eventRequests];
+  const allRequests = [...infoRequests, ...authorityInfoRequests, ...eventRequests, ...fireChainRequests];
   const request = allRequests.find(r => r.id === requestId);
   
   if (!request) {
@@ -169,11 +169,9 @@ function isEligibleByAuthority(request: Request, authority: number): boolean {
  * 
  * Priority order:
  * 1. Check for scheduled events whose targetTick <= currentTick (FIFO order)
- * 2. If fireRisk > 70 => pick EVT_CRISIS_FIRE
- * 3. Else if health < 30 => pick EVT_CRISIS_DISEASE
- * 4. Else if satisfaction < 30 => pick EVT_CRISIS_UNREST
- * 5. Else if any need is required (unlocked and unfulfilled for current cycle) => pick randomly among eligible need-requests
- * 6. Else pick a random event among all 25
+ * 2. Crisis checks: health < 30 => EVT_CRISIS_DISEASE, satisfaction < 30 => EVT_CRISIS_UNREST
+ *    (EVT_CRISIS_FIRE removed — replaced by Fire System V3 chain slots)
+ * 3. Else pick a random event
  * 
  * Never repeats lastRequestId.
  * Filters out events that have reached maxTriggers.
@@ -396,7 +394,7 @@ export function pickNextRequest(
           }
         }
         
-        const scheduledRequest = [...infoRequests, ...authorityInfoRequests, ...eventRequests].find(
+        const scheduledRequest = [...infoRequests, ...authorityInfoRequests, ...eventRequests, ...fireChainRequests].find(
           (r) => r.id === dueEvent.requestId
         );
         
@@ -437,13 +435,11 @@ export function pickNextRequest(
 
   /**
    * Helper function to check if any crisis event is currently eligible
-   * Crisis events are prioritized in this order: Fire > Disease > Unrest
+   * Crisis events are prioritized in this order: Disease > Unrest
+   * Note: EVT_CRISIS_FIRE is disabled — replaced by Fire System V3 chain-based logic.
    */
   const getEligibleCrisis = (): Request | null => {
-    if (stats.fireRisk > 70) {
-      const crisisRequest = eventRequests.find((r) => r.id === 'EVT_CRISIS_FIRE');
-      if (crisisRequest && crisisRequest.id !== actualLastRequestId) return crisisRequest;
-    }
+    // EVT_CRISIS_FIRE removed: fire is now handled by Fire System V3 chain slots
     if (stats.health < 30) {
       const crisisRequest = eventRequests.find((r) => r.id === 'EVT_CRISIS_DISEASE');
       if (crisisRequest && crisisRequest.id !== actualLastRequestId) return crisisRequest;

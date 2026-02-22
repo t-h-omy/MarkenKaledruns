@@ -295,6 +295,10 @@ function App() {
       spawnFlyingDeltas(optionIndex, option.effects)
     }
     
+    // Check if this is a fire info "Zum Bau-Menü" action
+    const isFireInfoRequest = gameState.currentRequestId.startsWith('FIRE_INFO::')
+    const openConstructionAfter = isFireInfoRequest && option?.text === 'Zum Bau-Menü'
+    
     // If combat request and Option A (index 0), pass combatCommit
     if (currentRequest?.combat && optionIndex === 0) {
       dispatch({ type: 'CHOOSE_OPTION', optionIndex, combatCommit })
@@ -304,6 +308,11 @@ function App() {
       dispatch({ type: 'CHOOSE_OPTION', optionIndex, authorityCommit: committedAmount })
     } else {
       dispatch({ type: 'CHOOSE_OPTION', optionIndex })
+    }
+    
+    // Open construction overlay after dispatching if "Zum Bau-Menü" was chosen
+    if (openConstructionAfter) {
+      openConstructionScreen()
     }
   }
   

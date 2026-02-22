@@ -240,3 +240,90 @@ export interface Request {
   /** Authority range filter: maximum authority allowed to show this event */
   authorityMax?: number;
 }
+
+// ─── Fire System V3 Types ────────────────────────────────────────────
+
+/**
+ * Fire chain severity tier.
+ */
+export type FireTier = 'minor' | 'major' | 'catastrophic';
+
+/**
+ * Runtime state for a single fire chain slot (1..10).
+ */
+export interface FireChainSlotState {
+  /** Slot index, always 1..10 */
+  slotIndex: number;
+  /** Whether this slot has an active fire chain */
+  active: boolean;
+  /** Severity tier of the active fire chain */
+  tier?: FireTier;
+  /** Building type targeted by this fire chain */
+  targetBuildingId?: string;
+  /** Tick when this fire chain started */
+  startedTick?: number;
+  /** Number of on-fire units initially applied by this chain */
+  initialOnFireApplied?: number;
+  /** Whether this chain was aborted by manual extinguish */
+  abortedByManualExtinguish?: boolean;
+}
+
+/**
+ * A queued fire info message to be shown as a synthetic info request on the next tick.
+ */
+export interface FireInfoMessage {
+  /** Type of fire info message */
+  type: 'SPREAD_OR_DESTROY' | 'ALL_EXTINGUISHED_ABORT';
+  /** Map of building IDs to newly on-fire count deltas */
+  newOnFireByBuildingId?: Record<string, number>;
+  /** Map of building IDs to newly destroyed count deltas */
+  newDestroyedByBuildingId?: Record<string, number>;
+}
+
+/**
+ * Fire runtime state container on GameState.
+ */
+export interface FireState {
+  /** Fixed 10 fire chain slots */
+  slots: FireChainSlotState[];
+  /** Queued info messages for next tick */
+  pendingInfoQueue: FireInfoMessage[];
+}
+
+/**
+ * Tier rules for fire chain probability and initial damage.
+ */
+export interface FireTierRule {
+  tier: FireTier;
+  minFireRisk: number;
+  maxFireRisk: number;
+  weight: number;
+  initialOnFireMin: number;
+  initialOnFireMax: number;
+}
+
+/**
+ * Configuration for the fire system.
+ */
+export interface FireSystemConfig {
+  baseOffset: number;
+  factor: number;
+  chanceMin: number;
+  chanceMax: number;
+
+  maxConcurrentChainsByRisk: Array<{ minRisk: number; maxRisk: number; maxChains: number }>;
+
+  spreadChancePerBurningBuilding: number;
+  destroyChancePerBurningBuilding: number;
+
+  /** Repair cost as a fraction of the original build cost (0.75 = 75%) */
+  repairCostPercentOfBuildCost: number;
+
+  extinguishCost: Effect;
+  repairCostOverride?: Effect;
+
+  /** Fixed: 10 */
+  chainSlots: number;
+
+  tierRules: FireTierRule[];
+}
