@@ -204,7 +204,7 @@ main.tsx (entry point)
    └─ Pick next request
 
 3. BUILDING (action: BUILD_BUILDING)
-   ├─ Validate no active building state (build lock)
+   ├─ Validate no active building state (build lock: rejects if any onFireCount/destroyedCount/onStrikeCount > 0)
    ├─ Deduct gold cost
    ├─ Increment building count
    ├─ Set unlock token (if first build)
@@ -285,7 +285,7 @@ Crises trigger automatically when thresholds are crossed:
 | Disease Wave | `health < 30` | `EVT_CRISIS_DISEASE` | Active |
 | Unrest | `satisfaction < 30` | `EVT_CRISIS_UNREST` | Active |
 
-Priority order: Disease > Unrest. Fire crises are now handled by the slot-based Fire System V3 (see §18).
+Priority order: Disease > Unrest. Fire crises are now handled by the slot-based Fire System V3 (see [Section 18](#18-fire-system-v3)).
 
 ### 6.5 Game Over
 
@@ -440,7 +440,7 @@ interface Request {
 | `ARKANAT_INSPECTOR` | `CHAIN_ARKANAT_INSPECTOR_START` | ~6 events | Inspector encounter chain |
 | `EGO_INSULT` | `CHAIN_EGO_INSULT_START` | ~6 events | Authority ego test chain |
 | `RIVER_PIRATES` | `CHAIN_RIVER_PIRATES_START` | ~6 events | River pirates chain |
-| `CHAIN_FIRE_SLOT_1..10` | `FIRE_S{n}_START` | 4 per slot (×10 = 40) | Fire System V3 chain slots (see §18) |
+| `CHAIN_FIRE_SLOT_1..10` | `FIRE_S{n}_START` | 4 per slot (×10 = 40) | Fire System V3 chain slots (see [Section 18](#18-fire-system-v3)) |
 
 **Authority Events:**
 - Low authority (0–33): `EVT_LOW_AUTHORITY`, `EVT_LOW_GUARD_INSUBORDINATION`, `EVT_LOW_SABOTAGE`, `EVT_LOW_PETITION_DENIED`, `EVT_LOW_DEBT_COLLECTOR`, `EVT_LOW_COUNCIL_REVOLT`, `EVT_LOW_BANDITS_MOCK`, `EVT_LOW_FARMERS_LEAVE`, `EVT_LOW_MERCHANT_EXTORTION`, `EVT_LOW_AUTHORITY_CRISIS`
@@ -813,7 +813,7 @@ interface FireInfoMessage {
 
 Each tick advance (after overcrowding, before game-over check):
 
-1. **Spread & Destroy** (`applyFireSpreadAndDestroy`): For each burning unit, rolls for spread (to random eligible building) and destroy (on-fire → destroyed). Tracks all deltas.
+1. **Spread & Destroy** (`applyFireSpreadAndDestroy`): For each burning unit, rolls for spread (to random building type with `effectiveCount > 0`, i.e. at least one non-stated unit exists) and destroy (on-fire → destroyed). Tracks all deltas.
 2. **Chain Start** (`attemptFireChainStart`): Linear probability check, concurrency limit, tier selection, target selection, applies initial on-fire damage, activates lowest free slot.
 3. **Info Queue → Scheduled Events**: Converts `pendingInfoQueue` entries into `FIRE_INFO::` synthetic events for next tick, then clears the queue.
 
