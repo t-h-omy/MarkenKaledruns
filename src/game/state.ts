@@ -8,7 +8,7 @@ import { infoRequests, authorityInfoRequests, eventRequests, fireChainRequests }
 import { pickNextRequest, selectWeightedCandidate, getRandomValue, resetRandom } from './picker';
 import { needModifiers } from './modifiers';
 import type { BuildingTracking } from './buildings';
-import { BUILDING_DEFINITIONS, isBuildingActive, calculateRequiredBuildings, getBuildingDef, createInitialBuildingTracking } from './buildings';
+import { BUILDING_DEFINITIONS, isBuildingActive, calculateRequiredBuildings, getBuildingDef, createInitialBuildingTracking, hasAnyBuildingState } from './buildings';
 
 /**
  * Represents a single applied change to a stat
@@ -192,6 +192,16 @@ export type GameAction =
     }
   | {
       type: 'BUILD_BUILDING';
+      buildingId: string;
+    }
+  | {
+      /** Extinguish one on-fire unit of a building type. Applies FIRE_SYSTEM_CONFIG.extinguishCost. */
+      type: 'EXTINGUISH_ONE';
+      buildingId: string;
+    }
+  | {
+      /** Repair one destroyed unit of a building type. Costs ceil(buildCost * 0.75). */
+      type: 'REPAIR_ONE';
       buildingId: string;
     };
 
@@ -1922,6 +1932,17 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return state;
     }
 
+    // Validate: build lock — cannot build if building has any active state (on fire, destroyed, on strike)
+    const existingTracking = state.buildingTracking[action.buildingId];
+    if (existingTracking && hasAnyBuildingState(existingTracking)) {
+      console.error('Build locked: building has active state:', action.buildingId, {
+        onFireCount: existingTracking.onFireCount,
+        destroyedCount: existingTracking.destroyedCount,
+        onStrikeCount: existingTracking.onStrikeCount,
+      });
+      return state;
+    }
+
     // Validate: enough gold
     if (state.stats.gold < def.cost) {
       console.error('Not enough gold for:', action.buildingId, 'Need', def.cost, 'have', state.stats.gold);
@@ -1989,6 +2010,97 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       unlocks,
       scheduledEvents,
       log: [...state.log, logEntry],
+    };
+  }
+
+  // Handle EXTINGUISH_ONE action
+  if (action.type === 'EXTINGUISH_ONE') {
+    if (state.gameOver) return state;
+
+    const tracking = state.buildingTracking[action.buildingId];
+    if (!tracking || tracking.onFireCount <= 0) {
+      console.error('Cannot extinguish: no on-fire units for', action.buildingId);
+      return state;
+    }
+
+    // Apply extinguish cost (e.g. gold, satisfaction)
+    const costEffect = FIRE_SYSTEM_CONFIG.extinguishCost;
+    const newStats = clampStats(applyEffects(state.stats, costEffect));
+
+    // Reduce onFireCount by 1
+    const newTracking = { ...tracking, onFireCount: tracking.onFireCount - 1 };
+    const buildingTracking = {
+      ...state.buildingTracking,
+      [action.buildingId]: newTracking,
+    };
+
+    // Check global sum of onFireCount
+    const globalOnFireCount = Object.values(buildingTracking).reduce(
+      (sum, t) => sum + t.onFireCount, 0
+    );
+
+    let fire = { ...state.fire };
+
+    // If global onFire is now 0: abort all active chains and queue info
+    if (globalOnFireCount === 0) {
+      fire = {
+        ...fire,
+        slots: fire.slots.map(s => s.active
+          ? { ...s, active: false, abortedByManualExtinguish: true }
+          : s
+        ),
+        pendingInfoQueue: [
+          ...fire.pendingInfoQueue,
+          { type: 'ALL_EXTINGUISHED_ABORT' as const },
+        ],
+      };
+    }
+
+    return {
+      ...state,
+      stats: newStats,
+      buildingTracking,
+      fire,
+    };
+  }
+
+  // Handle REPAIR_ONE action
+  if (action.type === 'REPAIR_ONE') {
+    if (state.gameOver) return state;
+
+    const tracking = state.buildingTracking[action.buildingId];
+    if (!tracking || tracking.destroyedCount <= 0) {
+      console.error('Cannot repair: no destroyed units for', action.buildingId);
+      return state;
+    }
+
+    // Calculate repair cost
+    let newStats: Stats;
+    if (FIRE_SYSTEM_CONFIG.repairCostOverride) {
+      // Use override effect if defined
+      newStats = clampStats(applyEffects(state.stats, FIRE_SYSTEM_CONFIG.repairCostOverride));
+    } else {
+      // Default: ceil(buildCost * repairCostPercentOfBuildCost)
+      const def = getBuildingDef(action.buildingId);
+      if (!def) {
+        console.error('Unknown building ID for repair:', action.buildingId);
+        return state;
+      }
+      const goldCost = Math.ceil(def.cost * FIRE_SYSTEM_CONFIG.repairCostPercentOfBuildCost);
+      newStats = clampStats(applyEffects(state.stats, { gold: -goldCost }));
+    }
+
+    // Reduce destroyedCount by 1
+    const newTracking = { ...tracking, destroyedCount: tracking.destroyedCount - 1 };
+    const buildingTracking = {
+      ...state.buildingTracking,
+      [action.buildingId]: newTracking,
+    };
+
+    return {
+      ...state,
+      stats: newStats,
+      buildingTracking,
     };
   }
 
