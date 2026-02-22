@@ -385,6 +385,8 @@ export const eventRequests: Request[] = [
     id: 'EVT_CRISIS_FIRE',
     title: 'The Ember Alert',
     text: 'Warning: High Fire Risk! Neglect has made the village a tinderbox. A single spark could be fatal. We must implement emergency fire safety measures immediately.',
+    // Disabled: replaced by Fire System V3 chain-based fire logic
+    canTriggerRandomly: false,
     options: [
       {
         text: 'PREPARE',
@@ -5224,7 +5226,7 @@ export const authorityInfoRequests: Request[] = [
  * Throws errors if validation fails.
  */
 export function validateRequests(): void {
-  const allRequests = [...infoRequests, ...authorityInfoRequests, ...eventRequests];
+  const allRequests = [...infoRequests, ...authorityInfoRequests, ...eventRequests, ...fireChainRequests];
   const errors: string[] = [];
 
   // Collect all request IDs
@@ -5233,7 +5235,8 @@ export function validateRequests(): void {
 
   for (const request of allRequests) {
     // Check 1: Info and reminder requests must have exactly 1 option, all others must have exactly 2
-    const isSingleOptionRequest = request.id.startsWith('INFO_') || request.id.startsWith('REMINDER_');
+    // Fire START requests (FIRE_S*_START) also have exactly 1 option
+    const isSingleOptionRequest = request.id.startsWith('INFO_') || request.id.startsWith('REMINDER_') || request.id.match(/^FIRE_S\d+_START$/);
     const expectedOptions = isSingleOptionRequest ? 1 : 2;
     if (request.options.length !== expectedOptions) {
       errors.push(

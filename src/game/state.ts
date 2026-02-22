@@ -3,8 +3,8 @@
  * Based on POF_SPEC.md specification.
  */
 
-import type { Stats, Effect, Request, FollowUp, AuthorityCheck, AuthorityCheckResult, WeightedCandidate, AuthorityFollowUpBoost, FireState, FireChainSlotState } from './models';
-import { infoRequests, authorityInfoRequests, eventRequests } from './requests';
+import type { Stats, Effect, Request, FollowUp, AuthorityCheck, AuthorityCheckResult, WeightedCandidate, AuthorityFollowUpBoost, FireState, FireChainSlotState, FireSystemConfig } from './models';
+import { infoRequests, authorityInfoRequests, eventRequests, fireChainRequests } from './requests';
 import { pickNextRequest, selectWeightedCandidate, getRandomValue, resetRandom } from './picker';
 import { needModifiers } from './modifiers';
 import type { BuildingTracking } from './buildings';
@@ -206,6 +206,39 @@ function createInitialFireSlots(): FireChainSlotState[] {
 }
 
 /**
+ * Default configuration for Fire System V3.
+ * Balancing values — can be adjusted without code changes.
+ */
+export const FIRE_SYSTEM_CONFIG: FireSystemConfig = {
+  baseOffset: -10,
+  factor: 0.5,
+  chanceMin: 0,
+  chanceMax: 40,
+
+  maxConcurrentChainsByRisk: [
+    { minRisk: 0,  maxRisk: 30,  maxChains: 1 },
+    { minRisk: 31, maxRisk: 60,  maxChains: 2 },
+    { minRisk: 61, maxRisk: 80,  maxChains: 3 },
+    { minRisk: 81, maxRisk: 100, maxChains: 5 },
+  ],
+
+  spreadChancePerBurningBuilding: 0.10,
+  destroyChancePerBurningBuilding: 0.08,
+
+  repairCostPercentOfBuildCost: 0.75,
+
+  extinguishCost: { gold: -15, satisfaction: -3 },
+
+  chainSlots: 10,
+
+  tierRules: [
+    { tier: 'minor',        minFireRisk: 0,  maxFireRisk: 40,  weight: 6, initialOnFireMin: 1, initialOnFireMax: 1 },
+    { tier: 'major',        minFireRisk: 30, maxFireRisk: 75,  weight: 3, initialOnFireMin: 1, initialOnFireMax: 2 },
+    { tier: 'catastrophic', minFireRisk: 60, maxFireRisk: 100, weight: 1, initialOnFireMin: 2, initialOnFireMax: 3 },
+  ],
+};
+
+/**
  * Initial game state with starting values from POF_SPEC.md
  */
 export const initialState: GameState = {
@@ -250,7 +283,7 @@ function clamp(value: number, min: number, max: number): number {
  * @returns The request's title, or a fallback string if not found
  */
 function getRequestTitleFromId(requestId: string): string {
-  const allRequests = [...infoRequests, ...authorityInfoRequests, ...eventRequests];
+  const allRequests = [...infoRequests, ...authorityInfoRequests, ...eventRequests, ...fireChainRequests];
   const request = allRequests.find(r => r.id === requestId);
   
   if (!request) {
@@ -1377,7 +1410,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
     
     // Find the current request (non-synthetic)
-    const currentRequest = [...infoRequests, ...authorityInfoRequests, ...eventRequests].find(
+    const currentRequest = [...infoRequests, ...authorityInfoRequests, ...eventRequests, ...fireChainRequests].find(
       (r) => r.id === state.currentRequestId
     );
 
@@ -2114,7 +2147,7 @@ export function getCurrentRequest(state: GameState): Request | null {
   }
   
   // Regular request - look it up in the arrays
-  return [...infoRequests, ...authorityInfoRequests, ...eventRequests].find(
+  return [...infoRequests, ...authorityInfoRequests, ...eventRequests, ...fireChainRequests].find(
     (r) => r.id === state.currentRequestId
   ) || null;
 }
