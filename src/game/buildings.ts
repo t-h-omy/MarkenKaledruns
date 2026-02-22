@@ -43,6 +43,12 @@ export interface BuildingDefinition {
 export interface BuildingTracking {
   /** Number of instances built (persistent, never decreases) */
   buildingCount: number;
+  /** Number of instances currently on fire (count-based state) */
+  onFireCount: number;
+  /** Number of instances destroyed (count-based state) */
+  destroyedCount: number;
+  /** Number of instances on strike (count-based state) */
+  onStrikeCount: number;
   /** Tick when this building type was first unlocked */
   unlockedAtTick?: number;
   /** Tick when an additional building last became required (population crossed threshold) */
@@ -187,9 +193,28 @@ export function createInitialBuildingTracking(): Record<string, BuildingTracking
   for (const def of BUILDING_DEFINITIONS) {
     tracking[def.id] = {
       buildingCount: def.id === 'farmstead' ? 2 : 0,
+      onFireCount: 0,
+      destroyedCount: 0,
+      onStrikeCount: 0,
       reminderScheduled: false,
       reminderCooldownUntil: 0,
     };
   }
   return tracking;
+}
+
+/**
+ * Get the effective (functional) building count, excluding buildings with any state.
+ * Buildings that are on fire, destroyed, or on strike do not count.
+ */
+export function getEffectiveBuildingCount(tracking: BuildingTracking): number {
+  return tracking.buildingCount - tracking.onFireCount - tracking.destroyedCount - tracking.onStrikeCount;
+}
+
+/**
+ * Check if a building type has any active state (on fire, destroyed, or on strike).
+ * When true, the player cannot build more of this type.
+ */
+export function hasAnyBuildingState(tracking: BuildingTracking): boolean {
+  return tracking.onFireCount > 0 || tracking.destroyedCount > 0 || tracking.onStrikeCount > 0;
 }

@@ -3,7 +3,7 @@
  * Based on POF_SPEC.md specification.
  */
 
-import type { Stats, Effect, Request, FollowUp, AuthorityCheck, AuthorityCheckResult, WeightedCandidate, AuthorityFollowUpBoost } from './models';
+import type { Stats, Effect, Request, FollowUp, AuthorityCheck, AuthorityCheckResult, WeightedCandidate, AuthorityFollowUpBoost, FireState, FireChainSlotState } from './models';
 import { infoRequests, authorityInfoRequests, eventRequests } from './requests';
 import { pickNextRequest, selectWeightedCandidate, getRandomValue, resetRandom } from './picker';
 import { needModifiers } from './modifiers';
@@ -174,6 +174,8 @@ export interface GameState {
   activeCombat?: ActiveCombat;
   /** Pending authority checks to resolve at future ticks */
   pendingAuthorityChecks: PendingAuthorityCheck[];
+  /** Fire system runtime state (slots and pending info queue) */
+  fire: FireState;
 }
 
 /**
@@ -192,6 +194,16 @@ export type GameAction =
       type: 'BUILD_BUILDING';
       buildingId: string;
     };
+
+/**
+ * Create the initial fire chain slot states (10 slots, all inactive).
+ */
+function createInitialFireSlots(): FireChainSlotState[] {
+  return Array.from({ length: 10 }, (_, i) => ({
+    slotIndex: i + 1,
+    active: false,
+  }));
+}
 
 /**
  * Initial game state with starting values from POF_SPEC.md
@@ -219,6 +231,10 @@ export const initialState: GameState = {
   unlocks: {},
   scheduledCombats: [],
   pendingAuthorityChecks: [],
+  fire: {
+    slots: createInitialFireSlots(),
+    pendingInfoQueue: [],
+  },
 };
 
 /**
@@ -1583,6 +1599,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         unlocks,
         scheduledCombats,
         pendingAuthorityChecks: state.pendingAuthorityChecks,
+        fire: state.fire,
       };
     }
 
@@ -1605,6 +1622,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         unlocks,
         scheduledCombats,
         pendingAuthorityChecks: state.pendingAuthorityChecks,
+        fire: state.fire,
       });
 
       // Return state with same tick, updated stats/unlocks/log, new request
@@ -1623,6 +1641,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         unlocks,
         scheduledCombats,
         pendingAuthorityChecks: state.pendingAuthorityChecks,
+        fire: state.fire,
       };
     }
 
@@ -1745,6 +1764,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         unlocks,
         scheduledCombats,
         pendingAuthorityChecks: state.pendingAuthorityChecks,
+        fire: state.fire,
       };
     }
 
@@ -1806,6 +1826,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       unlocks,
       scheduledCombats,
       pendingAuthorityChecks,
+      fire: state.fire,
     });
 
     // 4.5. Check if the picked request was a scheduled event with committed authority
@@ -1848,6 +1869,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       unlocks,
       scheduledCombats,
       pendingAuthorityChecks,
+      fire: state.fire,
     };
   }
 
@@ -1879,6 +1901,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     // Increment building count
     const oldTracking = state.buildingTracking[action.buildingId] ?? {
       buildingCount: 0,
+      onFireCount: 0,
+      destroyedCount: 0,
+      onStrikeCount: 0,
       reminderScheduled: false,
       reminderCooldownUntil: 0,
     };
