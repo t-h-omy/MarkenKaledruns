@@ -1853,6 +1853,31 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     buildingTracking = reminderResult.buildingTracking;
     scheduledEvents = reminderResult.scheduledEvents;
 
+    // 3.7. Convert fire pendingInfoQueue into scheduled synthetic info requests (FIFO)
+    let fireState = { ...state.fire };
+    if (fireState.pendingInfoQueue.length > 0) {
+      for (const infoMsg of fireState.pendingInfoQueue) {
+        let syntheticId: string;
+        if (infoMsg.type === 'SPREAD_OR_DESTROY') {
+          const payload = {
+            newOnFireByBuildingId: infoMsg.newOnFireByBuildingId || {},
+            newDestroyedByBuildingId: infoMsg.newDestroyedByBuildingId || {},
+          };
+          syntheticId = `FIRE_INFO::SPREAD_OR_DESTROY::${encodeURIComponent(JSON.stringify(payload))}`;
+        } else {
+          syntheticId = `FIRE_INFO::ALL_EXTINGUISHED_ABORT`;
+        }
+        scheduledEvents.push({
+          targetTick: state.tick + 1,
+          requestId: syntheticId,
+          scheduledAtTick: state.tick,
+          priority: 'info',
+        });
+      }
+      // Clear the queue so messages don't repeat
+      fireState = { ...fireState, pendingInfoQueue: [] };
+    }
+
     // 4. Pick next request
     const nextRequest = pickNextRequest({
       tick: state.tick + 1,
@@ -1869,7 +1894,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       unlocks,
       scheduledCombats,
       pendingAuthorityChecks,
-      fire: state.fire,
+      fire: fireState,
     });
 
     // 4.5. Check if the picked request was a scheduled event with committed authority
@@ -1912,7 +1937,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       unlocks,
       scheduledCombats,
       pendingAuthorityChecks,
-      fire: state.fire,
+      fire: fireState,
     };
   }
 
@@ -2276,10 +2301,92 @@ export function getCurrentRequest(state: GameState): Request | null {
     }
   }
   
+  // Check if this is a synthetic fire info request
+  if (state.currentRequestId.startsWith('FIRE_INFO::')) {
+    return buildSyntheticFireInfoRequest(state.currentRequestId);
+  }
+
   // Regular request - look it up in the arrays
   return [...infoRequests, ...authorityInfoRequests, ...eventRequests, ...fireChainRequests].find(
     (r) => r.id === state.currentRequestId
   ) || null;
+}
+
+/**
+ * Build a synthetic Request object from a FIRE_INFO:: encoded request ID.
+ * Two types are supported:
+ *  - FIRE_INFO::SPREAD_OR_DESTROY::{json} — lists newly on-fire and destroyed buildings
+ *  - FIRE_INFO::ALL_EXTINGUISHED_ABORT — all fires manually extinguished
+ */
+function buildSyntheticFireInfoRequest(requestId: string): Request {
+  const parts = requestId.split('::');
+  const infoType = parts[1]; // 'SPREAD_OR_DESTROY' or 'ALL_EXTINGUISHED_ABORT'
+
+  if (infoType === 'SPREAD_OR_DESTROY') {
+    try {
+      const data = JSON.parse(decodeURIComponent(parts[2] || '{}'));
+      const newOnFire: Record<string, number> = data.newOnFireByBuildingId || {};
+      const newDestroyed: Record<string, number> = data.newDestroyedByBuildingId || {};
+
+      // Build text listing exact deltas per building type
+      const lines: string[] = [];
+
+      const onFireEntries = Object.entries(newOnFire).filter(([, count]) => count > 0);
+      if (onFireEntries.length > 0) {
+        lines.push('Neue Brände:');
+        for (const [buildingId, count] of onFireEntries) {
+          const def = getBuildingDef(buildingId);
+          const name = def ? `${def.icon} ${def.displayName}` : buildingId;
+          lines.push(`  🔥 ${name}: ${count}`);
+        }
+      }
+
+      const destroyedEntries = Object.entries(newDestroyed).filter(([, count]) => count > 0);
+      if (destroyedEntries.length > 0) {
+        if (lines.length > 0) lines.push('');
+        lines.push('Neu zerstört:');
+        for (const [buildingId, count] of destroyedEntries) {
+          const def = getBuildingDef(buildingId);
+          const name = def ? `${def.icon} ${def.displayName}` : buildingId;
+          lines.push(`  🧱 ${name}: ${count}`);
+        }
+      }
+
+      return {
+        id: requestId,
+        title: '🔥 Das Feuer greift um sich',
+        text: lines.length > 0 ? lines.join('\n') : 'Das Feuer wütet weiter.',
+        options: [
+          { text: 'Zum Bau-Menü', effects: {} },
+          { text: 'Weiter', effects: {} },
+        ],
+        advancesTick: false,
+      };
+    } catch {
+      return {
+        id: requestId,
+        title: '🔥 Das Feuer greift um sich',
+        text: 'Das Feuer wütet weiter.',
+        options: [
+          { text: 'Zum Bau-Menü', effects: {} },
+          { text: 'Weiter', effects: {} },
+        ],
+        advancesTick: false,
+      };
+    }
+  }
+
+  // ALL_EXTINGUISHED_ABORT
+  return {
+    id: requestId,
+    title: 'Die Lage beruhigt sich',
+    text: 'Alle Brände wurden manuell gelöscht. Sämtliche Brandketten wurden beendet.',
+    options: [
+      { text: 'OK', effects: {} },
+      { text: 'Zum Bau-Menü', effects: {} },
+    ],
+    advancesTick: false,
+  };
 }
 
 /**
