@@ -435,7 +435,7 @@
   background: #cc4400;
   color: #fff;
 }
-.state-action-fire:hover {
+.state-action-fire:hover:not(:disabled) {
   background: #ff5500;
 }
 
@@ -443,8 +443,19 @@
   background: #8b6914;
   color: #fff;
 }
-.state-action-repair:hover {
+.state-action-repair:hover:not(:disabled) {
   background: #a07818;
+}
+
+.state-action-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.state-action-no-gold {
+  font-size: 0.75rem;
+  font-weight: 400;
+  opacity: 0.9;
 }
 
 .state-action-strike {

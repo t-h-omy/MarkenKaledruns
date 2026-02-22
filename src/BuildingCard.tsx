@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import './BuildingCard.css'
 import type { BuildingDefinition, BuildingTracking } from './game/buildings'
 import { hasAnyBuildingState, getEffectiveBuildingCount } from './game/buildings'
+import { FIRE_SYSTEM_CONFIG } from './game/state'
 
 export type BuildingStatus = 'locked' | 'available' | 'needed' | 'no-gold' | 'fulfilled'
 
@@ -176,21 +177,33 @@ function BuildingCard({
                   <span className="state-effective">Effective: {getEffectiveBuildingCount(tracking)} / {tracking.buildingCount}</span>
                 </div>
                 {/* Primary state action button */}
-                {tracking.onFireCount > 0 ? (
-                  <button
-                    className="building-state-action-button state-action-fire"
-                    onClick={() => onExtinguish?.(definition.id)}
-                  >
-                    🔥 Extinguish Fire (1)
-                  </button>
-                ) : tracking.destroyedCount > 0 ? (
-                  <button
-                    className="building-state-action-button state-action-repair"
-                    onClick={() => onRepair?.(definition.id)}
-                  >
-                    🧱 Repair (1)
-                  </button>
-                ) : tracking.onStrikeCount > 0 ? (
+                {tracking.onFireCount > 0 ? (() => {
+                  const extinguishGoldCost = Math.abs(FIRE_SYSTEM_CONFIG.extinguishCost.gold ?? 0);
+                  const canAfford = gold >= extinguishGoldCost;
+                  return (
+                    <button
+                      className={`building-state-action-button state-action-fire${!canAfford ? ' state-action-disabled' : ''}`}
+                      onClick={() => canAfford && onExtinguish?.(definition.id)}
+                      disabled={!canAfford}
+                    >
+                      🔥 Extinguish Fire (1) — {extinguishGoldCost}g
+                      {!canAfford && <span className="state-action-no-gold"> (not enough gold)</span>}
+                    </button>
+                  );
+                })() : tracking.destroyedCount > 0 ? (() => {
+                  const repairGoldCost = Math.ceil(definition.cost * FIRE_SYSTEM_CONFIG.repairCostPercentOfBuildCost);
+                  const canAfford = gold >= repairGoldCost;
+                  return (
+                    <button
+                      className={`building-state-action-button state-action-repair${!canAfford ? ' state-action-disabled' : ''}`}
+                      onClick={() => canAfford && onRepair?.(definition.id)}
+                      disabled={!canAfford}
+                    >
+                      🧱 Repair (1) — {repairGoldCost}g
+                      {!canAfford && <span className="state-action-no-gold"> (not enough gold)</span>}
+                    </button>
+                  );
+                })() : tracking.onStrikeCount > 0 ? (
                   <button
                     className="building-state-action-button state-action-strike"
                     disabled
