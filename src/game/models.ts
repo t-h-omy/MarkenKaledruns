@@ -316,7 +316,7 @@ export interface FireSystemConfig {
   spreadChancePerBurningBuilding: number;
   destroyChancePerBurningBuilding: number;
 
-  /** Default: 0.75 — repair cost as fraction of build cost */
+  /** Repair cost as a fraction of the original build cost (0.75 = 75%) */
   repairCostPercentOfBuildCost: number;
 
   extinguishCost: Effect;

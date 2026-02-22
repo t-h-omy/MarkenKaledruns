@@ -208,7 +208,7 @@ export function createInitialBuildingTracking(): Record<string, BuildingTracking
  * Buildings that are on fire, destroyed, or on strike do not count.
  */
 export function getEffectiveBuildingCount(tracking: BuildingTracking): number {
-  return tracking.buildingCount - tracking.onFireCount - tracking.destroyedCount - tracking.onStrikeCount;
+  return Math.max(0, tracking.buildingCount - tracking.onFireCount - tracking.destroyedCount - tracking.onStrikeCount);
 }
 
 /**
