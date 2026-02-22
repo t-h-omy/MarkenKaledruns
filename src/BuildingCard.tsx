@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import './BuildingCard.css'
 import type { BuildingDefinition, BuildingTracking } from './game/buildings'
+import { hasAnyBuildingState, getEffectiveBuildingCount } from './game/buildings'
 
 export type BuildingStatus = 'locked' | 'available' | 'needed' | 'no-gold' | 'fulfilled'
 
@@ -18,6 +19,8 @@ interface BuildingCardProps {
   isHighlighted?: boolean;
   onBuild: (buildingId: string) => void;
   onBuildMultiple?: (buildingId: string) => void;
+  onExtinguish?: (buildingId: string) => void;
+  onRepair?: (buildingId: string) => void;
 }
 
 function BuildingCard({
@@ -29,7 +32,9 @@ function BuildingCard({
   status,
   isHighlighted = false,
   onBuild,
-  onBuildMultiple
+  onBuildMultiple,
+  onExtinguish,
+  onRepair
 }: BuildingCardProps) {
   const built = tracking.buildingCount
   const shortage = Math.max(0, requiredCount - built)
@@ -159,21 +164,58 @@ function BuildingCard({
             </div>
           )}
           
-          {/* Build Button */}
+          {/* Build Button / State Action Button */}
           <div className="building-card-actions">
-            <button
-              className="building-build-button"
-              onClick={handleBuildClick}
-            >
-              BUILD {definition.displayName.toUpperCase()}
-            </button>
-            {shortage > 1 && onBuildMultiple && (
-              <button
-                className="building-build-multiple-button"
-                onClick={handleBuildMultipleClick}
-              >
-                BUILD MULTIPLE...
-              </button>
+            {hasAnyBuildingState(tracking) ? (
+              <>
+                {/* State status line */}
+                <div className="building-state-status">
+                  {tracking.onFireCount > 0 && <span className="state-tag state-fire">🔥 {tracking.onFireCount}</span>}
+                  {tracking.destroyedCount > 0 && <span className="state-tag state-destroyed">🧱 {tracking.destroyedCount}</span>}
+                  {tracking.onStrikeCount > 0 && <span className="state-tag state-strike">⚑ {tracking.onStrikeCount}</span>}
+                  <span className="state-effective">Wirksam: {getEffectiveBuildingCount(tracking)} / {tracking.buildingCount}</span>
+                </div>
+                {/* Primary state action button */}
+                {tracking.onFireCount > 0 ? (
+                  <button
+                    className="building-state-action-button state-action-fire"
+                    onClick={() => onExtinguish?.(definition.id)}
+                  >
+                    🔥 Feuer löschen (1)
+                  </button>
+                ) : tracking.destroyedCount > 0 ? (
+                  <button
+                    className="building-state-action-button state-action-repair"
+                    onClick={() => onRepair?.(definition.id)}
+                  >
+                    🧱 Reparieren (1)
+                  </button>
+                ) : tracking.onStrikeCount > 0 ? (
+                  <button
+                    className="building-state-action-button state-action-strike"
+                    disabled
+                  >
+                    ⚑ Streik beenden (1) — nicht implementiert
+                  </button>
+                ) : null}
+              </>
+            ) : (
+              <>
+                <button
+                  className="building-build-button"
+                  onClick={handleBuildClick}
+                >
+                  BUILD {definition.displayName.toUpperCase()}
+                </button>
+                {shortage > 1 && onBuildMultiple && (
+                  <button
+                    className="building-build-multiple-button"
+                    onClick={handleBuildMultipleClick}
+                  >
+                    BUILD MULTIPLE...
+                  </button>
+                )}
+              </>
             )}
           </div>
         </>

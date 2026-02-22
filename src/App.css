@@ -1523,3 +1523,24 @@
     transform: translate(-50%, -50%) translateY(-80px) scale(0.8);
   }
 }
+
+/* ─── Fire Chain Tag + Context Line ──────────────────────────────────── */
+.fire-chain-info {
+  margin-bottom: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  background: rgba(255, 100, 0, 0.12);
+  border-left: 3px solid #ff6600;
+  border-radius: 4px;
+}
+
+.fire-chain-tag {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #ff6600;
+}
+
+.fire-chain-context {
+  font-size: 0.8rem;
+  color: #ccc;
+  margin-top: 0.15rem;
+}

@@ -2,7 +2,7 @@ import { useReducer, useState, useEffect, useRef } from 'react'
 import './App.css'
 import { gameReducer, initializeGame, getCurrentRequest } from './game/state'
 import type { Effect } from './game/models'
-import { BUILDING_DEFINITIONS, calculateRequiredBuildings } from './game/buildings'
+import { BUILDING_DEFINITIONS, calculateRequiredBuildings, getBuildingDef } from './game/buildings'
 import type { BuildingDefinition } from './game/buildings'
 import ConstructionScreen from './ConstructionScreen'
 import LogScreen from './LogScreen'
@@ -606,6 +606,26 @@ function App() {
             <h2>Decision Required</h2>
             {currentRequest ? (
               <>
+                {/* Fire chain tag + context line */}
+                {(() => {
+                  const fireSlotMatch = gameState.currentRequestId.match(/^FIRE_S(\d+)_(START|DECISION|ESCALATE|END)$/)
+                  if (!fireSlotMatch) return null
+                  const slotIndex = parseInt(fireSlotMatch[1], 10)
+                  const slot = gameState.fire.slots.find(s => s.slotIndex === slotIndex)
+                  const targetId = slot?.targetBuildingId
+                  const targetDef = targetId ? getBuildingDef(targetId) : null
+                  const targetTracking = targetId ? gameState.buildingTracking[targetId] : null
+                  return (
+                    <div className="fire-chain-info">
+                      <div className="fire-chain-tag">🔥 Brand (Slot {slotIndex})</div>
+                      {targetDef && targetTracking && (
+                        <div className="fire-chain-context">
+                          Betroffen: {targetDef.icon} {targetDef.displayName} | 🔥 {targetTracking.onFireCount} | 🧱 {targetTracking.destroyedCount}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })()}
                 <h3 className="request-title">{currentRequest.title}</h3>
                 <p className="request-text">{currentRequest.text}</p>
                 
@@ -947,6 +967,8 @@ function App() {
           buildingTracking={gameState.buildingTracking}
           highlightedBuilding={highlightedBuildingId ?? undefined}
           onBuild={(buildingId) => dispatch({ type: 'BUILD_BUILDING', buildingId })}
+          onExtinguish={(buildingId) => dispatch({ type: 'EXTINGUISH_ONE', buildingId })}
+          onRepair={(buildingId) => dispatch({ type: 'REPAIR_ONE', buildingId })}
         />
         
         {/* Log Screen Overlay */}
