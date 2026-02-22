@@ -14,6 +14,8 @@ interface ConstructionScreenProps {
   buildingTracking: Record<string, BuildingTracking>;
   highlightedBuilding?: string;
   onBuild: (buildingId: string) => void;
+  onExtinguish?: (buildingId: string) => void;
+  onRepair?: (buildingId: string) => void;
 }
 
 function ConstructionScreen({ 
@@ -23,7 +25,9 @@ function ConstructionScreen({
   gold, 
   buildingTracking, 
   highlightedBuilding,
-  onBuild 
+  onBuild,
+  onExtinguish,
+  onRepair
 }: ConstructionScreenProps) {
   const highlightedBuildingRef = useRef<HTMLDivElement>(null)
   const [buildMultipleModalOpen, setBuildMultipleModalOpen] = useState(false)
@@ -168,6 +172,8 @@ function ConstructionScreen({
                   isHighlighted={isHighlighted}
                   onBuild={onBuild}
                   onBuildMultiple={handleOpenBuildMultiple}
+                  onExtinguish={onExtinguish}
+                  onRepair={onRepair}
                 />
               </div>
             )

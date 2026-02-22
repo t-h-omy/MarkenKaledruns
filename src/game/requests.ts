@@ -385,6 +385,8 @@ export const eventRequests: Request[] = [
     id: 'EVT_CRISIS_FIRE',
     title: 'The Ember Alert',
     text: 'Warning: High Fire Risk! Neglect has made the village a tinderbox. A single spark could be fatal. We must implement emergency fire safety measures immediately.',
+    // Disabled: replaced by Fire System V3 chain-based fire logic
+    canTriggerRandomly: false,
     options: [
       {
         text: 'PREPARE',
@@ -5224,7 +5226,7 @@ export const authorityInfoRequests: Request[] = [
  * Throws errors if validation fails.
  */
 export function validateRequests(): void {
-  const allRequests = [...infoRequests, ...authorityInfoRequests, ...eventRequests];
+  const allRequests = [...infoRequests, ...authorityInfoRequests, ...eventRequests, ...fireChainRequests];
   const errors: string[] = [];
 
   // Collect all request IDs
@@ -5233,7 +5235,8 @@ export function validateRequests(): void {
 
   for (const request of allRequests) {
     // Check 1: Info and reminder requests must have exactly 1 option, all others must have exactly 2
-    const isSingleOptionRequest = request.id.startsWith('INFO_') || request.id.startsWith('REMINDER_');
+    // Fire START requests (FIRE_S*_START) also have exactly 1 option
+    const isSingleOptionRequest = request.id.startsWith('INFO_') || request.id.startsWith('REMINDER_') || request.id.match(/^FIRE_S\d+_START$/);
     const expectedOptions = isSingleOptionRequest ? 1 : 2;
     if (request.options.length !== expectedOptions) {
       errors.push(
@@ -5296,3 +5299,115 @@ export function validateRequests(): void {
     );
   }
 }
+
+/**
+ * Fire Chain Requests (40)
+ * 10 fire chain slots × 4 requests each (START, DECISION, ESCALATE, END).
+ * Triggered by the fire system, not randomly.
+ */
+function generateFireChainRequests(): Request[] {
+  const requests: Request[] = [];
+
+  for (let n = 1; n <= 10; n++) {
+    const chainId = `CHAIN_FIRE_SLOT_${n}`;
+
+    // START
+    requests.push({
+      id: `FIRE_S${n}_START`,
+      title: `🔥 Fire! (Slot ${n})`,
+      text: `A fire has broken out in part of the settlement! Smoke rises and panic spreads among the villagers.`,
+      canTriggerRandomly: false,
+      advancesTick: false,
+      chainId,
+      chainRole: 'start',
+      options: [
+        { text: 'Assess the situation', effects: {} },
+      ],
+      followUps: [
+        {
+          triggerOnOptionIndex: 0,
+          delayMinTicks: 2,
+          delayMaxTicks: 4,
+          candidates: [{ requestId: `FIRE_S${n}_DECISION`, weight: 1 }],
+        },
+      ],
+    });
+
+    // DECISION
+    requests.push({
+      id: `FIRE_S${n}_DECISION`,
+      title: `🔥 Fire Response (Slot ${n})`,
+      text: `The fire rages on. You must decide how to respond before it spreads further.`,
+      canTriggerRandomly: false,
+      advancesTick: false,
+      chainId,
+      chainRole: 'member',
+      options: [
+        { text: 'Send a bucket brigade', effects: { satisfaction: -5 } },
+        { text: 'Let it burn, focus elsewhere', effects: { fireRisk: 5 } },
+      ],
+      followUps: [
+        {
+          triggerOnOptionIndex: 0,
+          delayMinTicks: 2,
+          delayMaxTicks: 4,
+          candidates: [{ requestId: `FIRE_S${n}_ESCALATE`, weight: 1 }],
+        },
+        {
+          triggerOnOptionIndex: 1,
+          delayMinTicks: 2,
+          delayMaxTicks: 4,
+          candidates: [{ requestId: `FIRE_S${n}_ESCALATE`, weight: 1 }],
+        },
+      ],
+    });
+
+    // ESCALATE
+    requests.push({
+      id: `FIRE_S${n}_ESCALATE`,
+      title: `🔥 Fire Spreads (Slot ${n})`,
+      text: `The fire has spread to nearby structures! The situation is becoming dire.`,
+      canTriggerRandomly: false,
+      advancesTick: false,
+      chainId,
+      chainRole: 'member',
+      options: [
+        { text: 'Mobilize all hands', effects: { gold: -20, satisfaction: -5 } },
+        { text: 'Salvage what you can', effects: { fireRisk: 10 } },
+      ],
+      followUps: [
+        {
+          triggerOnOptionIndex: 0,
+          delayMinTicks: 2,
+          delayMaxTicks: 3,
+          candidates: [{ requestId: `FIRE_S${n}_END`, weight: 1 }],
+        },
+        {
+          triggerOnOptionIndex: 1,
+          delayMinTicks: 2,
+          delayMaxTicks: 3,
+          candidates: [{ requestId: `FIRE_S${n}_END`, weight: 1 }],
+        },
+      ],
+    });
+
+    // END
+    requests.push({
+      id: `FIRE_S${n}_END`,
+      title: `🔥 Fire Resolved (Slot ${n})`,
+      text: `The fire is finally under control. Now is the time to deal with the aftermath.`,
+      canTriggerRandomly: false,
+      advancesTick: true,
+      chainId,
+      chainRole: 'end',
+      options: [
+        { text: 'Standard cleanup', effects: { fireRisk: -10 } },
+        { text: 'Invest in prevention', effects: { fireRisk: -20, gold: -30 } },
+      ],
+    });
+  }
+
+  return requests;
+}
+
+export const fireChainRequests = generateFireChainRequests();

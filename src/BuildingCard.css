@@ -382,3 +382,84 @@
     margin: 0.75rem 0;
   }
 }
+
+/* ─── Fire State Action Buttons ──────────────────────────────────────── */
+.building-state-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+  margin-bottom: 0.4rem;
+  font-size: 0.8rem;
+}
+
+.state-tag {
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.state-fire {
+  background: rgba(255, 80, 0, 0.2);
+  color: #ff6600;
+}
+
+.state-destroyed {
+  background: rgba(180, 100, 50, 0.2);
+  color: #c47832;
+}
+
+.state-strike {
+  background: rgba(200, 200, 0, 0.2);
+  color: #cccc00;
+}
+
+.state-effective {
+  margin-left: auto;
+  color: #999;
+  font-size: 0.75rem;
+}
+
+.building-state-action-button {
+  width: 100%;
+  padding: 0.5rem 0.8rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.state-action-fire {
+  background: #cc4400;
+  color: #fff;
+}
+.state-action-fire:hover:not(:disabled) {
+  background: #ff5500;
+}
+
+.state-action-repair {
+  background: #8b6914;
+  color: #fff;
+}
+.state-action-repair:hover:not(:disabled) {
+  background: #a07818;
+}
+
+.state-action-disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.state-action-no-gold {
+  font-size: 0.75rem;
+  font-weight: 400;
+  opacity: 0.9;
+}
+
+.state-action-strike {
+  background: #555;
+  color: #999;
+  cursor: not-allowed;
+}

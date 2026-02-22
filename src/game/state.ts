@@ -3,12 +3,12 @@
  * Based on POF_SPEC.md specification.
  */
 
-import type { Stats, Effect, Request, FollowUp, AuthorityCheck, AuthorityCheckResult, WeightedCandidate, AuthorityFollowUpBoost } from './models';
-import { infoRequests, authorityInfoRequests, eventRequests } from './requests';
+import type { Stats, Effect, Request, FollowUp, AuthorityCheck, AuthorityCheckResult, WeightedCandidate, AuthorityFollowUpBoost, FireState, FireChainSlotState, FireSystemConfig } from './models';
+import { infoRequests, authorityInfoRequests, eventRequests, fireChainRequests } from './requests';
 import { pickNextRequest, selectWeightedCandidate, getRandomValue, resetRandom } from './picker';
 import { needModifiers } from './modifiers';
 import type { BuildingTracking } from './buildings';
-import { BUILDING_DEFINITIONS, isBuildingActive, calculateRequiredBuildings, getBuildingDef, createInitialBuildingTracking } from './buildings';
+import { BUILDING_DEFINITIONS, isBuildingActive, calculateRequiredBuildings, getBuildingDef, createInitialBuildingTracking, hasAnyBuildingState, getEffectiveBuildingCount } from './buildings';
 
 /**
  * Represents a single applied change to a stat
@@ -174,6 +174,8 @@ export interface GameState {
   activeCombat?: ActiveCombat;
   /** Pending authority checks to resolve at future ticks */
   pendingAuthorityChecks: PendingAuthorityCheck[];
+  /** Fire system runtime state (slots and pending info queue) */
+  fire: FireState;
 }
 
 /**
@@ -191,7 +193,60 @@ export type GameAction =
   | {
       type: 'BUILD_BUILDING';
       buildingId: string;
+    }
+  | {
+      /** Extinguish one on-fire unit of a building type. Applies FIRE_SYSTEM_CONFIG.extinguishCost. */
+      type: 'EXTINGUISH_ONE';
+      buildingId: string;
+    }
+  | {
+      /** Repair one destroyed unit of a building type. Costs ceil(buildCost * config.repairCostPercentOfBuildCost). */
+      type: 'REPAIR_ONE';
+      buildingId: string;
     };
+
+/**
+ * Create the initial fire chain slot states (10 slots, all inactive).
+ */
+function createInitialFireSlots(): FireChainSlotState[] {
+  return Array.from({ length: 10 }, (_, i) => ({
+    slotIndex: i + 1,
+    active: false,
+  }));
+}
+
+/**
+ * Default configuration for Fire System V3.
+ * Balancing values — can be adjusted without code changes.
+ */
+export const FIRE_SYSTEM_CONFIG: FireSystemConfig = {
+  baseOffset: -10,
+  factor: 0.5,
+  chanceMin: 0,
+  chanceMax: 40,
+
+  maxConcurrentChainsByRisk: [
+    { minRisk: 0,  maxRisk: 30,  maxChains: 1 },
+    { minRisk: 31, maxRisk: 60,  maxChains: 2 },
+    { minRisk: 61, maxRisk: 80,  maxChains: 3 },
+    { minRisk: 81, maxRisk: 100, maxChains: 5 },
+  ],
+
+  spreadChancePerBurningBuilding: 0.10,
+  destroyChancePerBurningBuilding: 0.08,
+
+  repairCostPercentOfBuildCost: 0.75,
+
+  extinguishCost: { gold: -15, satisfaction: -3 },
+
+  chainSlots: 10,
+
+  tierRules: [
+    { tier: 'minor',        minFireRisk: 0,  maxFireRisk: 40,  weight: 6, initialOnFireMin: 1, initialOnFireMax: 1 },
+    { tier: 'major',        minFireRisk: 30, maxFireRisk: 75,  weight: 3, initialOnFireMin: 1, initialOnFireMax: 2 },
+    { tier: 'catastrophic', minFireRisk: 60, maxFireRisk: 100, weight: 1, initialOnFireMin: 2, initialOnFireMax: 3 },
+  ],
+};
 
 /**
  * Initial game state with starting values from POF_SPEC.md
@@ -219,6 +274,10 @@ export const initialState: GameState = {
   unlocks: {},
   scheduledCombats: [],
   pendingAuthorityChecks: [],
+  fire: {
+    slots: createInitialFireSlots(),
+    pendingInfoQueue: [],
+  },
 };
 
 /**
@@ -234,7 +293,7 @@ function clamp(value: number, min: number, max: number): number {
  * @returns The request's title, or a fallback string if not found
  */
 function getRequestTitleFromId(requestId: string): string {
-  const allRequests = [...infoRequests, ...authorityInfoRequests, ...eventRequests];
+  const allRequests = [...infoRequests, ...authorityInfoRequests, ...eventRequests, ...fireChainRequests];
   const request = allRequests.find(r => r.id === requestId);
   
   if (!request) {
@@ -428,7 +487,8 @@ function applyOvercrowdingPenalties(
   stats: Stats,
   buildingTracking: Record<string, BuildingTracking>
 ): { stats: Stats; changes: AppliedChange[] } {
-  const farmsteadCount = buildingTracking['farmstead']?.buildingCount ?? 0;
+  const farmsteadTracking = buildingTracking['farmstead'];
+  const farmsteadCount = farmsteadTracking ? getEffectiveBuildingCount(farmsteadTracking) : 0;
   const capacity = farmsteadCount * 20;
   const overflow = Math.max(0, stats.farmers - capacity);
 
@@ -469,6 +529,230 @@ function applyOvercrowdingPenalties(
   ];
 
   return { stats: newStats, changes };
+}
+
+/**
+ * Applies fire spread and destroy logic during tick advance.
+ * For each burning unit: roll for spread (to a random effective building) and destroy.
+ * Uses seeded RNG only. Tracks all deltas and enqueues a SPREAD_OR_DESTROY info
+ * message if any changes occurred (no silent damage).
+ *
+ * Mutates buildingTracking in-place and returns the updated fire state.
+ */
+function applyFireSpreadAndDestroy(
+  buildingTracking: Record<string, BuildingTracking>,
+  fireState: FireState,
+  config: FireSystemConfig
+): FireState {
+  const newOnFireByBuildingId: Record<string, number> = {};
+  const newDestroyedByBuildingId: Record<string, number> = {};
+
+  // Collect building types that currently have on-fire units
+  const burningTypes = BUILDING_DEFINITIONS
+    .filter(def => (buildingTracking[def.id]?.onFireCount ?? 0) > 0);
+
+  if (burningTypes.length === 0) {
+    return fireState;
+  }
+
+  // Iterate each burning building type and each burning unit
+  for (const burningDef of burningTypes) {
+    const burningTracking = buildingTracking[burningDef.id];
+    if (!burningTracking) continue;
+
+    // Snapshot the current onFireCount so new spread-fires this tick don't
+    // trigger additional rolls within the same iteration
+    const currentOnFire = burningTracking.onFireCount;
+
+    for (let i = 0; i < currentOnFire; i++) {
+      // ── Spread roll ──
+      if (getRandomValue() < config.spreadChancePerBurningBuilding) {
+        // Find all building types with effectiveCount > 0 (at least one state-free unit)
+        const eligibleTargets = BUILDING_DEFINITIONS.filter(def => {
+          const t = buildingTracking[def.id];
+          return t && getEffectiveBuildingCount(t) > 0;
+        });
+
+        if (eligibleTargets.length > 0) {
+          // Pick a random eligible target
+          const targetIdx = Math.floor(getRandomValue() * eligibleTargets.length);
+          const targetDef = eligibleTargets[targetIdx];
+          const targetTracking = buildingTracking[targetDef.id];
+
+          // Guard: total state counts must not exceed buildingCount
+          if (targetTracking && targetTracking.onFireCount + targetTracking.destroyedCount + targetTracking.onStrikeCount < targetTracking.buildingCount) {
+            buildingTracking[targetDef.id] = {
+              ...targetTracking,
+              onFireCount: targetTracking.onFireCount + 1,
+            };
+            newOnFireByBuildingId[targetDef.id] = (newOnFireByBuildingId[targetDef.id] || 0) + 1;
+          }
+        }
+      }
+
+      // ── Destroy roll ──
+      if (getRandomValue() < config.destroyChancePerBurningBuilding) {
+        // Re-read tracking in case it was mutated by spread above
+        const bTracking = buildingTracking[burningDef.id];
+        // Destroy converts on-fire → destroyed (net state count stays same), so only
+        // need to verify there is still an on-fire unit to convert
+        if (bTracking && bTracking.onFireCount > 0) {
+          buildingTracking[burningDef.id] = {
+            ...bTracking,
+            onFireCount: bTracking.onFireCount - 1,
+            destroyedCount: bTracking.destroyedCount + 1,
+          };
+          newDestroyedByBuildingId[burningDef.id] = (newDestroyedByBuildingId[burningDef.id] || 0) + 1;
+        }
+      }
+    }
+  }
+
+  // Only enqueue info if something actually changed
+  const hasSpread = Object.keys(newOnFireByBuildingId).length > 0;
+  const hasDestroy = Object.keys(newDestroyedByBuildingId).length > 0;
+
+  if (hasSpread || hasDestroy) {
+    return {
+      ...fireState,
+      pendingInfoQueue: [
+        ...fireState.pendingInfoQueue,
+        {
+          type: 'SPREAD_OR_DESTROY',
+          newOnFireByBuildingId: hasSpread ? newOnFireByBuildingId : undefined,
+          newDestroyedByBuildingId: hasDestroy ? newDestroyedByBuildingId : undefined,
+        },
+      ],
+    };
+  }
+
+  return fireState;
+}
+
+/**
+ * Attempts to start a new fire chain during tick advance.
+ * Uses linear probability based on fireRisk, respects concurrency limits,
+ * selects tier and target building, applies initial on-fire damage,
+ * activates the first free slot, and schedules the START request.
+ *
+ * Called after spread/destroy in the tick pipeline.
+ */
+function attemptFireChainStart(
+  buildingTracking: Record<string, BuildingTracking>,
+  fireState: FireState,
+  scheduledEvents: ScheduledEvent[],
+  config: FireSystemConfig,
+  fireRisk: number,
+  currentTick: number
+): { fireState: FireState; scheduledEvents: ScheduledEvent[] } {
+  // 1. Count active chains
+  const activeChains = fireState.slots.filter(s => s.active).length;
+
+  // 2. Determine allowed max concurrent chains for current fireRisk
+  const band = config.maxConcurrentChainsByRisk.find(
+    b => fireRisk >= b.minRisk && fireRisk <= b.maxRisk
+  );
+  const allowedMaxChains = band ? band.maxChains : 0;
+
+  // Guard: don't exceed allowed concurrent chains
+  if (activeChains >= allowedMaxChains) {
+    return { fireState, scheduledEvents };
+  }
+
+  // 3. Find first free slot (lowest slotIndex)
+  const freeSlot = fireState.slots.find(s => !s.active);
+  if (!freeSlot) {
+    return { fireState, scheduledEvents };
+  }
+
+  // 4. Find eligible target building types (effectiveCount > 0)
+  const eligibleTargets = BUILDING_DEFINITIONS.filter(def => {
+    const t = buildingTracking[def.id];
+    return t && getEffectiveBuildingCount(t) > 0;
+  });
+
+  if (eligibleTargets.length === 0) {
+    return { fireState, scheduledEvents };
+  }
+
+  // 5. Compute linear chance and roll
+  const chancePercent = Math.max(
+    config.chanceMin,
+    Math.min(config.chanceMax, (fireRisk + config.baseOffset) * config.factor)
+  );
+  const roll = getRandomValue() * 100;
+  if (roll >= chancePercent) {
+    return { fireState, scheduledEvents };
+  }
+
+  // 6. Select tier from tierRules (filtered by fireRisk, weighted by weight)
+  const eligibleTiers = config.tierRules.filter(
+    rule => fireRisk >= rule.minFireRisk && fireRisk <= rule.maxFireRisk
+  );
+  if (eligibleTiers.length === 0) {
+    return { fireState, scheduledEvents };
+  }
+  const selectedTier = selectWeightedCandidate(eligibleTiers);
+  if (!selectedTier) {
+    return { fireState, scheduledEvents };
+  }
+
+  // 7. Select target building type (weighted by effectiveCount)
+  const targetCandidates = eligibleTargets.map(def => ({
+    def,
+    weight: getEffectiveBuildingCount(buildingTracking[def.id]),
+  }));
+  const selectedTarget = selectWeightedCandidate(targetCandidates);
+  if (!selectedTarget) {
+    return { fireState, scheduledEvents };
+  }
+
+  const targetDef = selectedTarget.def;
+  const targetTracking = buildingTracking[targetDef.id];
+  const effectiveCount = getEffectiveBuildingCount(targetTracking);
+
+  // 8. Determine k = randomInt(initialOnFireMin..initialOnFireMax), clamp to effectiveCount
+  const range = selectedTier.initialOnFireMax - selectedTier.initialOnFireMin + 1;
+  let k = selectedTier.initialOnFireMin + Math.floor(getRandomValue() * range);
+  k = Math.min(k, effectiveCount);
+  if (k <= 0) {
+    return { fireState, scheduledEvents };
+  }
+
+  // 9. Apply target.onFireCount += k
+  buildingTracking[targetDef.id] = {
+    ...targetTracking,
+    onFireCount: targetTracking.onFireCount + k,
+  };
+
+  // 10. Activate the slot
+  const newSlots = fireState.slots.map(s =>
+    s.slotIndex === freeSlot.slotIndex
+      ? {
+          ...s,
+          active: true,
+          tier: selectedTier.tier,
+          targetBuildingId: targetDef.id,
+          startedTick: currentTick,
+          initialOnFireApplied: k,
+          abortedByManualExtinguish: false,
+        }
+      : s
+  );
+
+  // 11. Schedule the corresponding slot START request
+  const startRequestId = `FIRE_S${freeSlot.slotIndex}_START`;
+  const newScheduledEvents = [...scheduledEvents, {
+    targetTick: currentTick + 1,
+    requestId: startRequestId,
+    scheduledAtTick: currentTick,
+    priority: 'normal' as const,
+  }];
+
+  return {
+    fireState: { ...fireState, slots: newSlots },
+    scheduledEvents: newScheduledEvents,
+  };
 }
 
 /**
@@ -1361,7 +1645,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
     
     // Find the current request (non-synthetic)
-    const currentRequest = [...infoRequests, ...authorityInfoRequests, ...eventRequests].find(
+    const currentRequest = [...infoRequests, ...authorityInfoRequests, ...eventRequests, ...fireChainRequests].find(
       (r) => r.id === state.currentRequestId
     );
 
@@ -1529,6 +1813,38 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         chainStatus[currentRequest.chainId] = { active: false, completedTick: state.tick };
       }
     }
+
+    // Fire END cleanup: when a FIRE_SX_END request is resolved, clean up the slot
+    let updatedBuildingTracking = state.buildingTracking;
+    let updatedFire = state.fire;
+    const fireEndMatch = state.currentRequestId.match(/^FIRE_S(\d+)_END$/);
+    if (fireEndMatch) {
+      const slotIndex = parseInt(fireEndMatch[1], 10);
+      const slot = state.fire.slots.find(s => s.slotIndex === slotIndex);
+      if (slot && slot.active && slot.targetBuildingId && slot.initialOnFireApplied) {
+        // Remove at least initialOnFireApplied from target onFireCount (spread fires remain)
+        const newTracking = { ...state.buildingTracking };
+        const target = newTracking[slot.targetBuildingId];
+        if (target) {
+          const reduction = Math.min(target.onFireCount, slot.initialOnFireApplied);
+          newTracking[slot.targetBuildingId] = {
+            ...target,
+            onFireCount: target.onFireCount - reduction,
+          };
+        }
+        updatedBuildingTracking = newTracking;
+
+        // Deactivate the slot (clear tier/target/initial data)
+        updatedFire = {
+          ...state.fire,
+          slots: state.fire.slots.map(s =>
+            s.slotIndex === slotIndex
+              ? { slotIndex, active: false }
+              : s
+          ),
+        };
+      }
+    }
     
     // Create log entry for request decision (skip for combat commits as they have their own log)
     if (!(currentRequest.combat && action.optionIndex === 0)) {
@@ -1570,7 +1886,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return {
         tick: state.tick + 1,
         stats,
-        buildingTracking: state.buildingTracking,
+        buildingTracking: updatedBuildingTracking,
         newlyUnlockedBuilding: null,
         currentRequestId: state.currentRequestId,
         lastRequestId: state.currentRequestId,
@@ -1583,6 +1899,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         unlocks,
         scheduledCombats,
         pendingAuthorityChecks: state.pendingAuthorityChecks,
+        fire: updatedFire,
       };
     }
 
@@ -1593,7 +1910,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const nextRequest = pickNextRequest({
         tick: state.tick,
         stats,
-        buildingTracking: state.buildingTracking,
+        buildingTracking: updatedBuildingTracking,
         newlyUnlockedBuilding: null,
         currentRequestId: state.currentRequestId,
         lastRequestId: state.currentRequestId,
@@ -1605,13 +1922,14 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         unlocks,
         scheduledCombats,
         pendingAuthorityChecks: state.pendingAuthorityChecks,
+        fire: updatedFire,
       });
 
       // Return state with same tick, updated stats/unlocks/log, new request
       return {
         tick: state.tick, // Same tick
         stats,
-        buildingTracking: state.buildingTracking,
+        buildingTracking: updatedBuildingTracking,
         newlyUnlockedBuilding: null,
         currentRequestId: nextRequest.id,
         lastRequestId: state.currentRequestId,
@@ -1623,6 +1941,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         unlocks,
         scheduledCombats,
         pendingAuthorityChecks: state.pendingAuthorityChecks,
+        fire: updatedFire,
       };
     }
 
@@ -1664,7 +1983,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     // 2b. Apply bakery building effect (10% chance for +1 farmer growth)
-    if (isBuildingActive(state.buildingTracking, 'bakery') && Math.random() < 0.10) {
+    if (isBuildingActive(updatedBuildingTracking, 'bakery') && Math.random() < 0.10) {
       const beforeBakery = { ...stats };
       stats.farmers += 1;
       stats = clampStats(stats);
@@ -1692,7 +2011,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     // 2c. Apply overcrowding penalties
     const beforeOvercrowding = { ...stats };
-    const overcrowdingResult = applyOvercrowdingPenalties(stats, state.buildingTracking);
+    const overcrowdingResult = applyOvercrowdingPenalties(stats, updatedBuildingTracking);
     stats = clampStats(overcrowdingResult.stats);
 
     if (overcrowdingResult.changes.length > 0) {
@@ -1708,7 +2027,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     // Update building tracking (detect newly required buildings, etc.)
-    let buildingTracking = { ...state.buildingTracking };
+    let buildingTracking = { ...updatedBuildingTracking };
     // Update unlockedAtTick for newly unlocked buildings
     if (newlyUnlockedBuilding) {
       const tracking = buildingTracking[newlyUnlockedBuilding];
@@ -1726,6 +2045,17 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         buildingTracking[def.id] = { ...tracking, lastRequirementTick: state.tick + 1 };
       }
     }
+
+    // 2d. Apply fire spread and destroy (before game-over check)
+    let fireState = applyFireSpreadAndDestroy(buildingTracking, updatedFire, FIRE_SYSTEM_CONFIG);
+
+    // 2e. Attempt to start a new fire chain (after spread/destroy)
+    const chainStartResult = attemptFireChainStart(
+      buildingTracking, fireState, scheduledEvents, FIRE_SYSTEM_CONFIG,
+      stats.fireRisk, state.tick
+    );
+    fireState = chainStartResult.fireState;
+    scheduledEvents = chainStartResult.scheduledEvents;
 
     // 3. Check for game over condition
     if (stats.gold <= -50) {
@@ -1745,6 +2075,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         unlocks,
         scheduledCombats,
         pendingAuthorityChecks: state.pendingAuthorityChecks,
+        fire: fireState,
       };
     }
 
@@ -1790,6 +2121,30 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     buildingTracking = reminderResult.buildingTracking;
     scheduledEvents = reminderResult.scheduledEvents;
 
+    // 3.7. Convert fire pendingInfoQueue into scheduled synthetic info requests (FIFO)
+    if (fireState.pendingInfoQueue.length > 0) {
+      for (const infoMsg of fireState.pendingInfoQueue) {
+        let syntheticId: string;
+        if (infoMsg.type === 'SPREAD_OR_DESTROY') {
+          const payload = {
+            newOnFireByBuildingId: infoMsg.newOnFireByBuildingId || {},
+            newDestroyedByBuildingId: infoMsg.newDestroyedByBuildingId || {},
+          };
+          syntheticId = `FIRE_INFO::SPREAD_OR_DESTROY::${encodeURIComponent(JSON.stringify(payload))}`;
+        } else {
+          syntheticId = `FIRE_INFO::ALL_EXTINGUISHED_ABORT`;
+        }
+        scheduledEvents.push({
+          targetTick: state.tick + 1,
+          requestId: syntheticId,
+          scheduledAtTick: state.tick,
+          priority: 'info',
+        });
+      }
+      // Clear the queue so messages don't repeat
+      fireState = { ...fireState, pendingInfoQueue: [] };
+    }
+
     // 4. Pick next request
     const nextRequest = pickNextRequest({
       tick: state.tick + 1,
@@ -1806,6 +2161,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       unlocks,
       scheduledCombats,
       pendingAuthorityChecks,
+      fire: fireState,
     });
 
     // 4.5. Check if the picked request was a scheduled event with committed authority
@@ -1848,6 +2204,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       unlocks,
       scheduledCombats,
       pendingAuthorityChecks,
+      fire: fireState,
     };
   }
 
@@ -1867,6 +2224,17 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return state;
     }
 
+    // Validate: build lock — cannot build if building has any active state (on fire, destroyed, on strike)
+    const existingTracking = state.buildingTracking[action.buildingId];
+    if (existingTracking && hasAnyBuildingState(existingTracking)) {
+      console.error('Build locked: building has active state:', action.buildingId, {
+        onFireCount: existingTracking.onFireCount,
+        destroyedCount: existingTracking.destroyedCount,
+        onStrikeCount: existingTracking.onStrikeCount,
+      });
+      return state;
+    }
+
     // Validate: enough gold
     if (state.stats.gold < def.cost) {
       console.error('Not enough gold for:', action.buildingId, 'Need', def.cost, 'have', state.stats.gold);
@@ -1879,6 +2247,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     // Increment building count
     const oldTracking = state.buildingTracking[action.buildingId] ?? {
       buildingCount: 0,
+      onFireCount: 0,
+      destroyedCount: 0,
+      onStrikeCount: 0,
       reminderScheduled: false,
       reminderCooldownUntil: 0,
     };
@@ -1931,6 +2302,115 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       unlocks,
       scheduledEvents,
       log: [...state.log, logEntry],
+    };
+  }
+
+  // Handle EXTINGUISH_ONE action
+  if (action.type === 'EXTINGUISH_ONE') {
+    if (state.gameOver) return state;
+
+    const tracking = state.buildingTracking[action.buildingId];
+    if (!tracking || tracking.onFireCount <= 0) {
+      console.error('Cannot extinguish: no on-fire units for', action.buildingId);
+      return state;
+    }
+
+    // Apply extinguish cost (e.g. gold, satisfaction)
+    const costEffect = FIRE_SYSTEM_CONFIG.extinguishCost;
+
+    // Validate: enough gold for extinguish cost
+    if (costEffect.gold !== undefined && state.stats.gold < Math.abs(costEffect.gold)) {
+      console.error('Not enough gold to extinguish:', action.buildingId, 'Need', Math.abs(costEffect.gold), 'have', state.stats.gold);
+      return state;
+    }
+
+    const newStats = clampStats(applyEffects(state.stats, costEffect));
+
+    // Reduce onFireCount by 1
+    const newTracking = { ...tracking, onFireCount: tracking.onFireCount - 1 };
+    const buildingTracking = {
+      ...state.buildingTracking,
+      [action.buildingId]: newTracking,
+    };
+
+    // Check global sum of onFireCount
+    const globalOnFireCount = Object.values(buildingTracking).reduce(
+      (sum, t) => sum + t.onFireCount, 0
+    );
+
+    let fire = { ...state.fire };
+
+    // If global onFire is now 0: abort all active chains and queue info
+    if (globalOnFireCount === 0) {
+      fire = {
+        ...fire,
+        slots: fire.slots.map(s => s.active
+          ? { ...s, active: false, abortedByManualExtinguish: true }
+          : s
+        ),
+        pendingInfoQueue: [
+          ...fire.pendingInfoQueue,
+          { type: 'ALL_EXTINGUISHED_ABORT' as const },
+        ],
+      };
+    }
+
+    return {
+      ...state,
+      stats: newStats,
+      buildingTracking,
+      fire,
+    };
+  }
+
+  // Handle REPAIR_ONE action
+  if (action.type === 'REPAIR_ONE') {
+    if (state.gameOver) return state;
+
+    const tracking = state.buildingTracking[action.buildingId];
+    if (!tracking || tracking.destroyedCount <= 0) {
+      console.error('Cannot repair: no destroyed units for', action.buildingId);
+      return state;
+    }
+
+    // Calculate repair cost
+    let newStats: Stats;
+    if (FIRE_SYSTEM_CONFIG.repairCostOverride) {
+      // Validate: enough gold for override cost
+      const overrideGold = FIRE_SYSTEM_CONFIG.repairCostOverride.gold;
+      if (overrideGold !== undefined && state.stats.gold < Math.abs(overrideGold)) {
+        console.error('Not enough gold to repair:', action.buildingId, 'Need', Math.abs(overrideGold), 'have', state.stats.gold);
+        return state;
+      }
+      // Use override effect if defined
+      newStats = clampStats(applyEffects(state.stats, FIRE_SYSTEM_CONFIG.repairCostOverride));
+    } else {
+      // Default: ceil(buildCost * repairCostPercentOfBuildCost)
+      const def = getBuildingDef(action.buildingId);
+      if (!def) {
+        console.error('Unknown building ID for repair:', action.buildingId);
+        return state;
+      }
+      const goldCost = Math.ceil(def.cost * FIRE_SYSTEM_CONFIG.repairCostPercentOfBuildCost);
+      // Validate: enough gold
+      if (state.stats.gold < goldCost) {
+        console.error('Not enough gold to repair:', action.buildingId, 'Need', goldCost, 'have', state.stats.gold);
+        return state;
+      }
+      newStats = clampStats(applyEffects(state.stats, { gold: -goldCost }));
+    }
+
+    // Reduce destroyedCount by 1
+    const newTracking = { ...tracking, destroyedCount: tracking.destroyedCount - 1 };
+    const buildingTracking = {
+      ...state.buildingTracking,
+      [action.buildingId]: newTracking,
+    };
+
+    return {
+      ...state,
+      stats: newStats,
+      buildingTracking,
     };
   }
 
@@ -2088,10 +2568,93 @@ export function getCurrentRequest(state: GameState): Request | null {
     }
   }
   
+  // Check if this is a synthetic fire info request
+  if (state.currentRequestId.startsWith('FIRE_INFO::')) {
+    return buildSyntheticFireInfoRequest(state.currentRequestId);
+  }
+
   // Regular request - look it up in the arrays
-  return [...infoRequests, ...authorityInfoRequests, ...eventRequests].find(
+  return [...infoRequests, ...authorityInfoRequests, ...eventRequests, ...fireChainRequests].find(
     (r) => r.id === state.currentRequestId
   ) || null;
+}
+
+/**
+ * Build a synthetic Request object from a FIRE_INFO:: encoded request ID.
+ * Two types are supported:
+ *  - FIRE_INFO::SPREAD_OR_DESTROY::{json} — lists newly on-fire and destroyed buildings
+ *  - FIRE_INFO::ALL_EXTINGUISHED_ABORT — all fires manually extinguished
+ */
+function buildSyntheticFireInfoRequest(requestId: string): Request {
+  const parts = requestId.split('::');
+  const infoType = parts[1]; // 'SPREAD_OR_DESTROY' or 'ALL_EXTINGUISHED_ABORT'
+
+  if (infoType === 'SPREAD_OR_DESTROY') {
+    try {
+      const data = JSON.parse(decodeURIComponent(parts[2] || '{}'));
+      const newOnFire: Record<string, number> = data.newOnFireByBuildingId || {};
+      const newDestroyed: Record<string, number> = data.newDestroyedByBuildingId || {};
+
+      // Build text listing exact deltas per building type
+      const lines: string[] = [];
+
+      const onFireEntries = Object.entries(newOnFire).filter(([, count]) => count > 0);
+      if (onFireEntries.length > 0) {
+        lines.push('New fires:');
+        for (const [buildingId, count] of onFireEntries) {
+          const def = getBuildingDef(buildingId);
+          const name = def ? `${def.icon} ${def.displayName}` : buildingId;
+          lines.push(`  🔥 ${name}: ${count}`);
+        }
+      }
+
+      const destroyedEntries = Object.entries(newDestroyed).filter(([, count]) => count > 0);
+      if (destroyedEntries.length > 0) {
+        if (lines.length > 0) lines.push('');
+        lines.push('Newly destroyed:');
+        for (const [buildingId, count] of destroyedEntries) {
+          const def = getBuildingDef(buildingId);
+          const name = def ? `${def.icon} ${def.displayName}` : buildingId;
+          lines.push(`  🧱 ${name}: ${count}`);
+        }
+      }
+
+      return {
+        id: requestId,
+        title: '🔥 The fire is spreading',
+        text: lines.length > 0 ? lines.join('\n') : 'The fire rages on.',
+        options: [
+          { text: 'To Construction', effects: {} },
+          { text: 'Continue', effects: {} },
+        ],
+        advancesTick: false,
+      };
+    } catch (error) {
+      console.error('Failed to parse fire info request:', error);
+      return {
+        id: requestId,
+        title: '🔥 The fire is spreading',
+        text: 'The fire rages on.',
+        options: [
+          { text: 'To Construction', effects: {} },
+          { text: 'Continue', effects: {} },
+        ],
+        advancesTick: false,
+      };
+    }
+  }
+
+  // ALL_EXTINGUISHED_ABORT
+  return {
+    id: requestId,
+    title: 'The situation calms down',
+    text: 'All fires have been manually extinguished. All fire chains have been ended.',
+    options: [
+      { text: 'OK', effects: {} },
+      { text: 'To Construction', effects: {} },
+    ],
+    advancesTick: false,
+  };
 }
 
 /**
