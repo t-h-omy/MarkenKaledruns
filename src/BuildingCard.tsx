@@ -178,6 +178,7 @@ function BuildingCard({
                 </div>
                 {/* Primary state action button */}
                 {tracking.onFireCount > 0 ? (() => {
+                  // extinguishCost.gold is negative (e.g. -15) since it's an effect; display absolute value
                   const extinguishGoldCost = Math.abs(FIRE_SYSTEM_CONFIG.extinguishCost.gold ?? 0);
                   const canAfford = gold >= extinguishGoldCost;
                   return (
