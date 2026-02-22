@@ -295,9 +295,9 @@ function App() {
       spawnFlyingDeltas(optionIndex, option.effects)
     }
     
-    // Check if this is a fire info "Zum Bau-Menü" action
+    // Check if this is a fire info "To Construction" action
     const isFireInfoRequest = gameState.currentRequestId.startsWith('FIRE_INFO::')
-    const openConstructionAfter = isFireInfoRequest && option?.text === 'Zum Bau-Menü'
+    const openConstructionAfter = isFireInfoRequest && option?.text === 'To Construction'
     
     // If combat request and Option A (index 0), pass combatCommit
     if (currentRequest?.combat && optionIndex === 0) {
@@ -310,7 +310,7 @@ function App() {
       dispatch({ type: 'CHOOSE_OPTION', optionIndex })
     }
     
-    // Open construction overlay after dispatching if "Zum Bau-Menü" was chosen
+    // Open construction overlay after dispatching if "To Construction" was chosen
     if (openConstructionAfter) {
       openConstructionScreen()
     }
@@ -617,10 +617,10 @@ function App() {
                   const targetTracking = targetId ? gameState.buildingTracking[targetId] : null
                   return (
                     <div className="fire-chain-info">
-                      <div className="fire-chain-tag">🔥 Brand (Slot {slotIndex})</div>
+                      <div className="fire-chain-tag">🔥 Fire (Slot {slotIndex})</div>
                       {targetDef && targetTracking && (
                         <div className="fire-chain-context">
-                          Betroffen: {targetDef.icon} {targetDef.displayName} | 🔥 {targetTracking.onFireCount} | 🧱 {targetTracking.destroyedCount}
+                          Affected: {targetDef.icon} {targetDef.displayName} | 🔥 {targetTracking.onFireCount} | 🧱 {targetTracking.destroyedCount}
                         </div>
                       )}
                     </div>

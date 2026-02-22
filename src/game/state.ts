@@ -487,7 +487,8 @@ function applyOvercrowdingPenalties(
   stats: Stats,
   buildingTracking: Record<string, BuildingTracking>
 ): { stats: Stats; changes: AppliedChange[] } {
-  const farmsteadCount = buildingTracking['farmstead']?.buildingCount ?? 0;
+  const farmsteadTracking = buildingTracking['farmstead'];
+  const farmsteadCount = farmsteadTracking ? getEffectiveBuildingCount(farmsteadTracking) : 0;
   const capacity = farmsteadCount * 20;
   const overflow = Math.max(0, stats.farmers - capacity);
 
@@ -2599,7 +2600,7 @@ function buildSyntheticFireInfoRequest(requestId: string): Request {
 
       const onFireEntries = Object.entries(newOnFire).filter(([, count]) => count > 0);
       if (onFireEntries.length > 0) {
-        lines.push('Neue Brände:');
+        lines.push('New fires:');
         for (const [buildingId, count] of onFireEntries) {
           const def = getBuildingDef(buildingId);
           const name = def ? `${def.icon} ${def.displayName}` : buildingId;
@@ -2610,7 +2611,7 @@ function buildSyntheticFireInfoRequest(requestId: string): Request {
       const destroyedEntries = Object.entries(newDestroyed).filter(([, count]) => count > 0);
       if (destroyedEntries.length > 0) {
         if (lines.length > 0) lines.push('');
-        lines.push('Neu zerstört:');
+        lines.push('Newly destroyed:');
         for (const [buildingId, count] of destroyedEntries) {
           const def = getBuildingDef(buildingId);
           const name = def ? `${def.icon} ${def.displayName}` : buildingId;
@@ -2620,11 +2621,11 @@ function buildSyntheticFireInfoRequest(requestId: string): Request {
 
       return {
         id: requestId,
-        title: '🔥 Das Feuer greift um sich',
-        text: lines.length > 0 ? lines.join('\n') : 'Das Feuer wütet weiter.',
+        title: '🔥 The fire is spreading',
+        text: lines.length > 0 ? lines.join('\n') : 'The fire rages on.',
         options: [
-          { text: 'Zum Bau-Menü', effects: {} },
-          { text: 'Weiter', effects: {} },
+          { text: 'To Construction', effects: {} },
+          { text: 'Continue', effects: {} },
         ],
         advancesTick: false,
       };
@@ -2632,11 +2633,11 @@ function buildSyntheticFireInfoRequest(requestId: string): Request {
       console.error('Failed to parse fire info request:', error);
       return {
         id: requestId,
-        title: '🔥 Das Feuer greift um sich',
-        text: 'Das Feuer wütet weiter.',
+        title: '🔥 The fire is spreading',
+        text: 'The fire rages on.',
         options: [
-          { text: 'Zum Bau-Menü', effects: {} },
-          { text: 'Weiter', effects: {} },
+          { text: 'To Construction', effects: {} },
+          { text: 'Continue', effects: {} },
         ],
         advancesTick: false,
       };
@@ -2646,11 +2647,11 @@ function buildSyntheticFireInfoRequest(requestId: string): Request {
   // ALL_EXTINGUISHED_ABORT
   return {
     id: requestId,
-    title: 'Die Lage beruhigt sich',
-    text: 'Alle Brände wurden manuell gelöscht. Sämtliche Brandketten wurden beendet.',
+    title: 'The situation calms down',
+    text: 'All fires have been manually extinguished. All fire chains have been ended.',
     options: [
       { text: 'OK', effects: {} },
-      { text: 'Zum Bau-Menü', effects: {} },
+      { text: 'To Construction', effects: {} },
     ],
     advancesTick: false,
   };

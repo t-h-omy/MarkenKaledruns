@@ -5323,6 +5323,14 @@ function generateFireChainRequests(): Request[] {
       options: [
         { text: 'Assess the situation', effects: {} },
       ],
+      followUps: [
+        {
+          triggerOnOptionIndex: 0,
+          delayMinTicks: 2,
+          delayMaxTicks: 4,
+          candidates: [{ requestId: `FIRE_S${n}_DECISION`, weight: 1 }],
+        },
+      ],
     });
 
     // DECISION
@@ -5338,6 +5346,20 @@ function generateFireChainRequests(): Request[] {
         { text: 'Send a bucket brigade', effects: { satisfaction: -5 } },
         { text: 'Let it burn, focus elsewhere', effects: { fireRisk: 5 } },
       ],
+      followUps: [
+        {
+          triggerOnOptionIndex: 0,
+          delayMinTicks: 2,
+          delayMaxTicks: 4,
+          candidates: [{ requestId: `FIRE_S${n}_ESCALATE`, weight: 1 }],
+        },
+        {
+          triggerOnOptionIndex: 1,
+          delayMinTicks: 2,
+          delayMaxTicks: 4,
+          candidates: [{ requestId: `FIRE_S${n}_ESCALATE`, weight: 1 }],
+        },
+      ],
     });
 
     // ESCALATE
@@ -5352,6 +5374,20 @@ function generateFireChainRequests(): Request[] {
       options: [
         { text: 'Mobilize all hands', effects: { gold: -20, satisfaction: -5 } },
         { text: 'Salvage what you can', effects: { fireRisk: 10 } },
+      ],
+      followUps: [
+        {
+          triggerOnOptionIndex: 0,
+          delayMinTicks: 2,
+          delayMaxTicks: 3,
+          candidates: [{ requestId: `FIRE_S${n}_END`, weight: 1 }],
+        },
+        {
+          triggerOnOptionIndex: 1,
+          delayMinTicks: 2,
+          delayMaxTicks: 3,
+          candidates: [{ requestId: `FIRE_S${n}_END`, weight: 1 }],
+        },
       ],
     });
 

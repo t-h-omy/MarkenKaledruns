@@ -173,7 +173,7 @@ function BuildingCard({
                   {tracking.onFireCount > 0 && <span className="state-tag state-fire">🔥 {tracking.onFireCount}</span>}
                   {tracking.destroyedCount > 0 && <span className="state-tag state-destroyed">🧱 {tracking.destroyedCount}</span>}
                   {tracking.onStrikeCount > 0 && <span className="state-tag state-strike">⚑ {tracking.onStrikeCount}</span>}
-                  <span className="state-effective">Wirksam: {getEffectiveBuildingCount(tracking)} / {tracking.buildingCount}</span>
+                  <span className="state-effective">Effective: {getEffectiveBuildingCount(tracking)} / {tracking.buildingCount}</span>
                 </div>
                 {/* Primary state action button */}
                 {tracking.onFireCount > 0 ? (
@@ -181,21 +181,21 @@ function BuildingCard({
                     className="building-state-action-button state-action-fire"
                     onClick={() => onExtinguish?.(definition.id)}
                   >
-                    🔥 Feuer löschen (1)
+                    🔥 Extinguish Fire (1)
                   </button>
                 ) : tracking.destroyedCount > 0 ? (
                   <button
                     className="building-state-action-button state-action-repair"
                     onClick={() => onRepair?.(definition.id)}
                   >
-                    🧱 Reparieren (1)
+                    🧱 Repair (1)
                   </button>
                 ) : tracking.onStrikeCount > 0 ? (
                   <button
                     className="building-state-action-button state-action-strike"
                     disabled
                   >
-                    ⚑ Streik beenden (1) — nicht implementiert
+                    ⚑ End Strike (1) — not implemented
                   </button>
                 ) : null}
               </>
