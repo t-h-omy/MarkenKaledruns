@@ -200,7 +200,7 @@ export type GameAction =
       buildingId: string;
     }
   | {
-      /** Repair one destroyed unit of a building type. Costs ceil(buildCost * 0.75). */
+      /** Repair one destroyed unit of a building type. Costs ceil(buildCost * config.repairCostPercentOfBuildCost). */
       type: 'REPAIR_ONE';
       buildingId: string;
     };
@@ -2025,6 +2025,13 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     // Apply extinguish cost (e.g. gold, satisfaction)
     const costEffect = FIRE_SYSTEM_CONFIG.extinguishCost;
+
+    // Validate: enough gold for extinguish cost
+    if (costEffect.gold !== undefined && state.stats.gold < Math.abs(costEffect.gold)) {
+      console.error('Not enough gold to extinguish:', action.buildingId, 'Need', Math.abs(costEffect.gold), 'have', state.stats.gold);
+      return state;
+    }
+
     const newStats = clampStats(applyEffects(state.stats, costEffect));
 
     // Reduce onFireCount by 1
@@ -2077,6 +2084,12 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     // Calculate repair cost
     let newStats: Stats;
     if (FIRE_SYSTEM_CONFIG.repairCostOverride) {
+      // Validate: enough gold for override cost
+      const overrideGold = FIRE_SYSTEM_CONFIG.repairCostOverride.gold;
+      if (overrideGold !== undefined && state.stats.gold < Math.abs(overrideGold)) {
+        console.error('Not enough gold to repair:', action.buildingId, 'Need', Math.abs(overrideGold), 'have', state.stats.gold);
+        return state;
+      }
       // Use override effect if defined
       newStats = clampStats(applyEffects(state.stats, FIRE_SYSTEM_CONFIG.repairCostOverride));
     } else {
@@ -2087,6 +2100,11 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         return state;
       }
       const goldCost = Math.ceil(def.cost * FIRE_SYSTEM_CONFIG.repairCostPercentOfBuildCost);
+      // Validate: enough gold
+      if (state.stats.gold < goldCost) {
+        console.error('Not enough gold to repair:', action.buildingId, 'Need', goldCost, 'have', state.stats.gold);
+        return state;
+      }
       newStats = clampStats(applyEffects(state.stats, { gold: -goldCost }));
     }
 
