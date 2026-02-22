@@ -566,7 +566,7 @@ function applyFireSpreadAndDestroy(
     for (let i = 0; i < currentOnFire; i++) {
       // ── Spread roll ──
       if (getRandomValue() < config.spreadChancePerBurningBuilding) {
-        // Find all building types with effectiveCount > 0 (at least one non-stated unit)
+        // Find all building types with effectiveCount > 0 (at least one state-free unit)
         const eligibleTargets = BUILDING_DEFINITIONS.filter(def => {
           const t = buildingTracking[def.id];
           return t && getEffectiveBuildingCount(t) > 0;
@@ -578,7 +578,7 @@ function applyFireSpreadAndDestroy(
           const targetDef = eligibleTargets[targetIdx];
           const targetTracking = buildingTracking[targetDef.id];
 
-          // Guard: don't exceed buildingCount
+          // Guard: total state counts must not exceed buildingCount
           if (targetTracking && targetTracking.onFireCount + targetTracking.destroyedCount + targetTracking.onStrikeCount < targetTracking.buildingCount) {
             buildingTracking[targetDef.id] = {
               ...targetTracking,
@@ -593,16 +593,15 @@ function applyFireSpreadAndDestroy(
       if (getRandomValue() < config.destroyChancePerBurningBuilding) {
         // Re-read tracking in case it was mutated by spread above
         const bTracking = buildingTracking[burningDef.id];
+        // Destroy converts on-fire → destroyed (net state count stays same), so only
+        // need to verify there is still an on-fire unit to convert
         if (bTracking && bTracking.onFireCount > 0) {
-          // Guard: total state counts must not exceed buildingCount
-          if (bTracking.destroyedCount + 1 <= bTracking.buildingCount) {
-            buildingTracking[burningDef.id] = {
-              ...bTracking,
-              onFireCount: bTracking.onFireCount - 1,
-              destroyedCount: bTracking.destroyedCount + 1,
-            };
-            newDestroyedByBuildingId[burningDef.id] = (newDestroyedByBuildingId[burningDef.id] || 0) + 1;
-          }
+          buildingTracking[burningDef.id] = {
+            ...bTracking,
+            onFireCount: bTracking.onFireCount - 1,
+            destroyedCount: bTracking.destroyedCount + 1,
+          };
+          newDestroyedByBuildingId[burningDef.id] = (newDestroyedByBuildingId[burningDef.id] || 0) + 1;
         }
       }
     }
