@@ -8,7 +8,7 @@ import { infoRequests, authorityInfoRequests, eventRequests, fireChainRequests }
 import { pickNextRequest, selectWeightedCandidate, getRandomValue, resetRandom } from './picker';
 import { needModifiers } from './modifiers';
 import type { BuildingTracking } from './buildings';
-import { BUILDING_DEFINITIONS, isBuildingActive, calculateRequiredBuildings, getBuildingDef, createInitialBuildingTracking, hasAnyBuildingState } from './buildings';
+import { BUILDING_DEFINITIONS, isBuildingActive, calculateRequiredBuildings, getBuildingDef, createInitialBuildingTracking, hasAnyBuildingState, getEffectiveBuildingCount } from './buildings';
 
 /**
  * Represents a single applied change to a stat
@@ -528,6 +528,105 @@ function applyOvercrowdingPenalties(
   ];
 
   return { stats: newStats, changes };
+}
+
+/**
+ * Applies fire spread and destroy logic during tick advance.
+ * For each burning unit: roll for spread (to a random effective building) and destroy.
+ * Uses seeded RNG only. Tracks all deltas and enqueues a SPREAD_OR_DESTROY info
+ * message if any changes occurred (no silent damage).
+ *
+ * Mutates buildingTracking in-place and returns the updated fire state.
+ */
+function applyFireSpreadAndDestroy(
+  buildingTracking: Record<string, BuildingTracking>,
+  fireState: FireState,
+  config: FireSystemConfig
+): FireState {
+  const newOnFireByBuildingId: Record<string, number> = {};
+  const newDestroyedByBuildingId: Record<string, number> = {};
+
+  // Collect building types that currently have on-fire units
+  const burningTypes = BUILDING_DEFINITIONS
+    .filter(def => (buildingTracking[def.id]?.onFireCount ?? 0) > 0);
+
+  if (burningTypes.length === 0) {
+    return fireState;
+  }
+
+  // Iterate each burning building type and each burning unit
+  for (const burningDef of burningTypes) {
+    const burningTracking = buildingTracking[burningDef.id];
+    if (!burningTracking) continue;
+
+    // Snapshot the current onFireCount so new spread-fires this tick don't
+    // trigger additional rolls within the same iteration
+    const currentOnFire = burningTracking.onFireCount;
+
+    for (let i = 0; i < currentOnFire; i++) {
+      // ── Spread roll ──
+      if (getRandomValue() < config.spreadChancePerBurningBuilding) {
+        // Find all building types with effectiveCount > 0 (at least one non-stated unit)
+        const eligibleTargets = BUILDING_DEFINITIONS.filter(def => {
+          const t = buildingTracking[def.id];
+          return t && getEffectiveBuildingCount(t) > 0;
+        });
+
+        if (eligibleTargets.length > 0) {
+          // Pick a random eligible target
+          const targetIdx = Math.floor(getRandomValue() * eligibleTargets.length);
+          const targetDef = eligibleTargets[targetIdx];
+          const targetTracking = buildingTracking[targetDef.id];
+
+          // Guard: don't exceed buildingCount
+          if (targetTracking && targetTracking.onFireCount + targetTracking.destroyedCount + targetTracking.onStrikeCount < targetTracking.buildingCount) {
+            buildingTracking[targetDef.id] = {
+              ...targetTracking,
+              onFireCount: targetTracking.onFireCount + 1,
+            };
+            newOnFireByBuildingId[targetDef.id] = (newOnFireByBuildingId[targetDef.id] || 0) + 1;
+          }
+        }
+      }
+
+      // ── Destroy roll ──
+      if (getRandomValue() < config.destroyChancePerBurningBuilding) {
+        // Re-read tracking in case it was mutated by spread above
+        const bTracking = buildingTracking[burningDef.id];
+        if (bTracking && bTracking.onFireCount > 0) {
+          // Guard: total state counts must not exceed buildingCount
+          if (bTracking.destroyedCount + 1 <= bTracking.buildingCount) {
+            buildingTracking[burningDef.id] = {
+              ...bTracking,
+              onFireCount: bTracking.onFireCount - 1,
+              destroyedCount: bTracking.destroyedCount + 1,
+            };
+            newDestroyedByBuildingId[burningDef.id] = (newDestroyedByBuildingId[burningDef.id] || 0) + 1;
+          }
+        }
+      }
+    }
+  }
+
+  // Only enqueue info if something actually changed
+  const hasSpread = Object.keys(newOnFireByBuildingId).length > 0;
+  const hasDestroy = Object.keys(newDestroyedByBuildingId).length > 0;
+
+  if (hasSpread || hasDestroy) {
+    return {
+      ...fireState,
+      pendingInfoQueue: [
+        ...fireState.pendingInfoQueue,
+        {
+          type: 'SPREAD_OR_DESTROY',
+          newOnFireByBuildingId: hasSpread ? newOnFireByBuildingId : undefined,
+          newDestroyedByBuildingId: hasDestroy ? newDestroyedByBuildingId : undefined,
+        },
+      ],
+    };
+  }
+
+  return fireState;
 }
 
 /**
@@ -1789,6 +1888,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       }
     }
 
+    // 2d. Apply fire spread and destroy (before game-over check)
+    let fireState = applyFireSpreadAndDestroy(buildingTracking, state.fire, FIRE_SYSTEM_CONFIG);
+
     // 3. Check for game over condition
     if (stats.gold <= -50) {
       return {
@@ -1807,7 +1909,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         unlocks,
         scheduledCombats,
         pendingAuthorityChecks: state.pendingAuthorityChecks,
-        fire: state.fire,
+        fire: fireState,
       };
     }
 
@@ -1854,7 +1956,6 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     scheduledEvents = reminderResult.scheduledEvents;
 
     // 3.7. Convert fire pendingInfoQueue into scheduled synthetic info requests (FIFO)
-    let fireState = { ...state.fire };
     if (fireState.pendingInfoQueue.length > 0) {
       for (const infoMsg of fireState.pendingInfoQueue) {
         let syntheticId: string;
