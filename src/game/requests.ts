@@ -5296,3 +5296,79 @@ export function validateRequests(): void {
     );
   }
 }
+
+/**
+ * Fire Chain Requests (40)
+ * 10 fire chain slots × 4 requests each (START, DECISION, ESCALATE, END).
+ * Triggered by the fire system, not randomly.
+ */
+function generateFireChainRequests(): Request[] {
+  const requests: Request[] = [];
+
+  for (let n = 1; n <= 10; n++) {
+    const chainId = `CHAIN_FIRE_SLOT_${n}`;
+
+    // START
+    requests.push({
+      id: `FIRE_S${n}_START`,
+      title: `🔥 Fire! (Slot ${n})`,
+      text: `A fire has broken out in part of the settlement! Smoke rises and panic spreads among the villagers.`,
+      canTriggerRandomly: false,
+      advancesTick: false,
+      chainId,
+      chainRole: 'start',
+      options: [
+        { text: 'Assess the situation', effects: {} },
+      ],
+    });
+
+    // DECISION
+    requests.push({
+      id: `FIRE_S${n}_DECISION`,
+      title: `🔥 Fire Response (Slot ${n})`,
+      text: `The fire rages on. You must decide how to respond before it spreads further.`,
+      canTriggerRandomly: false,
+      advancesTick: false,
+      chainId,
+      chainRole: 'member',
+      options: [
+        { text: 'Send a bucket brigade', effects: { satisfaction: -5 } },
+        { text: 'Let it burn, focus elsewhere', effects: { fireRisk: 5 } },
+      ],
+    });
+
+    // ESCALATE
+    requests.push({
+      id: `FIRE_S${n}_ESCALATE`,
+      title: `🔥 Fire Spreads (Slot ${n})`,
+      text: `The fire has spread to nearby structures! The situation is becoming dire.`,
+      canTriggerRandomly: false,
+      advancesTick: false,
+      chainId,
+      chainRole: 'member',
+      options: [
+        { text: 'Mobilize all hands', effects: { gold: -20, satisfaction: -5 } },
+        { text: 'Salvage what you can', effects: { fireRisk: 10 } },
+      ],
+    });
+
+    // END
+    requests.push({
+      id: `FIRE_S${n}_END`,
+      title: `🔥 Fire Resolved (Slot ${n})`,
+      text: `The fire is finally under control. Now is the time to deal with the aftermath.`,
+      canTriggerRandomly: false,
+      advancesTick: true,
+      chainId,
+      chainRole: 'end',
+      options: [
+        { text: 'Standard cleanup', effects: { fireRisk: -10 } },
+        { text: 'Invest in prevention', effects: { fireRisk: -20, gold: -30 } },
+      ],
+    });
+  }
+
+  return requests;
+}
+
+export const fireChainRequests = generateFireChainRequests();
