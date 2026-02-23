@@ -3554,7 +3554,7 @@ export const eventRequests: Request[] = [
     text: 'A delegation of merchants arrives at the marketplace. They propose forming a guild to regulate trade and share profits — for a founding fee.',
     options: [
       { text: 'ACCEPT', effects: { gold: -15 } },
-      { text: 'REJECT', effects: {  },
+      { text: 'REJECT', effects: {} },
     ],
     followUps: [
       {
@@ -3639,7 +3639,7 @@ export const eventRequests: Request[] = [
     title: 'Black Market',
     text: 'Without a guild, smugglers fill the void. Cheap goods appear but quality is terrible and crime rises.',
     options: [
-      { text: 'CRACK DOWN', effects: { landForce: -3, authority: 1 } },
+      { text: 'CRACK DOWN', effects: { landForces: -3, authority: 1 } },
       { text: 'TOLERATE IT', effects: { health: -2, satisfaction: -2 } },
     ],
     followUps: [
