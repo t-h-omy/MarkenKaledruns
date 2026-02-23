@@ -3553,8 +3553,8 @@ export const eventRequests: Request[] = [
     title: 'Guild Proposal',
     text: 'A delegation of merchants arrives at the marketplace. They propose forming a guild to regulate trade and share profits — for a founding fee.',
     options: [
-      { text: 'ACCEPT', effects: { gold: -25 } },
-      { text: 'REJECT', effects: { satisfaction: -3 } },
+      { text: 'ACCEPT', effects: { gold: -15 } },
+      { text: 'REJECT', effects: {  },
     ],
     followUps: [
       {
@@ -3584,8 +3584,8 @@ export const eventRequests: Request[] = [
     title: 'Thriving Commerce',
     text: 'The guild is running smoothly. Goods flow, prices stabilize, and the treasury benefits. The guild master asks to expand operations.',
     options: [
-      { text: 'EXPAND', effects: { gold: -15, satisfaction: 5 } },
-      { text: 'KEEP CURRENT SIZE', effects: { gold: 10 } },
+      { text: 'EXPAND', effects: { gold: -15, } },
+      { text: 'KEEP CURRENT SIZE', effects: { } },
     ],
     followUps: [
       {
@@ -3610,8 +3610,8 @@ export const eventRequests: Request[] = [
     title: 'Shady Dealings',
     text: 'Reports surface that guild members are price-fixing and skimming profits. The guild master denies it flatly.',
     options: [
-      { text: 'INVESTIGATE', effects: { gold: -5, authority: 1 } },
-      { text: 'TURN A BLIND EYE', effects: { gold: 5, satisfaction: -5 } },
+      { text: 'INVESTIGATE', effects: { gold: -10, authority: 1 } },
+      { text: 'TURN A BLIND EYE', effects: { satisfaction: -3 } },
     ],
     followUps: [
       {
@@ -3639,8 +3639,8 @@ export const eventRequests: Request[] = [
     title: 'Black Market',
     text: 'Without a guild, smugglers fill the void. Cheap goods appear but quality is terrible and crime rises.',
     options: [
-      { text: 'CRACK DOWN', effects: { gold: -10, authority: 2 } },
-      { text: 'TOLERATE IT', effects: { gold: 5, health: -3, satisfaction: -3 } },
+      { text: 'CRACK DOWN', effects: { landForce: -3, authority: 1 } },
+      { text: 'TOLERATE IT', effects: { health: -2, satisfaction: -2 } },
     ],
     followUps: [
       {
@@ -3665,8 +3665,8 @@ export const eventRequests: Request[] = [
     title: 'Golden Age of Trade',
     text: 'The expanded guild brings prosperity. Merchants from distant lands flock to your marketplace.',
     options: [
-      { text: 'HOST A TRADE FAIR', effects: { gold: 15, satisfaction: 5 } },
-      { text: 'TAX THE PROFITS', effects: { gold: 20, satisfaction: -2 } },
+      { text: 'HOST A TRADE FAIR', effects: { gold: 45, satisfaction: 2 } },
+      { text: 'TAX THE PROFITS', effects: { gold: 60, satisfaction: -3 } },
     ],
   },
   {
@@ -3677,8 +3677,8 @@ export const eventRequests: Request[] = [
     title: 'Steady Trade',
     text: 'Trade continues at a modest pace. The guild — or lack thereof — has settled into a routine.',
     options: [
-      { text: 'GOOD ENOUGH', effects: { satisfaction: 2 } },
-      { text: 'INVEST MORE', effects: { gold: -10, satisfaction: 4 } },
+      { text: 'GOOD ENOUGH', effects: { gold: 25 } },
+      { text: 'TAX THE PROFITS', effects: { gold: 35, satisfaction: -3 } },
     ],
   },
   {
@@ -3689,7 +3689,7 @@ export const eventRequests: Request[] = [
     title: 'A Fresh Start',
     text: 'With the corrupt elements removed, honest merchants return. The marketplace is cleaner and more trustworthy.',
     options: [
-      { text: 'CELEBRATE', effects: { satisfaction: 5, authority: 1 } },
+      { text: 'CELEBRATE', effects: { satisfaction: 3 } },
       { text: 'STAY VIGILANT', effects: { authority: 2 } },
     ],
   },
@@ -3709,7 +3709,7 @@ export const eventRequests: Request[] = [
     title: 'Dark Whispers',
     text: 'Travelers speak of a sickness spreading through neighboring settlements. Your healers urge precautions before it reaches your lands.',
     options: [
-      { text: 'QUARANTINE BORDERS', effects: { gold: -15, satisfaction: -3 } },
+      { text: 'QUARANTINE BORDERS', effects: { gold: -10, satisfaction: -3 } },
       { text: 'DISMISS THE RUMORS', effects: {} },
     ],
     followUps: [
@@ -3741,8 +3741,8 @@ export const eventRequests: Request[] = [
     title: 'Quarantine Holds',
     text: 'The border quarantine is working. Sickness has not reached your village, but trade has slowed to a crawl.',
     options: [
-      { text: 'MAINTAIN QUARANTINE', effects: { gold: -10, health: 5 } },
-      { text: 'REOPEN BORDERS', effects: { gold: 10, health: -3 } },
+      { text: 'MAINTAIN QUARANTINE', effects: { gold: -10 } },
+      { text: 'REOPEN BORDERS', effects: { gold: 10 } },
     ],
     followUps: [
       {
@@ -3770,8 +3770,8 @@ export const eventRequests: Request[] = [
     title: 'Quarantine Breached',
     text: 'Despite your efforts, a merchant slipped through the quarantine. Several villagers have fallen ill.',
     options: [
-      { text: 'TREAT THE SICK', effects: { gold: -20, health: 3 } },
-      { text: 'ISOLATE THEM', effects: { satisfaction: -5, health: 1 } },
+      { text: 'TREAT THE SICK', effects: { gold: -15, health: 3, } },
+      { text: 'ISOLATE THEM', effects: { satisfaction: -3, } },
     ],
     followUps: [
       {
@@ -3796,8 +3796,8 @@ export const eventRequests: Request[] = [
     title: 'Plague Arrives',
     text: 'The sickness has reached your village. People are falling ill rapidly. The healers plead for resources.',
     options: [
-      { text: 'FUND HEALERS', effects: { gold: -25, health: 5 } },
-      { text: 'PRAY FOR THE BEST', effects: { health: -8, farmers: -5 } },
+      { text: 'FUND HEALERS', effects: { gold: -15, health: 5 } },
+      { text: 'PRAY FOR THE BEST', effects: { health: -5, farmers: -5 } },
     ],
     followUps: [
       {
@@ -3837,8 +3837,8 @@ export const eventRequests: Request[] = [
     title: 'Crisis Averted',
     text: 'The sickness passes without major casualties. Your village emerges stronger and more resilient.',
     options: [
-      { text: 'CELEBRATE SURVIVAL', effects: { satisfaction: 5, health: 3 } },
-      { text: 'BUILD AN INFIRMARY', effects: { gold: -15, health: 8 } },
+      { text: 'CELEBRATE SURVIVAL', effects: { satisfaction: 3, health: 5 } },
+      { text: 'BUILD AN INFIRMARY', effects: { gold: -10, health: 8 } },
     ],
   },
   {
@@ -3849,8 +3849,8 @@ export const eventRequests: Request[] = [
     title: 'Scars of Sickness',
     text: 'The plague has taken its toll. Empty homes stand as reminders. Recovery will take time.',
     options: [
-      { text: 'MOURN AND REBUILD', effects: { satisfaction: -3, farmers: -5 } },
-      { text: 'BURN THE DEAD', effects: { health: 3, satisfaction: -5 } },
+      { text: 'MOURN AND REBUILD', effects: { farmers: -5, health: 3 } },
+      { text: 'BLAME YOUR HEALERS', effects: { farmers: -5, satisfaction: -3, health: 3, authority: 1 } },
     ],
   },
 
@@ -3873,7 +3873,7 @@ export const eventRequests: Request[] = [
         text: 'ASSERT YOUR CLAIM',
         effects: {},
         authorityCheck: {
-          minCommit: 0,
+          minCommit: 5,
           maxCommit: 20,
           followUpBoosts: [
             {
@@ -3885,7 +3885,7 @@ export const eventRequests: Request[] = [
           ],
         },
       },
-      { text: 'YIELD THE LAND', effects: { farmers: -3, satisfaction: -4, authority: -2 } },
+      { text: 'YIELD THE LAND', effects: { farmers: -3, authority: -2 } },
     ],
     followUps: [
       {
@@ -3943,20 +3943,19 @@ export const eventRequests: Request[] = [
     text: 'Lord Alden has gathered his men. His banners appear on the borderland. Feldric readies the militia: "This is no bluff."',
     options: [
       { text: 'DEFEND THE BORDER', effects: {} },
-      { text: 'OFFER TRIBUTE', effects: { gold: -20, authority: -3 } },
+      { text: 'OFFER TRIBUTE', effects: { gold: -20, authority: -1 } },
     ],
     combat: {
       enemyForces: 6,
       prepDelayMinTicks: 2,
       prepDelayMaxTicks: 4,
       onWin: {
-        authority: 3,
-        satisfaction: 3,
+        authority: 2,
       },
       onLose: {
         farmers: -4,
-        satisfaction: -4,
-        authority: -3,
+        satisfaction: -3,
+        authority: -2,
       },
       followUpsOnWin: [
         {
@@ -3992,8 +3991,8 @@ export const eventRequests: Request[] = [
     title: 'Neighborly Accord',
     text: 'You and Lord Alden reach a fair agreement. The border is settled and both fiefs benefit from cooperation.',
     options: [
-      { text: 'TOAST TO PEACE', effects: { satisfaction: 4, gold: 5 } },
-      { text: 'FORMALIZE THE PACT', effects: { authority: 2 } },
+      { text: 'TOAST TO PEACE', effects: { satisfaction: 3, gold: 10 } },
+      { text: 'FORMALIZE THE PACT', effects: { authority: 2, gold: 10 } },
     ],
   },
   {
@@ -4004,8 +4003,8 @@ export const eventRequests: Request[] = [
     title: 'The Border Stands',
     text: 'Lord Alden retreats in defeat. The borderland remains yours. Your people cheer their victory.',
     options: [
-      { text: 'REWARD THE MILITIA', effects: { gold: -10, landForces: 3, satisfaction: 5 } },
-      { text: 'FORTIFY THE BORDER', effects: { gold: -15, landForces: 5 } },
+      { text: 'REWARD THE MILITIA', effects: { satisfaction: 5 } },
+      { text: 'FORTIFY THE BORDER', effects: { landForces: 5 } },
     ],
   },
   {
@@ -4016,8 +4015,8 @@ export const eventRequests: Request[] = [
     title: 'Land Lost',
     text: 'The borderland now belongs to Lord Alden. Your farmers must find new fields, and your authority has suffered.',
     options: [
-      { text: 'ACCEPT THE LOSS', effects: { satisfaction: -3 } },
-      { text: 'PLAN REVENGE', effects: { authority: 1, satisfaction: -1 } },
+      { text: 'ACCEPT THE LOSS', effects: { gold: -15, authority: -1 } },
+      { text: 'PLAN REVENGE', effects: { gold: -15, authority: 1, satisfaction: -2 } },
     ],
   },
 
@@ -4036,7 +4035,7 @@ export const eventRequests: Request[] = [
     title: 'Festival Season',
     text: 'The harvest is in and the people want a grand festival. Brewers offer their finest ale if you fund the event.',
     options: [
-      { text: 'FUND THE FESTIVAL', effects: { gold: -20 } },
+      { text: 'FUND THE FESTIVAL', effects: { gold: -15 } },
       { text: 'CANCEL IT', effects: { satisfaction: -3 } },
     ],
     followUps: [
@@ -4065,8 +4064,8 @@ export const eventRequests: Request[] = [
     title: 'Joy and Ale',
     text: 'The festival is a roaring success! Music, dancing, and barrels of ale. But the crowd wants even more entertainment.',
     options: [
-      { text: 'HIRE PERFORMERS', effects: { gold: -15, satisfaction: 3 } },
-      { text: 'LET THEM ENJOY', effects: { satisfaction: 5 } },
+      { text: 'HIRE PERFORMERS', effects: { gold: -10 } },
+      { text: 'LET THEM ENJOY', effects: {  } },
     ],
     followUps: [
       {
@@ -4092,7 +4091,7 @@ export const eventRequests: Request[] = [
     text: 'Too much ale has led to a brawl between farmers. Fists fly and tables break. The festival could turn ugly.',
     options: [
       { text: 'RESTORE ORDER', effects: { authority: 2, satisfaction: -2 } },
-      { text: 'LET THEM FIGHT', effects: { health: -3, satisfaction: 1 } },
+      { text: 'LET THEM FIGHT', effects: { health: -3 } },
     ],
     followUps: [
       {
@@ -4120,8 +4119,8 @@ export const eventRequests: Request[] = [
     title: 'A Festival to Remember',
     text: 'Songs are written about this festival. The people are united, and word of your generosity spreads far.',
     options: [
-      { text: 'BASK IN GLORY', effects: { satisfaction: 5, authority: 2 } },
-      { text: 'PREPARE NEXT YEAR', effects: { gold: -5, satisfaction: 3 } },
+      { text: 'BASK IN GLORY', effects: { satisfaction: 3, authority: 2 } },
+      { text: 'PREPARE NEXT YEAR', effects: { satisfaction: 6 } },
     ],
   },
   {
@@ -4132,8 +4131,8 @@ export const eventRequests: Request[] = [
     title: 'Fond Memories',
     text: 'The festival winds down peacefully. People head home with warm bellies and good cheer.',
     options: [
-      { text: 'REST WELL', effects: { satisfaction: 3, health: 2 } },
-      { text: 'CLEAN UP', effects: { satisfaction: 1 } },
+      { text: 'REST WELL', effects: { satisfaction: 2, health: 2 } },
+      { text: 'CLEAN UP', effects: { satisfaction: 3 } },
     ],
   },
   {
@@ -4144,8 +4143,8 @@ export const eventRequests: Request[] = [
     title: 'Back to Work',
     text: 'Festival or not, the work continues. The village settles back into its daily routine.',
     options: [
-      { text: 'CARRY ON', effects: { satisfaction: 1 } },
-      { text: 'PROMISE A BETTER ONE', effects: { satisfaction: 2, authority: -1 } },
+      { text: 'CARRY ON', effects: { } },
+      { text: 'PROMISE A BETTER ONE', effects: { satisfaction: 2, gold: -10 } },
     ],
   },
 
@@ -4162,8 +4161,8 @@ export const eventRequests: Request[] = [
     text: 'A peddler collapses at the gate, shivering with fever. The village healer warns that an unknown sickness may already be spreading among the traders\' carts.',
     canTriggerRandomly: true,
     options: [
-      { text: 'QUARANTINE EARLY', effects: { gold: -8, satisfaction: -2, health: 2 } },
-      { text: 'WAIT', effects: { health: -6 } },
+      { text: 'QUARANTINE EARLY', effects: { gold: -8, satisfaction: -2 } },
+      { text: 'WAIT', effects: { } },
     ],
     followUps: [
       {
@@ -4171,7 +4170,7 @@ export const eventRequests: Request[] = [
         delayMinTicks: 1,
         delayMaxTicks: 2,
         candidates: [
-          { requestId: 'CHAIN_DISEASE_CONTAINED', weight: 2 },
+          { requestId: 'CHAIN_DISEASE_CONTAINED', weight: 3 },
           { requestId: 'CHAIN_DISEASE_SPREADS', weight: 1 },
         ],
       },
@@ -4180,7 +4179,7 @@ export const eventRequests: Request[] = [
         delayMinTicks: 1,
         delayMaxTicks: 2,
         candidates: [
-          { requestId: 'CHAIN_DISEASE_SPREADS', weight: 2 },
+          { requestId: 'CHAIN_DISEASE_SPREADS', weight: 3 },
           { requestId: 'CHAIN_DISEASE_FALSE_ALARM', weight: 1 },
         ],
       },
@@ -4194,8 +4193,8 @@ export const eventRequests: Request[] = [
     title: 'Quarantine Holds',
     text: 'Your swift action paid off. The sick have been isolated and the village healer reports no new cases. The people praise your foresight.',
     options: [
-      { text: 'GOOD', effects: { authority: 1 } },
-      { text: 'STAY VIGILANT', effects: {} },
+      { text: 'AS IT SHOULD BE', effects: { health: 3, authority: 1 } },
+      { text: 'IMPROVE SANITATION', effects: {gold: -10, health: 4} },
     ],
     followUps: [
       {
@@ -4214,8 +4213,8 @@ export const eventRequests: Request[] = [
     title: 'Plague Creeps In',
     text: 'The sickness has spread to several households. Coughing echoes through the streets and the healer begs for coin to set up treatment tents.',
     options: [
-      { text: 'SET UP HEALERS', effects: { gold: -15, health: 4 } },
-      { text: 'DO NOTHING', effects: { health: -5, satisfaction: -2 } },
+      { text: 'SET UP HEALERS', effects: { gold: -15, health: -4 } },
+      { text: 'DO NOTHING', effects: { health: -5, authority: -1} },
     ],
     // If health drops below 30 from this, EVT_CRISIS_DISEASE may be triggered globally by picker.ts.
     followUps: [
@@ -4235,8 +4234,8 @@ export const eventRequests: Request[] = [
     title: 'Just a Cold',
     text: 'The healer examines the last patient and shrugs. "Seasonal sniffles, nothing more." The village breathes a sigh of relief, though some grumble about the wasted panic.',
     options: [
-      { text: 'WHAT A RELIEF', effects: { satisfaction: -1 } },
-      { text: 'BETTER SAFE', effects: {} },
+      { text: 'WHAT A RELIEF', effects: { } },
+      { text: 'SCOLD YOUR HEALER', effects: {satisfaction: -2, authority: 1} },
     ],
     followUps: [
       {
@@ -4257,7 +4256,7 @@ export const eventRequests: Request[] = [
     text: 'Whether by quarantine, treatment, or simple luck, the threat of disease has faded. Life returns to normal — for now.',
     options: [
       { text: 'MOVE ON', effects: {} },
-      { text: 'STOCK HERBS', effects: {} },
+      { text: 'STOCK HERBS', effects: {gold: -10, health: 3} },
     ],
   },
 
@@ -4274,7 +4273,7 @@ export const eventRequests: Request[] = [
     text: 'The outer palisade has deteriorated badly. Gaps in the timber invite wolves and worse. Feldric urges an upgrade before the next raid season.',
     canTriggerRandomly: true,
     options: [
-      { text: 'INVEST IN PALISADE', effects: { gold: -15, authority: 1 } },
+      { text: 'INVEST IN PALISADE', effects: { gold: -15 } },
       { text: 'DELAY', effects: { satisfaction: -1 } },
     ],
     followUps: [
@@ -4284,15 +4283,15 @@ export const eventRequests: Request[] = [
         delayMaxTicks: 2,
         candidates: [
           // This follow-up requires building:marketplace to be unlocked (meetsRequirements).
-          { requestId: 'CHAIN_PALISADE_HIRE_CARPENTERS', weight: 1 },
-          { requestId: 'CHAIN_PALISADE_LOCAL_BUILD', weight: 2 },
+          { requestId: 'CHAIN_PALISADE_HIRE_CARPENTERS', weight: 100 },
+          { requestId: 'CHAIN_PALISADE_LOCAL_BUILD', weight: 1 },
         ],
       },
       {
         triggerOnOptionIndex: 1,
         delayMinTicks: 1,
         delayMaxTicks: 2,
-        candidates: [{ requestId: 'CHAIN_PALISADE_END', weight: 1 }],
+        candidates: [{ requestId: 'CHAIN_PALISADE_END_WEAKENED', weight: 1 }],
       },
     ],
   },
@@ -4305,15 +4304,21 @@ export const eventRequests: Request[] = [
     title: 'Guild Carpenters Available',
     text: 'Thanks to the marketplace, a guild of skilled carpenters offers their services. Their work would be superior, but their rates are steep.',
     options: [
-      { text: 'PAY GUILD', effects: { gold: -15, authority: 2 } },
-      { text: 'HAGGLE', effects: { satisfaction: -1 } },
+      { text: 'PAY GUILD', effects: { gold: -15 } },
+      { text: 'FARMERS ARE GOOD ENOUGH', effects: { satisfaction: -1 } },
     ],
     followUps: [
       {
         triggerOnOptionIndex: 0,
         delayMinTicks: 1,
         delayMaxTicks: 1,
-        candidates: [{ requestId: 'CHAIN_PALISADE_END', weight: 1 }],
+        candidates: [{ requestId: 'CHAIN_PALISADE_END_STRONG', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 1,
+        delayMaxTicks: 1,
+        candidates: [{ requestId: 'CHAIN_PALISADE_LOCAL_BUILD', weight: 1 }],
       },
     ],
   },
@@ -4323,32 +4328,35 @@ export const eventRequests: Request[] = [
     chainRole: 'member',
     canTriggerRandomly: false,
     title: 'Village Hands',
-    text: 'Without guild access, the villagers must do the work themselves. It will take longer and the result may not hold, but it costs nothing beyond sweat.',
+    text: 'Without guild access, the villagers must do the work themselves. It will take longer, but the result is good, and it costs nothing beyond sweat.',
     options: [
-      { text: 'RALLY VILLAGERS', effects: { satisfaction: -2, authority: 1 } },
-      { text: 'PAY OVERTIME', effects: { gold: -10, satisfaction: -1 } },
-    ],
-    followUps: [
-      {
-        triggerOnOptionIndex: 0,
-        delayMinTicks: 1,
-        delayMaxTicks: 1,
-        candidates: [{ requestId: 'CHAIN_PALISADE_END', weight: 1 }],
-      },
+      { text: 'STANDARD WORKTIME', effects: { landForces: 3, authority: 1 } },
+      { text: 'PAY OVERTIME', effects: { gold: -10, landForces: 6} },
     ],
   },
   {
-    // WIP: This doesn't make sense. When the player does nothing, this request is also shown and it says the palisade is repaired.
-    id: 'CHAIN_PALISADE_END',
+    id: 'CHAIN_PALISADE_END_WEAKENED',
     chainId: 'palisade',
     chainRole: 'end',
     canTriggerRandomly: false,
     chainRestartCooldownTicks: 90,
-    title: 'Walls Stand Again',
-    text: 'The palisade is repaired — or at least patched. Whether it was guild craftsmanship or village grit, the settlement is a little safer tonight.',
+    title: 'pallisades or ruins?',
+    text: 'You decided not investing into pallisade renovations. Now, they are barely more than a pile of pebble.',
     options: [
-      { text: 'INSPECT THE WORK', effects: {} },
-      { text: 'POST SENTRIES', effects: {} },
+      { text: 'TOO BAD', effects: {landForces: -3, authority: -1} },
+    ],
+  },
+  {
+    id: 'CHAIN_PALISADE_END_STRONG',
+    chainId: 'palisade',
+    chainRole: 'end',
+    canTriggerRandomly: false,
+    chainRestartCooldownTicks: 90,
+    title: 'Most shiny pallisades around',
+    text: 'The hired guild workers do excellent efforts. Your pallisades are not only strong as ever, but also beautiful.',
+    options: [
+      { text: 'THANK THEM', effects: {landForces: 10, authority: 1, satisfaction: 2} },
+      { text: 'SHOW OFF', effects: {landForces: 10, authority: 3} },
     ],
   },
 
@@ -5336,7 +5344,7 @@ function generateFireChainRequests(): Request[] {
       chainId,
       chainRole: 'member',
       options: [
-        { text: 'Mobilize all hands', effects: { gold: -20, satisfaction: -5 } },
+        { text: 'Mobilize all hands', effects: { gold: -10, health: -2 } },
         { text: 'Salvage what you can', effects: { fireRisk: 10 } },
       ],
       followUps: [
