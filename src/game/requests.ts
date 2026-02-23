@@ -1590,7 +1590,6 @@ export const eventRequests: Request[] = [
           gold: 10,
         },
       },
-      },
     ],
   },
 
@@ -3150,7 +3149,7 @@ export const eventRequests: Request[] = [
         effects: {
           authority: 2,
           farmers: -1,
-          satisfation: -3,
+          satisfaction: -3,
         },
       },
       {
