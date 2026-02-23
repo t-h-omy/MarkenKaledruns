@@ -1627,14 +1627,15 @@ export const eventRequests: Request[] = [
       {
         text: 'PAY PROTECTION',
         effects: {
-          gold: -15,
-          authority: -2,
+          gold: -10,
+          authority: -1,
         },
       },
       {
-        text: 'REFUSE',
+        text: 'PAY HIM A VISIT',
         effects: {
           authority: 1,
+          landForces: 2,
         },
       },
     ],
@@ -1649,8 +1650,7 @@ export const eventRequests: Request[] = [
       {
         text: 'PUNISH THEM',
         effects: {
-          landForces: -4,
-          satisfaction: -5,
+          landForces: -2,
           authority: 1,
         },
       },
@@ -1670,7 +1670,7 @@ export const eventRequests: Request[] = [
     authorityMax: 33,
     options: [
       {
-        text: 'INVESTIGATE',
+        text: 'FIND THE NASTY THIEVES',
         effects: {
           gold: -10,
           farmers: -2,
@@ -1681,7 +1681,6 @@ export const eventRequests: Request[] = [
         text: 'ACCEPT THE LOSS',
         effects: {
           gold: -5,
-          satisfaction: -8,
           authority: -2,
         },
       },
@@ -1690,23 +1689,24 @@ export const eventRequests: Request[] = [
   {
     id: 'EVT_LOW_PETITION_DENIED',
     title: 'Petition Rejected',
-    text: 'You petition the regional lord for aid, but are turned away at the gates. "We deal only with legitimate leaders," the guards say.',
+    text: 'The harvest was poor, so you petition the neighboring lord for aid, but are turned away at the gates. "We deal only with legitimate leaders," the guards say.',
     authorityMin: 0,
     authorityMax: 33,
     options: [
       {
-        text: 'PLEAD HARDER',
+        text: 'BEG ON YOUR KNEES',
         effects: {
-          gold: -5,
+          gold: 15,
+          satisfaction: 2,
+          health: 2,
           authority: -2,
-          satisfaction: -5,
         },
       },
       {
         text: 'LEAVE WITH DIGNITY',
         effects: {
-          satisfaction: -3,
-          authority: 1,
+          satisfaction: -2,
+          health: -2,
         },
       },
     ],
@@ -1714,24 +1714,24 @@ export const eventRequests: Request[] = [
   {
     id: 'EVT_LOW_DEBT_COLLECTOR',
     title: 'The Debt Collector',
-    text: 'A ruthless debt collector arrives, sensing your weakness. He demands payment with interest - or else he\'ll take what he\'s owed by force.',
+    text: 'A ruthless debt collector arrives, sensing your weakness. He demands payment from you for debts of your poorest villagers - or else he\'ll take what he\'s owed by force.',
     authorityMin: 0,
     authorityMax: 33,
     options: [
       {
         text: 'PAY THE DEBT',
         effects: {
-          gold: -20,
-          satisfaction: 3,
+          gold: -15,
+          authority: -1,
+          satisfaction: 2,
         },
       },
       {
-        text: 'REFUSE TO PAY',
+        text: 'PAY - HIM A VISIT!',
         effects: {
           landForces: -3,
-          gold: -10,
-          authority: -3,
-          satisfaction: -5,
+          authority: 2,
+          satisfaction: 2
         },
       },
     ],
@@ -1746,16 +1746,15 @@ export const eventRequests: Request[] = [
       {
         text: 'STAND FIRM',
         effects: {
-          satisfaction: -10,
-          authority: 3,
+          satisfaction: -4,
+          authority: 2,
         },
       },
       {
-        text: 'COMPROMISE',
+        text: 'BRIBE THEM',
         effects: {
           gold: -15,
-          satisfaction: 5,
-          authority: -2,
+          satisfaction: 4,
         },
       },
     ],
@@ -1771,15 +1770,13 @@ export const eventRequests: Request[] = [
         text: 'IGNORE THEM',
         effects: {
           authority: -2,
-          satisfaction: -8,
         },
       },
       {
         text: 'HIRE MERCENARIES',
         effects: {
-          gold: -25,
+          gold: -10,
           authority: 2,
-          satisfaction: 5,
         },
       },
     ],
@@ -1787,25 +1784,23 @@ export const eventRequests: Request[] = [
   {
     id: 'EVT_LOW_FARMERS_LEAVE',
     title: 'Mass Exodus',
-    text: 'Several farming families announce they\'re leaving for a neighboring settlement with "real leadership." Your reputation has failed you.',
+    text: 'A herbalist and her family threaten that they\'re leaving for a neighboring settlement with "real leadership."',
     authorityMin: 0,
     authorityMax: 33,
     options: [
       {
         text: 'BEG THEM TO STAY',
         effects: {
-          farmers: -2,
           gold: -10,
-          authority: -3,
-          satisfaction: -5,
+          authority: -1,
         },
       },
       {
-        text: 'LET THEM GO',
+        text: 'THROW THEM OUT',
         effects: {
-          farmers: -5,
-          authority: -1,
-          satisfaction: -3,
+          farmers: -4,
+          health: -2,
+          authority: 1,
         },
       },
     ],
@@ -1813,7 +1808,7 @@ export const eventRequests: Request[] = [
   {
     id: 'EVT_LOW_MERCHANT_EXTORTION',
     title: 'Merchant Extortion',
-    text: 'A traveling merchant realizes your position is weak. He demands triple the usual prices for essential goods, knowing you have no leverage to refuse.',
+    text: 'A traveling merchant realizes your position is weak. He demands tusuae the usual prices for urgently needed healing potions, knowing you have very low leverage to refuse.',
     authorityMin: 0,
     authorityMax: 33,
     options: [
@@ -1822,14 +1817,13 @@ export const eventRequests: Request[] = [
         effects: {
           gold: -20,
           health: 5,
-          authority: -1,
         },
       },
       {
         text: 'REFUSE TO BUY',
         effects: {
-          health: -10,
-          satisfaction: -8,
+          health: -3,
+          satisfaction: -2,
           authority: 1,
         },
       },
@@ -1845,17 +1839,16 @@ export const eventRequests: Request[] = [
       {
         text: 'MAKE A GRAND GESTURE',
         effects: {
-          gold: -30,
-          satisfaction: 10,
-          authority: 5,
+          gold: -15,
+          satisfaction: 4,
+          authority: 1,
         },
       },
       {
         text: 'WAIT IT OUT',
         effects: {
-          satisfaction: -15,
-          health: -5,
-          authority: -2,
+          satisfaction: -2,
+          authority: -1,
         },
       },
     ],
@@ -1863,23 +1856,24 @@ export const eventRequests: Request[] = [
   {
     id: 'EVT_MEDIUM_AUTHORITY',
     title: 'Political Maneuver',
-    text: 'Your moderate influence allows you to negotiate a favorable trade deal with a neighboring settlement.',
+    text: 'Your moderate influence allows you to negotiate a trade deal with a neighboring settlement.',
     authorityMin: 34,
     authorityMax: 66,
     options: [
       {
         text: 'ACCEPT DEAL',
         effects: {
-          gold: 15,
-          authority: 3,
+          gold: 10,
+          authority: 1,
         },
       },
       {
-        text: 'DEMAND MORE',
+        text: 'SELL ALL WINTER STOCKS',
         effects: {
-          gold: 5,
-          authority: -5,
-          satisfaction: -5,
+          gold: 40,
+          satisfaction: -4,
+          health: -4,
+          farmers: -3,
         },
       },
     ],
