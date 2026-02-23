@@ -264,14 +264,14 @@ export const eventRequests: Request[] = [
         effects: {
           farmers: 6,
           landForces: 2,
-          fireRisk: 10,
-          health: -5,
+          fireRisk: 4,
+          health: -2,
         },
       },
       {
         text: 'DECLINE',
         effects: {
-          satisfaction: 4,
+          satisfaction: 2,
         },
       },
     ],
@@ -595,12 +595,13 @@ export const eventRequests: Request[] = [
         text: 'REPLACE',
         effects: {
           gold: -10,
+          fireRisk: -2
         },
       },
       {
         text: 'IGNORE',
         effects: {
-          fireRisk: 6,
+          fireRisk: 4,
           health: -3,
         },
       },
@@ -929,11 +930,11 @@ export const eventRequests: Request[] = [
     options: [
       { 
         text: 'HOLD A GRAND FEAST', 
-        effects: { satisfaction: 8, health: 6, authority: 2} 
+        effects: { satisfaction: 6, health: 4, authority: 2} 
       },
       { 
         text: 'REBUILD THE BORDER', 
-        effects: { gold: -10, landForces: 10, fireRisk: -10, authority: 2} 
+        effects: { gold: -10, landForces: 8, fireRisk: -8, authority: 2} 
       },
     ],
   },
@@ -1252,21 +1253,21 @@ export const eventRequests: Request[] = [
     text: 'During the second war round against Blackgeat, they set brushfires to blind you. Feldric snarls: "They want panic."',
     canTriggerRandomly: false,
     combat: {
-      enemyForces: 8,
+      enemyForces: 10,
       prepDelayMinTicks: 3,
       prepDelayMaxTicks: 5,
       onWin: {
         satisfaction: 2,
-        authority: 2
+        authority: 2,
       },
       onLose: {
-        satisfaction: -3,
-        authority: -3,
+        satisfaction: -2,
+        authority: -2,
       },
     },
     options: [
       { text: 'PROTECT THE VILLAGE', effects: { fireRisk: -4, satisfaction: 1 } },
-      { text: 'PRESS THE LINE', effects: { farmers: -4, fireRisk: 6 } },
+      { text: 'PRESS THE LINE', effects: { farmers: -4, fireRisk: 5 } },
     ],
     followUps: [
       {
@@ -1349,7 +1350,7 @@ export const eventRequests: Request[] = [
     canTriggerRandomly: false,
     options: [
       { text: 'ACCEPT HELP', effects: { landForces: 4 } },
-      { text: 'ACCEPT AND PAY', effects: { gold: -15, landForces: 8 } },
+      { text: 'ACCEPT AND PAY THEM', effects: { gold: -15, landForces: 8 } },
     ],
     followUps: [
       {
@@ -1563,24 +1564,39 @@ export const eventRequests: Request[] = [
     requires: ['building:marketplace'],
     options: [
       {
-        text: 'STEADY TRADE',
-        effects: {
-          gold: 8,
+        text: 'RISKY DEALS',
+        effects: {},
+        authorityCheck: {
+          minCommit: 0,
+          maxCommit: 25,
+          onSuccess: {
+            gold: 25,
+            satisfaction: 2,
+            authority: 1,
+          },
+          onFailure: {
+            gold: -10,
+            satisfaction: -3,
+          },
+          refundOnSuccessPercent: 100,
+          extraLossOnFailure: 2,
+          minSuccessChance: 25,
+          maxSuccessChance: 80,
         },
       },
       {
-        text: 'RISKY DEALS',
+        text: 'STEADY TRADE',
         effects: {
-          gold: 15,
-          satisfaction: -5,
+          gold: 10,
         },
+      },
       },
     ],
   },
 
   {
     id: 'EVENT_TAVERN_AFTER_WORK',
-    title: 'Feierabend in der Kneipe',
+    title: 'After-Work at the Tavern',
     text: 'After a long day of labor, the villagers gather at the tavern. Should you subsidize their drinks to boost morale, or let them enjoy at their own expense?',
     requires: ['building:brewery'],
     options: [
@@ -1593,8 +1609,8 @@ export const eventRequests: Request[] = [
       {
         text: 'SUBSIDIZE DRINKS',
         effects: {
-          satisfaction: 6,
-          gold: -20,
+          satisfaction: 5,
+          gold: -10,
         },
       },
     ],
@@ -1875,37 +1891,34 @@ export const eventRequests: Request[] = [
   {
     id: 'EVT_COMMIT_LOW_DESPERATE_PLEA',
     title: 'Desperate Negotiation',
-    text: 'A local merchant offers to help rebuild your reputation - but only if you can scrape together enough authority to prove you\'re worth the risk.',
+    text: 'A local merchant offers to help rebuild your reputation for a small fee.',
     authorityMin: 0,
     authorityMax: 33,
     options: [
       {
-        text: 'TRY TO CONVINCE',
-        effects: {},
+        text: 'TAKE THE OFFER',
+        effects: {gold: -5},
         authorityCheck: {
           minCommit: 0,
-          maxCommit: 10,
+          maxCommit: 25,
           onSuccess: {
-            gold: 25,
-            satisfaction: 8,
+            satisfaction: 4,
             authority: 3,
           },
           onFailure: {
-            gold: -5,
             satisfaction: -5,
           },
           successFeedbackRequestId: 'INFO_LOW_PLEA_SUCCESS',
           failureFeedbackRequestId: 'INFO_LOW_PLEA_FAILURE',
           refundOnSuccessPercent: 100,
           extraLossOnFailure: 5,
-          minSuccessChance: 55,
+          minSuccessChance: 40,
           maxSuccessChance: 90,
         },
       },
       {
-        text: 'DECLINE OFFER',
+        text: 'DECLINE',
         effects: {
-          satisfaction: -3,
         },
       },
     ],
@@ -1973,7 +1986,6 @@ export const eventRequests: Request[] = [
           successFeedbackRequestId: 'INFO_LOW_RESPECT_SUCCESS',
           failureFeedbackRequestId: 'INFO_LOW_RESPECT_FAILURE',
           refundOnSuccessPercent: 100,
-          extraLossOnFailure: 6,
           minSuccessChance: 55,
           maxSuccessChance: 90,
         },
@@ -1990,7 +2002,7 @@ export const eventRequests: Request[] = [
   {
     id: 'EVT_COMMIT_LOW_DEBT_NEGOTIATION',
     title: 'Debt Relief',
-    text: 'Creditors circle like vultures. Hiring a lawyer to negotiate costs 5 gold upfront. If you can muster enough authority, you might secure better terms. Otherwise, they will take everything.',
+    text: 'Creditors circle like vultures. Hiring a lawyer to negotiate costs gold upfront. If you can muster enough authority, you might secure better terms. Otherwise, they will take everything.',
     authorityMin: 0,
     authorityMax: 33,
     options: [
@@ -2001,28 +2013,27 @@ export const eventRequests: Request[] = [
         },
         authorityCheck: {
           minCommit: 0,
-          maxCommit: 10,
+          maxCommit: 25,
           onSuccess: {
-            gold: 15,
-            authority: 3,
+            gold: 20,
+            authority: 1,
           },
           onFailure: {
             gold: -15,
-            satisfaction: -7,
           },
           successFeedbackRequestId: 'INFO_LOW_DEBT_SUCCESS',
           failureFeedbackRequestId: 'INFO_LOW_DEBT_FAILURE',
           refundOnSuccessPercent: 100,
-          extraLossOnFailure: 7,
-          minSuccessChance: 55,
-          maxSuccessChance: 90,
+          extraLossOnFailure: 2,
+          minSuccessChance: 30,
+          maxSuccessChance: 85,
         },
       },
       {
         text: 'PAY FULL PRICE',
         effects: {
-          gold: -20,
-          authority: -2,
+          gold: -15,
+          authority: -1,
         },
       },
     ],
@@ -2141,16 +2152,15 @@ export const eventRequests: Request[] = [
         text: 'ATTEND WITH ENTOURAGE',
         effects: {
           gold: -30,
-          authority: 20,
-          satisfaction: 15,
+          authority: 3,
         },
       },
       {
         text: 'ATTEND HUMBLY',
         effects: {
           gold: -10,
-          authority: 10,
-          satisfaction: 8,
+          authority: -1,
+          satisfaction: 4,
         },
       },
     ],
@@ -2158,24 +2168,23 @@ export const eventRequests: Request[] = [
   {
     id: 'EVT_HIGH_BETRAYAL',
     title: 'The Trusted Betrayer',
-    text: 'Your closest advisor has been secretly undermining you, selling information to your enemies. Your authority will determine how you handle this betrayal.',
+    text: 'Your closest advisor and some guards have been secretly undermining you, selling information to your enemies. They offer you an \'incentive\' to make it go away. How will you handle this betrayal?',
     authorityMin: 67,
     authorityMax: 100,
     options: [
       {
         text: 'PUBLIC EXECUTION',
         effects: {
-          authority: 15,
-          satisfaction: -10,
-          landForces: -2,
+          authority: 3,
+          satisfaction: 4,
+          landForces: -5,
         },
       },
       {
-        text: 'EXILE QUIETLY',
+        text: 'TAKE THE \'INCENTIVE\'',
         effects: {
-          authority: 8,
-          satisfaction: 5,
-          gold: -10,
+          gold: 30,
+          satisfaction: -5,
         },
       },
     ],
@@ -2190,16 +2199,14 @@ export const eventRequests: Request[] = [
       {
         text: 'ACCEPT TRIBUTE',
         effects: {
-          gold: 35,
-          authority: 8,
-          satisfaction: 10,
+          gold: 30,
+          authority: 2,
         },
       },
       {
         text: 'REFUSE GRACIOUSLY',
         effects: {
-          authority: 12,
-          satisfaction: 15,
+          satisfaction: 4,
         },
       },
     ],
@@ -2214,16 +2221,16 @@ export const eventRequests: Request[] = [
       {
         text: 'DESTROY RIVAL',
         effects: {
-          gold: 20,
-          authority: 10,
-          satisfaction: -8,
+          gold: 25,
+          authority: 3,
+          satisfaction: -3,
         },
       },
       {
         text: 'SHOW MERCY',
         effects: {
-          authority: 5,
-          satisfaction: 12,
+          authority: -2,
+          satisfaction: 3,
         },
       },
     ],
@@ -2239,16 +2246,16 @@ export const eventRequests: Request[] = [
         text: 'LAVISH CELEBRATION',
         effects: {
           gold: -40,
-          authority: 15,
-          satisfaction: 20,
+          authority: 5,
+          satisfaction: 6,
         },
       },
       {
         text: 'MODEST AFFAIR',
         effects: {
-          gold: -20,
-          authority: 8,
-          satisfaction: 12,
+          gold: -15,
+          authority: 1,
+          satisfaction: 3,
         },
       },
     ],
@@ -2261,20 +2268,32 @@ export const eventRequests: Request[] = [
     authorityMax: 100,
     options: [
       {
-        text: 'DEMAND APOLOGY',
+        text: 'DEMAND APOLOGY (AND COMPENSATION)',
         effects: {
-          authority: 12,
-          satisfaction: 10,
-          gold: 15,
+
+        },
+        authorityCheck: {
+          minCommit: 15,
+          maxCommit: 40,
+          onSuccess: {
+            authority: 2,
+            satisfaction: 3,
+            gold: 20,
+          },
+          onFailure: {
+          },
+          refundOnSuccessPercent: 100,
+          extraLossOnFailure: 5,
+          minSuccessChance: 40,
+          maxSuccessChance: 85,
         },
       },
       {
         text: 'PREPARE FOR WAR',
         effects: {
-          authority: 8,
-          landForces: 8,
+          authority: 1,
+          landForces: 5,
           gold: -25,
-          satisfaction: 5,
         },
       },
     ],
@@ -2292,31 +2311,29 @@ export const eventRequests: Request[] = [
       {
         text: 'NEGOTIATE HARD',
         effects: {
-          gold: 10,
         },
         authorityCheck: {
           minCommit: 0,
-          maxCommit: 20,
+          maxCommit: 40,
           onSuccess: {
             gold: 30,
-            satisfaction: 5,
+            authority: 1,
           },
           onFailure: {
-            satisfaction: -8,
+            authority: -1,
           },
           successFeedbackRequestId: 'INFO_TRADE_SUCCESS',
           failureFeedbackRequestId: 'INFO_TRADE_FAILURE',
           refundOnSuccessPercent: 100,
-          extraLossOnFailure: 6,
-          minSuccessChance: 55,
-          maxSuccessChance: 90,
+          minSuccessChance: 30,
+          maxSuccessChance: 85,
         },
       },
       {
         text: 'ACCEPT THEIR TERMS',
         effects: {
           gold: 15,
-          authority: -2,
+          authority: -1,
         },
       },
     ],
@@ -2335,28 +2352,27 @@ export const eventRequests: Request[] = [
           minCommit: 0,
           maxCommit: 25,
           onSuccess: {
-            satisfaction: 15,
-            authority: 5,
+            satisfaction: 5,
+            authority: 2,
           },
           onFailure: {
-            satisfaction: -15,
+            satisfaction: -5,
             landForces: -3,
-            gold: -10,
           },
           successFeedbackRequestId: 'INFO_RIOT_SUCCESS',
           failureFeedbackRequestId: 'INFO_RIOT_FAILURE',
-          refundOnSuccessPercent: 80,
-          extraLossOnFailure: 10,
-          minSuccessChance: 55,
-          maxSuccessChance: 90,
+          refundOnSuccessPercent: 100,
+          extraLossOnFailure: 5,
+          minSuccessChance: 25,
+          maxSuccessChance: 85,
         },
       },
       {
         text: 'SEND IN GUARDS',
         effects: {
-          satisfaction: -10,
-          landForces: -2,
-          authority: -3,
+          satisfaction: -5,
+          landForces: -3,
+          authority: 3,
         },
       },
     ],
@@ -2375,12 +2391,10 @@ export const eventRequests: Request[] = [
           minCommit: 0,
           maxCommit: 20,
           onSuccess: {
-            gold: 20,
-            satisfaction: 10,
+            satisfaction: 5,
           },
           onFailure: {
-            satisfaction: -12,
-            gold: -15,
+            satisfaction: -5,
           },
           successFeedbackRequestId: 'INFO_JUSTICE_SUCCESS',
           failureFeedbackRequestId: 'INFO_JUSTICE_FAILURE',
@@ -2393,8 +2407,8 @@ export const eventRequests: Request[] = [
       {
         text: 'DEFER TO COUNCIL',
         effects: {
-          authority: -5,
-          satisfaction: 3,
+          authority: -1,
+          satisfaction: 2,
         },
       },
     ],
@@ -2410,21 +2424,21 @@ export const eventRequests: Request[] = [
         text: 'FORCE REFORMS',
         effects: {},
         authorityCheck: {
-          minCommit: 0,
-          maxCommit: 35,
+          minCommit: 10,
+          maxCommit: 30,
           onSuccess: {
             landForces: 10,
-            authority: 8,
+            authority: 3,
           },
           onFailure: {
             landForces: -5,
-            satisfaction: -10,
+            satisfaction: -3,
           },
           successFeedbackRequestId: 'INFO_REFORM_SUCCESS',
           failureFeedbackRequestId: 'INFO_REFORM_FAILURE',
-          refundOnSuccessPercent: 90,
-          extraLossOnFailure: 10,
-          minSuccessChance: 45,
+          refundOnSuccessPercent: 100,
+          extraLossOnFailure: 4,
+          minSuccessChance: 50,
           maxSuccessChance: 85,
         },
       },
@@ -2448,28 +2462,28 @@ export const eventRequests: Request[] = [
         text: 'RECRUIT THEM',
         effects: {},
         authorityCheck: {
-          minCommit: 0,
+          minCommit: 5,
           maxCommit: 25,
           onSuccess: {
-            landForces: 8,
-            satisfaction: -5,
+            landForces: 6,
+            authority: 2,
           },
           onFailure: {
             gold: -20,
-            landForces: -4,
+            fireRisk: 5,
           },
           successFeedbackRequestId: 'INFO_BANDIT_SUCCESS',
           failureFeedbackRequestId: 'INFO_BANDIT_FAILURE',
           refundOnSuccessPercent: 100,
-          extraLossOnFailure: 12,
-          minSuccessChance: 55,
-          maxSuccessChance: 90,
+          extraLossOnFailure: 0,
+          minSuccessChance: 50,
+          maxSuccessChance: 85,
         },
       },
       {
         text: 'REFUSE THEM',
         effects: {
-          authority: 2,
+          authority: -2,
           satisfaction: 5,
         },
       },
@@ -2487,21 +2501,20 @@ export const eventRequests: Request[] = [
         effects: {},
         authorityCheck: {
           minCommit: 0,
-          maxCommit: 20,
+          maxCommit: 40,
           onSuccess: {
-            gold: 35,
-            satisfaction: 8,
+            gold: 30,
           },
           onFailure: {
             gold: -10,
-            satisfaction: -15,
+            satisfaction: -5,
           },
           successFeedbackRequestId: 'INFO_TAX_SUCCESS',
           failureFeedbackRequestId: 'INFO_TAX_FAILURE',
           refundOnSuccessPercent: 100,
-          extraLossOnFailure: 7,
-          minSuccessChance: 55,
-          maxSuccessChance: 90,
+          extraLossOnFailure: 3,
+          minSuccessChance: 25,
+          maxSuccessChance: 85,
         },
       },
       {
@@ -2524,29 +2537,29 @@ export const eventRequests: Request[] = [
         text: 'MAKE A DECREE',
         effects: {},
         authorityCheck: {
-          minCommit: 0,
+          minCommit: 10,
           maxCommit: 30,
           onSuccess: {
-            satisfaction: 15,
-            authority: 10,
+            satisfaction: 5,
+            authority: 2,
           },
           onFailure: {
-            satisfaction: -20,
+            satisfaction: -5,
             farmers: -5,
           },
           successFeedbackRequestId: 'INFO_RELIGIOUS_SUCCESS',
           failureFeedbackRequestId: 'INFO_RELIGIOUS_FAILURE',
           refundOnSuccessPercent: 100,
-          extraLossOnFailure: 9,
+          extraLossOnFailure: 0,
           minSuccessChance: 50,
-          maxSuccessChance: 90,
+          maxSuccessChance: 85,
         },
       },
       {
         text: 'ALLOW PLURALISM',
         effects: {
-          satisfaction: 5,
-          authority: -4,
+          satisfaction: 2,
+          authority: -2,
         },
       },
     ],
@@ -2562,30 +2575,30 @@ export const eventRequests: Request[] = [
         text: 'ASSERT CLAIM',
         effects: {},
         authorityCheck: {
-          minCommit: 0,
-          maxCommit: 40,
+          minCommit: 15,
+          maxCommit: 25,
           onSuccess: {
-            farmers: 8,
+            farmers: 5,
             gold: 25,
-            authority: 12,
+            authority: 2,
           },
           onFailure: {
             landForces: -6,
-            satisfaction: -10,
+            satisfaction: -5,
           },
           successFeedbackRequestId: 'INFO_BORDER_SUCCESS',
           failureFeedbackRequestId: 'INFO_BORDER_FAILURE',
           refundOnSuccessPercent: 90,
           extraLossOnFailure: 10,
-          minSuccessChance: 40,
+          minSuccessChance: 50,
           maxSuccessChance: 80,
         },
       },
       {
         text: 'CONCEDE LANDS',
         effects: {
-          authority: -5,
-          satisfaction: -5,
+          authority: -1,
+          satisfaction: -2,
         },
       },
     ],
@@ -2593,40 +2606,38 @@ export const eventRequests: Request[] = [
   {
     id: 'EVT_COMMIT_CORRUPT_OFFICIAL',
     title: 'Corruption Exposed',
-    text: 'A powerful official is caught embezzling. Punishing them requires authority, as they have many allies.',
+    text: 'A powerful official is caught embezzling. Punishing them requires authority and investment, as they have many allies.',
     authorityMin: 34,
     authorityMax: 100,
     options: [
       {
         text: 'PROSECUTE FULLY',
-        effects: {},
+        effects: {gold: -10,},
         authorityCheck: {
-          minCommit: 0,
+          minCommit: 5,
           maxCommit: 20,
           onSuccess: {
             gold: 25,
-            satisfaction: 12,
-            authority: 8,
+            satisfaction: 4,
+            authority: 2,
           },
           onFailure: {
             gold: -15,
-            satisfaction: -12,
+            satisfaction: -3,
             landForces: -3,
           },
           successFeedbackRequestId: 'INFO_CORRUPT_SUCCESS',
           failureFeedbackRequestId: 'INFO_CORRUPT_FAILURE',
           refundOnSuccessPercent: 100,
           extraLossOnFailure: 10,
-          minSuccessChance: 55,
-          maxSuccessChance: 90,
+          minSuccessChance: 40,
+          maxSuccessChance: 85,
         },
       },
       {
         text: 'QUIET DISMISSAL',
         effects: {
-          gold: 10,
-          authority: -4,
-          satisfaction: -5,
+          authority: -2,
         },
       },
     ],
@@ -2642,30 +2653,30 @@ export const eventRequests: Request[] = [
         text: 'BACK A CLAIMANT',
         effects: {},
         authorityCheck: {
-          minCommit: 0,
+          minCommit: 10,
           maxCommit: 40,
           onSuccess: {
             gold: 40,
-            landForces: 12,
-            authority: 15,
+            landForces: 5,
+            authority: 2,
           },
           onFailure: {
-            gold: -25,
-            landForces: -8,
-            satisfaction: -10,
+            gold: -20,
+            landForces: -3,
+            satisfaction: -3,
           },
           successFeedbackRequestId: 'INFO_SUCCESSION_SUCCESS',
           failureFeedbackRequestId: 'INFO_SUCCESSION_FAILURE',
           refundOnSuccessPercent: 80,
-          extraLossOnFailure: 12,
-          minSuccessChance: 40,
+          extraLossOnFailure: 0,
+          minSuccessChance: 50,
           maxSuccessChance: 80,
         },
       },
       {
         text: 'STAY NEUTRAL',
         effects: {
-          authority: -3,
+          authority: -2,
         },
       },
     ],
@@ -2681,29 +2692,29 @@ export const eventRequests: Request[] = [
         text: 'BACK ONE GUILD',
         effects: {},
         authorityCheck: {
-          minCommit: 0,
-          maxCommit: 15,
+          minCommit: 5,
+          maxCommit: 20,
           onSuccess: {
             gold: 30,
-            satisfaction: 8,
+            satisfaction: 3,
           },
           onFailure: {
-            gold: -18,
-            satisfaction: -15,
+            gold: -20,
+            satisfaction: -3,
           },
           successFeedbackRequestId: 'INFO_GUILD_SUCCESS',
           failureFeedbackRequestId: 'INFO_GUILD_FAILURE',
           refundOnSuccessPercent: 100,
-          extraLossOnFailure: 8,
+          extraLossOnFailure: 0,
           minSuccessChance: 55,
-          maxSuccessChance: 90,
+          maxSuccessChance: 85,
         },
       },
       {
         text: 'FORCE COMPROMISE',
         effects: {
-          gold: 12,
-          authority: -2,
+          gold: 10,
+          authority: -1,
         },
       },
     ],
@@ -2720,20 +2731,18 @@ export const eventRequests: Request[] = [
         effects: {},
         authorityCheck: {
           minCommit: 0,
-          maxCommit: 35,
+          maxCommit: 40,
           onSuccess: {
-            gold: 35,
-            authority: 12,
-            satisfaction: 10,
+            gold: 25,
+            authority: 1,
           },
           onFailure: {
-            authority: -5,
-            satisfaction: -8,
+            authority: -2,
+            satisfaction: -3,
           },
           successFeedbackRequestId: 'INFO_ENVOY_SUCCESS',
           failureFeedbackRequestId: 'INFO_ENVOY_FAILURE',
           refundOnSuccessPercent: 100,
-          extraLossOnFailure: 6,
           minSuccessChance: 45,
           maxSuccessChance: 85,
         },
@@ -2741,8 +2750,8 @@ export const eventRequests: Request[] = [
       {
         text: 'ACCEPT THEIR TERMS',
         effects: {
-          gold: 20,
-          authority: -3,
+          gold: 10,
+          authority: -1,
         },
       },
     ],
@@ -2758,31 +2767,30 @@ export const eventRequests: Request[] = [
         text: 'REDISTRIBUTE LAND',
         effects: {},
         authorityCheck: {
-          minCommit: 0,
+          minCommit: 10,
           maxCommit: 40,
           onSuccess: {
-            farmers: 12,
-            satisfaction: 20,
-            authority: 10,
+            farmers: 5,
+            satisfaction: 5,
+            authority: 2,
           },
           onFailure: {
-            satisfaction: -18,
+            satisfaction: -3,
             gold: -25,
-            farmers: -6,
+            farmers: -5,
           },
           successFeedbackRequestId: 'INFO_LAND_SUCCESS',
           failureFeedbackRequestId: 'INFO_LAND_FAILURE',
-          refundOnSuccessPercent: 85,
-          extraLossOnFailure: 10,
-          minSuccessChance: 40,
-          maxSuccessChance: 80,
+          refundOnSuccessPercent: 100,
+          extraLossOnFailure: 0,
+          minSuccessChance: 45,
+          maxSuccessChance: 85,
         },
       },
       {
         text: 'MAINTAIN STATUS QUO',
         effects: {
-          satisfaction: -8,
-          authority: -2,
+          satisfaction: -3,
         },
       },
     ],
@@ -2798,29 +2806,26 @@ export const eventRequests: Request[] = [
         text: 'ABOLISH TRADITION',
         effects: {},
         authorityCheck: {
-          minCommit: 0,
-          maxCommit: 30,
+          minCommit: 5,
+          maxCommit: 20,
           onSuccess: {
-            satisfaction: 15,
-            health: 8,
-            authority: 10,
+            health: 6,
           },
           onFailure: {
-            satisfaction: -20,
-            authority: -5,
+            satisfaction: -5,
           },
           successFeedbackRequestId: 'INFO_TRADITION_SUCCESS',
           failureFeedbackRequestId: 'INFO_TRADITION_FAILURE',
           refundOnSuccessPercent: 100,
-          extraLossOnFailure: 10,
-          minSuccessChance: 50,
-          maxSuccessChance: 90,
+          extraLossOnFailure: 0,
+          minSuccessChance: 55,
+          maxSuccessChance: 85,
         },
       },
       {
         text: 'RESPECT TRADITION',
         effects: {
-          satisfaction: 5,
+          satisfaction: 3,
           health: -5,
         },
       },
@@ -2837,28 +2842,24 @@ export const eventRequests: Request[] = [
         text: 'RECRUIT PIRATES',
         effects: {},
         authorityCheck: {
-          minCommit: 0,
-          maxCommit: 20,
+          minCommit: 5,
+          maxCommit: 25,
           onSuccess: {
-            gold: 28,
             landForces: 6,
           },
           onFailure: {
-            gold: -22,
-            satisfaction: -10,
           },
           successFeedbackRequestId: 'INFO_PIRATE_SUCCESS',
           failureFeedbackRequestId: 'INFO_PIRATE_FAILURE',
           refundOnSuccessPercent: 100,
-          extraLossOnFailure: 8,
-          minSuccessChance: 55,
-          maxSuccessChance: 90,
+          extraLossOnFailure: 5,
+          minSuccessChance: 25,
+          maxSuccessChance: 80,
         },
       },
       {
         text: 'IGNORE THEM',
         effects: {
-          gold: -10,
         },
       },
     ],
@@ -2866,7 +2867,7 @@ export const eventRequests: Request[] = [
   {
     id: 'EVT_COMMIT_MARRIAGE_ALLIANCE',
     title: 'Political Marriage',
-    text: 'A powerful family offers a marriage alliance. Securing favorable terms requires authority to negotiate from strength.',
+    text: 'A powerful family offers a rather unbalanced marriage alliance. Securing favorable terms requires authority to negotiate from strength.',
     authorityMin: 34,
     authorityMax: 100,
     options: [
@@ -2874,31 +2875,28 @@ export const eventRequests: Request[] = [
         text: 'NEGOTIATE TERMS',
         effects: {},
         authorityCheck: {
-          minCommit: 0,
-          maxCommit: 35,
+          minCommit: 15,
+          maxCommit: 50,
           onSuccess: {
             gold: 45,
-            landForces: 10,
-            authority: 15,
+            landForces: 5,
           },
           onFailure: {
-            gold: -20,
-            authority: -6,
-            satisfaction: -12,
+            gold: -30,
+            satisfaction: -5,
           },
           successFeedbackRequestId: 'INFO_MARRIAGE_SUCCESS',
           failureFeedbackRequestId: 'INFO_MARRIAGE_FAILURE',
           refundOnSuccessPercent: 90,
-          extraLossOnFailure: 10,
-          minSuccessChance: 45,
+          extraLossOnFailure: 0,
+          minSuccessChance: 40,
           maxSuccessChance: 85,
         },
       },
       {
         text: 'ACCEPT AS OFFERED',
         effects: {
-          gold: 25,
-          landForces: 5,
+          gold: 15,
           authority: -3,
         },
       },
@@ -2914,16 +2912,16 @@ export const eventRequests: Request[] = [
       {
         text: 'LISTEN HUMBLY',
         effects: {
-          authority: -2,
-          satisfaction: 10,
-          gold: 5,
+          authority: -1,
+          satisfaction: 3,
+          gold: 10,
         },
       },
       {
         text: 'PUT HIM IN HIS PLACE',
         effects: {
-          authority: 3,
-          satisfaction: -8,
+          authority: 2,
+          satisfaction: -3,
         },
       },
     ],
@@ -2931,20 +2929,20 @@ export const eventRequests: Request[] = [
   {
     id: 'EVT_EGO_PUBLIC_CRITICISM',
     title: 'Public Criticism',
-    text: 'A merchant loudly criticizes your recent decisions in the town square. Others are watching to see how you respond.',
+    text: 'A popular merchant loudly criticizes your recent decisions in the town square. Others are watching to see how you respond.',
     options: [
       {
         text: 'LAUGH IT OFF',
         effects: {
-          authority: -3,
-          satisfaction: 8,
+          authority: -1,
+          satisfaction: 3,
         },
       },
       {
         text: 'ARREST HIM',
         effects: {
-          authority: 5,
-          satisfaction: -12,
+          authority: 2,
+          satisfaction: -5,
         },
       },
     ],
@@ -2964,8 +2962,8 @@ export const eventRequests: Request[] = [
       {
         text: 'PUNISH SEVERELY',
         effects: {
-          authority: 3,
-          satisfaction: -8,
+          authority: 2,
+          satisfaction: -5,
           landForces: -1,
         },
       },
@@ -2974,21 +2972,20 @@ export const eventRequests: Request[] = [
   {
     id: 'EVT_EGO_FLATTERY',
     title: 'Obvious Flattery',
-    text: 'A courtier praises you with absurd exaggerations, calling you "the greatest leader ever to walk the earth." It\'s clearly insincere.',
+    text: 'A courtier praises you with absurd exaggerations, calling you "the greatest leader ever to walk the earth."',
     options: [
       {
         text: 'ENJOY THE PRAISE',
         effects: {
-          authority: -5,
-          gold: -5,
+          authority: 2,
           satisfaction: -5,
         },
       },
       {
         text: 'CALL OUT THE LIE',
         effects: {
-          authority: 5,
-          satisfaction: 8,
+          authority: -2,
+          satisfaction: 3,
         },
       },
     ],
@@ -3001,16 +2998,16 @@ export const eventRequests: Request[] = [
       {
         text: 'ADMIT FAULT',
         effects: {
-          authority: -5,
-          satisfaction: 15,
-          gold: -5,
+          authority: -2,
+          satisfaction: 5,
+          gold: -10,
         },
       },
       {
         text: 'BLAME OTHERS',
         effects: {
-          authority: 8,
-          satisfaction: -10,
+          authority: 2,
+          satisfaction: -5,
         },
       },
     ],
@@ -3018,21 +3015,20 @@ export const eventRequests: Request[] = [
   {
     id: 'EVT_EGO_RIVAL_SUCCESS',
     title: 'Rival\'s Success',
-    text: 'A rival leader achieves great success. Your advisors suggest you publicly congratulate them to show grace, but it would acknowledge their superiority.',
+    text: 'A rival leader achieves great success. Your advisors suggest you might publicly congratulate him to show grace, but it would acknowledge their superiority.',
     options: [
       {
-        text: 'CONGRATULATE THEM',
+        text: 'CONGRATULATE HIM HUMBLY',
         effects: {
-          authority: -3,
-          satisfaction: 8,
+          authority: -2,
           gold: 10,
         },
       },
       {
-        text: 'REMAIN SILENT',
+        text: 'DENOUNCE HIM',
         effects: {
           authority: 2,
-          satisfaction: -5,
+          satisfaction: -4,
         },
       },
     ],
@@ -3045,16 +3041,15 @@ export const eventRequests: Request[] = [
       {
         text: 'ACCEPT THE TITLE',
         effects: {
-          authority: -8,
-          satisfaction: -12,
-          gold: -10,
+          authority: 2,
+          satisfaction: -4,
         },
       },
       {
         text: 'REFUSE HUMBLY',
         effects: {
-          authority: 5,
-          satisfaction: 15,
+          authority: -2,
+          satisfaction: 4,
         },
       },
     ],
@@ -3067,16 +3062,16 @@ export const eventRequests: Request[] = [
       {
         text: 'MAKE IT RIGHT',
         effects: {
-          authority: -4,
-          satisfaction: 12,
+          authority: -1,
+          satisfaction: 3,
           gold: -5,
         },
       },
       {
         text: 'DISMISS THE SERVANT',
         effects: {
-          authority: 6,
-          satisfaction: -10,
+          authority: 2,
+          satisfaction: -4,
         },
       },
     ],
@@ -3089,17 +3084,16 @@ export const eventRequests: Request[] = [
       {
         text: 'THROW THE FEAST',
         effects: {
-          gold: -40,
-          authority: 10,
-          satisfaction: -15,
+          gold: -30,
+          authority: 4,
+          satisfaction: -3,
         },
       },
       {
         text: 'MODEST CELEBRATION',
         effects: {
           gold: -10,
-          authority: -2,
-          satisfaction: 10,
+          satisfaction: 3,
         },
       },
     ],
@@ -3112,17 +3106,16 @@ export const eventRequests: Request[] = [
       {
         text: 'HEED THE WARNING',
         effects: {
-          authority: -6,
+          authority: -2,
           gold: 15,
-          satisfaction: 8,
         },
       },
       {
         text: 'PROCEED AS PLANNED',
         effects: {
-          authority: 4,
-          gold: -20,
-          satisfaction: -12,
+          authority: 2,
+          gold: -15,
+          satisfaction: -2,
         },
       },
     ],
@@ -3135,16 +3128,14 @@ export const eventRequests: Request[] = [
       {
         text: 'BUILD THE STATUE',
         effects: {
-          gold: -35,
-          authority: 8,
-          satisfaction: -15,
+          gold: -25,
+          authority: 4,
+          satisfaction: -3,
         },
       },
       {
         text: 'DECLINE',
         effects: {
-          authority: -2,
-          satisfaction: 12,
         },
       },
     ],
@@ -3157,15 +3148,15 @@ export const eventRequests: Request[] = [
       {
         text: 'HARSH PUNISHMENT',
         effects: {
-          authority: 4,
-          satisfaction: -15,
+          authority: 2,
+          farmers: -1,
+          satisfation: -3,
         },
       },
       {
         text: 'IGNORE IT',
         effects: {
-          authority: -2,
-          satisfaction: 5,
+          authority: -1,
         },
       },
     ],
@@ -3174,16 +3165,15 @@ export const eventRequests: Request[] = [
   {
     id: 'EVT_MYSTERIOUS_TRAVELER_ENHANCED',
     title: 'Mysterious Traveler',
-    text: 'A hooded stranger arrives at your gates, asking for shelter. He seems educated but evasive about his past. You can use your authority to show respect and hospitality, which may influence his future behavior.',
+    text: 'A hooded stranger arrives at your gates, asking for shelter. He seems educated but evasive about his past.',
     canTriggerRandomly: true,
     authorityMin: 20,
     authorityMax: 100,
     options: [
       {
-        text: 'DEMAND RESPECT',
+        text: 'INVITE HIM',
         effects: {
           gold: -5,
-          satisfaction: 2,
         },
         authorityCheck: {
           minCommit: 0,
@@ -3194,7 +3184,7 @@ export const eventRequests: Request[] = [
             {
               targetRequestId: 'EVT_TRAVELER_TEACHES',
               boostType: 'linear',
-              boostValue: 5.0,  // At max commit (10): 75% → ~89%
+              boostValue: 4.0,  // At max commit (10): 75% → ~89%
               description: 'Increases chance traveler shares knowledge',
             },
           ],
@@ -3203,7 +3193,6 @@ export const eventRequests: Request[] = [
       {
         text: 'SEND AWAY',
         effects: {
-          satisfaction: -2,
         },
       },
     ],
@@ -3213,9 +3202,9 @@ export const eventRequests: Request[] = [
         delayMinTicks: 2,
         delayMaxTicks: 4,
         candidates: [
-          { requestId: 'EVT_TRAVELER_TEACHES', weight: 3 },    // Base: 75% (3/4)
-          { requestId: 'EVT_TRAVELER_BETRAYS', weight: 1 },    // Base: 25% (1/4)
-          // WITH AUTHORITY BOOST:
+          { requestId: 'EVT_TRAVELER_TEACHES', weight: 2 },
+          { requestId: 'EVT_TRAVELER_BETRAYS', weight: 1 },
+          // WITH AUTHORITY BOOST (these are old values but I leave them here as example):
           // No commit (0):     TEACHES 75% (3/4),      BETRAYS 25% (1/4)
           // Half commit (5):   TEACHES ~85% (5.5/6.5), BETRAYS ~15% (1/6.5)
           // Full commit (10):  TEACHES ~89% (8/9),     BETRAYS ~11% (1/9)
@@ -3241,15 +3230,13 @@ export const eventRequests: Request[] = [
       {
         text: 'ACCEPT HIS TEACHINGS',
         effects: {
-          gold: 15,
-          satisfaction: 8,
-          authority: 5,
+          health: 5,
+          authority: 2,
         },
       },
       {
         text: 'POLITELY DECLINE',
         effects: {
-          satisfaction: 3,
         },
       },
     ],
@@ -3264,15 +3251,15 @@ export const eventRequests: Request[] = [
         text: 'DAMAGE CONTROL',
         effects: {
           gold: -20,
-          satisfaction: -10,
-          authority: -8,
+          authority: -2,
         },
       },
       {
         text: 'ACCEPT THE LOSS',
         effects: {
           gold: -15,
-          authority: -5,
+          authority: -2,
+          satisfaction: -2,
         },
       },
     ],
@@ -3286,14 +3273,15 @@ export const eventRequests: Request[] = [
       {
         text: 'SEEK REMEDY',
         effects: {
-          gold: -10,
-          satisfaction: -5,
+          gold: -15,
+          health: -3,
         },
       },
       {
         text: 'IGNORE SUPERSTITION',
         effects: {
-          satisfaction: -8,
+          satisfaction: -4,
+          health: -3,
         },
       },
     ],
@@ -3307,7 +3295,6 @@ export const eventRequests: Request[] = [
       {
         text: 'APOLOGIZE',
         effects: {
-          gold: 5,
           satisfaction: 3,
         },
       },
@@ -5043,7 +5030,7 @@ export const authorityInfoRequests: Request[] = [
     text: 'The pirates scoff at your authority. They raid your docks and escape with your gold.',
     advancesTick: false,
     canTriggerRandomly: false,
-    options: [{ text: 'LOSSES', effects: {} }],
+    options: [{ text: 'LOSSES', effects: {gold: -15,} }],
   },
   {
     id: 'INFO_MARRIAGE_SUCCESS',
