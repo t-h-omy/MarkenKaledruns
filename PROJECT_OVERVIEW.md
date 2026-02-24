@@ -31,7 +31,7 @@
 
 **Die Marken Kaledruns** is a turn-based village management strategy game built as a Progressive Web App (PWA). The player governs a settlement by responding to events (called "requests"), managing resources, constructing buildings, commanding military forces, and navigating political authority. The game ends when gold drops to **-50** (bankruptcy).
 
-- **Version**: 1.1.11
+- **Version**: 1.1.12
 - **Package name**: `pof-prototype`
 - **Repository**: `t-h-omy/MarkenKaledruns`
 
@@ -120,7 +120,7 @@ MarkenKaledruns/
 | `src/game/requests.ts` | ~5380 | All event/request definitions (incl. 40 fire chain requests) |
 | `src/game/state.ts` | ~2670 | Reducer, game loop, all game logic (incl. fire system engine) |
 | `src/App.tsx` | ~1030 | Main UI component (incl. request-panel BEM layout, portrait wiring, fire chain tag/context) |
-| `src/App.css` | ~1700 | All main game styles (incl. portrait img, fire chain info styles) |
+| `src/App.css` | ~1650 | All main game styles (incl. portrait img, fire chain info styles) |
 | `src/game/picker.ts` | ~560 | Request selection & RNG |
 | `src/BuildingCard.css` | ~455 | Building card styles (incl. fire state action styles) |
 | `src/game/models.ts` | ~335 | Core type definitions (incl. fire types, PortraitId on Request) |
@@ -348,7 +348,7 @@ All styling is in plain CSS files co-located with their components. No CSS-in-JS
 
 | CSS File | Lines | Scope |
 |----------|-------|-------|
-| `App.css` | ~1740 | Main game layout, stats bars, request panel (BEM layout), decision cards, options, animations, medieval theme variables |
+| `App.css` | ~1650 | Main game layout, stats bars, request panel (BEM layout), decision cards, options, animations, medieval theme variables |
 | `BuildingCard.css` | ~385 | Building card appearance and states |
 | `LogScreen.css` | ~275 | Decision log layout and entries |
 | `BuildMultipleModal.css` | ~230 | Bulk build modal styling |
