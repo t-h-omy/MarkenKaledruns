@@ -176,6 +176,7 @@
 
 .request-panel__portrait {
   flex-shrink: 0;
+  align-self: flex-start;
   width: clamp(128px, 28vw, 220px);
   aspect-ratio: 2 / 3;
   border-radius: 6px;
