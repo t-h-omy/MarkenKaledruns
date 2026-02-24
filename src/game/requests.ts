@@ -1619,8 +1619,8 @@ export const eventRequests: Request[] = [
   // These events reflect weak leadership, disrespect, and vulnerability
   {
     id: 'EVT_LOW_AUTHORITY',
-    title: 'Desperate Plea',
-    text: 'With your authority waning, a merchant demands protection money. Your weakened position makes this a difficult situation.',
+    title: 'Protection Money',
+    text: 'With your authority waning, a local mercenary demands protection money. Your weakened position makes this a difficult situation.',
     authorityMin: 0,
     authorityMax: 33,
     options: [
@@ -1632,10 +1632,10 @@ export const eventRequests: Request[] = [
         },
       },
       {
-        text: 'PAY HIM A VISIT',
+        text: 'THROW HIM OUT',
         effects: {
           authority: 1,
-          landForces: 2,
+          landForces: -2,
         },
       },
     ],
@@ -1714,7 +1714,7 @@ export const eventRequests: Request[] = [
   {
     id: 'EVT_LOW_DEBT_COLLECTOR',
     title: 'The Debt Collector',
-    text: 'A ruthless debt collector arrives, sensing your weakness. He demands payment from you for debts of your poorest villagers - or else he\'ll take what he\'s owed by force.',
+    text: 'A ruthless debt collector arrives, sensing your weakness. He demands that you pay for debts of your poorest villagers - or else he\'ll take what he\'s owed by force.',
     authorityMin: 0,
     authorityMax: 33,
     options: [
