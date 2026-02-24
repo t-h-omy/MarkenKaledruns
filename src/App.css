@@ -1,7 +1,11 @@
 .app {
   width: 100%;
+  /* Progressive viewport-height fallback: vh → svh → dvh */
   height: 100vh;
+  height: 100dvh;
+  min-height: 100dvh;
   padding: 0.5rem;
+  padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -955,6 +959,7 @@
   background: #2a2a2a;
   border-radius: 8px;
   padding: 0.5rem;
+  padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   flex-shrink: 0;
   display: flex;
@@ -1613,7 +1618,7 @@
 /* Version footer */
 .version-footer {
   position: fixed;
-  bottom: 0.5rem;
+  bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
   right: 0.5rem;
   font-size: 0.75rem;
   color: #666;
@@ -1627,7 +1632,7 @@
 
 @media (max-width: 768px) {
   .version-footer {
-    bottom: 0.25rem;
+    bottom: calc(0.25rem + env(safe-area-inset-bottom, 0px));
     right: 0.25rem;
     font-size: 0.7rem;
   }
