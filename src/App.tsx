@@ -515,9 +515,9 @@ function App() {
   }
 
   // --- Request Screen Render Helper ---
-  // Groups request-screen JSX (chain title, fire context, title, text,
-  // combat slider, options with effect chips, authority, and reminder buttons)
-  // into a single render helper for maintainability.
+  // Groups request-screen JSX into the new request-panel layout:
+  //   request-panel > request-panel__header (portrait + content) + request-panel__options
+  // Keeps all existing logic and handlers intact.
   const renderRequestPanel = () => {
     return (
       <div className={`panel request-panel ${isCrisis ? 'crisis-panel' : ''}`}>
@@ -526,33 +526,51 @@ function App() {
             ⚠️ CRISIS EVENT ⚠️
           </div>
         )}
-        <h2>Decision Required</h2>
         {currentRequest ? (
           <>
-            {/* Fire chain tag + context line */}
-            {(() => {
-              const fireSlotMatch = gameState.currentRequestId.match(/^FIRE_S(\d+)_(START|DECISION|ESCALATE|END)$/)
-              if (!fireSlotMatch) return null
-              const slotIndex = parseInt(fireSlotMatch[1], 10)
-              const slot = gameState.fire.slots.find(s => s.slotIndex === slotIndex)
-              const targetId = slot?.targetBuildingId
-              const targetDef = targetId ? getBuildingDef(targetId) : null
-              const targetTracking = targetId ? gameState.buildingTracking[targetId] : null
-              return (
-                <div className="fire-chain-info">
-                  <div className="fire-chain-tag">🔥 Fire (Slot {slotIndex})</div>
-                  {targetDef && targetTracking && (
-                    <div className="fire-chain-context">
-                      Affected: {targetDef.icon} {targetDef.displayName} | 🔥 {targetTracking.onFireCount} | 🧱 {targetTracking.destroyedCount}
+            {/* ── Header: portrait + content ── */}
+            <div className="request-panel__header">
+              {/* Portrait placeholder (image support wired in Step 3) */}
+              <div className="request-panel__portrait">
+                <div className="request-panel__portrait-placeholder">⚜</div>
+              </div>
+
+              {/* Content: chain/fire context, title, scrollable text */}
+              <div className="request-panel__content">
+                {/* Chain title (if request belongs to a chain) */}
+                {currentRequest.chainId && (
+                  <div className="request-panel__chainTitle">
+                    {currentRequest.chainId}
+                  </div>
+                )}
+
+                {/* Fire chain tag + context line */}
+                {(() => {
+                  const fireSlotMatch = gameState.currentRequestId.match(/^FIRE_S(\d+)_(START|DECISION|ESCALATE|END)$/)
+                  if (!fireSlotMatch) return null
+                  const slotIndex = parseInt(fireSlotMatch[1], 10)
+                  const slot = gameState.fire.slots.find(s => s.slotIndex === slotIndex)
+                  const targetId = slot?.targetBuildingId
+                  const targetDef = targetId ? getBuildingDef(targetId) : null
+                  const targetTracking = targetId ? gameState.buildingTracking[targetId] : null
+                  return (
+                    <div className="request-panel__fireContext fire-chain-info">
+                      <div className="fire-chain-tag">🔥 Fire (Slot {slotIndex})</div>
+                      {targetDef && targetTracking && (
+                        <div className="fire-chain-context">
+                          Affected: {targetDef.icon} {targetDef.displayName} | 🔥 {targetTracking.onFireCount} | 🧱 {targetTracking.destroyedCount}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              )
-            })()}
-            <h3 className="request-title">{currentRequest.title}</h3>
-            <p className="request-text">{currentRequest.text}</p>
-            
-            {/* Combat Slider UI */}
+                  )
+                })()}
+
+                <h3 className="request-panel__title">{currentRequest.title}</h3>
+                <div className="request-panel__text">{currentRequest.text}</div>
+              </div>
+            </div>
+
+            {/* Combat Slider UI (remains outside header, before options) */}
             {currentRequest.combat && (
               <div className="combat-slider-container">
                 <div className="combat-info">
@@ -570,35 +588,36 @@ function App() {
                 />
               </div>
             )}
-            
-            <div className="options-container">
+
+            {/* ── Options ── */}
+            <div className="request-panel__options">
               {currentRequest.options.map((option, index) => {
                 const effects = formatEffects(option.effects, true, true)
                 let { disabled, reason } = isOptionDisabled(option.effects)
-                
+
                 // For combat requests, disable Option A if no forces available
                 if (currentRequest.combat && index === 0 && maxForces < 1) {
                   disabled = true
                   reason = 'No land forces available'
                 }
-                
+
                 const hasAuthorityCheck = !!option.authorityCheck
                 const committedAmount = authorityCommitments[index]
-                
+
                 return (
                   <div key={index} className="option-row">
                     <button
                       ref={(el) => { optionButtonRefs.current[index] = el }}
-                      className={`option-button ${disabled ? 'option-disabled' : ''}`}
+                      className={`decision-card ${disabled ? 'decision-card--disabled' : ''}`}
                       onClick={() => !disabled && handleOptionClick(index)}
                       disabled={disabled}
                     >
-                      <div className="option-text">{option.text}</div>
+                      <div className="decision-card__label">{option.text}</div>
                       {effects.length > 0 && (
-                        <div className="option-consequences">
+                        <div className="decision-card__effects">
                           {effects.map((effect, i) => (
-                            <span 
-                              key={i} 
+                            <span
+                              key={i}
                               className={`consequence ${effect.isPositive ? 'positive' : 'negative'}`}
                             >
                               {typeof effect.value === 'number' && effect.value !== 0 && (
@@ -626,23 +645,23 @@ function App() {
                   </div>
                 )
               })}
-              
+
               {/* Add "Go to Construction" button for reminder requests */}
               {currentRequest.id.startsWith('REMINDER_') && (() => {
                 // Extract building ID from reminder request ID (e.g., REMINDER_FARMSTEAD -> farmstead)
                 const buildingId = currentRequest.id.replace('REMINDER_', '').toLowerCase()
                 // Validate that the building ID exists
                 const buildingExists = BUILDING_DEFINITIONS.some(def => def.id === buildingId)
-                
+
                 if (!buildingExists) {
                   console.warn(`Building ID "${buildingId}" extracted from reminder "${currentRequest.id}" does not exist`)
                   return null
                 }
-                
+
                 return (
                   <div className="option-row">
                     <button
-                      className="option-button"
+                      className="decision-card"
                       onClick={() => {
                         // Dismiss the request first
                         dispatch({ type: 'CHOOSE_OPTION', optionIndex: 0 })
@@ -650,7 +669,7 @@ function App() {
                         openConstructionScreen(buildingId)
                       }}
                     >
-                      <div className="option-text">🏗️ Go to Construction</div>
+                      <div className="decision-card__label">🏗️ Go to Construction</div>
                     </button>
                   </div>
                 )
@@ -658,7 +677,7 @@ function App() {
             </div>
           </>
         ) : (
-          <p className="request-text">No request available</p>
+          <p className="request-panel__text">No request available</p>
         )}
       </div>
     )

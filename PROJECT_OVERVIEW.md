@@ -31,7 +31,7 @@
 
 **Die Marken Kaledruns** is a turn-based village management strategy game built as a Progressive Web App (PWA). The player governs a settlement by responding to events (called "requests"), managing resources, constructing buildings, commanding military forces, and navigating political authority. The game ends when gold drops to **-50** (bankruptcy).
 
-- **Version**: 1.1.2
+- **Version**: 1.1.3
 - **Package name**: `pof-prototype`
 - **Repository**: `t-h-omy/MarkenKaledruns`
 
@@ -83,7 +83,7 @@ MarkenKaledruns/
 │   ├── assets/
 │   │   └── react.svg                      # React logo
 │   │
-│   ├── App.tsx                            # Main game component (~960 lines)
+│   ├── App.tsx                            # Main game component (~1020 lines)
 │   ├── App.css                            # Main game styles (~1525 lines)
 │   ├── ConstructionScreen.tsx             # Building construction overlay
 │   ├── ConstructionScreen.css             # Construction screen styles
@@ -115,7 +115,7 @@ MarkenKaledruns/
 |------|-------|---------|
 | `src/game/requests.ts` | ~5380 | All event/request definitions (incl. 40 fire chain requests) |
 | `src/game/state.ts` | ~2670 | Reducer, game loop, all game logic (incl. fire system engine) |
-| `src/App.tsx` | ~990 | Main UI component (incl. fire chain tag/context) |
+| `src/App.tsx` | ~1020 | Main UI component (incl. request-panel BEM layout, fire chain tag/context) |
 | `src/App.css` | ~1550 | All main game styles (incl. fire chain info styles) |
 | `src/game/picker.ts` | ~560 | Request selection & RNG |
 | `src/BuildingCard.css` | ~455 | Building card styles (incl. fire state action styles) |
@@ -303,11 +303,18 @@ main.tsx
       ├─ Stats Bar                        # Resource bars (gold, farmers, satisfaction, health, fireRisk, landForces, authority)
       │   └─ Flying delta indicators      # Animated +/- numbers on stat changes
       ├─ renderRequestPanel()             # Render helper grouping request-screen JSX
-      │   ├─ Fire chain tag + context     # Fire chain info (when fire request active)
-      │   ├─ Request title + text         # Shows current request title + text
+      │   ├─ request-panel__header        # Header row: portrait + content side-by-side
+      │   │   ├─ request-panel__portrait  # Portrait image or ⚜ placeholder
+      │   │   └─ request-panel__content   # Chain title, fire context, title, scrollable text
+      │   │       ├─ request-panel__chainTitle   # Chain ID label (when applicable)
+      │   │       ├─ request-panel__fireContext   # Fire chain tag + context (when fire request)
+      │   │       ├─ request-panel__title         # Request title
+      │   │       └─ request-panel__text          # Request body text (internal scroll)
       │   ├─ Combat Commit Slider         # For committing forces (when combat request)
-      │   └─ Options container            # Player choices with effect previews
-      │       ├─ Option Buttons (1–2)     # Decision buttons with effect chips
+      │   └─ request-panel__options       # Decision cards container
+      │       ├─ decision-card (1–2)      # Decision buttons with BEM structure
+      │       │   ├─ decision-card__label # Option text label
+      │       │   └─ decision-card__effects # Effect preview chips
       │       ├─ Authority buttons        # Authority commitment per option (when applicable)
       │       └─ Reminder shortcut        # "Go to Construction" button (reminder requests)
       ├─ Authority Modal                  # Commitment slider for authority checks
@@ -323,7 +330,7 @@ main.tsx
 
 | Component | File | Description |
 |-----------|------|-------------|
-| `App` | `App.tsx` | Main game component. Manages all game state via `useReducer`. Renders stats, requests, options, combat UI, modals. Contains animation logic for stat changes and flying deltas. Request-screen JSX (chain title, fire context, title, text, combat slider, options with effect chips, authority buttons, reminder shortcuts) is grouped in a `renderRequestPanel()` render helper for maintainability. |
+| `App` | `App.tsx` | Main game component. Manages all game state via `useReducer`. Renders stats, requests, options, combat UI, modals. Contains animation logic for stat changes and flying deltas. Request-screen JSX is grouped in `renderRequestPanel()` using BEM-style layout: `request-panel__header` (portrait + content), `request-panel__options` with `decision-card` buttons containing `decision-card__label` and `decision-card__effects`. Portrait placeholder is rendered; image support wired in later steps. |
 | `ConstructionScreen` | `ConstructionScreen.tsx` | Full-screen overlay showing all buildings as a grid. Opened via a button in the main UI. Shows building states (locked/unlocked/built/deficit). |
 | `BuildingCard` | `BuildingCard.tsx` | Individual card displaying one building type: icon, name, description, cost, progress (built/required). When building has no active state: shows build buttons. When building has active state (fire/destroyed/strike): hides build controls and shows state action button (extinguish/repair) with state counts and effective count display. |
 | `BuildMultipleModal` | `BuildMultipleModal.tsx` | Modal dialog for building multiple instances at once. Shows cost calculation and gold validation. |
@@ -335,7 +342,7 @@ All styling is in plain CSS files co-located with their components. No CSS-in-JS
 
 | CSS File | Lines | Scope |
 |----------|-------|-------|
-| `App.css` | ~1525 | Main game layout, stats bars, request display, options, animations |
+| `App.css` | ~1690 | Main game layout, stats bars, request panel (BEM layout), decision cards, options, animations |
 | `BuildingCard.css` | ~385 | Building card appearance and states |
 | `LogScreen.css` | ~275 | Decision log layout and entries |
 | `BuildMultipleModal.css` | ~230 | Bulk build modal styling |
