@@ -444,7 +444,16 @@ function App() {
     return iconMap[resourceType]
   }
 
-  // Get stat icon for feedback
+  // Icon mapping for effect chips – same visual language as the top resource bar
+  const EFFECT_ICONS: Record<string, string> = {
+    'Gold': '💰',
+    'Satisfaction': '😊',
+    'Health': '❤️',
+    'Fire Risk': '🔥',
+    'Farmers': '👨‍🌾',
+    'Land Forces': '⚔️',
+    'Authority': '👑',
+  }
 
   // Format effects for display
   const formatEffects = (effects: Effect, excludeAuthority = false, excludeFeedbackStats = false): Array<{ label: string; value: number | string; isPositive: boolean }> => {
@@ -624,19 +633,24 @@ function App() {
                       <div className="decision-card__label">{option.text}</div>
                       {effects.length > 0 && (
                         <div className="decision-card__effects">
-                          {effects.map((effect, i) => (
-                            <span
-                              key={i}
-                              className={`consequence ${effect.isPositive ? 'positive' : 'negative'}`}
-                            >
-                              {typeof effect.value === 'number' && effect.value !== 0 && (
-                                <>
-                                  {effect.label}: {effect.value > 0 ? '+' : ''}{effect.value}
-                                </>
-                              )}
-                              {effect.value === '' && effect.label}
-                            </span>
-                          ))}
+                          {effects.map((effect, i) => {
+                            const icon = EFFECT_ICONS[effect.label]
+                            const iconEl = icon ? <span className="consequence__icon">{icon}</span> : null
+                            return (
+                              <span
+                                key={i}
+                                className={`consequence ${effect.isPositive ? 'positive' : 'negative'}`}
+                              >
+                                {typeof effect.value === 'number' && effect.value !== 0 && (
+                                  <>
+                                    {iconEl}
+                                    {effect.label}: {effect.value > 0 ? '+' : ''}{effect.value}
+                                  </>
+                                )}
+                                {effect.value === '' && <>{iconEl}{effect.label}</>}
+                              </span>
+                            )
+                          })}
                         </div>
                       )}
                       {disabled && reason && (
