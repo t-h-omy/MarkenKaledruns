@@ -121,6 +121,7 @@
 /* ─── Request Panel: header (portrait + content) ─────────────────────── */
 .request-panel__header {
   display: flex;
+  flex-wrap: nowrap;
   gap: 0.75rem;
   margin-bottom: 0.75rem;
   min-height: 0;
@@ -130,8 +131,8 @@
 
 .request-panel__portrait {
   flex-shrink: 0;
-  width: 80px;
-  min-height: 80px;
+  width: clamp(128px, 28vw, 220px);
+  aspect-ratio: 3 / 2;
   border-radius: 6px;
   overflow: hidden;
   display: flex;

@@ -31,7 +31,7 @@
 
 **Die Marken Kaledruns** is a turn-based village management strategy game built as a Progressive Web App (PWA). The player governs a settlement by responding to events (called "requests"), managing resources, constructing buildings, commanding military forces, and navigating political authority. The game ends when gold drops to **-50** (bankruptcy).
 
-- **Version**: 1.1.4
+- **Version**: 1.1.5
 - **Package name**: `pof-prototype`
 - **Repository**: `t-h-omy/MarkenKaledruns`
 
@@ -309,8 +309,8 @@ main.tsx
       ├─ Stats Bar                        # Resource bars (gold, farmers, satisfaction, health, fireRisk, landForces, authority)
       │   └─ Flying delta indicators      # Animated +/- numbers on stat changes
       ├─ renderRequestPanel()             # Render helper grouping request-screen JSX
-      │   ├─ request-panel__header        # Header row: portrait + content side-by-side
-      │   │   ├─ request-panel__portrait  # Portrait image or ⚜ placeholder
+      │   ├─ request-panel__header        # Header row: portrait + content side-by-side (flex, nowrap)
+      │   │   ├─ request-panel__portrait  # Portrait image or ⚜ placeholder; responsive width via clamp(128px, 28vw, 220px), aspect-ratio 3/2
       │   │   └─ request-panel__content   # Chain title, fire context, title, scrollable text
       │   │       ├─ request-panel__chainTitle   # Chain ID label (when applicable)
       │   │       ├─ request-panel__fireContext   # Fire chain tag + context (when fire request)
@@ -336,7 +336,7 @@ main.tsx
 
 | Component | File | Description |
 |-----------|------|-------------|
-| `App` | `App.tsx` | Main game component. Manages all game state via `useReducer`. Renders stats, requests, options, combat UI, modals. Contains animation logic for stat changes and flying deltas. Request-screen JSX is grouped in `renderRequestPanel()` using BEM-style layout: `request-panel__header` (portrait + content), `request-panel__options` with `decision-card` buttons containing `decision-card__label` and `decision-card__effects`. Portrait is resolved from `currentRequest.portraitId` via the portrait registry (`PORTRAITS`); placeholder is shown when no portrait is defined. |
+| `App` | `App.tsx` | Main game component. Manages all game state via `useReducer`. Renders stats, requests, options, combat UI, modals. Contains animation logic for stat changes and flying deltas. Request-screen JSX is grouped in `renderRequestPanel()` using BEM-style layout: `request-panel__header` (portrait + content), `request-panel__options` with `decision-card` buttons containing `decision-card__label` and `decision-card__effects`. Portrait is resolved from `currentRequest.portraitId` via the portrait registry (`PORTRAITS`); placeholder is shown when no portrait is defined. Portrait stays left of the text on all screen sizes using a responsive clamped width (`clamp(128px, 28vw, 220px)`) and `aspect-ratio: 3/2`. |
 | `ConstructionScreen` | `ConstructionScreen.tsx` | Full-screen overlay showing all buildings as a grid. Opened via a button in the main UI. Shows building states (locked/unlocked/built/deficit). |
 | `BuildingCard` | `BuildingCard.tsx` | Individual card displaying one building type: icon, name, description, cost, progress (built/required). When building has no active state: shows build buttons. When building has active state (fire/destroyed/strike): hides build controls and shows state action button (extinguish/repair) with state counts and effective count display. |
 | `BuildMultipleModal` | `BuildMultipleModal.tsx` | Modal dialog for building multiple instances at once. Shows cost calculation and gold validation. |
