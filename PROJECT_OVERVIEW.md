@@ -31,7 +31,7 @@
 
 **Die Marken Kaledruns** is a turn-based village management strategy game built as a Progressive Web App (PWA). The player governs a settlement by responding to events (called "requests"), managing resources, constructing buildings, commanding military forces, and navigating political authority. The game ends when gold drops to **-50** (bankruptcy).
 
-- **Version**: 1.0.3
+- **Version**: 1.1.2
 - **Package name**: `pof-prototype`
 - **Repository**: `t-h-omy/MarkenKaledruns`
 
@@ -302,12 +302,16 @@ main.tsx
  └─ <App />                              # src/App.tsx
       ├─ Stats Bar                        # Resource bars (gold, farmers, satisfaction, health, fireRisk, landForces, authority)
       │   └─ Flying delta indicators      # Animated +/- numbers on stat changes
-      ├─ Request Display                  # Shows current request title + text
-      ├─ Option Buttons (1–2)             # Player choices with effect previews
-      ├─ Combat Commit Slider             # For committing forces (when combat request)
+      ├─ renderRequestPanel()             # Render helper grouping request-screen JSX
+      │   ├─ Fire chain tag + context     # Fire chain info (when fire request active)
+      │   ├─ Request title + text         # Shows current request title + text
+      │   ├─ Combat Commit Slider         # For committing forces (when combat request)
+      │   └─ Options container            # Player choices with effect previews
+      │       ├─ Option Buttons (1–2)     # Decision buttons with effect chips
+      │       ├─ Authority buttons        # Authority commitment per option (when applicable)
+      │       └─ Reminder shortcut        # "Go to Construction" button (reminder requests)
       ├─ Authority Modal                  # Commitment slider for authority checks
       │   └─ Success threshold display
-      ├─ Combat UI                        # Battle screen with round info
       ├─ Game Over Screen                 # Bankruptcy display + restart button
       ├─ <ConstructionScreen />           # src/ConstructionScreen.tsx (overlay)
       │    └─ <BuildingCard />[]          # src/BuildingCard.tsx (one per building type)
@@ -319,7 +323,7 @@ main.tsx
 
 | Component | File | Description |
 |-----------|------|-------------|
-| `App` | `App.tsx` | Main game component. Manages all game state via `useReducer`. Renders stats, requests, options, combat UI, modals. Contains animation logic for stat changes and flying deltas. |
+| `App` | `App.tsx` | Main game component. Manages all game state via `useReducer`. Renders stats, requests, options, combat UI, modals. Contains animation logic for stat changes and flying deltas. Request-screen JSX (chain title, fire context, title, text, combat slider, options with effect chips, authority buttons, reminder shortcuts) is grouped in a `renderRequestPanel()` render helper for maintainability. |
 | `ConstructionScreen` | `ConstructionScreen.tsx` | Full-screen overlay showing all buildings as a grid. Opened via a button in the main UI. Shows building states (locked/unlocked/built/deficit). |
 | `BuildingCard` | `BuildingCard.tsx` | Individual card displaying one building type: icon, name, description, cost, progress (built/required). When building has no active state: shows build buttons. When building has active state (fire/destroyed/strike): hides build controls and shows state action button (extinguish/repair) with state counts and effective count display. |
 | `BuildMultipleModal` | `BuildMultipleModal.tsx` | Modal dialog for building multiple instances at once. Shows cost calculation and gold validation. |
