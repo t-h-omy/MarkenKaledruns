@@ -141,7 +141,7 @@
   border: 1px solid #444;
 }
 
-.request-panel__portrait img {
+.request-panel__portrait-img {
   width: 100%;
   height: 100%;
   object-fit: cover;

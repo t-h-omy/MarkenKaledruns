@@ -3,6 +3,8 @@
  * Core type definitions for the game engine.
  */
 
+import type { PortraitId } from '../assets/portraits'
+
 /**
  * Game statistics that track the state of the village.
  * All stats are visible to the player.
@@ -239,6 +241,8 @@ export interface Request {
   authorityMin?: number;
   /** Authority range filter: maximum authority allowed to show this event */
   authorityMax?: number;
+  /** Optional portrait to display on the request screen (key from portrait registry) */
+  portraitId?: PortraitId;
 }
 
 // ─── Fire System V3 Types ────────────────────────────────────────────

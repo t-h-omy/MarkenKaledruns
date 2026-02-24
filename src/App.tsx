@@ -4,6 +4,7 @@ import { gameReducer, initializeGame, getCurrentRequest } from './game/state'
 import type { Effect } from './game/models'
 import { BUILDING_DEFINITIONS, calculateRequiredBuildings, getBuildingDef } from './game/buildings'
 import type { BuildingDefinition } from './game/buildings'
+import { PORTRAITS } from './assets/portraits'
 import ConstructionScreen from './ConstructionScreen'
 import LogScreen from './LogScreen'
 
@@ -530,9 +531,17 @@ function App() {
           <>
             {/* ── Header: portrait + content ── */}
             <div className="request-panel__header">
-              {/* Portrait placeholder (image support wired in Step 3) */}
+              {/* Portrait: show image from registry or placeholder */}
               <div className="request-panel__portrait">
-                <div className="request-panel__portrait-placeholder">⚜</div>
+                {currentRequest.portraitId && PORTRAITS[currentRequest.portraitId] ? (
+                  <img
+                    className="request-panel__portrait-img"
+                    src={PORTRAITS[currentRequest.portraitId]}
+                    alt={currentRequest.portraitId}
+                  />
+                ) : (
+                  <div className="request-panel__portrait-placeholder">⚜</div>
+                )}
               </div>
 
               {/* Content: chain/fire context, title, scrollable text */}

@@ -31,7 +31,7 @@
 
 **Die Marken Kaledruns** is a turn-based village management strategy game built as a Progressive Web App (PWA). The player governs a settlement by responding to events (called "requests"), managing resources, constructing buildings, commanding military forces, and navigating political authority. The game ends when gold drops to **-50** (bankruptcy).
 
-- **Version**: 1.1.3
+- **Version**: 1.1.4
 - **Package name**: `pof-prototype`
 - **Repository**: `t-h-omy/MarkenKaledruns`
 
@@ -81,7 +81,11 @@ MarkenKaledruns/
 │   │   └── modifiers.ts                   # Building-based event effect modifiers
 │   │
 │   ├── assets/
-│   │   └── react.svg                      # React logo
+│   │   ├── react.svg                      # React logo
+│   │   └── portraits/                     # Portrait images for request screen
+│   │       ├── index.ts                   # Portrait registry (PORTRAITS lookup, PortraitId type)
+│   │       ├── Advisor.webp               # Advisor portrait
+│   │       └── Farmer.webp                # Farmer portrait
 │   │
 │   ├── App.tsx                            # Main game component (~1020 lines)
 │   ├── App.css                            # Main game styles (~1525 lines)
@@ -115,11 +119,11 @@ MarkenKaledruns/
 |------|-------|---------|
 | `src/game/requests.ts` | ~5380 | All event/request definitions (incl. 40 fire chain requests) |
 | `src/game/state.ts` | ~2670 | Reducer, game loop, all game logic (incl. fire system engine) |
-| `src/App.tsx` | ~1020 | Main UI component (incl. request-panel BEM layout, fire chain tag/context) |
-| `src/App.css` | ~1550 | All main game styles (incl. fire chain info styles) |
+| `src/App.tsx` | ~1030 | Main UI component (incl. request-panel BEM layout, portrait wiring, fire chain tag/context) |
+| `src/App.css` | ~1700 | All main game styles (incl. portrait img, fire chain info styles) |
 | `src/game/picker.ts` | ~560 | Request selection & RNG |
 | `src/BuildingCard.css` | ~455 | Building card styles (incl. fire state action styles) |
-| `src/game/models.ts` | ~330 | Core type definitions (incl. fire types) |
+| `src/game/models.ts` | ~335 | Core type definitions (incl. fire types, PortraitId on Request) |
 | `src/LogScreen.css` | ~275 | Log screen styles |
 | `src/BuildMultipleModal.css` | ~230 | Modal styles |
 | `src/BuildingCard.tsx` | ~230 | Building card UI (incl. state action buttons) |
@@ -131,6 +135,7 @@ MarkenKaledruns/
 | `src/game/modifiers.ts` | ~100 | Effect modifiers |
 | `src/index.css` | ~40 | Global styles |
 | `src/main.tsx` | ~30 | App bootstrap |
+| `src/assets/portraits/index.ts` | ~16 | Portrait registry (PORTRAITS lookup, PortraitId type) |
 
 ---
 
@@ -160,6 +165,7 @@ main.tsx (entry point)
 | File | Key Exports |
 |------|-------------|
 | `models.ts` | `Stats`, `Effect`, `Request`, `Option`, `AuthorityCheck`, `AuthorityCheckResult`, `CombatSpec`, `FollowUp`, `WeightedCandidate`, `AuthorityFollowUpBoost` |
+| `portraits/index.ts` | `PORTRAITS`, `PortraitId` |
 | `state.ts` | `GameState`, `GameAction`, `gameReducer`, `initializeGame`, `getCurrentRequest`, `initialState`, `AppliedChange`, `LogEntry`, `ScheduledEvent`, `ScheduledCombat`, `ActiveCombat`, `PendingAuthorityCheck`, `ModifierHook`, `applyOptionWithModifiers`, `hasUnlock`, `meetsRequirements`, `syncBuildingUnlockTokens`, `FIRE_SYSTEM_CONFIG` |
 | `requests.ts` | `infoRequests`, `eventRequests`, `authorityInfoRequests`, `fireChainRequests`, `validateRequests` |
 | `picker.ts` | `pickNextRequest`, `selectWeightedCandidate`, `seedRandom`, `resetRandom`, `getRandomValue` |
@@ -330,7 +336,7 @@ main.tsx
 
 | Component | File | Description |
 |-----------|------|-------------|
-| `App` | `App.tsx` | Main game component. Manages all game state via `useReducer`. Renders stats, requests, options, combat UI, modals. Contains animation logic for stat changes and flying deltas. Request-screen JSX is grouped in `renderRequestPanel()` using BEM-style layout: `request-panel__header` (portrait + content), `request-panel__options` with `decision-card` buttons containing `decision-card__label` and `decision-card__effects`. Portrait placeholder is rendered; image support wired in later steps. |
+| `App` | `App.tsx` | Main game component. Manages all game state via `useReducer`. Renders stats, requests, options, combat UI, modals. Contains animation logic for stat changes and flying deltas. Request-screen JSX is grouped in `renderRequestPanel()` using BEM-style layout: `request-panel__header` (portrait + content), `request-panel__options` with `decision-card` buttons containing `decision-card__label` and `decision-card__effects`. Portrait is resolved from `currentRequest.portraitId` via the portrait registry (`PORTRAITS`); placeholder is shown when no portrait is defined. |
 | `ConstructionScreen` | `ConstructionScreen.tsx` | Full-screen overlay showing all buildings as a grid. Opened via a button in the main UI. Shows building states (locked/unlocked/built/deficit). |
 | `BuildingCard` | `BuildingCard.tsx` | Individual card displaying one building type: icon, name, description, cost, progress (built/required). When building has no active state: shows build buttons. When building has active state (fire/destroyed/strike): hides build controls and shows state action button (extinguish/repair) with state counts and effective count display. |
 | `BuildMultipleModal` | `BuildMultipleModal.tsx` | Modal dialog for building multiple instances at once. Shows cost calculation and gold validation. |
@@ -424,6 +430,7 @@ interface Request {
   combat?: CombatSpec;           // Combat specification
   authorityMin?: number;         // Min authority to show
   authorityMax?: number;         // Max authority to show
+  portraitId?: PortraitId;       // Portrait to show on request screen (key from portrait registry)
 }
 ```
 
