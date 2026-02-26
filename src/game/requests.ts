@@ -98,7 +98,7 @@ export const eventRequests: Request[] = [
     id: 'EVT_RECRUIT_MILITIA',
     title: 'Call to Arms',
     text: 'The borders feel thin. Should we recruit farmers into the militia to bolster defenses, even if the fields suffer from fewer hands?',
-    portraitId: 'advisor',
+    portraitId: 'military_advisor',
     options: [
       {
         text: 'YES',
@@ -226,7 +226,7 @@ export const eventRequests: Request[] = [
         authority: -2,
       },
     },
-    portraitId: 'advisor',
+    portraitId: 'military_advisor',
     options: [
       {
         text: 'PATROL',
@@ -246,7 +246,7 @@ export const eventRequests: Request[] = [
     id: 'EVT_VETERANS_LEAVE',
     title: 'The Old Guard',
     text: 'Your most experienced fighters are considering retirement. A small bonus might convince them to stay and train the new recruits.',
-    portraitId: 'advisor',
+    portraitId: 'military_advisor',
     options: [
       {
         text: 'COMPENSATE',
@@ -573,7 +573,7 @@ export const eventRequests: Request[] = [
     id: 'EVT_THEFTS',
     title: 'Sticky Fingers',
     text: 'Marketplace thefts are on the rise. More guards would stop the loss of gold, but they are needed elsewhere for defense.',
-    portraitId: 'advisor',
+    portraitId: 'merchant',
     options: [
       {
         text: 'MORE GUARDS',
@@ -595,7 +595,7 @@ export const eventRequests: Request[] = [
     id: 'EVT_BAD_HARVEST',
     title: 'The Blighted Crop',
     text: 'An early frost has ruined the crops. The people are hungry — will the crown step in to provide compensation and food?',
-    portraitId: 'advisor',
+    portraitId: 'farmer',
     options: [
       {
         text: 'COMPENSATE',
@@ -639,7 +639,7 @@ export const eventRequests: Request[] = [
     id: 'EVT_FARMERS_QUARREL',
     title: 'The Fence Dispute',
     text: 'Two farmers are quarreling over a boundary line. A moment of your time could settle this before it turns into a local feud.',
-    portraitId: 'advisor',
+    portraitId: 'farmer',
     options: [
       {
         text: 'MEDIATE',
@@ -760,7 +760,7 @@ export const eventRequests: Request[] = [
         },
       ],
     },
-    portraitId: 'advisor',
+    portraitId: 'military_advisor',
     options: [
       { text: 'HOLD THE LINE', effects: {} },
       { text: 'RETREAT NOW', effects: { satisfaction: -2, authority: -3 } },
@@ -774,7 +774,7 @@ export const eventRequests: Request[] = [
     title: 'Aescweald Aftermath',
     text: 'This is the aftermath of the Aescweald battle. Blackgeat pulls back in good order. Brimwulf watches the wounded, already thinking about what Wulfham can demand next.',
     canTriggerRandomly: false,
-    portraitId: 'advisor',
+    portraitId: 'council_member',
     options: [
       { text: 'TEND THE WOUNDED', effects: { health: 4 } },
       { text: 'FORTIFY THE BORDER', effects: { landForces: 5, gold: -10 } },
@@ -808,7 +808,7 @@ export const eventRequests: Request[] = [
     title: 'Good Allies',
     text: 'Brimwulf returns after the Battle of Aescweald. "Wulfham remembers who stood with us. We will not forget." Feldric mutters, "Blackgeat will come back — count on it."',
     canTriggerRandomly: false,
-    portraitId: 'advisor',
+    portraitId: 'council_member',
     options: [
       { text: 'RETURN HOME TRIUMPHANT', effects: { authority: 3, satisfaction: 3 } },
       { text: 'LOOT THE BATTLEFIELD', effects: { gold: 25 } },
@@ -836,7 +836,7 @@ export const eventRequests: Request[] = [
     title: 'Hrycgwulf\'s Message',
     text: 'Following the Aescweald battle, Hrycgwulf of Blackgeat arrives with a message. "You are capable. Pay a border tribute and we turn our army elsewhere." Feldric adds quietly, "This is their next move after Aescweald."',
     canTriggerRandomly: false,
-    portraitId: 'advisor',
+    portraitId: 'council_member',
     options: [
       { text: 'PAY FOR PIECE', effects: { gold: -15, authority: -2 } },
       { text: 'THROW HIM OUT', effects: { authority: 1 } },
@@ -870,7 +870,7 @@ export const eventRequests: Request[] = [
     title: 'The Second Demand',
     text: 'This is the second demand after Hrycgwulf\'s first tribute request. Hrycgwulf stays polite. "Tribute is not punishment. It is safety." Feldric spits, "It\'s a leash."',
     canTriggerRandomly: false,
-    portraitId: 'advisor',
+    portraitId: 'council_member',
     options: [
       { text: 'PAY AGAIN', effects: { gold: -15, authority: -2 } },
       { text: 'PREPARE FOR WAR', effects: { authority: 1 } },
@@ -942,7 +942,7 @@ export const eventRequests: Request[] = [
         },
       ],
     },
-    portraitId: 'advisor',
+    portraitId: 'military_advisor',
     options: [
       { 
         text: 'STAND YOUR GROUND', 
@@ -965,7 +965,7 @@ export const eventRequests: Request[] = [
     title: 'Echoes of Liberty',
     text: 'The Sigilmark Blackgeat has retreated! Against all odds, you held the line. Feldric raises a toast: "The land is ours once more, and our gold stays in our pockets. We are truly free."',
     canTriggerRandomly: false,
-    portraitId: 'advisor',
+    portraitId: 'military_advisor',
     options: [
       { 
         text: 'HOLD A GRAND FEAST', 
@@ -1005,7 +1005,7 @@ export const eventRequests: Request[] = [
     title: 'The Bill Comes Due',
     text: 'After the battle of Aescweald, Brimwulf\'s smile is thin. "Wulfham shed more blood than you. Compensation is expected." Feldric whispers, "This is the hook."',
     canTriggerRandomly: false,
-    portraitId: 'advisor',
+    portraitId: 'council_member',
     options: [
       { text: 'PAY', effects: { gold: -15, authority: -1} },
       { text: 'REFUSE', effects: {authority: 1} },
@@ -1033,7 +1033,7 @@ export const eventRequests: Request[] = [
     title: 'More, Always More',
     text: 'Brimwulf returns again — this is the second payment demand since Aescweald. "The roads. The wagons. The widows. Pay again."',
     canTriggerRandomly: false,
-    portraitId: 'advisor',
+    portraitId: 'council_member',
     options: [
       { text: 'PAY', effects: { gold: -15, authority: -1} },
       { text: 'REFUSE', effects: {authority: 1} },
@@ -1061,9 +1061,9 @@ export const eventRequests: Request[] = [
     title: 'The Threat',
     text: 'Brimwulf stops pretending. "Coin, or Wulfham secures your lands permanently." Feldric says, "This started with Aescweald. Now it\'s extortion. Give me leave to prepare."',
     canTriggerRandomly: false,
-    portraitId: 'advisor',
+    portraitId: 'council_member',
     options: [
-      { text: 'PREenemyFOR WAR', effects: { farmers: -5, landForces: 5 } },
+      { text: 'PREPARE FOR WAR', effects: { farmers: -5, landForces: 5 } },
       { text: 'PAY TO DELAY', effects: { gold: -15 } },
     ],
     followUps: [
@@ -1089,7 +1089,7 @@ export const eventRequests: Request[] = [
     title: 'Showdown at the Border Stones',
     text: 'Weeks after the battle of Aescweald, Feldric meets Brimwulf at the border stones. "One step further," Feldric says, "and we settle this in iron."',
     canTriggerRandomly: false,
-    portraitId: 'advisor',
+    portraitId: 'military_advisor',
     options: [
       { text: 'STAND FIRM', effects: {  } },
       { text: 'BACK DOWN', effects: { gold: -15, farmers: -5, authority: -3} },
@@ -1117,7 +1117,7 @@ export const eventRequests: Request[] = [
     title: 'A Scar, Not a Grave',
     text: 'Wulfham withdraws — you are victorious! Feldric\'s verdict: "You\'ll remember this every time an ally asks for \'help\'."',
     canTriggerRandomly: false,
-    portraitId: 'advisor',
+    portraitId: 'military_advisor',
     options: [
       { text: 'DEMAND GOLD', effects: { gold: 30, satisfaction: 1, authority: 2} },
       { text: 'DEMAND SWORDS', effects: { landForces: 5, satisfaction: 1, authority: 2} },
@@ -1131,7 +1131,7 @@ export const eventRequests: Request[] = [
     title: 'The Hollow Peace',
     text: 'Brimwulf accepted your last payment as final. Wulfham\'s riders turn back toward their own borders. Feldric watches them go: "We have bought peace, but sold our pride."',
     canTriggerRandomly: false,
-    portraitId: 'advisor',
+    portraitId: 'council_member',
     options: [
       { text: 'RECOVER', effects: { health: 5 } },
       { text: 'REPAIR', effects: { fireRisk: -5 } },
@@ -1146,7 +1146,7 @@ export const eventRequests: Request[] = [
     title: 'Wulfham Overrun',
     text: 'Because you refused Brimwulf\'s alliance request earlier, he returns in defeat. "Wulfham burns. Blackgeat\'s march turns toward you."',
     canTriggerRandomly: false,
-    portraitId: 'advisor',
+    portraitId: 'council_member',
     options: [
       { text: 'SEND LATE AID', effects: { gold: -15, landForces: -6 } },
       { text: 'DO NOTHING', effects: {} },
@@ -1174,7 +1174,7 @@ export const eventRequests: Request[] = [
     title: 'The Blackgeat Envoy',
     text: 'As consequence of Wulfham\'s defeat, Blackgeat\'s envoy Hrycgwulf arrives at your gates. "Submit, or be folded into Blackgeat." Feldric\'s hand rests on his sword.',
     canTriggerRandomly: false,
-    portraitId: 'advisor',
+    portraitId: 'council_member',
     options: [
       { text: 'BOW and PAY', effects: { gold: -15, authority: -1,} },
       { text: 'RESIST and PREPARE', effects: {} },
@@ -1275,7 +1275,7 @@ export const eventRequests: Request[] = [
         authority: -3,
       },
     },
-    portraitId: 'advisor',
+    portraitId: 'military_advisor',
     options: [
       { text: 'HOLD', effects: {} },
       { text: 'COUNTERSTRIKE', effects: { gold: 10 } },
@@ -1316,7 +1316,7 @@ export const eventRequests: Request[] = [
         authority: -2,
       },
     },
-    portraitId: 'advisor',
+    portraitId: 'military_advisor',
     options: [
       { text: 'PROTECT THE VILLAGE', effects: { fireRisk: -4, satisfaction: 1 } },
       { text: 'PRESS THE LINE', effects: { farmers: -4, fireRisk: 5 } },
@@ -1357,7 +1357,7 @@ export const eventRequests: Request[] = [
         authority: -3,
       },
     },
-    portraitId: 'advisor',
+    portraitId: 'military_advisor',
     options: [
       { text: 'ALL-IN STRIKE', effects: { gold: 35, satisfaction: 5 } },
       { text: 'WITHDRAW', effects: { satisfaction: -2, farmers: -5 } },
@@ -1388,7 +1388,7 @@ export const eventRequests: Request[] = [
     title: 'Blackgeat Recoils',
     text: 'After three war rounds, Blackgeat pulls back and the war finally ends. Feldric wipes blood from his lip: "This is what resisting Blackgeat costs—and what it buys."',
     canTriggerRandomly: false,
-    portraitId: 'advisor',
+    portraitId: 'military_advisor',
     options: [
       { text: 'SELL THE LOOT', effects: { gold: 35, satisfaction: 2, authority: 1,} },
       { text: 'KEEP THE LOOT', effects: { landForces: 5, satisfaction: 2, authority:1,} },
@@ -1402,7 +1402,7 @@ export const eventRequests: Request[] = [
     title: 'Help from a Free Barony',
     text: 'As the Blackgeat war drags on, riders from a neighboring free barony arrive at dusk: "We won\'t watch you fall."',
     canTriggerRandomly: false,
-    portraitId: 'advisor',
+    portraitId: 'council_member',
     options: [
       { text: 'ACCEPT HELP', effects: { landForces: 4 } },
       { text: 'ACCEPT AND PAY THEM', effects: { gold: -15, landForces: 8 } },
@@ -1430,7 +1430,7 @@ export const eventRequests: Request[] = [
     title: 'A Bitter Retreat',
     text: 'The Blackgeat war ends badly. You live, but they loot the village. Feldric\'s eyes are stone: "A bitter defeat! What should we do now?"',
     canTriggerRandomly: false,
-    portraitId: 'advisor',
+    portraitId: 'military_advisor',
     options: [
       { text: 'SAFE TREASURY', effects: { gold: -15, farmers: -12, authority: -3,} },
       { text: 'SAFE YOUR PEOPLE ', effects: { gold: -35, farmers: -4, authority: -3,} },
@@ -1458,7 +1458,7 @@ export const eventRequests: Request[] = [
     title: 'A Line Held',
     text: 'A fierce last battle against Blackgeat ends well with the barony\'s help. Feldric nods once: "Next time Blackgeat comes, we\'ll be ready sooner."',
     canTriggerRandomly: false,
-    portraitId: 'advisor',
+    portraitId: 'military_advisor',
     options: [
       { text: 'PURSUE THE FLEEING', effects: { landForces: -5, gold: 30 } },
       { text: 'HOLD A FEAST', effects: { health: 4, satisfaction: 3 } },
@@ -1473,7 +1473,7 @@ export const eventRequests: Request[] = [
     title: 'Tribute I',
     text: 'This tribute demand comes from Hrycgwulf\'s earlier ultimatum. His messenger waits: "The first payment." Feldric murmurs: "This is how Blackgeat turns a threat into routine."',
     canTriggerRandomly: false,
-    portraitId: 'advisor',
+    portraitId: 'council_member',
     options: [
       { text: 'PAY', effects: { gold: -15, satisfaction: -1, authority: -1,} },
       { text: 'REFUSE AND ARM', effects: {} },
@@ -1501,7 +1501,7 @@ export const eventRequests: Request[] = [
     title: 'Tribute II',
     text: 'The second tribute demand from Blackgeat arrives. Hrycgwulf repeats the terms, less polite this time.',
     canTriggerRandomly: false,
-    portraitId: 'advisor',
+    portraitId: 'council_member',
     options: [
       { text: 'PAY', effects: { gold: -15, satisfaction: -1, authority: -1,} },
       { text: 'REFUSE AND ARM', effects: {} },
@@ -1529,7 +1529,7 @@ export const eventRequests: Request[] = [
     title: 'Tribute III',
     text: 'Hrycgwulf comes back with another tribute demand. The people notice the wagons leaving your gates and start whispering about submission.',
     canTriggerRandomly: false,
-    portraitId: 'advisor',
+    portraitId: 'council_member',
     options: [
       { text: 'PAY', effects: { gold: -15, satisfaction: -2, authority: -1,} },
       { text: 'REFUSE AND ARM', effects: {} },
@@ -1557,7 +1557,7 @@ export const eventRequests: Request[] = [
     title: 'Tribute IV',
     text: 'Blackgeat\'s next tribute demand arrives with Hrycgwulf\'s personal seal. Feldric says, "They\'re making sure you remember who\'s in charge."',
     canTriggerRandomly: false,
-    portraitId: 'advisor',
+    portraitId: 'council_member',
     options: [
       { text: 'PAY', effects: { gold: -15, satisfaction: -2, authority: -1,} },
       { text: 'REFUSE AND ARM', effects: {} },
@@ -1585,7 +1585,7 @@ export const eventRequests: Request[] = [
     title: 'Tribute V',
     text: 'Another routine tribute demand from Blackgeat. Feldric says, "Paying five times teaches them you\'ll pay a sixth."',
     canTriggerRandomly: false,
-    portraitId: 'advisor',
+    portraitId: 'council_member',
     options: [
       { text: 'PAY', effects: { gold: -15, satisfaction: -1, authority: -1,} },
       { text: 'REFUSE AND ARM', effects: {} },
@@ -1613,7 +1613,7 @@ export const eventRequests: Request[] = [
     title: 'A Bought Breath',
     text: 'Hrycgwulf visits you one last time: "You paid for safety. Now you shall have peace". Feldric: "This peace seems temporary. For next time, we will prepare."',
     canTriggerRandomly: false,
-    portraitId: 'advisor',
+    portraitId: 'council_member',
     options: [
       { text: 'CELEBRATE PEACE', effects: { health: 4, satisfaction: 4 } },
       { text: 'START PREPARING', effects: { gold: -10, landForces: 6 } },
@@ -1662,7 +1662,7 @@ export const eventRequests: Request[] = [
     title: 'After-Work at the Tavern',
     text: 'After a long day of labor, the villagers gather at the tavern. Should you subsidize their drinks to boost morale, or let them enjoy at their own expense?',
     requires: ['building:brewery'],
-    portraitId: 'advisor',
+    portraitId: 'farmer',
     options: [
       {
         text: 'LET THEM PAY',
@@ -1688,7 +1688,7 @@ export const eventRequests: Request[] = [
     text: 'With your authority waning, a local mercenary demands protection money. Your weakened position makes this a difficult situation.',
     authorityMin: 0,
     authorityMax: 33,
-    portraitId: 'advisor',
+    portraitId: 'bandit',
     options: [
       {
         text: 'PAY PROTECTION',
@@ -1712,7 +1712,7 @@ export const eventRequests: Request[] = [
     text: 'Your guards openly mock your orders. One even spits at your feet. Your weakened authority has emboldened them to disrespect you.',
     authorityMin: 0,
     authorityMax: 33,
-    portraitId: 'advisor',
+    portraitId: 'military_advisor',
     options: [
       {
         text: 'PUNISH THEM',
@@ -1735,7 +1735,7 @@ export const eventRequests: Request[] = [
     text: 'Someone has been stealing from the grain stores. Your lack of authority makes it impossible to maintain order or discover the culprit.',
     authorityMin: 0,
     authorityMax: 33,
-    portraitId: 'advisor',
+    portraitId: 'bandit',
     options: [
       {
         text: 'FIND THE NASTY THIEVES',
@@ -1760,7 +1760,7 @@ export const eventRequests: Request[] = [
     text: 'The harvest was poor, so you petition the neighboring lord for aid, but are turned away at the gates. "We deal only with legitimate leaders," the guards say.',
     authorityMin: 0,
     authorityMax: 33,
-    portraitId: 'advisor',
+    portraitId: 'council_member',
     options: [
       {
         text: 'BEG ON YOUR KNEES',
@@ -1786,7 +1786,7 @@ export const eventRequests: Request[] = [
     text: 'A ruthless debt collector arrives, sensing your weakness. He demands that you pay for debts of your poorest villagers - or else he\'ll take what he\'s owed by force.',
     authorityMin: 0,
     authorityMax: 33,
-    portraitId: 'advisor',
+    portraitId: 'merchant',
     options: [
       {
         text: 'PAY THE DEBT',
@@ -1859,7 +1859,7 @@ export const eventRequests: Request[] = [
     text: 'A herbalist and her family threaten that they\'re leaving for a neighboring settlement with "real leadership."',
     authorityMin: 0,
     authorityMax: 33,
-    portraitId: 'advisor',
+    portraitId: 'farmer',
     options: [
       {
         text: 'BEG THEM TO STAY',
@@ -1934,7 +1934,7 @@ export const eventRequests: Request[] = [
     text: 'Your moderate influence allows you to negotiate a trade deal with a neighboring settlement.',
     authorityMin: 34,
     authorityMax: 66,
-    portraitId: 'advisor',
+    portraitId: 'merchant',
     options: [
       {
         text: 'ACCEPT DEAL',
@@ -1999,7 +1999,7 @@ export const eventRequests: Request[] = [
     text: 'Your guards whisper of desertion. You could attempt to rally them with what little authority you have left, or let them go.',
     authorityMin: 0,
     authorityMax: 33,
-    portraitId: 'advisor',
+    portraitId: 'military_advisor',
     options: [
       {
         text: 'RALLY THEM',
@@ -2120,7 +2120,7 @@ export const eventRequests: Request[] = [
     text: 'Your formidable authority grants you an invitation to the regional council. This is an opportunity to solidify your position among the elite.',
     authorityMin: 67,
     authorityMax: 100,
-    portraitId: 'advisor',
+    portraitId: 'council_member',
     options: [
       {
         text: 'ATTEND SUMMIT',
@@ -2145,7 +2145,7 @@ export const eventRequests: Request[] = [
     text: 'Lord Heinrich of the neighboring Mark challenges your authority publicly, claiming your lands should be his. This affront cannot go unanswered.',
     authorityMin: 67,
     authorityMax: 100,
-    portraitId: 'advisor',
+    portraitId: 'council_member',
     options: [
       {
         text: 'ACCEPT THE DUEL',
@@ -2172,7 +2172,7 @@ export const eventRequests: Request[] = [
     text: 'The Count of the Eastern Marches offers a formal alliance. With your strong reputation, this could open doors to greater power and wealth.',
     authorityMin: 67,
     authorityMax: 100,
-    portraitId: 'advisor',
+    portraitId: 'council_member',
     options: [
       {
         text: 'ACCEPT ALLIANCE',
@@ -2224,7 +2224,7 @@ export const eventRequests: Request[] = [
     text: 'The King himself summons you to court, recognizing your authority. This is a rare honor that could elevate your status significantly.',
     authorityMin: 67,
     authorityMax: 100,
-    portraitId: 'advisor',
+    portraitId: 'council_member',
     options: [
       {
         text: 'ATTEND WITH ENTOURAGE',
@@ -2274,7 +2274,7 @@ export const eventRequests: Request[] = [
     text: 'A weaker neighboring lord sends tribute, acknowledging your superior authority. This is the fruit of your strong leadership.',
     authorityMin: 67,
     authorityMax: 100,
-    portraitId: 'advisor',
+    portraitId: 'council_member',
     options: [
       {
         text: 'ACCEPT TRIBUTE',
@@ -2297,7 +2297,7 @@ export const eventRequests: Request[] = [
     text: 'You have the opportunity to eliminate a political rival through legal maneuvering. Your authority makes this possible, but the ethics are questionable.',
     authorityMin: 67,
     authorityMax: 100,
-    portraitId: 'advisor',
+    portraitId: 'council_member',
     options: [
       {
         text: 'DESTROY RIVAL',
@@ -2322,7 +2322,7 @@ export const eventRequests: Request[] = [
     text: 'You host a magnificent tournament that attracts nobles from across the realm. Your authority ensures this event will be remembered.',
     authorityMin: 67,
     authorityMax: 100,
-    portraitId: 'advisor',
+    portraitId: 'council_member',
     options: [
       {
         text: 'LAVISH CELEBRATION',
@@ -2348,7 +2348,7 @@ export const eventRequests: Request[] = [
     text: 'An insult from a foreign ambassador threatens war. Your authority gives you the standing to demand satisfaction or broker peace.',
     authorityMin: 67,
     authorityMax: 100,
-    portraitId: 'advisor',
+    portraitId: 'council_member',
     options: [
       {
         text: 'DEMAND APOLOGY (AND COMPENSATION)',
@@ -2468,7 +2468,7 @@ export const eventRequests: Request[] = [
     text: 'Two noble families feud over land rights. Your judgment will be final, but you need authority to make it stick.',
     authorityMin: 34,
     authorityMax: 100,
-    portraitId: 'advisor',
+    portraitId: 'council_member',
     options: [
       {
         text: 'RENDER JUDGMENT',
@@ -2740,7 +2740,7 @@ export const eventRequests: Request[] = [
     text: 'A neighboring lord dies without clear heir. Several claimants seek your backing. Your choice requires authority to enforce.',
     authorityMin: 34,
     authorityMax: 100,
-    portraitId: 'advisor',
+    portraitId: 'council_member',
     options: [
       {
         text: 'BACK A CLAIMANT',
@@ -2819,7 +2819,7 @@ export const eventRequests: Request[] = [
     text: 'An envoy from a distant kingdom offers trade and alliance, but demands concessions. Your authority determines the terms.',
     authorityMin: 34,
     authorityMax: 100,
-    portraitId: 'advisor',
+    portraitId: 'council_member',
     options: [
       {
         text: 'DEMAND EQUALITY',
@@ -2968,7 +2968,7 @@ export const eventRequests: Request[] = [
     text: 'A powerful family offers a rather unbalanced marriage alliance. Securing favorable terms requires authority to negotiate from strength.',
     authorityMin: 34,
     authorityMax: 100,
-    portraitId: 'advisor',
+    portraitId: 'council_member',
     options: [
       {
         text: 'NEGOTIATE TERMS',
@@ -3007,7 +3007,7 @@ export const eventRequests: Request[] = [
     id: 'EVT_EGO_HUMBLE_PEASANT',
     title: 'The Wise Peasant',
     text: 'An elderly peasant offers unsolicited advice on governance. He speaks wisely, but addressing you as an equal. Do you listen humbly or assert your station?',
-    portraitId: 'advisor',
+    portraitId: 'farmer',
     options: [
       {
         text: 'LISTEN HUMBLY',
@@ -3030,7 +3030,7 @@ export const eventRequests: Request[] = [
     id: 'EVT_EGO_PUBLIC_CRITICISM',
     title: 'Public Criticism',
     text: 'A popular merchant loudly criticizes your recent decisions in the town square. Others are watching to see how you respond.',
-    portraitId: 'advisor',
+    portraitId: 'merchant',
     options: [
       {
         text: 'LAUGH IT OFF',
@@ -3552,7 +3552,7 @@ export const eventRequests: Request[] = [
     canTriggerRandomly: false,
     title: 'Licking Wounds',
     text: 'The bandits defeated your men but did not press the attack. Feldric advises rebuilding strength before they return.',
-    portraitId: 'advisor',
+    portraitId: 'military_advisor',
     options: [
       { text: 'RECRUIT MORE', effects: { gold: -10, landForces: 4 } },
       { text: 'NEGOTIATE PEACE', effects: { gold: -15, authority: -2 } },
@@ -3631,7 +3631,7 @@ export const eventRequests: Request[] = [
     canTriggerRandomly: false,
     title: 'Road Secured',
     text: 'The trade road is clear at last. Merchants return, and the village prospers from renewed commerce.',
-    portraitId: 'advisor',
+    portraitId: 'merchant',
     options: [
       { text: 'CELEBRATE', effects: { satisfaction: 5, gold: 10 } },
       { text: 'FORTIFY THE ROAD', effects: { gold: -10, landForces: 3 } },
@@ -3657,7 +3657,7 @@ export const eventRequests: Request[] = [
     canTriggerRandomly: false,
     title: 'A Costly Lesson',
     text: 'The bandits control the road now. Trade slows to a trickle and your people grow restless.',
-    portraitId: 'advisor',
+    portraitId: 'bandit',
     options: [
       { text: 'SEEK ALLIES', effects: { gold: -5, authority: 1 } },
       { text: 'ENDURE', effects: { satisfaction: -5 } },
@@ -3766,7 +3766,7 @@ export const eventRequests: Request[] = [
     canTriggerRandomly: false,
     title: 'Black Market',
     text: 'Without a guild, smugglers fill the void. Cheap goods appear but quality is terrible and crime rises.',
-    portraitId: 'advisor',
+    portraitId: 'bandit',
     options: [
       { text: 'CRACK DOWN', effects: { landForces: -3, authority: 1 } },
       { text: 'TOLERATE IT', effects: { health: -2, satisfaction: -2 } },
@@ -3793,7 +3793,7 @@ export const eventRequests: Request[] = [
     canTriggerRandomly: false,
     title: 'Golden Age of Trade',
     text: 'The expanded guild brings prosperity. Merchants from distant lands flock to your marketplace.',
-    portraitId: 'advisor',
+    portraitId: 'merchant',
     options: [
       { text: 'HOST A TRADE FAIR', effects: { gold: 45, satisfaction: 2 } },
       { text: 'TAX THE PROFITS', effects: { gold: 60, satisfaction: -3 } },
@@ -3806,7 +3806,7 @@ export const eventRequests: Request[] = [
     canTriggerRandomly: false,
     title: 'Steady Trade',
     text: 'Trade continues at a modest pace. The guild — or lack thereof — has settled into a routine.',
-    portraitId: 'advisor',
+    portraitId: 'merchant',
     options: [
       { text: 'GOOD ENOUGH', effects: { gold: 25 } },
       { text: 'TAX THE PROFITS', effects: { gold: 35, satisfaction: -3 } },
@@ -3819,7 +3819,7 @@ export const eventRequests: Request[] = [
     canTriggerRandomly: false,
     title: 'A Fresh Start',
     text: 'With the corrupt elements removed, honest merchants return. The marketplace is cleaner and more trustworthy.',
-    portraitId: 'advisor',
+    portraitId: 'merchant',
     options: [
       { text: 'CELEBRATE', effects: { satisfaction: 3 } },
       { text: 'STAY VIGILANT', effects: { authority: 2 } },
@@ -4007,7 +4007,7 @@ export const eventRequests: Request[] = [
     authorityMax: 100,
     title: 'The Rival Lord',
     text: 'Lord Alden of a neighboring fief has laid claim to a strip of borderland that your farmers work. He demands you yield or face consequences.',
-    portraitId: 'advisor',
+    portraitId: 'council_member',
     options: [
       {
         text: 'ASSERT YOUR CLAIM',
@@ -4052,7 +4052,7 @@ export const eventRequests: Request[] = [
     canTriggerRandomly: false,
     title: 'A Reasonable Man',
     text: 'Lord Alden agrees to meet. Surprisingly, he is open to negotiation. Perhaps this can be settled without bloodshed.',
-    portraitId: 'advisor',
+    portraitId: 'council_member',
     options: [
       { text: 'OFFER COMPROMISE', effects: { gold: -10, authority: 1 } },
       { text: 'DEMAND FULL RIGHTS', effects: { authority: 2 } },
@@ -4082,7 +4082,7 @@ export const eventRequests: Request[] = [
     canTriggerRandomly: false,
     title: 'Swords Drawn',
     text: 'Lord Alden has gathered his men. His banners appear on the borderland. Feldric readies the militia: "This is no bluff."',
-    portraitId: 'advisor',
+    portraitId: 'military_advisor',
     options: [
       { text: 'DEFEND THE BORDER', effects: {} },
       { text: 'OFFER TRIBUTE', effects: { gold: -20, authority: -1 } },
@@ -4132,7 +4132,7 @@ export const eventRequests: Request[] = [
     canTriggerRandomly: false,
     title: 'Neighborly Accord',
     text: 'You and Lord Alden reach a fair agreement. The border is settled and both fiefs benefit from cooperation.',
-    portraitId: 'advisor',
+    portraitId: 'council_member',
     options: [
       { text: 'TOAST TO PEACE', effects: { satisfaction: 3, gold: 10 } },
       { text: 'FORMALIZE THE PACT', effects: { authority: 2, gold: 10 } },
@@ -4145,7 +4145,7 @@ export const eventRequests: Request[] = [
     canTriggerRandomly: false,
     title: 'The Border Stands',
     text: 'Lord Alden retreats in defeat. The borderland remains yours. Your people cheer their victory.',
-    portraitId: 'advisor',
+    portraitId: 'military_advisor',
     options: [
       { text: 'REWARD THE MILITIA', effects: { satisfaction: 5 } },
       { text: 'FORTIFY THE BORDER', effects: { landForces: 5 } },
@@ -4158,7 +4158,7 @@ export const eventRequests: Request[] = [
     canTriggerRandomly: false,
     title: 'Land Lost',
     text: 'The borderland now belongs to Lord Alden. Your farmers must find new fields, and your authority has suffered.',
-    portraitId: 'advisor',
+    portraitId: 'council_member',
     options: [
       { text: 'ACCEPT THE LOSS', effects: { gold: -15, authority: -1 } },
       { text: 'PLAN REVENGE', effects: { gold: -15, authority: 1, satisfaction: -2 } },
@@ -4179,7 +4179,7 @@ export const eventRequests: Request[] = [
     requires: ['building:brewery'],
     title: 'Festival Season',
     text: 'The harvest is in and the people want a grand festival. Brewers offer their finest ale if you fund the event.',
-    portraitId: 'advisor',
+    portraitId: 'farmer',
     options: [
       { text: 'FUND THE FESTIVAL', effects: { gold: -15 } },
       { text: 'CANCEL IT', effects: { satisfaction: -3 } },
@@ -4209,7 +4209,7 @@ export const eventRequests: Request[] = [
     canTriggerRandomly: false,
     title: 'Joy and Ale',
     text: 'The festival is a roaring success! Music, dancing, and barrels of ale. But the crowd wants even more entertainment.',
-    portraitId: 'advisor',
+    portraitId: 'farmer',
     options: [
       { text: 'HIRE PERFORMERS', effects: { gold: -10 } },
       { text: 'LET THEM ENJOY', effects: {  } },
@@ -4236,7 +4236,7 @@ export const eventRequests: Request[] = [
     canTriggerRandomly: false,
     title: 'Drunken Brawl',
     text: 'Too much ale has led to a brawl between farmers. Fists fly and tables break. The festival could turn ugly.',
-    portraitId: 'advisor',
+    portraitId: 'farmer',
     options: [
       { text: 'RESTORE ORDER', effects: { authority: 2, satisfaction: -2 } },
       { text: 'LET THEM FIGHT', effects: { health: -3 } },
@@ -4266,7 +4266,7 @@ export const eventRequests: Request[] = [
     canTriggerRandomly: false,
     title: 'A Festival to Remember',
     text: 'Songs are written about this festival. The people are united, and word of your generosity spreads far.',
-    portraitId: 'advisor',
+    portraitId: 'farmer',
     options: [
       { text: 'BASK IN GLORY', effects: { satisfaction: 3, authority: 2 } },
       { text: 'PREPARE NEXT YEAR', effects: { satisfaction: 6 } },
@@ -4279,7 +4279,7 @@ export const eventRequests: Request[] = [
     canTriggerRandomly: false,
     title: 'Fond Memories',
     text: 'The festival winds down peacefully. People head home with warm bellies and good cheer.',
-    portraitId: 'advisor',
+    portraitId: 'farmer',
     options: [
       { text: 'REST WELL', effects: { satisfaction: 2, health: 2 } },
       { text: 'CLEAN UP', effects: { satisfaction: 3 } },
@@ -4292,7 +4292,7 @@ export const eventRequests: Request[] = [
     canTriggerRandomly: false,
     title: 'Back to Work',
     text: 'Festival or not, the work continues. The village settles back into its daily routine.',
-    portraitId: 'advisor',
+    portraitId: 'farmer',
     options: [
       { text: 'CARRY ON', effects: { } },
       { text: 'PROMISE A BETTER ONE', effects: { satisfaction: 2, gold: -10 } },
@@ -4428,7 +4428,7 @@ export const eventRequests: Request[] = [
     title: 'Rotting Defenses',
     text: 'The outer palisade has deteriorated badly. Gaps in the timber invite wolves and worse. Feldric urges an upgrade before the next raid season.',
     canTriggerRandomly: true,
-    portraitId: 'advisor',
+    portraitId: 'military_advisor',
     options: [
       { text: 'INVEST IN PALISADE', effects: { gold: -15 } },
       { text: 'DELAY', effects: { satisfaction: -1 } },
@@ -4460,7 +4460,7 @@ export const eventRequests: Request[] = [
     requires: ['building:marketplace'],
     title: 'Guild Carpenters Available',
     text: 'Thanks to the marketplace, a guild of skilled carpenters offers their services. Their work would be superior, but their rates are steep.',
-    portraitId: 'advisor',
+    portraitId: 'merchant',
     options: [
       { text: 'PAY GUILD', effects: { gold: -15 } },
       { text: 'FARMERS ARE GOOD ENOUGH', effects: { satisfaction: -1 } },
@@ -4487,7 +4487,7 @@ export const eventRequests: Request[] = [
     canTriggerRandomly: false,
     title: 'Village Hands',
     text: 'Without guild access, the villagers must do the work themselves. It will take longer, but the result is good, and it costs nothing beyond sweat.',
-    portraitId: 'advisor',
+    portraitId: 'farmer',
     options: [
       { text: 'STANDARD WORKTIME', effects: { landForces: 3, authority: 1 } },
       { text: 'PAY OVERTIME', effects: { gold: -10, landForces: 6} },
@@ -4534,7 +4534,7 @@ export const eventRequests: Request[] = [
     title: 'The Arkanat Arrives',
     text: 'A stern official from the Arkanat — the regional mage council — dismounts at your gate. He carries sealed writs and a cold expression. "I am here to audit your governance."',
     canTriggerRandomly: true,
-    portraitId: 'advisor',
+    portraitId: 'council_member',
     options: [
       {
         text: 'ASSERT JURISDICTION',
@@ -4577,7 +4577,7 @@ export const eventRequests: Request[] = [
     canTriggerRandomly: false,
     title: 'Inspector Relents',
     text: 'Faced with your firm stance and the weight of your authority, the Arkanat inspector folds his writs. "Very well. Your records appear... adequate." He mounts his horse without another word.',
-    portraitId: 'advisor',
+    portraitId: 'council_member',
     options: [
       { text: 'SEE HIM OUT', effects: { authority: 1 } },
     ],
@@ -4597,7 +4597,7 @@ export const eventRequests: Request[] = [
     canTriggerRandomly: false,
     title: 'Inspector Strikes Back',
     text: 'The inspector was not bluffing. He produces a decree stripping you of certain privileges and levies a fine. "The Arkanat does not forget defiance."',
-    portraitId: 'advisor',
+    portraitId: 'council_member',
     options: [
       { text: 'ACCEPT THE BLOW', effects: { authority: -3, satisfaction: -2 } },
       { text: 'PROTEST', effects: {} },
@@ -4618,7 +4618,7 @@ export const eventRequests: Request[] = [
     canTriggerRandomly: false,
     title: 'Administrative Fees',
     text: 'The inspector smiles thinly. "Your cooperation is noted. However, administrative fees are still due." He slides a ledger across the table with an exorbitant sum circled in red.',
-    portraitId: 'advisor',
+    portraitId: 'council_member',
     options: [
       { text: 'PAY', effects: { gold: -20 } },
       { text: 'REFUSE', effects: { authority: 1, satisfaction: -1 } },
@@ -4639,7 +4639,7 @@ export const eventRequests: Request[] = [
     canTriggerRandomly: false,
     title: 'Mutual Understanding',
     text: 'Your willingness to cooperate impresses the inspector. Over ale, he shares useful information about regional trade routes and promises to speak well of you to the council.',
-    portraitId: 'advisor',
+    portraitId: 'council_member',
     options: [
       { text: 'A GOOD OUTCOME', effects: { authority: 1 } },
       { text: 'THANK HIM', effects: {} },
@@ -4680,7 +4680,7 @@ export const eventRequests: Request[] = [
     title: 'A Voice from the Crowd',
     text: 'During a public address, a villager shouts: "You call yourself a leader? My goat governs better!" Laughter ripples through the crowd. All eyes turn to you.',
     canTriggerRandomly: true,
-    portraitId: 'advisor',
+    portraitId: 'farmer',
     options: [
       { text: 'PUNISH', effects: { authority: 1, satisfaction: -2 } },
       { text: 'LAUGH IT OFF', effects: { satisfaction: 1 } },
@@ -4713,7 +4713,7 @@ export const eventRequests: Request[] = [
     canTriggerRandomly: false,
     title: 'Heavy Hand Backfires',
     text: 'The heckler is dragged away, but the crowd murmurs darkly. "He only spoke what we all think." Your show of force has made things worse.',
-    portraitId: 'advisor',
+    portraitId: 'farmer',
     options: [
       { text: 'LEAVE THE SQUARE', effects: { authority: -1 } },
       { text: 'DISPERSE THE CROWD', effects: {satisfaction: -2, authority: 1} },
@@ -4734,7 +4734,7 @@ export const eventRequests: Request[] = [
     canTriggerRandomly: false,
     title: 'Order Restored',
     text: 'The crowd falls silent at first. Then a loud voice rings out: “All hail!” It isn’t long before the whole square erupts in applause. Whether out of fear or awe, you cannot say.',
-    portraitId: 'advisor',
+    portraitId: 'farmer',
     options: [
       { text: 'AS IT SHOULD BE', effects: { authority: 1, } },
       { text: 'DEAL OUT COINS', effects: {gold: -5,} },
@@ -4755,7 +4755,7 @@ export const eventRequests: Request[] = [
     canTriggerRandomly: false,
     title: 'Mockery Spreads',
     text: 'Your good humor emboldens others. Soon "the goat lord" becomes a street joke. Children bleat at you in the streets.',
-    portraitId: 'advisor',
+    portraitId: 'farmer',
     options: [
       { text: 'IGNORE IT', effects: { authority: -1 } },
       { text: 'IMPRISON THEM', effects: {satisfaction: -5, farmers: -3, authority: 1 } },
@@ -4776,7 +4776,7 @@ export const eventRequests: Request[] = [
     canTriggerRandomly: false,
     title: 'Grace Under Fire',
     text: 'Your laughter disarms the moment entirely. The heckler himself grins sheepishly. "Fair enough, my lord." The crowd warms to you — a leader who can take a joke is a leader worth following.',
-    portraitId: 'advisor',
+    portraitId: 'farmer',
     options: [
       { text: 'WELL HANDLED', effects: { satisfaction: 1 } },
       { text: 'BUY HIM AN ALE', effects: {gold: -5, satisfaction: 1} },
@@ -4895,7 +4895,7 @@ export const eventRequests: Request[] = [
     canTriggerRandomly: false,
     title: 'Docks in Flames',
     text: 'The pirates overwhelmed your defenses and march towards your treasury. Your villagers try to flee.',
-    portraitId: 'advisor',
+    portraitId: 'bandit',
     options: [
       { text: 'PEASANTS, DEFEND MY TREASURY!', effects: {farmers: -10, satisfaction: -3,} },
       { text: 'RUN FOR YOUR LIVES!', effects: {gold: -20, satisfaction: 3,} },
