@@ -31,7 +31,7 @@
 
 **Die Marken Kaledruns** is a turn-based village management strategy game built as a Progressive Web App (PWA). The player governs a settlement by responding to events (called "requests"), managing resources, constructing buildings, commanding military forces, and navigating political authority. The game ends when gold drops to **-50** (bankruptcy).
 
-- **Version**: 1.1.13
+- **Version**: 1.1.14
 - **Package name**: `pof-prototype`
 - **Repository**: `t-h-omy/MarkenKaledruns`
 
@@ -344,7 +344,7 @@ main.tsx
 
 ### Styling
 
-All styling is in plain CSS files co-located with their components. No CSS-in-JS or CSS frameworks are used. Request-screen styling uses a medieval / light high-fantasy theme palette defined as CSS custom properties (`--mk-*`) in `:root` of `App.css` — dark stone surfaces, muted gold headings, ivory text, readable chip colors, and restrained royal-blue accents.
+All styling is in plain CSS files co-located with their components. No CSS-in-JS or CSS frameworks are used. Request-screen styling uses a medieval / light high-fantasy theme palette defined as CSS custom properties (`--mk-*`) in `:root` of `App.css` — dark stone surfaces, muted gold headings, ivory text, readable chip colors, and restrained royal-blue accents. Interactive elements (decision cards, toggle buttons, sliders) use brightened button surfaces (`--mk-button-surface`) and gold borders (`--mk-button-border` mapped to `--mk-heading-gold-soft`) so they stand out from panel backgrounds and are clearly recognizable as interactive. Combat slider and bottom-bar toggle buttons use theme variables (`--mk-accent-blue`, `--mk-heading-gold`, `--mk-text-secondary`) instead of hardcoded colors for consistent theming.
 
 | CSS File | Lines | Scope |
 |----------|-------|-------|

@@ -30,9 +30,9 @@
   --mk-chip-neutral-border: #6b5b47;
   --mk-chip-neutral-text: #efe4cf;
 
-  --mk-button-surface: #2b251f;
-  --mk-button-surface-hover: #342d25;
-  --mk-button-border: #6a5b45;
+  --mk-button-surface: #38302a;            /* brightened for card visibility */
+  --mk-button-surface-hover: #443b33;
+  --mk-button-border: #b89145;             /* gold border signals interactivity */
 
   --mk-shadow-soft: 0 6px 20px rgba(0, 0, 0, 0.28);
   --mk-shadow-panel: 0 10px 28px rgba(0, 0, 0, 0.34);
@@ -291,8 +291,8 @@
 
 /* Combat Slider Styles */
 .combat-slider-container {
-  background: rgba(100, 108, 255, 0.1);
-  border: 2px solid #646cff;
+  background: rgba(79, 103, 163, 0.15);
+  border: 2px solid var(--mk-accent-blue);
   border-radius: 8px;
   padding: 0.75rem;
   margin-bottom: 0.75rem;
@@ -306,7 +306,7 @@
   justify-content: space-between;
   font-size: 0.9rem;
   font-weight: bold;
-  color: #ffd700;
+  color: var(--mk-heading-gold);
 }
 
 .combat-slider {
@@ -314,7 +314,7 @@
   height: 8px;
   -webkit-appearance: none;
   appearance: none;
-  background: #4a4a4a;
+  background: var(--mk-border);
   border-radius: 4px;
   outline: none;
   cursor: pointer;
@@ -325,21 +325,21 @@
   appearance: none;
   width: 20px;
   height: 20px;
-  background: #646cff;
+  background: var(--mk-accent-blue-hover);
   border-radius: 50%;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .combat-slider::-webkit-slider-thumb:hover {
-  background: #8086ff;
+  background: var(--mk-focus-ring);
   transform: scale(1.2);
 }
 
 .combat-slider::-moz-range-thumb {
   width: 20px;
   height: 20px;
-  background: #646cff;
+  background: var(--mk-accent-blue-hover);
   border-radius: 50%;
   border: none;
   cursor: pointer;
@@ -347,7 +347,7 @@
 }
 
 .combat-slider::-moz-range-thumb:hover {
-  background: #8086ff;
+  background: var(--mk-focus-ring);
   transform: scale(1.2);
 }
 
@@ -893,10 +893,10 @@
   padding: 0.75rem 2rem;
   font-size: 1rem;
   font-weight: bold;
-  background: linear-gradient(135deg, #646cff 0%, #4a4acf 100%);
+  background: var(--mk-accent-blue);
   border: none;
   border-radius: 8px;
-  color: #fff;
+  color: var(--mk-text-primary);
   cursor: pointer;
   transition: all 0.2s;
   text-transform: uppercase;
@@ -904,9 +904,9 @@
 }
 
 .restart-button:hover {
-  background: linear-gradient(135deg, #7580ff 0%, #5b5bdf 100%);
+  background: var(--mk-accent-blue-hover);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(100, 108, 255, 0.4);
+  box-shadow: 0 4px 12px rgba(79, 103, 163, 0.4);
 }
 
 .restart-button:active {
@@ -915,7 +915,7 @@
 
 /* Bottom Bar with Toggle */
 .bottom-bar {
-  background: #2a2a2a;
+  background: var(--mk-bg-panel);
   border-radius: 8px;
   padding: 0.5rem;
   padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
@@ -937,10 +937,10 @@
   padding: 0.4rem 1.5rem;
   font-size: 0.9rem;
   font-weight: bold;
-  background: #1a1a1a;
-  border: 2px solid #444;
+  background: var(--mk-button-surface);
+  border: 2px solid var(--mk-button-border);
   border-radius: 6px;
-  color: #aaa;
+  color: var(--mk-text-secondary);
   cursor: pointer;
   transition: all 0.2s;
   text-transform: uppercase;
@@ -949,13 +949,13 @@
 }
 
 .toggle-btn.active {
-  background: #646cff;
-  border-color: #646cff;
-  color: #fff;
+  background: var(--mk-accent-blue);
+  border-color: var(--mk-accent-blue);
+  color: var(--mk-text-primary);
 }
 
 .toggle-btn:hover {
-  border-color: #646cff;
+  border-color: var(--mk-heading-gold);
 }
 
 /* Notification badge on toggle button */
@@ -1547,10 +1547,10 @@
   padding: 1rem 2rem;
   font-size: 1.1rem;
   font-weight: bold;
-  background: linear-gradient(135deg, #646cff 0%, #4a4acf 100%);
-  border: 2px solid #646cff;
+  background: var(--mk-accent-blue);
+  border: 2px solid var(--mk-accent-blue);
   border-radius: 8px;
-  color: #fff;
+  color: var(--mk-text-primary);
   cursor: pointer;
   transition: all 0.2s;
   text-transform: uppercase;
@@ -1559,9 +1559,9 @@
 }
 
 .confirm-button:hover {
-  background: linear-gradient(135deg, #7a7aff 0%, #646cff 100%);
+  background: var(--mk-accent-blue-hover);
   transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(100, 108, 255, 0.5);
+  box-shadow: 0 4px 16px rgba(79, 103, 163, 0.5);
 }
 
 .confirm-button:active {
