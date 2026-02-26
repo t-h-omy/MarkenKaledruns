@@ -31,7 +31,7 @@
 
 **Die Marken Kaledruns** is a turn-based village management strategy game built as a Progressive Web App (PWA). The player governs a settlement by responding to events (called "requests"), managing resources, constructing buildings, commanding military forces, and navigating political authority. The game ends when gold drops to **-50** (bankruptcy).
 
-- **Version**: 1.1.14
+- **Version**: 1.1.15
 - **Package name**: `pof-prototype`
 - **Repository**: `t-h-omy/MarkenKaledruns`
 
@@ -84,8 +84,12 @@ MarkenKaledruns/
 │   │   ├── react.svg                      # React logo
 │   │   └── portraits/                     # Portrait images for request screen
 │   │       ├── index.ts                   # Portrait registry (PORTRAITS lookup, PortraitId type)
-│   │       ├── Advisor.webp               # Advisor portrait
-│   │       └── Farmer.webp                # Farmer portrait
+│   │       ├── advisor.webp               # Advisor portrait
+│   │       ├── bandit.webp                # Bandit / pirate portrait
+│   │       ├── council_member.webp        # Council member / envoy portrait
+│   │       ├── farmer.webp                # Farmer portrait
+│   │       ├── merchant.webp              # Merchant portrait
+│   │       └── military_advisor.webp      # Military advisor portrait
 │   │
 │   ├── App.tsx                            # Main game component (~1020 lines)
 │   ├── App.css                            # Main game styles (~1525 lines)
@@ -135,7 +139,7 @@ MarkenKaledruns/
 | `src/game/modifiers.ts` | ~100 | Effect modifiers |
 | `src/index.css` | ~40 | Global styles |
 | `src/main.tsx` | ~30 | App bootstrap |
-| `src/assets/portraits/index.ts` | ~16 | Portrait registry (PORTRAITS lookup, PortraitId type) |
+| `src/assets/portraits/index.ts` | ~26 | Portrait registry (PORTRAITS lookup, PortraitId type; 6 portraits: advisor, bandit, council_member, farmer, merchant, military_advisor) |
 
 ---
 
