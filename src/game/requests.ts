@@ -117,6 +117,7 @@ export const eventRequests: Request[] = [
     id: 'EVT_RAID_SMALL',
     title: 'Shadows in the Woods',
     text: 'A small band of brigands has been spotted nearby. Do we drive them off by force or pay a "toll" to keep the peace?',
+    portraitId: 'bandit',
     combat: {
       enemyForces: 3,
       prepDelayMinTicks: 3,
@@ -148,6 +149,7 @@ export const eventRequests: Request[] = [
     id: 'EVT_RAID_LARGE',
     title: 'The War Horns',
     text: 'A massive raiding force is at the gates! Stand your ground and fight, or the intruders will bring destruction to your village.',
+    portraitId: 'bandit',
     combat: {
       enemyForces: 8,
       prepDelayMinTicks: 3,
@@ -432,6 +434,7 @@ export const eventRequests: Request[] = [
     id: 'EVT_MEDICAL_HERBS',
     title: 'The Traveling Apothecary',
     text: 'A merchant offers a rare shipment of medicinal herbs. These could significantly boost the overall health of the village.',
+    portraitId: 'merchant',
     options: [
       {
         text: 'BUY',
@@ -451,6 +454,7 @@ export const eventRequests: Request[] = [
     id: 'EVT_TRAIN_MILITIA',
     title: 'Drill Practice',
     text: 'A retired captain offers to drill your troops. This would make your defense forces much more formidable for future raids.',
+    portraitId: 'military_advisor',
     options: [
       {
         text: 'TRAIN',
@@ -643,6 +647,7 @@ export const eventRequests: Request[] = [
     id: 'CHAIN_BLACKGEAT_START',
     title: 'The Black March',
     text: 'Brimwulf, envoy of the County of Wulfham, introduces himself: "The Sigilmark of Blackgeat is raising troops. Join forces with us - only together can we defeat them."',
+    portraitId: 'council_member',
     chainId: 'BLACKGEAT',
     chainRole: 'start',
     chainRestartCooldownTicks: 100,
@@ -674,6 +679,7 @@ export const eventRequests: Request[] = [
     id: 'CHAIN_BLACKGEAT_PREP_FELDRIC',
     chainId: 'BLACKGEAT',
     chainRole: 'member',
+    portraitId: 'military_advisor',
     title: 'Feldric\'s Counsel',
     text: 'Feldric your Marshal bows. "About Brimwulf\'s alliance request: if we accept, we need to ready our troops."',
     canTriggerRandomly: false,
@@ -1186,6 +1192,7 @@ export const eventRequests: Request[] = [
     id: 'CHAIN_BLACKGEAT_WAR_PREP_FELDRIC',
     chainId: 'BLACKGEAT',
     chainRole: 'member',
+    portraitId: 'military_advisor',
     title: 'Feldric Prepares the Host',
     text: 'Feldric your Marshall comes before you: "We need better preparation for the coming battle with Blackgeat."',
     canTriggerRandomly: false,
@@ -1568,6 +1575,7 @@ export const eventRequests: Request[] = [
     id: 'EVENT_MARKET_DAY',
     title: 'Market Day',
     text: 'The marketplace is bustling with traders from distant lands. Will you focus on steady profits or take a riskier approach for greater gains?',
+    portraitId: 'merchant',
     requires: ['building:marketplace'],
     options: [
       {
@@ -1747,6 +1755,7 @@ export const eventRequests: Request[] = [
     id: 'EVT_LOW_COUNCIL_REVOLT',
     title: 'Council Challenge',
     text: 'Your own council openly questions your decisions. "Perhaps we need new leadership," one elder suggests loudly.',
+    portraitId: 'council_member',
     authorityMin: 0,
     authorityMax: 33,
     options: [
@@ -1770,6 +1779,7 @@ export const eventRequests: Request[] = [
     id: 'EVT_LOW_BANDITS_MOCK',
     title: 'Mocked by Bandits',
     text: 'A band of thieves leaves mocking notes at your doorstep, daring you to stop them. They know you lack the authority to organize an effective response.',
+    portraitId: 'bandit',
     authorityMin: 0,
     authorityMax: 33,
     options: [
@@ -1816,6 +1826,7 @@ export const eventRequests: Request[] = [
     id: 'EVT_LOW_MERCHANT_EXTORTION',
     title: 'Merchant Extortion',
     text: 'A traveling merchant realizes your position is weak. He demands tusuae the usual prices for urgently needed healing potions, knowing you have very low leverage to refuse.',
+    portraitId: 'merchant',
     authorityMin: 0,
     authorityMax: 33,
     options: [
@@ -1892,6 +1903,7 @@ export const eventRequests: Request[] = [
     id: 'EVT_COMMIT_LOW_DESPERATE_PLEA',
     title: 'Desperate Negotiation',
     text: 'A local merchant offers to help rebuild your reputation for a small fee.',
+    portraitId: 'merchant',
     authorityMin: 0,
     authorityMax: 33,
     options: [
@@ -2305,6 +2317,7 @@ export const eventRequests: Request[] = [
     id: 'EVT_COMMIT_NEGOTIATE_TRADE',
     title: 'Trade Negotiation',
     text: 'A wealthy merchant guild seeks exclusive trading rights. You can leverage your authority to demand better terms, but failure could damage your reputation.',
+    portraitId: 'merchant',
     authorityMin: 34,
     authorityMax: 100,
     options: [
@@ -2417,6 +2430,7 @@ export const eventRequests: Request[] = [
     id: 'EVT_COMMIT_MILITARY_REFORM',
     title: 'Military Reorganization',
     text: 'Your military structure is outdated. Reforming it requires authority to overcome resistance from traditional commanders.',
+    portraitId: 'military_advisor',
     authorityMin: 34,
     authorityMax: 100,
     options: [
@@ -2455,6 +2469,7 @@ export const eventRequests: Request[] = [
     id: 'EVT_COMMIT_BANDIT_PARLEY',
     title: 'Bandit Negotiation',
     text: 'A bandit chief offers to serve you instead of raiding. This requires enough authority to command their respect and loyalty.',
+    portraitId: 'bandit',
     authorityMin: 34,
     authorityMax: 100,
     options: [
@@ -2685,6 +2700,7 @@ export const eventRequests: Request[] = [
     id: 'EVT_COMMIT_GUILD_RIVALRY',
     title: 'Guild Power Struggle',
     text: 'Two merchant guilds vie for dominance. Choosing a winner requires authority to make your decision final.',
+    portraitId: 'merchant',
     authorityMin: 34,
     authorityMax: 100,
     options: [
@@ -2835,6 +2851,7 @@ export const eventRequests: Request[] = [
     id: 'EVT_COMMIT_PIRATE_ALLIANCE',
     title: 'River Pirates',
     text: 'Pirates control the river trade. You can attempt to recruit them as privateers, but it requires authority they will respect.',
+    portraitId: 'bandit',
     authorityMin: 34,
     authorityMax: 100,
     options: [
@@ -3318,6 +3335,7 @@ export const eventRequests: Request[] = [
     chainRole: 'start',
     chainRestartCooldownTicks: 80,
     maxTriggers: 3,
+    portraitId: 'bandit',
     title: 'Blocked Road',
     text: 'A band of armed men has set up a barricade across the only trade road. Their leader steps forward: "Toll is ten gold per cart. Pay or fight."',
     options: [
@@ -3402,6 +3420,7 @@ export const eventRequests: Request[] = [
     chainId: 'bandit_toll',
     chainRole: 'member',
     canTriggerRandomly: false,
+    portraitId: 'bandit',
     title: 'A Bandit Speaks',
     text: 'One of the bandits survived. He offers information about a larger gang in exchange for his life.',
     options: [
@@ -3457,6 +3476,7 @@ export const eventRequests: Request[] = [
     chainId: 'bandit_toll',
     chainRole: 'member',
     canTriggerRandomly: false,
+    portraitId: 'bandit',
     title: 'They Are Back',
     text: 'The bandits have returned with reinforcements. This time they demand double the toll or blood.',
     options: [
@@ -3551,6 +3571,7 @@ export const eventRequests: Request[] = [
     chainRole: 'start',
     chainRestartCooldownTicks: 60,
     requires: ['building:marketplace'],
+    portraitId: 'merchant',
     title: 'Guild Proposal',
     text: 'A delegation of merchants arrives at the marketplace. They propose forming a guild to regulate trade and share profits — for a founding fee.',
     options: [
@@ -3582,6 +3603,7 @@ export const eventRequests: Request[] = [
     chainId: 'merchant_guild',
     chainRole: 'member',
     canTriggerRandomly: false,
+    portraitId: 'merchant',
     title: 'Thriving Commerce',
     text: 'The guild is running smoothly. Goods flow, prices stabilize, and the treasury benefits. The guild master asks to expand operations.',
     options: [
@@ -3608,6 +3630,7 @@ export const eventRequests: Request[] = [
     chainId: 'merchant_guild',
     chainRole: 'member',
     canTriggerRandomly: false,
+    portraitId: 'merchant',
     title: 'Shady Dealings',
     text: 'Reports surface that guild members are price-fixing and skimming profits. The guild master denies it flatly.',
     options: [
@@ -4641,6 +4664,7 @@ export const eventRequests: Request[] = [
     id: 'CHAIN_RIVER_PIRATES_START',
     chainId: 'river_pirates',
     chainRole: 'start',
+    portraitId: 'bandit',
     title: 'Sails on the River',
     text: 'Black-flagged longboats have been spotted on the river. A pirate fleet demands tribute or threatens to burn your docks and seize your coin.',
     canTriggerRandomly: true,
@@ -4739,6 +4763,7 @@ export const eventRequests: Request[] = [
     chainId: 'river_pirates',
     chainRole: 'member',
     canTriggerRandomly: false,
+    portraitId: 'bandit',
     title: 'Pirates Withdraw',
     text: 'The pirate captain counts the tribute and nods. "Wise choice." The black sails disappear downriver. Perhaps your show of authority convinced them to seek easier prey.',
     options: [
@@ -4759,6 +4784,7 @@ export const eventRequests: Request[] = [
     chainId: 'river_pirates',
     chainRole: 'member',
     canTriggerRandomly: false,
+    portraitId: 'bandit',
     title: 'They Want More',
     text: 'The pirates took the tribute — and came back for more. "give us your coin or we take your wives!" The crew jeers from the deck as their captain extends an open palm.',
     options: [
