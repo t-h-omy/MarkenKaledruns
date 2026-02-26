@@ -31,7 +31,7 @@
 
 **Die Marken Kaledruns** is a turn-based village management strategy game built as a Progressive Web App (PWA). The player governs a settlement by responding to events (called "requests"), managing resources, constructing buildings, commanding military forces, and navigating political authority. The game ends when gold drops to **-50** (bankruptcy).
 
-- **Version**: 1.0.3
+- **Version**: 1.1.14
 - **Package name**: `pof-prototype`
 - **Repository**: `t-h-omy/MarkenKaledruns`
 
@@ -81,9 +81,13 @@ MarkenKaledruns/
 │   │   └── modifiers.ts                   # Building-based event effect modifiers
 │   │
 │   ├── assets/
-│   │   └── react.svg                      # React logo
+│   │   ├── react.svg                      # React logo
+│   │   └── portraits/                     # Portrait images for request screen
+│   │       ├── index.ts                   # Portrait registry (PORTRAITS lookup, PortraitId type)
+│   │       ├── Advisor.webp               # Advisor portrait
+│   │       └── Farmer.webp                # Farmer portrait
 │   │
-│   ├── App.tsx                            # Main game component (~960 lines)
+│   ├── App.tsx                            # Main game component (~1020 lines)
 │   ├── App.css                            # Main game styles (~1525 lines)
 │   ├── ConstructionScreen.tsx             # Building construction overlay
 │   ├── ConstructionScreen.css             # Construction screen styles
@@ -115,11 +119,11 @@ MarkenKaledruns/
 |------|-------|---------|
 | `src/game/requests.ts` | ~5380 | All event/request definitions (incl. 40 fire chain requests) |
 | `src/game/state.ts` | ~2670 | Reducer, game loop, all game logic (incl. fire system engine) |
-| `src/App.tsx` | ~990 | Main UI component (incl. fire chain tag/context) |
-| `src/App.css` | ~1550 | All main game styles (incl. fire chain info styles) |
+| `src/App.tsx` | ~1030 | Main UI component (incl. request-panel BEM layout, portrait wiring, fire chain tag/context) |
+| `src/App.css` | ~1650 | All main game styles (incl. portrait img, fire chain info styles) |
 | `src/game/picker.ts` | ~560 | Request selection & RNG |
 | `src/BuildingCard.css` | ~455 | Building card styles (incl. fire state action styles) |
-| `src/game/models.ts` | ~330 | Core type definitions (incl. fire types) |
+| `src/game/models.ts` | ~335 | Core type definitions (incl. fire types, PortraitId on Request) |
 | `src/LogScreen.css` | ~275 | Log screen styles |
 | `src/BuildMultipleModal.css` | ~230 | Modal styles |
 | `src/BuildingCard.tsx` | ~230 | Building card UI (incl. state action buttons) |
@@ -131,6 +135,7 @@ MarkenKaledruns/
 | `src/game/modifiers.ts` | ~100 | Effect modifiers |
 | `src/index.css` | ~40 | Global styles |
 | `src/main.tsx` | ~30 | App bootstrap |
+| `src/assets/portraits/index.ts` | ~16 | Portrait registry (PORTRAITS lookup, PortraitId type) |
 
 ---
 
@@ -160,6 +165,7 @@ main.tsx (entry point)
 | File | Key Exports |
 |------|-------------|
 | `models.ts` | `Stats`, `Effect`, `Request`, `Option`, `AuthorityCheck`, `AuthorityCheckResult`, `CombatSpec`, `FollowUp`, `WeightedCandidate`, `AuthorityFollowUpBoost` |
+| `portraits/index.ts` | `PORTRAITS`, `PortraitId` |
 | `state.ts` | `GameState`, `GameAction`, `gameReducer`, `initializeGame`, `getCurrentRequest`, `initialState`, `AppliedChange`, `LogEntry`, `ScheduledEvent`, `ScheduledCombat`, `ActiveCombat`, `PendingAuthorityCheck`, `ModifierHook`, `applyOptionWithModifiers`, `hasUnlock`, `meetsRequirements`, `syncBuildingUnlockTokens`, `FIRE_SYSTEM_CONFIG` |
 | `requests.ts` | `infoRequests`, `eventRequests`, `authorityInfoRequests`, `fireChainRequests`, `validateRequests` |
 | `picker.ts` | `pickNextRequest`, `selectWeightedCandidate`, `seedRandom`, `resetRandom`, `getRandomValue` |
@@ -302,12 +308,23 @@ main.tsx
  └─ <App />                              # src/App.tsx
       ├─ Stats Bar                        # Resource bars (gold, farmers, satisfaction, health, fireRisk, landForces, authority)
       │   └─ Flying delta indicators      # Animated +/- numbers on stat changes
-      ├─ Request Display                  # Shows current request title + text
-      ├─ Option Buttons (1–2)             # Player choices with effect previews
-      ├─ Combat Commit Slider             # For committing forces (when combat request)
+      ├─ renderRequestPanel()             # Render helper grouping request-screen JSX
+      │   ├─ request-panel__header        # Header row: portrait + content side-by-side (flex, nowrap)
+      │   │   ├─ request-panel__portrait  # Portrait image or ⚜ placeholder; responsive width via clamp(128px, 28vw, 220px), aspect-ratio 2/3 (3:2 vertical), align-self: flex-start for consistent proportions
+      │   │   └─ request-panel__content   # Chain title, fire context, title, scrollable text
+      │   │       ├─ request-panel__chainTitle   # Chain ID label (when applicable)
+      │   │       ├─ request-panel__fireContext   # Fire chain tag + context (when fire request)
+      │   │       ├─ request-panel__title         # Request title
+      │   │       └─ request-panel__text          # Request body text (flex: 1 for natural growth; overflow-y: auto for long content; responsive max-height via clamp to protect option visibility)
+      │   ├─ Combat Commit Slider         # For committing forces (when combat request)
+      │   └─ request-panel__options       # Decision cards container
+      │       ├─ decision-card (1–2)      # Decision buttons with BEM structure
+      │       │   ├─ decision-card__label # Option text label
+      │       │   └─ decision-card__effects # Effect preview chips with icons (same emoji as stats bar)
+      │       ├─ Authority buttons        # Authority commitment per option (when applicable)
+      │       └─ Reminder shortcut        # "Go to Construction" button (reminder requests)
       ├─ Authority Modal                  # Commitment slider for authority checks
       │   └─ Success threshold display
-      ├─ Combat UI                        # Battle screen with round info
       ├─ Game Over Screen                 # Bankruptcy display + restart button
       ├─ <ConstructionScreen />           # src/ConstructionScreen.tsx (overlay)
       │    └─ <BuildingCard />[]          # src/BuildingCard.tsx (one per building type)
@@ -319,7 +336,7 @@ main.tsx
 
 | Component | File | Description |
 |-----------|------|-------------|
-| `App` | `App.tsx` | Main game component. Manages all game state via `useReducer`. Renders stats, requests, options, combat UI, modals. Contains animation logic for stat changes and flying deltas. |
+| `App` | `App.tsx` | Main game component. Manages all game state via `useReducer`. Renders stats, requests, options, combat UI, modals. Contains animation logic for stat changes and flying deltas. Request-screen JSX is grouped in `renderRequestPanel()` using BEM-style layout: `request-panel__header` (portrait + content), `request-panel__options` with `decision-card` buttons containing `decision-card__label` and `decision-card__effects`. Effect chips include icons matching the top resource bar emoji (💰 Gold, 😊 Satisfaction, ❤️ Health, 🔥 Fire Risk, 👨‍🌾 Farmers, ⚔️ Land Forces, 👑 Authority) via the `EFFECT_ICONS` lookup. Portrait is resolved from `currentRequest.portraitId` via the portrait registry (`PORTRAITS`); placeholder is shown when no portrait is defined. Portrait stays left of the text on all screen sizes using a responsive clamped width (`clamp(128px, 28vw, 220px)`), `aspect-ratio: 2/3` (3:2 vertical), and `align-self: flex-start` to ensure consistent proportions across all requests. Request text area uses `flex: 1` to grow naturally and `overflow-y: auto` with a responsive `max-height` via `clamp()` so most texts render without a scrollbar while very long texts scroll internally, keeping option cards visible. Root `.app` container uses `100dvh`/`100svh` viewport units with `env(safe-area-inset-bottom)` padding so the bottom action bar (LOG / CONSTRUCTION) stays visible and tappable on mobile browsers while browser navigation bars are visible. `viewport-fit=cover` is set in `index.html`. Request UI uses a medieval / light high-fantasy visual theme via CSS variables (`--mk-*`) defined in `:root`: dark stone surfaces, muted gold headings, ivory body text, readable positive/negative/neutral effect chips, and restrained royal-blue interactive accents with visible focus rings. |
 | `ConstructionScreen` | `ConstructionScreen.tsx` | Full-screen overlay showing all buildings as a grid. Opened via a button in the main UI. Shows building states (locked/unlocked/built/deficit). |
 | `BuildingCard` | `BuildingCard.tsx` | Individual card displaying one building type: icon, name, description, cost, progress (built/required). When building has no active state: shows build buttons. When building has active state (fire/destroyed/strike): hides build controls and shows state action button (extinguish/repair) with state counts and effective count display. |
 | `BuildMultipleModal` | `BuildMultipleModal.tsx` | Modal dialog for building multiple instances at once. Shows cost calculation and gold validation. |
@@ -327,11 +344,11 @@ main.tsx
 
 ### Styling
 
-All styling is in plain CSS files co-located with their components. No CSS-in-JS or CSS frameworks are used.
+All styling is in plain CSS files co-located with their components. No CSS-in-JS or CSS frameworks are used. Request-screen styling uses a medieval / light high-fantasy theme palette defined as CSS custom properties (`--mk-*`) in `:root` of `App.css` — dark stone surfaces, muted gold headings, ivory text, readable chip colors, and restrained royal-blue accents. Interactive elements (decision cards, toggle buttons, sliders) use brightened button surfaces (`--mk-button-surface`) and gold borders (`--mk-button-border` mapped to `--mk-heading-gold-soft`) so they stand out from panel backgrounds and are clearly recognizable as interactive. Combat slider and bottom-bar toggle buttons use theme variables (`--mk-accent-blue`, `--mk-heading-gold`, `--mk-text-secondary`) instead of hardcoded colors for consistent theming.
 
 | CSS File | Lines | Scope |
 |----------|-------|-------|
-| `App.css` | ~1525 | Main game layout, stats bars, request display, options, animations |
+| `App.css` | ~1650 | Main game layout, stats bars, request panel (BEM layout), decision cards, options, animations, medieval theme variables |
 | `BuildingCard.css` | ~385 | Building card appearance and states |
 | `LogScreen.css` | ~275 | Decision log layout and entries |
 | `BuildMultipleModal.css` | ~230 | Bulk build modal styling |
@@ -413,6 +430,7 @@ interface Request {
   combat?: CombatSpec;           // Combat specification
   authorityMin?: number;         // Min authority to show
   authorityMax?: number;         // Max authority to show
+  portraitId?: PortraitId;       // Portrait to show on request screen (key from portrait registry)
 }
 ```
 

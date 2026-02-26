@@ -93,6 +93,7 @@ export const eventRequests: Request[] = [
     id: 'EVT_RECRUIT_MILITIA',
     title: 'Call to Arms',
     text: 'The borders feel thin. Should we recruit farmers into the militia to bolster defenses, even if the fields suffer from fewer hands?',
+    portraitId: 'advisor',
     options: [
       {
         text: 'YES',
@@ -258,6 +259,7 @@ export const eventRequests: Request[] = [
     id: 'EVT_NEW_FARMERS',
     title: 'Wandering Souls',
     text: 'A group of sick travelers seeks land to till. They bring labor, but their makeshift camps pose a significant fire risk to the village.',
+    portraitId: 'farmer',
     options: [
       {
         text: 'ALLOW',
@@ -280,6 +282,7 @@ export const eventRequests: Request[] = [
     id: 'EVT_EMIGRATION',
     title: 'The Long Goodbye',
     text: 'Dissatisfied with current conditions, several families are packing their wagons. Will you offer concessions to keep them?',
+    portraitId: 'farmer',
     options: [
       {
         text: 'CONCEDE',
@@ -300,6 +303,7 @@ export const eventRequests: Request[] = [
     id: 'EVT_BIG_FAMILY',
     title: 'A Growing House',
     text: "A local family struggles to feed their many children. They've come to you for a small charitable gift to get through the month.",
+    portraitId: 'farmer',
     options: [
       {
         text: 'HELP',
@@ -320,6 +324,7 @@ export const eventRequests: Request[] = [
     id: 'EVT_HARVEST_HELPERS',
     title: 'The Golden Fields',
     text: 'The crops are ripening all at once. Hiring seasonal helpers could save the harvest before the rats can spread.',
+    portraitId: 'farmer',
     options: [
       {
         text: 'HIRE',
@@ -389,6 +394,7 @@ export const eventRequests: Request[] = [
     id: 'EVT_FIRE_WATCH',
     title: 'The High Tower',
     text: 'An architect proposes a watchtower to spot fires early. It is a wise investment in the long-term safety of the settlement.',
+    portraitId: 'advisor',
     options: [
       {
         text: 'BUILD',
@@ -484,6 +490,7 @@ export const eventRequests: Request[] = [
     id: 'EVT_TAX_REFORM',
     title: 'The Royal Ledger',
     text: 'Balancing the books: Do you lower taxes to win favor, or raise them to fill the treasury for upcoming hardships?',
+    portraitId: 'advisor',
     options: [
       {
         text: 'LOWER taxes',
