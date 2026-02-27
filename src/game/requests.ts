@@ -5065,8 +5065,8 @@ export const eventRequests: Request[] = [
     text: 'The worst of the illness has passed. Color returns to the villagers\' cheeks, and the settlement stirs back to life. Whether by healer\'s skill or village grit, your people endure.',
     portraitId: 'advisor',
     options: [
-      { text: 'CELEBRATE RECOVERY', effects: { satisfaction: 3, gold: 5 } },
-      { text: 'BUILD A HERB GARDEN', effects: { health: 3, fireRisk: -2 } },
+      { text: 'CELEBRATE RECOVERY', effects: { satisfaction: 3, gold: -5 } },
+      { text: 'BUILD A HERB GARDEN', effects: { health: 3, fireRisk: -2, gold: -10 } },
     ],
   },
 
