@@ -1,7 +1,7 @@
 /**
  * Request data for the Proof-of-Fun game.
  * Based on POF_SPEC.md specification.
- * Contains 130 event-requests (25 base + 44 Blackgeat chain + 34 chains 1-5 + 27 chains 6-10).
+ * Contains 158 event-requests (25 base + 44 Blackgeat chain + 34 chains 1-5 + 27 chains 6-10 + 28 chains 11-15).
  */
 
 import type { Request } from './models';
@@ -4969,6 +4969,695 @@ export const eventRequests: Request[] = [
     options: [
       { text: 'CURSE PIRATES', effects: {satisfaction: 2, authority: -1} },
       { text: 'SCOLD YOUR SOLDIERS', effects: {satisfaction: -2, authority: 1} },
+    ],
+  },
+
+  // =========================================================
+  // CHAIN 11 – Wandering Healer (Small, 4 requests)
+  // A traveling healer offers aid to the settlement.
+  // Diamond pattern: START → TREAT / REFUSE → END
+  // =========================================================
+  {
+    id: 'CHAIN_HEALER_START',
+    chainId: 'wandering_healer',
+    chainRole: 'start',
+    chainRestartCooldownTicks: 30,
+    title: 'The Wandering Healer',
+    text: 'A woman in travel-worn robes approaches the gate, carrying bundles of dried herbs and a leather satchel of salves. She calls herself Maren, a healer from the eastern valleys. "Your people look pale," she says, studying the villagers. "I can help — for a fair price."',
+    options: [
+      { text: 'HIRE HER', effects: { gold: -10 } },
+      { text: 'SEND HER AWAY', effects: { satisfaction: -1 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [{ requestId: 'CHAIN_HEALER_TREAT', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [{ requestId: 'CHAIN_HEALER_REFUSE', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_HEALER_TREAT',
+    chainId: 'wandering_healer',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'The Healer\'s Craft',
+    text: 'Maren has been working tirelessly among the sick. Fevers have broken and wounds are mending. But she approaches you now with a request: "I need rarer ingredients to finish my work — yarrow root and ghost-moss. I can purchase them, but the cost falls to you."',
+    options: [
+      { text: 'PAY FOR INGREDIENTS', effects: { gold: -10, health: 3 } },
+      { text: 'USE LOCAL REMEDIES', effects: { farmers: -2, health: 2 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [{ requestId: 'CHAIN_HEALER_END', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [{ requestId: 'CHAIN_HEALER_END', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_HEALER_REFUSE',
+    chainId: 'wandering_healer',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'Sickness Lingers',
+    text: 'Without the healer\'s expertise, the village coughs grow worse. Your advisor pulls you aside: "My lord, the people are frightened. We must do something — quarantine the sick quarter, or at least gather what herbs we can from the forest."',
+    portraitId: 'advisor',
+    options: [
+      { text: 'QUARANTINE', effects: { health: -1, fireRisk: -2 } },
+      { text: 'GATHER HERBS', effects: { gold: -5, health: 1 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [{ requestId: 'CHAIN_HEALER_END', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [{ requestId: 'CHAIN_HEALER_END', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_HEALER_END',
+    chainId: 'wandering_healer',
+    chainRole: 'end',
+    canTriggerRandomly: false,
+    title: 'Recovery',
+    text: 'The worst of the illness has passed. Color returns to the villagers\' cheeks, and the settlement stirs back to life. Whether by healer\'s skill or village grit, your people endure.',
+    portraitId: 'advisor',
+    options: [
+      { text: 'CELEBRATE RECOVERY', effects: { satisfaction: 3, gold: -5 } },
+      { text: 'BUILD A HERB GARDEN', effects: { health: 3, fireRisk: -2, gold: -10 } },
+    ],
+  },
+
+  // =========================================================
+  // CHAIN 12 – Smuggler's Offer (Small, 5 requests)
+  // Cheap goods from smugglers test the player's morals.
+  // Diamond with extra member: START → DEAL → CAUGHT → END
+  //                            START → REPORT → END
+  // =========================================================
+  {
+    id: 'CHAIN_SMUGGLER_START',
+    chainId: 'smugglers_offer',
+    chainRole: 'start',
+    chainRestartCooldownTicks: 35,
+    title: 'Whispers at the Gate',
+    text: 'A merchant pulls you aside at the market square, glancing over his shoulder. "My lord, there are men camped beyond the treeline — smugglers. They carry salt, iron, and cloth at half the guild price. Shall I arrange a meeting, or shall we report them to the watch?"',
+    portraitId: 'merchant',
+    options: [
+      { text: 'ARRANGE A DEAL', effects: { gold: 10, authority: -1 } },
+      { text: 'REPORT TO WATCH', effects: { satisfaction: 1, gold: -5 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [{ requestId: 'CHAIN_SMUGGLER_DEAL', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [{ requestId: 'CHAIN_SMUGGLER_REPORT', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_SMUGGLER_DEAL',
+    chainId: 'smugglers_offer',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'The Midnight Exchange',
+    text: 'The smugglers delivered as promised — crates of goods now sit in your storehouse. But a guard on night patrol noticed the wagons. He stands before you, uncertain. "My lord, I saw unmarked carts at the south gate. Should I... forget what I saw?"',
+    portraitId: 'merchant',
+    options: [
+      { text: 'HIDE THE GOODS', effects: { fireRisk: 2, gold: 5 } },
+      { text: 'RETURN EVERYTHING', effects: { gold: -10, satisfaction: 1 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [{ requestId: 'CHAIN_SMUGGLER_CAUGHT', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [{ requestId: 'CHAIN_SMUGGLER_END', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_SMUGGLER_REPORT',
+    chainId: 'smugglers_offer',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'Justice at the Treeline',
+    text: 'Your watchmen tracked the smugglers to their camp and confronted them. The leader, a scarred man called Dettmer, spat at your guards but surrendered without a fight. "You could have profited, lord. Instead you chose the hard road." What do you do with the prisoners?',
+    portraitId: 'advisor',
+    options: [
+      { text: 'ARREST THEM', effects: { authority: 2, satisfaction: -1 } },
+      { text: 'DRIVE THEM OFF', effects: { satisfaction: 1 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [{ requestId: 'CHAIN_SMUGGLER_END', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [{ requestId: 'CHAIN_SMUGGLER_END', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_SMUGGLER_CAUGHT',
+    chainId: 'smugglers_offer',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'A Council Inquiry',
+    text: 'Word has reached the village council about the unmarked goods. A council member stands before you with a ledger. "My lord, there are discrepancies in the storehouse inventory. The people deserve an explanation."',
+    portraitId: 'council_member',
+    options: [
+      { text: 'PAY A FINE', effects: { gold: -15, authority: -1 } },
+      { text: 'BLAME THE MERCHANT', effects: { satisfaction: -2, authority: 1 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [{ requestId: 'CHAIN_SMUGGLER_END', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [{ requestId: 'CHAIN_SMUGGLER_END', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_SMUGGLER_END',
+    chainId: 'smugglers_offer',
+    chainRole: 'end',
+    canTriggerRandomly: false,
+    title: 'The Dust Settles',
+    text: 'The smuggler affair fades from memory as new concerns take hold. Your storehouse is stocked — or not — and the village moves on. Lessons were learned about the cost of shortcuts.',
+    portraitId: 'advisor',
+    options: [
+      { text: 'TIGHTEN PATROLS', effects: { gold: -5, fireRisk: -3 } },
+      { text: 'OPEN MARKETS WIDER', effects: { gold: 5, satisfaction: 2 } },
+    ],
+  },
+
+  // =========================================================
+  // CHAIN 13 – The Lost Child (Small, 4 requests)
+  // A child goes missing and the village must respond.
+  // Diamond pattern: START → SEARCH / WAIT → END
+  // =========================================================
+  {
+    id: 'CHAIN_LOST_CHILD_START',
+    chainId: 'lost_child',
+    chainRole: 'start',
+    chainRestartCooldownTicks: 25,
+    title: 'A Child Gone Missing',
+    text: 'A farmer bursts into the hall, breathless and wild-eyed. "My lord, my daughter — she was playing near the forest edge and never came home! The sun is setting and wolves howl in those woods at night. Please, you must help!"',
+    portraitId: 'farmer',
+    options: [
+      { text: 'SEND SEARCH PARTY', effects: { gold: -5, farmers: -3 } },
+      { text: 'WAIT UNTIL DAWN', effects: { satisfaction: -2 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [{ requestId: 'CHAIN_LOST_CHILD_SEARCH', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [{ requestId: 'CHAIN_LOST_CHILD_WAIT', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_LOST_CHILD_SEARCH',
+    chainId: 'lost_child',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'Into the Dark Woods',
+    text: 'Your search party pushes deeper into the forest with torches held high. They find small footprints near a stream, heading toward the old ruins. The trail is fresh but the woods grow thick. Press on, or set up camp and call out?',
+    portraitId: 'farmer',
+    options: [
+      { text: 'PRESS DEEPER', effects: { health: -1, gold: -5 } },
+      { text: 'CAMP AND CALL OUT', effects: { satisfaction: -1 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 2,
+        delayMaxTicks: 3,
+        candidates: [{ requestId: 'CHAIN_LOST_CHILD_END', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [{ requestId: 'CHAIN_LOST_CHILD_END', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_LOST_CHILD_WAIT',
+    chainId: 'lost_child',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'A Long Night',
+    text: 'The village holds its breath through the night. The father paces by the gate, refusing food or rest. At first light, your advisor approaches. "My lord, we could light bonfires at the forest edge to guide the child home — though the fire risk concerns me. Or we continue to wait and trust in providence."',
+    portraitId: 'advisor',
+    options: [
+      { text: 'LIGHT BONFIRES', effects: { fireRisk: 3, gold: -5 } },
+      { text: 'KEEP WAITING', effects: { satisfaction: -2 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 2,
+        delayMaxTicks: 3,
+        candidates: [{ requestId: 'CHAIN_LOST_CHILD_END', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 3,
+        delayMaxTicks: 5,
+        candidates: [{ requestId: 'CHAIN_LOST_CHILD_END', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_LOST_CHILD_END',
+    chainId: 'lost_child',
+    chainRole: 'end',
+    canTriggerRandomly: false,
+    title: 'Found',
+    text: 'The child is found — muddy, frightened, but alive — huddled beneath a fallen oak. The father weeps with relief as he carries her home. The village gathers around them, and for a moment, the hardships of frontier life feel lighter.',
+    portraitId: 'farmer',
+    options: [
+      { text: 'CELEBRATE', effects: { satisfaction: 3, gold: -5 } },
+      { text: 'POST FOREST WATCH', effects: { authority: 2, gold: -10 } },
+    ],
+  },
+
+  // =========================================================
+  // CHAIN 14 – Foreign Envoy (Mid, 8 requests)
+  // A diplomatic envoy from a neighboring realm arrives.
+  // Fork pattern with two distinct paths and three endings.
+  // =========================================================
+  {
+    id: 'CHAIN_ENVOY_START',
+    chainId: 'foreign_envoy',
+    chainRole: 'start',
+    chainRestartCooldownTicks: 50,
+    title: 'Riders on the Road',
+    text: 'A column of riders appears on the eastern road, bearing the banner of the March of Valdren — a silver stag on blue. A herald dismounts and bows. "My lords send greetings and request an audience. They wish to discuss matters of mutual benefit." Your council watches and waits for your response.',
+    portraitId: 'council_member',
+    options: [
+      { text: 'HOST A FEAST', effects: { gold: -10, satisfaction: 1 } },
+      { text: 'DENY ENTRY', effects: { authority: 1, satisfaction: -1 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [{ requestId: 'CHAIN_ENVOY_FEAST', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [{ requestId: 'CHAIN_ENVOY_REBUFF', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_ENVOY_FEAST',
+    chainId: 'foreign_envoy',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'The Envoy\'s Toast',
+    text: 'Wine flows and the envoy — a sharp-eyed woman called Lady Sigrun — raises her cup. "To friendship between our marches," she says. Over roasted venison, she leans closer. "But friendship requires investment, does it not? I have a proposal — hear me out before you judge."',
+    options: [
+      { text: 'HEAR THE PROPOSAL', effects: { gold: -5 } },
+      { text: 'DEMAND GIFTS FIRST', effects: { authority: 1, gold: 5 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 2,
+        delayMaxTicks: 3,
+        candidates: [{ requestId: 'CHAIN_ENVOY_PROPOSAL', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [{ requestId: 'CHAIN_ENVOY_PROPOSAL', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_ENVOY_REBUFF',
+    chainId: 'foreign_envoy',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'An Insult Remembered',
+    text: 'The envoy\'s herald rides back to the column, face flushed. From the gate, you watch the riders confer — then the column turns not east toward home, but south toward the river crossing. Your advisor frowns. "They are heading toward our trade routes, my lord. This may not be the last we hear of Valdren."',
+    portraitId: 'advisor',
+    options: [
+      { text: 'SEND AN APOLOGY', effects: { gold: -10, authority: -2 } },
+      { text: 'LET THEM STEW', effects: { authority: 2, satisfaction: -2 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 3,
+        delayMaxTicks: 5,
+        candidates: [{ requestId: 'CHAIN_ENVOY_TENSIONS', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 3,
+        delayMaxTicks: 5,
+        candidates: [{ requestId: 'CHAIN_ENVOY_TENSIONS', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_ENVOY_PROPOSAL',
+    chainId: 'foreign_envoy',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'The Valdren Accord',
+    text: 'Lady Sigrun unrolls a parchment across the table. "Valdren proposes a trade pact: your grain and timber for our iron and horses. We would also station a small garrison at the river ford — for mutual protection, of course." The terms are generous, but the garrison clause raises eyebrows among your council.',
+    portraitId: 'council_member',
+    options: [
+      { text: 'ACCEPT FULL TERMS', effects: { gold: -15, satisfaction: 2 } },
+      { text: 'COUNTER WITHOUT GARRISON', effects: { authority: -2 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [{ requestId: 'CHAIN_ENVOY_END_ALLIANCE', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [{ requestId: 'CHAIN_ENVOY_END_TRADE', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_ENVOY_TENSIONS',
+    chainId: 'foreign_envoy',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'Border Tensions',
+    text: 'Merchants returning from the south bring troubling news. Valdren riders have been seen near your border villages, questioning farmers about grain stores and troop movements. Whether this is intimidation or preparation, the message is clear: Valdren has not forgotten.',
+    portraitId: 'merchant',
+    options: [
+      { text: 'FORTIFY THE BORDER', effects: { gold: -15, authority: 1 } },
+      { text: 'SEEK DIPLOMACY', effects: { gold: -5, satisfaction: 1 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 3,
+        delayMaxTicks: 5,
+        candidates: [{ requestId: 'CHAIN_ENVOY_END_HOSTILE', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 3,
+        delayMaxTicks: 5,
+        candidates: [{ requestId: 'CHAIN_ENVOY_END_TRADE', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_ENVOY_END_ALLIANCE',
+    chainId: 'foreign_envoy',
+    chainRole: 'end',
+    canTriggerRandomly: false,
+    title: 'The Silver Stag Pact',
+    text: 'The Valdren Accord is signed with great ceremony. Lady Sigrun clasps your hand. "Today marks a new era for both our peoples." Iron and horses begin flowing into your settlement, and the Valdren garrison at the ford keeps the road safe. Time will tell if this friendship holds.',
+    portraitId: 'advisor',
+    options: [
+      { text: 'CELEBRATE THE PACT', effects: { satisfaction: 4, gold: 15 } },
+      { text: 'INVEST IN TRADE ROUTE', effects: { gold: -5, farmers: 4 } },
+    ],
+  },
+  {
+    id: 'CHAIN_ENVOY_END_TRADE',
+    chainId: 'foreign_envoy',
+    chainRole: 'end',
+    canTriggerRandomly: false,
+    title: 'A Cautious Agreement',
+    text: 'After weeks of negotiation, a modest trade agreement is reached. No garrison, no grand alliance — just goods exchanged at fair prices. Your council calls it prudent. Lady Sigrun calls it disappointing. Either way, the wagons roll.',
+    portraitId: 'merchant',
+    options: [
+      { text: 'ACCEPT THE DEAL', effects: { gold: 10, satisfaction: 1 } },
+      { text: 'PUSH FOR BETTER TERMS', effects: { authority: 2, gold: 5 } },
+    ],
+  },
+  {
+    id: 'CHAIN_ENVOY_END_HOSTILE',
+    chainId: 'foreign_envoy',
+    chainRole: 'end',
+    canTriggerRandomly: false,
+    title: 'A Cold Border',
+    text: 'The Valdren riders withdraw, but the damage is done. Trade with the east has slowed to a trickle, and your border villages report sleepless nights. You have preserved your independence — but at the cost of a neighbor\'s goodwill.',
+    portraitId: 'military_advisor',
+    options: [
+      { text: 'STRENGTHEN DEFENSES', effects: { gold: -10, landForces: 3 } },
+      { text: 'SEEK OTHER ALLIES', effects: { satisfaction: -1, authority: -1 } },
+    ],
+  },
+
+  // =========================================================
+  // CHAIN 15 – Deserter's Dilemma (Mid, 7 requests)
+  // Soldiers desert and the player must choose justice or mercy.
+  // Fork pattern: START → HUNT / PARDON → distinct endings.
+  // =========================================================
+  {
+    id: 'CHAIN_DESERTER_START',
+    chainId: 'deserters',
+    chainRole: 'start',
+    chainRestartCooldownTicks: 45,
+    title: 'Empty Bunks',
+    text: 'Your military advisor strides into the hall with a grim expression. "My lord, six soldiers slipped out of the barracks last night. They took weapons, rations, and a mule. Tracks lead south into the marshes. Desertion — plain and simple." He pauses. "Do we hunt them, or let word spread that we forgive cowardice?"',
+    portraitId: 'military_advisor',
+    options: [
+      { text: 'HUNT THEM DOWN', effects: { gold: -5, authority: 1 } },
+      { text: 'OFFER PARDON', effects: { authority: -2, satisfaction: 1 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [{ requestId: 'CHAIN_DESERTER_HUNT', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [{ requestId: 'CHAIN_DESERTER_PARDON', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_DESERTER_HUNT',
+    chainId: 'deserters',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'Tracks in the Marsh',
+    text: 'Your scouts locate the deserters in an abandoned woodcutter\'s cabin near the marsh. They have barricaded the door and are armed. Your military advisor studies the position. "We can storm them — it will be quick but bloody. Or we can call out terms and try to talk them back."',
+    portraitId: 'military_advisor',
+    combat: {
+      enemyForces: 4,
+      prepDelayMinTicks: 1,
+      prepDelayMaxTicks: 2,
+      onWin: { authority: 2 },
+      onLose: { satisfaction: -2, authority: -1 },
+      followUpsOnWin: [
+        {
+          triggerOnOptionIndex: 0,
+          delayMinTicks: 1,
+          delayMaxTicks: 2,
+          candidates: [{ requestId: 'CHAIN_DESERTER_CAPTURED', weight: 1 }],
+        },
+      ],
+      followUpsOnLose: [
+        {
+          triggerOnOptionIndex: 0,
+          delayMinTicks: 1,
+          delayMaxTicks: 2,
+          candidates: [{ requestId: 'CHAIN_DESERTER_CAPTURED', weight: 1 }],
+        },
+      ],
+    },
+    options: [
+      { text: 'STORM THE CABIN', effects: {} },
+      { text: 'NEGOTIATE SURRENDER', effects: { gold: -10, satisfaction: 1 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [{ requestId: 'CHAIN_DESERTER_END_JUSTICE', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_DESERTER_CAPTURED',
+    chainId: 'deserters',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'The Prisoners',
+    text: 'The deserters are brought back in chains, bruised and silent. The village watches as they are marched through the gate. Your military advisor waits for your judgment. "The men await sentencing, my lord. A harsh example, or measured justice?"',
+    portraitId: 'military_advisor',
+    options: [
+      { text: 'HARSH PUNISHMENT', effects: { authority: 2, satisfaction: -2 } },
+      { text: 'FAIR TRIAL', effects: { gold: -5, satisfaction: 1 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 2,
+        delayMaxTicks: 3,
+        candidates: [{ requestId: 'CHAIN_DESERTER_END_JUSTICE', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 2,
+        delayMaxTicks: 3,
+        candidates: [{ requestId: 'CHAIN_DESERTER_END_JUSTICE', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_DESERTER_PARDON',
+    chainId: 'deserters',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'The Pardon Proclaimed',
+    text: 'Word of the pardon spreads. Within days, four of the six deserters slink back through the gate, heads bowed. But the remaining two are nowhere to be seen. The returned soldiers look thin and ashamed. A farmer\'s wife spits at them. Your advisor asks, "How shall we receive them, my lord?"',
+    portraitId: 'farmer',
+    options: [
+      { text: 'PROMISE BETTER CONDITIONS', effects: { gold: -10, satisfaction: 2 } },
+      { text: 'SET A DEADLINE FOR OTHERS', effects: { authority: 1, satisfaction: -1 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [{ requestId: 'CHAIN_DESERTER_REINTEGRATE', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [{ requestId: 'CHAIN_DESERTER_REINTEGRATE', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_DESERTER_REINTEGRATE',
+    chainId: 'deserters',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    title: 'New Beginnings',
+    text: 'The pardoned soldiers stand before you, waiting for assignment. Some are farmers\' sons who never wanted to fight. Others were veterans who simply broke under the weight of endless duty. Your advisor lays out two paths: send them to the fields, or back to the barracks.',
+    portraitId: 'advisor',
+    options: [
+      { text: 'ASSIGN TO FARMS', effects: { farmers: 3, satisfaction: 1 } },
+      { text: 'RETURN TO MILITIA', effects: { landForces: 3, authority: 1 } },
+    ],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [{ requestId: 'CHAIN_DESERTER_END_MERCY', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [{ requestId: 'CHAIN_DESERTER_END_MERCY', weight: 1 }],
+      },
+    ],
+  },
+  {
+    id: 'CHAIN_DESERTER_END_JUSTICE',
+    chainId: 'deserters',
+    chainRole: 'end',
+    canTriggerRandomly: false,
+    title: 'Order Restored',
+    text: 'The deserter affair is settled. Whether by blade or by law, the message is clear: duty is not optional. The remaining soldiers stand straighter at their posts, and the village watches with a mix of fear and respect.',
+    portraitId: 'military_advisor',
+    options: [
+      { text: 'MAKE AN EXAMPLE', effects: { authority: 3, satisfaction: -3 } },
+      { text: 'SHOW RESTRAINT', effects: { satisfaction: 2, authority: 1 } },
+    ],
+  },
+  {
+    id: 'CHAIN_DESERTER_END_MERCY',
+    chainId: 'deserters',
+    chainRole: 'end',
+    canTriggerRandomly: false,
+    title: 'The Village Whole',
+    text: 'The pardoned men have settled into their new roles. Some till the fields with renewed purpose; others stand guard with a quieter resolve. The village is whole again — not because of punishment, but because of a second chance.',
+    portraitId: 'advisor',
+    options: [
+      { text: 'CELEBRATE UNITY', effects: { satisfaction: 3, gold: -5 } },
+      { text: 'INVEST IN TRAINING', effects: { landForces: 2, gold: -10 } },
     ],
   },
 ];
