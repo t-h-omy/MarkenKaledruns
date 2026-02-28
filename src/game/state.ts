@@ -221,9 +221,9 @@ function createInitialFireSlots(): FireChainSlotState[] {
  */
 export const FIRE_SYSTEM_CONFIG: FireSystemConfig = {
   baseOffset: -10,
-  factor: 0.5,
+  factor: 0.1,
   chanceMin: 0,
-  chanceMax: 40,
+  chanceMax: 9,
 
   maxConcurrentChainsByRisk: [
     { minRisk: 0,  maxRisk: 30,  maxChains: 1 },
@@ -232,12 +232,12 @@ export const FIRE_SYSTEM_CONFIG: FireSystemConfig = {
     { minRisk: 81, maxRisk: 100, maxChains: 5 },
   ],
 
-  spreadChancePerBurningBuilding: 0.10,
-  destroyChancePerBurningBuilding: 0.08,
+  spreadChancePerBurningBuilding: 0.05,
+  destroyChancePerBurningBuilding: 0.05,
 
-  repairCostPercentOfBuildCost: 0.75,
+  repairCostPercentOfBuildCost: 0.5,
 
-  extinguishCost: { gold: -15, satisfaction: -3 },
+  extinguishCost: { gold: -10},
 
   chainSlots: 10,
 
@@ -501,11 +501,11 @@ function applyOvercrowdingPenalties(
   let satisfactionPenalty: number;
   let fireRiskIncrease: number;
 
-  if (overflow <= 10) {
+  if (overflow <= 20) {
     healthPenalty = -1;
     satisfactionPenalty = -1;
     fireRiskIncrease = 1;
-  } else if (overflow <= 25) {
+  } else if (overflow <= 40) {
     healthPenalty = -2;
     satisfactionPenalty = -2;
     fireRiskIncrease = 2;
@@ -824,8 +824,8 @@ function checkBuildingReminders(
  * - farmers += floor(health / 10)
  */
 function applyBaseline(stats: Stats): Stats {
-  const goldIncome = Math.floor(0.1 * (stats.farmers * ((stats.satisfaction-10) / 100)));
-  const farmerGrowth = Math.floor((stats.health-25) / 20);
+  const goldIncome = Math.floor(0.15 * (stats.farmers * ((stats.satisfaction-10) / 100)));
+  const farmerGrowth = Math.floor((stats.health+20) / 41);
 
   return {
     ...stats,
