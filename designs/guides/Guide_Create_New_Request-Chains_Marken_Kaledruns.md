@@ -434,39 +434,41 @@ Before adding a chain to `requests.ts`, verify:
 
 The game uses a fixed roster of **30 character portrait archetypes**. All requests **must** use one of these 30 `portraitId` keys. Do not invent new portrait keys. When writing narrative text, you may give characters any name you like — the portrait represents an archetype, not a unique individual.
 
-**Key principle:** A single portrait can represent different named characters. The `council_member` portrait already represents both "Brimwulf" (Blackgeat chain) and unnamed council members in other events. The player sees a face archetype — the text provides the specific identity.
+**Key principle:** A single portrait can represent different named characters. The `envoy` portrait already represents both "Brimwulf" (Blackgeat chain) and "Lady Sigrun" (Valdren envoy chain). The player sees a face archetype — the text provides the specific identity.
 
 **Exception: Advisor characters are NOT archetypes.** The `advisor`, `military_advisor`, and `mage_advisor` portraits represent specific, unique individuals in the game world — the player's personal advisors. Do not reuse them as generic NPCs. When these portraits appear, the narrative should reflect that it is the player's own advisor speaking.
 
 #### Complete Portrait Roster (30 characters)
+
+All 30 portrait images are available in `src/assets/portraits/` and registered in `src/assets/portraits/index.ts`.
 
 | # | `portraitId` | Archetype | Use For |
 |---|-------------|-----------|---------|
 | 1 | `advisor` | Player's chief advisor | Governance advice, info events, tutorials. **Individual, not archetype.** |
 | 2 | `military_advisor` | Player's military advisor | Military events, combat briefings, defense. **Individual, not archetype.** |
 | 3 | `mage_advisor` | Player's mage advisor | Arcane events, Arkanat dealings, magical counsel. **Individual, not archetype.** |
-| 4 | `council_member` | Political figure / envoy | Diplomacy, negotiations, political chain NPCs |
+| 4 | `council_member` | Political figure | Internal council politics, local governance NPCs |
 | 5 | `farmer` | Common villager | Population events, harvest, daily life |
 | 6 | `merchant` | Trader / shopkeeper | Market events, trade deals, economic chains |
 | 7 | `bandit` | Outlaw / raider | Raids, theft, criminal events |
 | 8 | `pirate` | River pirate / sea raider | River pirate chain, coastal threats, smuggling |
 | 9 | `noble` | Local noble / lord | Feudal disputes, land rights, noble feud chains |
-| 10 | `priest` | Religious figure / cleric | Faith events, blessings, moral dilemmas |
+| 10 | `village_priest` | Religious figure / cleric | Faith events, blessings, moral dilemmas |
 | 11 | `healer` | Herbalist / physician | Disease chains, health events, plague response |
-| 12 | `scout` | Spy / reconnaissance agent | Intelligence, espionage, scouting reports |
+| 12 | `scout` | Reconnaissance agent / tracker | Scouting reports, search parties, forest patrols |
 | 13 | `elder` | Village elder / sage | Wisdom events, historical knowledge, tradition |
 | 14 | `craftsman` | Smith / builder / artisan | Construction chains, craft events, repairs |
 | 15 | `guard` | Watchman / sentinel | Security events, patrol reports, gate duty |
-| 16 | `child` | Youth / orphan | Human interest stories, innocence, education |
+| 16 | `children` | Youth / orphan | Human interest stories, innocence, education |
 | 17 | `traveler` | Wanderer / stranger | Mystery chains, rumors, unexpected visitors |
 | 18 | `envoy` | Foreign diplomat | Diplomatic missions, foreign relations, trade treaties |
-| 19 | `independent_trader` | Roaming trader / caravan leader | Independent trade offers, rare goods, traveling merchants |
-| 20 | `antagonist_ruler` | Hostile ruler of a neighboring march/county | Mid-game political/military antagonist, rival lord |
-| 21 | `endgame_antagonist` | Powerful late-game enemy ruler | Major end-game threat, final confrontation, overwhelming force |
-| 22 | `neutral_ruler` | Mysterious / neutral neighboring ruler | Ambiguous allegiance, unpredictable diplomacy, shifting loyalty |
-| 23 | `allied_ruler` | Friendly allied ruler | Alliance chains, mutual defense, joint ventures |
-| 24 | `warlord` | Independent warlord / mercenary captain | Mercenary offers, independent military threats, hired swords |
-| 25 | `spy` | Infiltrator / double agent | Espionage chains, betrayal, intelligence gathering |
+| 19 | `trader` | Roaming trader / caravan leader | Independent trade offers, rare goods, traveling merchants |
+| 20 | `ruler_enemy_weak` | Hostile ruler of a neighboring march/county | Mid-game political/military antagonist, rival lord |
+| 21 | `ruler_enemy_strong` | Powerful late-game enemy ruler | Major end-game threat, final confrontation, overwhelming force |
+| 22 | `ruler_neutral` | Mysterious / neutral neighboring ruler | Ambiguous allegiance, unpredictable diplomacy, shifting loyalty |
+| 23 | `ruler_allied` | Friendly allied ruler | Alliance chains, mutual defense, joint ventures |
+| 24 | `mercenary` | Independent warlord / mercenary captain | Mercenary offers, independent military threats, hired swords |
+| 25 | `spy_enemy` | Infiltrator / double agent | Espionage chains, betrayal, intelligence gathering |
 | 26 | `antagonist_villager` | Disgruntled / treacherous villager | Internal sabotage, dissent, betrayal from within |
 | 27 | `arkanat_mage` | Powerful Arkanat member (noble mage) | Arkanat inspection, magical authority, arcane politics |
 | 28 | `bard` | Entertainer / storyteller | Festival chains, morale events, rumor spreading |
@@ -479,6 +481,7 @@ The game uses a fixed roster of **30 character portrait archetypes**. All reques
 - Use the same portrait consistently for the same named character **within a chain**.
 - Across different chains, the same portrait may represent different named characters — this is intentional.
 - The three advisor portraits (`advisor`, `military_advisor`, `mage_advisor`) are always the player's personal advisors.
+- **Portrait economy:** A chain should only use as many distinct portraits as its storyline needs — do not assign additional portraits just to increase variety. If a chain has three speaking characters, use three portraits. Adding portraits for characters who never speak or drive events creates visual noise without narrative value.
 
 ### 4.2 Structuring Chains for Narrative Impact
 

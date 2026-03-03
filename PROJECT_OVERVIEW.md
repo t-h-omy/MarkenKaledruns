@@ -31,7 +31,7 @@
 
 **Die Marken Kaledruns** is a turn-based village management strategy game built as a Progressive Web App (PWA). The player governs a settlement by responding to events (called "requests"), managing resources, constructing buildings, commanding military forces, and navigating political authority. The game ends when gold drops to **-50** (bankruptcy).
 
-- **Version**: 1.1.15
+- **Version**: 1.2.0
 - **Package name**: `pof-prototype`
 - **Repository**: `t-h-omy/MarkenKaledruns`
 
@@ -82,14 +82,38 @@ MarkenKaledruns/
 │   │
 │   ├── assets/
 │   │   ├── react.svg                      # React logo
-│   │   └── portraits/                     # Portrait images for request screen
+│   │   └── portraits/                     # Portrait images for request screen (30 portraits)
 │   │       ├── index.ts                   # Portrait registry (PORTRAITS lookup, PortraitId type)
 │   │       ├── advisor.webp               # Advisor portrait
-│   │       ├── bandit.webp                # Bandit / pirate portrait
-│   │       ├── council_member.webp        # Council member / envoy portrait
+│   │       ├── antagonist_villager.webp   # Disgruntled villager portrait
+│   │       ├── arkanat_mage.webp          # Arkanat mage portrait
+│   │       ├── bandit.webp                # Bandit portrait
+│   │       ├── bard.webp                  # Bard / entertainer portrait
+│   │       ├── children.webp              # Children / youth portrait
+│   │       ├── council_member.webp        # Council member portrait
+│   │       ├── craftsman.webp             # Craftsman / artisan portrait
+│   │       ├── elder.webp                 # Village elder portrait
+│   │       ├── envoy.webp                 # Foreign envoy portrait
 │   │       ├── farmer.webp                # Farmer portrait
+│   │       ├── guard.webp                 # Guard / sentinel portrait
+│   │       ├── healer.webp                # Healer / herbalist portrait
+│   │       ├── knight.webp                # Knight portrait
+│   │       ├── mage_advisor.webp          # Mage advisor portrait
+│   │       ├── mercenary.webp             # Mercenary / warlord portrait
 │   │       ├── merchant.webp              # Merchant portrait
-│   │       └── military_advisor.webp      # Military advisor portrait
+│   │       ├── military_advisor.webp      # Military advisor portrait
+│   │       ├── noble.webp                 # Noble lord portrait
+│   │       ├── pirate.webp                # River pirate portrait
+│   │       ├── refugee.webp               # Refugee portrait
+│   │       ├── ruler_allied.webp          # Allied ruler portrait
+│   │       ├── ruler_enemy_strong.webp    # Strong enemy ruler portrait
+│   │       ├── ruler_enemy_weak.webp      # Weak enemy ruler portrait
+│   │       ├── ruler_neutral.webp         # Neutral ruler portrait
+│   │       ├── scout.webp                 # Scout portrait
+│   │       ├── spy_enemy.webp             # Enemy spy portrait
+│   │       ├── trader.webp                # Roaming trader portrait
+│   │       ├── traveler.webp              # Traveler / wanderer portrait
+│   │       └── village_priest.webp        # Village priest portrait
 │   │
 │   ├── App.tsx                            # Main game component (~1020 lines)
 │   ├── App.css                            # Main game styles (~1525 lines)
@@ -139,7 +163,7 @@ MarkenKaledruns/
 | `src/game/modifiers.ts` | ~100 | Effect modifiers |
 | `src/index.css` | ~40 | Global styles |
 | `src/main.tsx` | ~30 | App bootstrap |
-| `src/assets/portraits/index.ts` | ~26 | Portrait registry (PORTRAITS lookup, PortraitId type; 6 portraits: advisor, bandit, council_member, farmer, merchant, military_advisor) |
+| `src/assets/portraits/index.ts` | ~72 | Portrait registry (PORTRAITS lookup, PortraitId type; 30 portraits) |
 
 ---
 
