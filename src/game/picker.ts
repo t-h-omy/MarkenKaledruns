@@ -189,7 +189,7 @@ export function pickNextRequest(
   let actualLastRequestId: string;
   let tick: number = 0;
   let scheduledEvents: Array<{ targetTick: number; requestId: string; scheduledAtTick: number; priority?: "info" | "normal" }> = [];
-  let chainStatus: Record<string, { active: boolean; completedTick?: number }> = {};
+  let chainStatus: Record<string, { active: boolean; completedTick?: number; cooldownTicks?: number }> = {};
   let requestTriggerCounts: Record<string, number> = {};
   let gameState: GameState | null = null;
 

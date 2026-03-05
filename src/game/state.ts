@@ -624,7 +624,6 @@ function attemptFireOutbreak(
 
   const targetDef = selectedType.def;
   const targetTracking = buildingTracking[targetDef.id];
-  const effectiveCount = getEffectiveBuildingCount(targetTracking);
 
   // 7. Select a random functional unit ordinal for this building type
   //    Ordinals are 1..buildingCount; exclude ordinals already assigned in any slot
