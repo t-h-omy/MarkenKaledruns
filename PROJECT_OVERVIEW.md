@@ -23,7 +23,7 @@
 15. [Development Commands](#15-development-commands)
 16. [Deployment](#16-deployment)
 17. [Existing Documentation Index](#17-existing-documentation-index)
-18. [Fire System V3](#18-fire-system-v3)
+18. [Fire System V4](#18-fire-system-v4)
 
 ---
 
@@ -31,7 +31,7 @@
 
 **Die Marken Kaledruns** is a turn-based village management strategy game built as a Progressive Web App (PWA). The player governs a settlement by responding to events (called "requests"), managing resources, constructing buildings, commanding military forces, and navigating political authority. The game ends when gold drops to **-50** (bankruptcy).
 
-- **Version**: 1.2.0
+- **Version**: 1.3.0
 - **Package name**: `pof-prototype`
 - **Repository**: `t-h-omy/MarkenKaledruns`
 
@@ -780,18 +780,19 @@ The app registers a service worker via `vite-plugin-pwa`:
 | `TESTING.md` | Testing approach documentation |
 | `VERIFICATION.md` | Verification procedures |
 | `designs/CONSTRUCTION_SCREEN_DESIGN.md` | Construction screen UI/UX design spec |
-| `designs/fire-design-v3.md` | Fire System V3 design specification |
+| `designs/fire-design-v3.md` | Fire System V3 design specification (superseded) |
+| `designs/FIRE SYSTEM V4.md` | Fire System V4 design specification (active) |
 | `designs/requests_updated.ts` | Staging file for candidate request updates |
 
 ---
 
-## 18. Fire System V3
+## 18. Fire System V4
 
 ### Overview
 
-Fire System V3 replaces the old threshold-based `EVT_CRISIS_FIRE` (fireRisk > 70 trigger) with a deterministic, slot-based fire system. It uses 10 fixed chain slots, count-based building states, seeded RNG, and communicates all state changes through synthetic tickless info requests (no silent damage).
+Fire System V4 replaces V3's count-based, slot-broadcast approach with **unit-targeted incidents**. Every on_fire building unit has exactly one assigned fire chain; destroyed units keep an incident record until reconstruction. There is no more fire spread/destroy logic or synthetic FIRE_INFO info requests.
 
-**Design spec**: `designs/fire-design-v3.md`
+**Design spec**: `designs/FIRE SYSTEM V4.md`
 
 ### Architecture
 
@@ -801,119 +802,114 @@ All fire logic runs in the reducer pipeline (`src/game/state.ts`) using the exis
 
 ```typescript
 interface FireState {
-  slots: FireChainSlotState[];       // Exactly 10 fixed slots (slotIndex 1..10)
-  pendingInfoQueue: FireInfoMessage[]; // Queued info messages for next tick
+  slots: FireIncidentSlotState[];  // Exactly 10 fixed incident slots (slotIndex 1..10)
 }
 
-type FireTier = 'minor' | 'major' | 'catastrophic';
-
-interface FireChainSlotState {
-  slotIndex: number;                   // Fixed 1..10
-  active: boolean;                     // Is this slot currently running a fire chain?
-  tier?: FireTier;                     // Fire severity tier
-  targetBuildingId?: string;           // Which building type is affected
-  startedTick?: number;                // When the chain started
-  initialOnFireApplied?: number;       // How many buildings were initially set on fire
-  abortedByManualExtinguish?: boolean; // Aborted by player extinguishing all fires
-}
-
-interface FireInfoMessage {
-  type: 'SPREAD_OR_DESTROY' | 'ALL_EXTINGUISHED_ABORT';
-  newOnFireByBuildingId?: Record<string, number>;
-  newDestroyedByBuildingId?: Record<string, number>;
+interface FireIncidentSlotState {
+  slotIndex: number;             // Fixed 1..10
+  assigned: boolean;             // Is this slot holding an incident?
+  chainActive: boolean;          // Is a request chain currently running?
+  chainKind?: 'fire' | 'repair';
+  chainVariantId?: string;       // 'A' | 'B' for fire chains
+  targetBuildingId?: string;
+  targetUnitOrdinal?: number;    // 1..buildingCount for that type
+  unitStatus?: 'on_fire' | 'destroyed';
+  assignedTick?: number;
+  startedTick?: number;
 }
 ```
+
+**Source of truth**: `fire.slots[]` assignments. After any fire/repair operation the reducer recomputes `onFireCount` and `destroyedCount` in `buildingTracking` via `syncBuildingTrackingFromSlots`.
 
 ### Fire System Config (`FIRE_SYSTEM_CONFIG`)
 
 | Parameter | Value | Description |
 |-----------|-------|-------------|
 | `baseOffset` | -10 | Offset for linear chance calculation |
-| `factor` | 0.5 | Multiplier for chance calculation |
+| `factor` | 0.1 | Multiplier for chance calculation |
 | `chanceMin` | 0 | Minimum fire start chance (%) |
-| `chanceMax` | 40 | Maximum fire start chance (%) |
-| `spreadChancePerBurningBuilding` | 0.10 | 10% spread chance per burning unit per tick |
-| `destroyChancePerBurningBuilding` | 0.08 | 8% destroy chance per burning unit per tick |
-| `extinguishCost` | `{ gold: -15, satisfaction: -3 }` | Cost to extinguish one fire |
-| `repairCostPercentOfBuildCost` | 0.75 | Repair cost = 75% of building's build cost |
-| `chainSlots` | 10 | Fixed number of fire chain slots |
+| `chanceMax` | 9 | Maximum fire start chance (%) |
+| `repairCostPercentOfBuildCost` | 0.5 | Repair cost = 50% of building's build cost |
+| `chainSlots` | 10 | Fixed number of incident slots |
 
-**Max concurrent chains by fireRisk:**
+**Max concurrent on_fire incidents by fireRisk:**
 
-| fireRisk Range | Max Chains |
-|---------------|------------|
-| 0–30 | 1 |
-| 31–60 | 2 |
-| 61–80 | 3 |
-| 81–100 | 5 |
+| fireRisk Range | Max On-Fire |
+|---------------|-------------|
+| 0–25 | 1 |
+| 26–50 | 2 |
+| 51–85 | 3 |
+| 86–100 | 4 |
 
-**Tier rules:**
-
-| Tier | fireRisk Range | Weight | Initial On-Fire |
-|------|---------------|--------|-----------------|
-| minor | 0–100 | 60 | 1–2 |
-| major | 30–100 | 30 | 2–4 |
-| catastrophic | 60–100 | 10 | 3–6 |
-
-### Tick Pipeline (Fire Steps)
+### Tick Pipeline (Fire Step)
 
 Each tick advance (after overcrowding, before game-over check):
 
-1. **Spread & Destroy** (`applyFireSpreadAndDestroy`): For each burning unit, rolls for spread (to random building type with `effectiveCount > 0`, i.e. at least one non-stated unit exists) and destroy (on-fire → destroyed). Tracks all deltas.
-2. **Chain Start** (`attemptFireChainStart`): Linear probability check, concurrency limit, tier selection, target selection, applies initial on-fire damage, activates lowest free slot.
-3. **Info Queue → Scheduled Events**: Converts `pendingInfoQueue` entries into `FIRE_INFO::` synthetic events for next tick, then clears the queue.
+1. **Outbreak attempt** (`attemptFireOutbreak`): Linear probability check, concurrency cap, random functional unit selection, slot assignment, variant (A/B) selection, schedules `FIREV4_S{n}_{V}_START` at next tick.
+2. `syncBuildingTrackingFromSlots`: Recomputes `onFireCount`/`destroyedCount` per building type from slot state.
 
-### Fire Chain Requests (40 total)
+No spread/destroy logic exists in V4.
 
-For each slot n=1..10, four requests:
+### Fire Chain Requests (V4)
+
+For each slot `n=1..10` and variant `V=A|B`:
 
 | Request ID | Chain Role | advancesTick |
 |------------|-----------|--------------|
-| `FIRE_S{n}_START` | start | false |
-| `FIRE_S{n}_DECISION` | member | false |
-| `FIRE_S{n}_ESCALATE` | member | false |
-| `FIRE_S{n}_END` | end | true |
+| `FIREV4_S{n}_{V}_START` | start | false |
+| `FIREV4_S{n}_{V}_STEP1` | member | false |
+| `FIREV4_S{n}_{V}_END_EXT` | end | true |
+| `FIREV4_S{n}_{V}_END_DEST` | end (variant B only) | true |
 
-**END options (each slot):**
-- **Option A** ("Standard cleanup"): `{ fireRisk: -10 }`
-- **Option B** ("Invest in prevention"): `{ fireRisk: -20, gold: -30 }`
+**Chain outcomes:**
+- `END_EXT`: reducer clears slot → unit becomes functional
+- `END_DEST`: reducer sets `unitStatus='destroyed'`, `chainActive=false` → slot stays assigned
 
-### END Cleanup Rule
+**Variant A** (STEP1): both options lead to `END_EXT` (extinguish)  
+**Variant B** (STEP1): option 0 → `END_EXT`, option 1 → `END_DEST` (destroy; also triggers `triggerFireOutbreak`)
 
-When any `FIRE_SX_END` is resolved (regardless of option chosen):
-1. Read slot's `targetBuildingId` and `initialOnFireApplied`
-2. Reduce `onFireCount[target]` by `min(onFireCount, initialOnFireApplied)`
-3. Spread fires from other ticks remain untouched
-4. Deactivate slot: `{ slotIndex, active: false }`
+### Repair Chain Requests (V4)
 
-### Manual Actions
+For each slot `n=1..10`:
 
-| Action | Validation | Cost | Effect |
-|--------|-----------|------|--------|
-| `EXTINGUISH_ONE` | `onFireCount > 0`, sufficient gold | `{ gold: -15, satisfaction: -3 }` | `onFireCount -= 1` |
-| `REPAIR_ONE` | `destroyedCount > 0`, sufficient gold | `ceil(buildCost × 0.75)` gold | `destroyedCount -= 1` |
+| Request ID | Chain Role | advancesTick |
+|------------|-----------|--------------|
+| `REPAIRV4_S{n}_START` | start | false |
+| `REPAIRV4_S{n}_PROGRESS` | member | false |
+| `REPAIRV4_S{n}_END` | end | true |
 
-**Global Chain Abort**: If `EXTINGUISH_ONE` reduces global `Σ(onFireCount)` to 0, all active fire chain slots are immediately deactivated and an `ALL_EXTINGUISHED_ABORT` info message is queued.
+`REPAIRV4_S{n}_END` options:
+- **Option 0** ("Reconstruct the building"): reducer clears slot → unit becomes functional
+- **Option 1** ("Leave it as ruins for now"): reducer sets `chainActive=false` → slot stays assigned
 
-### Synthetic Info Requests
+### Effect Extensions (V4)
 
-Two types of fire info requests shown as tickless events:
+Two new optional fields on `Effect`:
+- `triggerFireOutbreak?: boolean` — triggers an outbreak attempt immediately
+- `fireOutbreakBypassCap?: boolean` — if true, bypasses the concurrent-fire cap
 
-| Type | Title | Content |
-|------|-------|---------|
-| `SPREAD_OR_DESTROY` | "Das Feuer greift um sich" | Lists exact building-type deltas (new fires + newly destroyed) |
-| `ALL_EXTINGUISHED_ABORT` | "Die Lage beruhigt sich" | Explains fires extinguished and all chains ended |
+### Actions
 
-Both include a "Zum Bau-Menü" option that opens the construction overlay.
+| Action | Behavior |
+|--------|----------|
+| `BUILD_BUILDING` | Unchanged; build lock still enforced when `hasAnyBuildingState` |
+| `START_REPAIR_CHAIN` | Finds lowest-ordinal repairable incident for buildingId, activates repair chain, schedules `REPAIRV4_S{n}_START` |
+
+`EXTINGUISH_ONE` and `REPAIR_ONE` actions are removed in V4. Fire resolution is exclusively via request chains.
 
 ### UI Integration
 
-**Fire Chain Tag** (App.tsx): When current request matches `FIRE_S{n}_(START|DECISION|ESCALATE|END)`:
-- Shows `🔥 Brand (Slot X)` tag above request title
-- Shows context line: `Betroffen: {icon} {name} | 🔥 {onFireCount} | 🧱 {destroyedCount}`
+**Fire Chain Tag** (App.tsx): When current request matches `FIREV4_S{n}_{V}_*` or `REPAIRV4_S{n}_*`:
+- Shows `🔥 Fire` or `🛠 Repair` tag above request title
+- Shows context line: `Affected: {icon} {name} • Unit {unitOrdinal} • Status: 🔥/💥`
+- Shows **Inactive** chip (unit does not count toward active buildings)
+- No numeric Active/Built counts on request screen
 
 **Building Cards** (BuildingCard.tsx): When `hasAnyBuildingState(tracking)` is true:
 - Build button hidden (build lock enforced in UI and reducer)
-- State status tags shown: `🔥 {n}`, `🧱 {m}`, `⚑ {k}`
-- Effective count display: `Wirksam: {effective} / {buildingCount}`
-- Priority action button: extinguish (fire) → repair (destroyed) → strike (disabled)
+- State tags shown: `🔥 On fire: F`, `💥 Destroyed: D`, `🔒 Locked: L`, `🛠 Repairable: R`
+- Effective count display: `Effective: {effective} / {buildingCount}`
+- Action buttons:
+  - If `R > 0`: **Repair building** button → dispatches `START_REPAIR_CHAIN`
+  - If `R == 0` and `D > 0`: disabled "Repair locked until incident resolves"
+  - No direct extinguish button (fire resolution is via request chains only)

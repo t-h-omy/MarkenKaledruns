@@ -3,7 +3,7 @@
  * Based on POF_SPEC.md specification.
  */
 
-import type { Stats, Effect, Request, FollowUp, AuthorityCheck, AuthorityCheckResult, WeightedCandidate, AuthorityFollowUpBoost, FireState, FireChainSlotState, FireSystemConfig } from './models';
+import type { Stats, Effect, Request, FollowUp, AuthorityCheck, AuthorityCheckResult, WeightedCandidate, AuthorityFollowUpBoost, FireState, FireIncidentSlotState, FireSystemConfig } from './models';
 import { infoRequests, authorityInfoRequests, eventRequests, fireChainRequests } from './requests';
 import { pickNextRequest, selectWeightedCandidate, getRandomValue, resetRandom } from './picker';
 import { needModifiers } from './modifiers';
@@ -195,28 +195,27 @@ export type GameAction =
       buildingId: string;
     }
   | {
-      /** Extinguish one on-fire unit of a building type. Applies FIRE_SYSTEM_CONFIG.extinguishCost. */
-      type: 'EXTINGUISH_ONE';
-      buildingId: string;
-    }
-  | {
-      /** Repair one destroyed unit of a building type. Costs ceil(buildCost * config.repairCostPercentOfBuildCost). */
-      type: 'REPAIR_ONE';
+      /**
+       * Start a repair chain for one repairable destroyed unit of a building type.
+       * Requires an assigned slot with unitStatus='destroyed' and chainActive=false.
+       */
+      type: 'START_REPAIR_CHAIN';
       buildingId: string;
     };
 
 /**
- * Create the initial fire chain slot states (10 slots, all inactive).
+ * Create the initial fire incident slot states (10 slots, all unassigned).
  */
-function createInitialFireSlots(): FireChainSlotState[] {
+function createInitialFireSlots(): FireIncidentSlotState[] {
   return Array.from({ length: 10 }, (_, i) => ({
     slotIndex: i + 1,
-    active: false,
+    assigned: false,
+    chainActive: false,
   }));
 }
 
 /**
- * Default configuration for Fire System V3.
+ * Default configuration for Fire System V4.
  * Balancing values — can be adjusted without code changes.
  */
 export const FIRE_SYSTEM_CONFIG: FireSystemConfig = {
@@ -225,27 +224,16 @@ export const FIRE_SYSTEM_CONFIG: FireSystemConfig = {
   chanceMin: 0,
   chanceMax: 9,
 
-  maxConcurrentChainsByRisk: [
-    { minRisk: 0,  maxRisk: 30,  maxChains: 1 },
-    { minRisk: 31, maxRisk: 60,  maxChains: 2 },
-    { minRisk: 61, maxRisk: 80,  maxChains: 3 },
-    { minRisk: 81, maxRisk: 100, maxChains: 5 },
+  maxConcurrentByRisk: [
+    { minRisk: 0,  maxRisk: 25,  maxFires: 1 },
+    { minRisk: 26, maxRisk: 50,  maxFires: 2 },
+    { minRisk: 51, maxRisk: 85,  maxFires: 3 },
+    { minRisk: 86, maxRisk: 100, maxFires: 4 },
   ],
-
-  spreadChancePerBurningBuilding: 0.05,
-  destroyChancePerBurningBuilding: 0.05,
 
   repairCostPercentOfBuildCost: 0.5,
 
-  extinguishCost: { gold: -10},
-
   chainSlots: 10,
-
-  tierRules: [
-    { tier: 'minor',        minFireRisk: 0,  maxFireRisk: 40,  weight: 6, initialOnFireMin: 1, initialOnFireMax: 1 },
-    { tier: 'major',        minFireRisk: 30, maxFireRisk: 75,  weight: 3, initialOnFireMin: 1, initialOnFireMax: 2 },
-    { tier: 'catastrophic', minFireRisk: 60, maxFireRisk: 100, weight: 1, initialOnFireMin: 2, initialOnFireMax: 3 },
-  ],
 };
 
 /**
@@ -276,7 +264,6 @@ export const initialState: GameState = {
   pendingAuthorityChecks: [],
   fire: {
     slots: createInitialFireSlots(),
-    pendingInfoQueue: [],
   },
 };
 
@@ -532,146 +519,86 @@ function applyOvercrowdingPenalties(
 }
 
 /**
- * Applies fire spread and destroy logic during tick advance.
- * For each burning unit: roll for spread (to a random effective building) and destroy.
- * Uses seeded RNG only. Tracks all deltas and enqueues a SPREAD_OR_DESTROY info
- * message if any changes occurred (no silent damage).
- *
- * Mutates buildingTracking in-place and returns the updated fire state.
+ * Synchronizes buildingTracking onFireCount and destroyedCount from the incident slots.
+ * Source of truth in V4 is the slots array.
  */
-function applyFireSpreadAndDestroy(
+function syncBuildingTrackingFromSlots(
   buildingTracking: Record<string, BuildingTracking>,
-  fireState: FireState,
-  config: FireSystemConfig
-): FireState {
-  const newOnFireByBuildingId: Record<string, number> = {};
-  const newDestroyedByBuildingId: Record<string, number> = {};
+  slots: FireIncidentSlotState[]
+): Record<string, BuildingTracking> {
+  // Compute per-building counts from slot assignments
+  const onFireByBuilding: Record<string, number> = {};
+  const destroyedByBuilding: Record<string, number> = {};
 
-  // Collect building types that currently have on-fire units
-  const burningTypes = BUILDING_DEFINITIONS
-    .filter(def => (buildingTracking[def.id]?.onFireCount ?? 0) > 0);
-
-  if (burningTypes.length === 0) {
-    return fireState;
-  }
-
-  // Iterate each burning building type and each burning unit
-  for (const burningDef of burningTypes) {
-    const burningTracking = buildingTracking[burningDef.id];
-    if (!burningTracking) continue;
-
-    // Snapshot the current onFireCount so new spread-fires this tick don't
-    // trigger additional rolls within the same iteration
-    const currentOnFire = burningTracking.onFireCount;
-
-    for (let i = 0; i < currentOnFire; i++) {
-      // ── Spread roll ──
-      if (getRandomValue() < config.spreadChancePerBurningBuilding) {
-        // Find all building types with effectiveCount > 0 (at least one state-free unit)
-        const eligibleTargets = BUILDING_DEFINITIONS.filter(def => {
-          const t = buildingTracking[def.id];
-          return t && getEffectiveBuildingCount(t) > 0;
-        });
-
-        if (eligibleTargets.length > 0) {
-          // Pick a random eligible target
-          const targetIdx = Math.floor(getRandomValue() * eligibleTargets.length);
-          const targetDef = eligibleTargets[targetIdx];
-          const targetTracking = buildingTracking[targetDef.id];
-
-          // Guard: total state counts must not exceed buildingCount
-          if (targetTracking && targetTracking.onFireCount + targetTracking.destroyedCount + targetTracking.onStrikeCount < targetTracking.buildingCount) {
-            buildingTracking[targetDef.id] = {
-              ...targetTracking,
-              onFireCount: targetTracking.onFireCount + 1,
-            };
-            newOnFireByBuildingId[targetDef.id] = (newOnFireByBuildingId[targetDef.id] || 0) + 1;
-          }
-        }
-      }
-
-      // ── Destroy roll ──
-      if (getRandomValue() < config.destroyChancePerBurningBuilding) {
-        // Re-read tracking in case it was mutated by spread above
-        const bTracking = buildingTracking[burningDef.id];
-        // Destroy converts on-fire → destroyed (net state count stays same), so only
-        // need to verify there is still an on-fire unit to convert
-        if (bTracking && bTracking.onFireCount > 0) {
-          buildingTracking[burningDef.id] = {
-            ...bTracking,
-            onFireCount: bTracking.onFireCount - 1,
-            destroyedCount: bTracking.destroyedCount + 1,
-          };
-          newDestroyedByBuildingId[burningDef.id] = (newDestroyedByBuildingId[burningDef.id] || 0) + 1;
-        }
-      }
+  for (const slot of slots) {
+    if (!slot.assigned || !slot.targetBuildingId) continue;
+    if (slot.unitStatus === 'on_fire') {
+      onFireByBuilding[slot.targetBuildingId] = (onFireByBuilding[slot.targetBuildingId] ?? 0) + 1;
+    } else if (slot.unitStatus === 'destroyed') {
+      destroyedByBuilding[slot.targetBuildingId] = (destroyedByBuilding[slot.targetBuildingId] ?? 0) + 1;
     }
   }
 
-  // Only enqueue info if something actually changed
-  const hasSpread = Object.keys(newOnFireByBuildingId).length > 0;
-  const hasDestroy = Object.keys(newDestroyedByBuildingId).length > 0;
-
-  if (hasSpread || hasDestroy) {
-    return {
-      ...fireState,
-      pendingInfoQueue: [
-        ...fireState.pendingInfoQueue,
-        {
-          type: 'SPREAD_OR_DESTROY',
-          newOnFireByBuildingId: hasSpread ? newOnFireByBuildingId : undefined,
-          newDestroyedByBuildingId: hasDestroy ? newDestroyedByBuildingId : undefined,
-        },
-      ],
-    };
+  const newTracking = { ...buildingTracking };
+  for (const def of BUILDING_DEFINITIONS) {
+    const t = newTracking[def.id];
+    if (!t) continue;
+    const newOnFire = onFireByBuilding[def.id] ?? 0;
+    const newDestroyed = destroyedByBuilding[def.id] ?? 0;
+    if (t.onFireCount !== newOnFire || t.destroyedCount !== newDestroyed) {
+      newTracking[def.id] = { ...t, onFireCount: newOnFire, destroyedCount: newDestroyed };
+    }
   }
-
-  return fireState;
+  return newTracking;
 }
 
 /**
- * Attempts to start a new fire chain during tick advance.
- * Uses linear probability based on fireRisk, respects concurrency limits,
- * selects tier and target building, applies initial on-fire damage,
- * activates the first free slot, and schedules the START request.
+ * Attempts to start a new fire outbreak during tick advance (V4).
  *
- * Called after spread/destroy in the tick pipeline.
+ * Rules (V4 Section 5):
+ *  - Uses linear probability: chance% = clamp((fireRisk + baseOffset) * factor, chanceMin, chanceMax)
+ *  - Counts only slots with unitStatus='on_fire' toward the concurrency cap
+ *  - Selects a random *functional unit* (weighted by effectiveCount, then random ordinal)
+ *  - Assigns the unit to the lowest free slot, picks variant A or B randomly
+ *  - Schedules FIREV4_S{n}_{V}_START at currentTick+1
+ *
+ * @param bypassCap  When true (effect outbreak), skip the concurrency cap check
  */
-function attemptFireChainStart(
+function attemptFireOutbreak(
   buildingTracking: Record<string, BuildingTracking>,
   fireState: FireState,
   scheduledEvents: ScheduledEvent[],
   config: FireSystemConfig,
   fireRisk: number,
-  currentTick: number
+  currentTick: number,
+  bypassCap: boolean = false
 ): { fireState: FireState; scheduledEvents: ScheduledEvent[] } {
-  // 1. Count active chains
-  const activeChains = fireState.slots.filter(s => s.active).length;
+  // 1. Count current on_fire incidents
+  const burningIncidents = fireState.slots.filter(s => s.assigned && s.unitStatus === 'on_fire').length;
 
-  // 2. Determine allowed max concurrent chains for current fireRisk
-  const band = config.maxConcurrentChainsByRisk.find(
-    b => fireRisk >= b.minRisk && fireRisk <= b.maxRisk
-  );
-  const allowedMaxChains = band ? band.maxChains : 0;
-
-  // Guard: don't exceed allowed concurrent chains
-  if (activeChains >= allowedMaxChains) {
-    return { fireState, scheduledEvents };
+  // 2. Check concurrency cap (unless bypassed)
+  if (!bypassCap) {
+    const band = config.maxConcurrentByRisk.find(
+      b => fireRisk >= b.minRisk && fireRisk <= b.maxRisk
+    );
+    const allowedMax = band ? band.maxFires : 1;
+    if (burningIncidents >= allowedMax) {
+      return { fireState, scheduledEvents };
+    }
   }
 
-  // 3. Find first free slot (lowest slotIndex)
-  const freeSlot = fireState.slots.find(s => !s.active);
+  // 3. Find lowest free slot
+  const freeSlot = fireState.slots.find(s => !s.assigned);
   if (!freeSlot) {
     return { fireState, scheduledEvents };
   }
 
-  // 4. Find eligible target building types (effectiveCount > 0)
-  const eligibleTargets = BUILDING_DEFINITIONS.filter(def => {
+  // 4. Find eligible building types (effectiveCount > 0)
+  const eligibleTypes = BUILDING_DEFINITIONS.filter(def => {
     const t = buildingTracking[def.id];
     return t && getEffectiveBuildingCount(t) > 0;
   });
-
-  if (eligibleTargets.length === 0) {
+  if (eligibleTypes.length === 0) {
     return { fireState, scheduledEvents };
   }
 
@@ -685,69 +612,73 @@ function attemptFireChainStart(
     return { fireState, scheduledEvents };
   }
 
-  // 6. Select tier from tierRules (filtered by fireRisk, weighted by weight)
-  const eligibleTiers = config.tierRules.filter(
-    rule => fireRisk >= rule.minFireRisk && fireRisk <= rule.maxFireRisk
-  );
-  if (eligibleTiers.length === 0) {
-    return { fireState, scheduledEvents };
-  }
-  const selectedTier = selectWeightedCandidate(eligibleTiers);
-  if (!selectedTier) {
-    return { fireState, scheduledEvents };
-  }
-
-  // 7. Select target building type (weighted by effectiveCount)
-  const targetCandidates = eligibleTargets.map(def => ({
+  // 6. Select target building type weighted by effectiveCount
+  const typeCandidates = eligibleTypes.map(def => ({
     def,
     weight: getEffectiveBuildingCount(buildingTracking[def.id]),
   }));
-  const selectedTarget = selectWeightedCandidate(targetCandidates);
-  if (!selectedTarget) {
+  const selectedType = selectWeightedCandidate(typeCandidates);
+  if (!selectedType) {
     return { fireState, scheduledEvents };
   }
 
-  const targetDef = selectedTarget.def;
+  const targetDef = selectedType.def;
   const targetTracking = buildingTracking[targetDef.id];
   const effectiveCount = getEffectiveBuildingCount(targetTracking);
 
-  // 8. Determine k = randomInt(initialOnFireMin..initialOnFireMax), clamp to effectiveCount
-  const range = selectedTier.initialOnFireMax - selectedTier.initialOnFireMin + 1;
-  let k = selectedTier.initialOnFireMin + Math.floor(getRandomValue() * range);
-  k = Math.min(k, effectiveCount);
-  if (k <= 0) {
+  // 7. Select a random functional unit ordinal for this building type
+  //    Ordinals are 1..buildingCount; exclude ordinals already assigned in any slot
+  const assignedOrdinals = new Set(
+    fireState.slots
+      .filter(s => s.assigned && s.targetBuildingId === targetDef.id && s.targetUnitOrdinal !== undefined)
+      .map(s => s.targetUnitOrdinal as number)
+  );
+  const candidateOrdinals: number[] = [];
+  for (let ord = 1; ord <= targetTracking.buildingCount; ord++) {
+    if (!assignedOrdinals.has(ord)) {
+      candidateOrdinals.push(ord);
+    }
+  }
+  if (candidateOrdinals.length === 0) {
     return { fireState, scheduledEvents };
   }
+  const ordIdx = Math.floor(getRandomValue() * candidateOrdinals.length);
+  const targetUnitOrdinal = candidateOrdinals[ordIdx];
 
-  // 9. Apply target.onFireCount += k
-  buildingTracking[targetDef.id] = {
-    ...targetTracking,
-    onFireCount: targetTracking.onFireCount + k,
-  };
+  // 8. Pick variant randomly (A or B)
+  const variant = getRandomValue() < 0.5 ? 'A' : 'B';
 
-  // 10. Activate the slot
+  // 9. Assign the slot
   const newSlots = fireState.slots.map(s =>
     s.slotIndex === freeSlot.slotIndex
       ? {
           ...s,
-          active: true,
-          tier: selectedTier.tier,
+          assigned: true,
+          chainActive: true,
+          chainKind: 'fire' as const,
+          chainVariantId: variant,
           targetBuildingId: targetDef.id,
+          targetUnitOrdinal,
+          unitStatus: 'on_fire' as const,
+          assignedTick: currentTick,
           startedTick: currentTick,
-          initialOnFireApplied: k,
-          abortedByManualExtinguish: false,
         }
       : s
   );
 
-  // 11. Schedule the corresponding slot START request
-  const startRequestId = `FIRE_S${freeSlot.slotIndex}_START`;
-  const newScheduledEvents = [...scheduledEvents, {
-    targetTick: currentTick + 1,
-    requestId: startRequestId,
-    scheduledAtTick: currentTick,
-    priority: 'normal' as const,
-  }];
+  // 10. Building tracking sync happens in the caller via syncBuildingTrackingFromSlots.
+
+  // 11. Schedule the START request at next tick with high priority
+  const startRequestId = `FIREV4_S${freeSlot.slotIndex}_${variant}_START`;
+  const newScheduledEvents = [
+    ...scheduledEvents,
+    {
+      targetTick: currentTick + 1,
+      requestId: startRequestId,
+      scheduledAtTick: currentTick,
+      priority: 'normal' as const,
+    },
+  ];
 
   return {
     fireState: { ...fireState, slots: newSlots },
@@ -1814,38 +1745,77 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       }
     }
 
-    // Fire END cleanup: when a FIRE_SX_END request is resolved, clean up the slot
+    // V4 Fire chain end handling: resolve incident when a FIREV4 or REPAIRV4 end request fires
     let updatedBuildingTracking = state.buildingTracking;
     let updatedFire = state.fire;
-    const fireEndMatch = state.currentRequestId.match(/^FIRE_S(\d+)_END$/);
-    if (fireEndMatch) {
-      const slotIndex = parseInt(fireEndMatch[1], 10);
-      const slot = state.fire.slots.find(s => s.slotIndex === slotIndex);
-      if (slot && slot.active && slot.targetBuildingId && slot.initialOnFireApplied) {
-        // Remove at least initialOnFireApplied from target onFireCount (spread fires remain)
-        const newTracking = { ...state.buildingTracking };
-        const target = newTracking[slot.targetBuildingId];
-        if (target) {
-          const reduction = Math.min(target.onFireCount, slot.initialOnFireApplied);
-          newTracking[slot.targetBuildingId] = {
-            ...target,
-            onFireCount: target.onFireCount - reduction,
-          };
-        }
-        updatedBuildingTracking = newTracking;
 
-        // Deactivate the slot (clear tier/target/initial data)
-        updatedFire = {
-          ...state.fire,
-          slots: state.fire.slots.map(s =>
-            s.slotIndex === slotIndex
-              ? { slotIndex, active: false }
-              : s
-          ),
-        };
+    // FIREV4_S{n}_{V}_END_EXT → extinguish: clear slot assignment, unit becomes functional
+    const fireEndExtMatch = state.currentRequestId.match(/^FIREV4_S(\d+)_([AB])_END_EXT$/);
+    if (fireEndExtMatch) {
+      const slotIndex = parseInt(fireEndExtMatch[1], 10);
+      const newSlots = updatedFire.slots.map(s =>
+        s.slotIndex === slotIndex
+          ? { slotIndex, assigned: false, chainActive: false }
+          : s
+      );
+      updatedFire = { ...updatedFire, slots: newSlots };
+      updatedBuildingTracking = syncBuildingTrackingFromSlots(updatedBuildingTracking, newSlots);
+    }
+
+    // FIREV4_S{n}_{V}_END_DEST → destroy: unitStatus becomes 'destroyed', chainActive=false
+    const fireEndDestMatch = state.currentRequestId.match(/^FIREV4_S(\d+)_([AB])_END_DEST$/);
+    if (fireEndDestMatch) {
+      const slotIndex = parseInt(fireEndDestMatch[1], 10);
+      const newSlots = updatedFire.slots.map(s =>
+        s.slotIndex === slotIndex && s.assigned
+          ? { ...s, unitStatus: 'destroyed' as const, chainActive: false }
+          : s
+      );
+      updatedFire = { ...updatedFire, slots: newSlots };
+      updatedBuildingTracking = syncBuildingTrackingFromSlots(updatedBuildingTracking, newSlots);
+    }
+
+    // REPAIRV4_S{n}_END: option 0 = reconstruct (clear slot), option 1 = leave destroyed
+    const repairEndMatch = state.currentRequestId.match(/^REPAIRV4_S(\d+)_END$/);
+    if (repairEndMatch) {
+      const slotIndex = parseInt(repairEndMatch[1], 10);
+      if (action.optionIndex === 0) {
+        // Reconstruct: clear slot entirely
+        const newSlots = updatedFire.slots.map(s =>
+          s.slotIndex === slotIndex
+            ? { slotIndex, assigned: false, chainActive: false }
+            : s
+        );
+        updatedFire = { ...updatedFire, slots: newSlots };
+        updatedBuildingTracking = syncBuildingTrackingFromSlots(updatedBuildingTracking, newSlots);
+      } else {
+        // Leave destroyed: chain ends but slot stays assigned (chainActive=false)
+        const newSlots = updatedFire.slots.map(s =>
+          s.slotIndex === slotIndex
+            ? { ...s, chainActive: false }
+            : s
+        );
+        updatedFire = { ...updatedFire, slots: newSlots };
+        updatedBuildingTracking = syncBuildingTrackingFromSlots(updatedBuildingTracking, newSlots);
       }
     }
     
+    // V4: Handle triggerFireOutbreak effect from the chosen option
+    let outbreakScheduledEvents: ScheduledEvent[] = [];
+    if (option.effects.triggerFireOutbreak) {
+      const bypassCap = option.effects.fireOutbreakBypassCap ?? false;
+      const outbreakResult = attemptFireOutbreak(
+        updatedBuildingTracking, updatedFire, state.scheduledEvents, FIRE_SYSTEM_CONFIG,
+        stats.fireRisk, state.tick, bypassCap
+      );
+      updatedFire = outbreakResult.fireState;
+      updatedBuildingTracking = syncBuildingTrackingFromSlots(updatedBuildingTracking, outbreakResult.fireState.slots);
+      // Collect any newly scheduled events from the outbreak (will be merged below)
+      outbreakScheduledEvents = outbreakResult.scheduledEvents.filter(
+        e => !state.scheduledEvents.some(s => s.requestId === e.requestId && s.scheduledAtTick === e.scheduledAtTick)
+      );
+    }
+
     // Create log entry for request decision (skip for combat commits as they have their own log)
     if (!(currentRequest.combat && action.optionIndex === 0)) {
       // Filter appliedChanges to only include need modifiers (not base effects)
@@ -1879,6 +1849,11 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     // Remove the current request from scheduled events if it was scheduled
     scheduledEvents = removeScheduledEvent(scheduledEvents, state.currentRequestId, state.tick);
+
+    // Merge any outbreak-triggered events (V4 triggerFireOutbreak effect)
+    if (outbreakScheduledEvents.length > 0) {
+      scheduledEvents = [...scheduledEvents, ...outbreakScheduledEvents];
+    }
 
     // Check for bankruptcy after option effects (before baseline)
     // This prevents players from escaping bankruptcy via positive baseline income
@@ -2046,16 +2021,16 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       }
     }
 
-    // 2d. Apply fire spread and destroy (before game-over check)
-    let fireState = applyFireSpreadAndDestroy(buildingTracking, updatedFire, FIRE_SYSTEM_CONFIG);
-
-    // 2e. Attempt to start a new fire chain (after spread/destroy)
-    const chainStartResult = attemptFireChainStart(
+    // 2d. Attempt a natural fire outbreak (V4 – no spread/destroy, just outbreak attempt)
+    let fireState = updatedFire;
+    const outbreakResult = attemptFireOutbreak(
       buildingTracking, fireState, scheduledEvents, FIRE_SYSTEM_CONFIG,
-      stats.fireRisk, state.tick
+      stats.fireRisk, state.tick, false
     );
-    fireState = chainStartResult.fireState;
-    scheduledEvents = chainStartResult.scheduledEvents;
+    fireState = outbreakResult.fireState;
+    scheduledEvents = outbreakResult.scheduledEvents;
+    // Sync building tracking after potential outbreak
+    buildingTracking = syncBuildingTrackingFromSlots(buildingTracking, fireState.slots);
 
     // 3. Check for game over condition
     if (stats.gold <= -50) {
@@ -2120,30 +2095,6 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     const reminderResult = checkBuildingReminders(state.tick + 1, stats, buildingTracking, scheduledEvents);
     buildingTracking = reminderResult.buildingTracking;
     scheduledEvents = reminderResult.scheduledEvents;
-
-    // 3.7. Convert fire pendingInfoQueue into scheduled synthetic info requests (FIFO)
-    if (fireState.pendingInfoQueue.length > 0) {
-      for (const infoMsg of fireState.pendingInfoQueue) {
-        let syntheticId: string;
-        if (infoMsg.type === 'SPREAD_OR_DESTROY') {
-          const payload = {
-            newOnFireByBuildingId: infoMsg.newOnFireByBuildingId || {},
-            newDestroyedByBuildingId: infoMsg.newDestroyedByBuildingId || {},
-          };
-          syntheticId = `FIRE_INFO::SPREAD_OR_DESTROY::${encodeURIComponent(JSON.stringify(payload))}`;
-        } else {
-          syntheticId = `FIRE_INFO::ALL_EXTINGUISHED_ABORT`;
-        }
-        scheduledEvents.push({
-          targetTick: state.tick + 1,
-          requestId: syntheticId,
-          scheduledAtTick: state.tick,
-          priority: 'info',
-        });
-      }
-      // Clear the queue so messages don't repeat
-      fireState = { ...fireState, pendingInfoQueue: [] };
-    }
 
     // 4. Pick next request
     const nextRequest = pickNextRequest({
@@ -2305,112 +2256,59 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     };
   }
 
-  // Handle EXTINGUISH_ONE action
-  if (action.type === 'EXTINGUISH_ONE') {
-    if (state.gameOver) return state;
-
-    const tracking = state.buildingTracking[action.buildingId];
-    if (!tracking || tracking.onFireCount <= 0) {
-      console.error('Cannot extinguish: no on-fire units for', action.buildingId);
-      return state;
-    }
-
-    // Apply extinguish cost (e.g. gold, satisfaction)
-    const costEffect = FIRE_SYSTEM_CONFIG.extinguishCost;
-
-    // Validate: enough gold for extinguish cost
-    if (costEffect.gold !== undefined && state.stats.gold < Math.abs(costEffect.gold)) {
-      console.error('Not enough gold to extinguish:', action.buildingId, 'Need', Math.abs(costEffect.gold), 'have', state.stats.gold);
-      return state;
-    }
-
-    const newStats = clampStats(applyEffects(state.stats, costEffect));
-
-    // Reduce onFireCount by 1
-    const newTracking = { ...tracking, onFireCount: tracking.onFireCount - 1 };
-    const buildingTracking = {
-      ...state.buildingTracking,
-      [action.buildingId]: newTracking,
-    };
-
-    // Check global sum of onFireCount
-    const globalOnFireCount = Object.values(buildingTracking).reduce(
-      (sum, t) => sum + t.onFireCount, 0
-    );
-
-    let fire = { ...state.fire };
-
-    // If global onFire is now 0: abort all active chains and queue info
-    if (globalOnFireCount === 0) {
-      fire = {
-        ...fire,
-        slots: fire.slots.map(s => s.active
-          ? { ...s, active: false, abortedByManualExtinguish: true }
-          : s
-        ),
-        pendingInfoQueue: [
-          ...fire.pendingInfoQueue,
-          { type: 'ALL_EXTINGUISHED_ABORT' as const },
-        ],
-      };
-    }
-
-    return {
-      ...state,
-      stats: newStats,
-      buildingTracking,
-      fire,
-    };
-  }
-
-  // Handle REPAIR_ONE action
-  if (action.type === 'REPAIR_ONE') {
+  // Handle START_REPAIR_CHAIN action (V4)
+  // Finds the lowest-ordinal repairable destroyed incident for the given building type,
+  // sets its slot to chainActive=true with chainKind='repair', and schedules the repair chain START.
+  if (action.type === 'START_REPAIR_CHAIN') {
     if (state.gameOver) return state;
 
     const tracking = state.buildingTracking[action.buildingId];
     if (!tracking || tracking.destroyedCount <= 0) {
-      console.error('Cannot repair: no destroyed units for', action.buildingId);
+      console.error('Cannot start repair chain: no destroyed units for', action.buildingId);
       return state;
     }
 
-    // Calculate repair cost
-    let newStats: Stats;
-    if (FIRE_SYSTEM_CONFIG.repairCostOverride) {
-      // Validate: enough gold for override cost
-      const overrideGold = FIRE_SYSTEM_CONFIG.repairCostOverride.gold;
-      if (overrideGold !== undefined && state.stats.gold < Math.abs(overrideGold)) {
-        console.error('Not enough gold to repair:', action.buildingId, 'Need', Math.abs(overrideGold), 'have', state.stats.gold);
-        return state;
-      }
-      // Use override effect if defined
-      newStats = clampStats(applyEffects(state.stats, FIRE_SYSTEM_CONFIG.repairCostOverride));
-    } else {
-      // Default: ceil(buildCost * repairCostPercentOfBuildCost)
-      const def = getBuildingDef(action.buildingId);
-      if (!def) {
-        console.error('Unknown building ID for repair:', action.buildingId);
-        return state;
-      }
-      const goldCost = Math.ceil(def.cost * FIRE_SYSTEM_CONFIG.repairCostPercentOfBuildCost);
-      // Validate: enough gold
-      if (state.stats.gold < goldCost) {
-        console.error('Not enough gold to repair:', action.buildingId, 'Need', goldCost, 'have', state.stats.gold);
-        return state;
-      }
-      newStats = clampStats(applyEffects(state.stats, { gold: -goldCost }));
+    // Find the repairable slot: assigned=true, unitStatus='destroyed', chainActive=false
+    // Choose the lowest unitOrdinal among repairable incidents of this building type
+    const repairableSlots = state.fire.slots
+      .filter(s =>
+        s.assigned &&
+        s.targetBuildingId === action.buildingId &&
+        s.unitStatus === 'destroyed' &&
+        !s.chainActive
+      )
+      .sort((a, b) => (a.targetUnitOrdinal ?? 0) - (b.targetUnitOrdinal ?? 0));
+
+    const targetSlot = repairableSlots[0];
+    if (!targetSlot) {
+      console.error('No repairable slot found for', action.buildingId);
+      return state;
     }
 
-    // Reduce destroyedCount by 1
-    const newTracking = { ...tracking, destroyedCount: tracking.destroyedCount - 1 };
-    const buildingTracking = {
-      ...state.buildingTracking,
-      [action.buildingId]: newTracking,
-    };
+    // Activate the repair chain on this slot
+    const newSlots = state.fire.slots.map(s =>
+      s.slotIndex === targetSlot.slotIndex
+        ? { ...s, chainKind: 'repair' as const, chainActive: true, startedTick: state.tick }
+        : s
+    );
+    const fire = { ...state.fire, slots: newSlots };
+
+    // Schedule the repair chain START request
+    const startRequestId = `REPAIRV4_S${targetSlot.slotIndex}_START`;
+    const scheduledEvents = [
+      ...state.scheduledEvents,
+      {
+        targetTick: state.tick + 1,
+        requestId: startRequestId,
+        scheduledAtTick: state.tick,
+        priority: 'normal' as const,
+      },
+    ];
 
     return {
       ...state,
-      stats: newStats,
-      buildingTracking,
+      fire,
+      scheduledEvents,
     };
   }
 
@@ -2568,93 +2466,10 @@ export function getCurrentRequest(state: GameState): Request | null {
     }
   }
   
-  // Check if this is a synthetic fire info request
-  if (state.currentRequestId.startsWith('FIRE_INFO::')) {
-    return buildSyntheticFireInfoRequest(state.currentRequestId);
-  }
-
   // Regular request - look it up in the arrays
   return [...infoRequests, ...authorityInfoRequests, ...eventRequests, ...fireChainRequests].find(
     (r) => r.id === state.currentRequestId
   ) || null;
-}
-
-/**
- * Build a synthetic Request object from a FIRE_INFO:: encoded request ID.
- * Two types are supported:
- *  - FIRE_INFO::SPREAD_OR_DESTROY::{json} — lists newly on-fire and destroyed buildings
- *  - FIRE_INFO::ALL_EXTINGUISHED_ABORT — all fires manually extinguished
- */
-function buildSyntheticFireInfoRequest(requestId: string): Request {
-  const parts = requestId.split('::');
-  const infoType = parts[1]; // 'SPREAD_OR_DESTROY' or 'ALL_EXTINGUISHED_ABORT'
-
-  if (infoType === 'SPREAD_OR_DESTROY') {
-    try {
-      const data = JSON.parse(decodeURIComponent(parts[2] || '{}'));
-      const newOnFire: Record<string, number> = data.newOnFireByBuildingId || {};
-      const newDestroyed: Record<string, number> = data.newDestroyedByBuildingId || {};
-
-      // Build text listing exact deltas per building type
-      const lines: string[] = [];
-
-      const onFireEntries = Object.entries(newOnFire).filter(([, count]) => count > 0);
-      if (onFireEntries.length > 0) {
-        lines.push('New fires:');
-        for (const [buildingId, count] of onFireEntries) {
-          const def = getBuildingDef(buildingId);
-          const name = def ? `${def.icon} ${def.displayName}` : buildingId;
-          lines.push(`  🔥 ${name}: ${count}`);
-        }
-      }
-
-      const destroyedEntries = Object.entries(newDestroyed).filter(([, count]) => count > 0);
-      if (destroyedEntries.length > 0) {
-        if (lines.length > 0) lines.push('');
-        lines.push('Newly destroyed:');
-        for (const [buildingId, count] of destroyedEntries) {
-          const def = getBuildingDef(buildingId);
-          const name = def ? `${def.icon} ${def.displayName}` : buildingId;
-          lines.push(`  🧱 ${name}: ${count}`);
-        }
-      }
-
-      return {
-        id: requestId,
-        title: '🔥 The fire is spreading',
-        text: lines.length > 0 ? lines.join('\n') : 'The fire rages on.',
-        options: [
-          { text: 'To Construction', effects: {} },
-          { text: 'Continue', effects: {} },
-        ],
-        advancesTick: false,
-      };
-    } catch (error) {
-      console.error('Failed to parse fire info request:', error);
-      return {
-        id: requestId,
-        title: '🔥 The fire is spreading',
-        text: 'The fire rages on.',
-        options: [
-          { text: 'To Construction', effects: {} },
-          { text: 'Continue', effects: {} },
-        ],
-        advancesTick: false,
-      };
-    }
-  }
-
-  // ALL_EXTINGUISHED_ABORT
-  return {
-    id: requestId,
-    title: 'The situation calms down',
-    text: 'All fires have been manually extinguished. All fire chains have been ended.',
-    options: [
-      { text: 'OK', effects: {} },
-      { text: 'To Construction', effects: {} },
-    ],
-    advancesTick: false,
-  };
 }
 
 /**

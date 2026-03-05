@@ -6785,8 +6785,12 @@ export function validateRequests(): void {
 
   for (const request of allRequests) {
     // Check 1: Info and reminder requests must have exactly 1 option, all others must have exactly 2
-    // Fire START requests (FIRE_S*_START) also have exactly 1 option
-    const isSingleOptionRequest = request.id.startsWith('INFO_') || request.id.startsWith('REMINDER_') || request.id.match(/^FIRE_S\d+_START$/);
+    // Fire V4 START requests (FIREV4_S*_*_START, REPAIRV4_S*_START) also have exactly 1 option
+    const isSingleOptionRequest =
+      request.id.startsWith('INFO_') ||
+      request.id.startsWith('REMINDER_') ||
+      /^FIREV4_S\d+_[AB]_START$/.test(request.id) ||
+      /^REPAIRV4_S\d+_START$/.test(request.id);
     const expectedOptions = isSingleOptionRequest ? 1 : 2;
     if (request.options.length !== expectedOptions) {
       errors.push(
@@ -6851,112 +6855,241 @@ export function validateRequests(): void {
 }
 
 /**
- * Fire Chain Requests (40)
- * 10 fire chain slots × 4 requests each (START, DECISION, ESCALATE, END).
- * Triggered by the fire system, not randomly.
+ * Fire Chain Requests V4 (80 per slot×variant + 30 repair chains)
+ *
+ * For each slot n=1..10 and variant V=A|B:
+ *   FIREV4_S{n}_{V}_START  (start, 1 option, no tick)
+ *   FIREV4_S{n}_{V}_STEP1  (member, 2 options, no tick)
+ *   FIREV4_S{n}_{V}_END_EXT  (end, 2 options, advances tick) → extinguish assigned unit
+ *   FIREV4_S{n}_{V}_END_DEST (end, 2 options, advances tick) → destroy assigned unit
+ *
+ * For each slot n=1..10:
+ *   REPAIRV4_S{n}_START  (start, 1 option, no tick)
+ *   REPAIRV4_S{n}_PROGRESS (member, 2 options, no tick)
+ *   REPAIRV4_S{n}_END  (end, 2 options, advances tick) → option 0=reconstruct, option 1=leave destroyed
  */
-function generateFireChainRequests(): Request[] {
+function generateFireV4ChainRequests(): Request[] {
   const requests: Request[] = [];
 
   for (let n = 1; n <= 10; n++) {
-    const chainId = `CHAIN_FIRE_SLOT_${n}`;
+    for (const variant of ['A', 'B'] as const) {
+      const chainId = `FIREV4_S${n}_${variant}`;
 
-    // START
+      // ── START (1 option, tickless) ──────────────────────────────────
+      requests.push({
+        id: `FIREV4_S${n}_${variant}_START`,
+        chainId,
+        chainRole: 'start',
+        canTriggerRandomly: false,
+        advancesTick: false,
+        portraitId: 'advisor',
+        title: '🔥 Fire!',
+        text: variant === 'A'
+          ? 'A fire has broken out in a building! The villagers are scrambling to contain it.'
+          : 'Flames erupt without warning. The smoke rises thick and fast.',
+        options: [
+          { text: 'Assess the situation', effects: {} },
+        ],
+        followUps: [
+          {
+            triggerOnOptionIndex: 0,
+            delayMinTicks: 1,
+            delayMaxTicks: 2,
+            candidates: [{ requestId: `FIREV4_S${n}_${variant}_STEP1`, weight: 1 }],
+          },
+        ],
+      });
+
+      // ── STEP1 (member, 2 options, tickless) ────────────────────────
+      // Variant A: both options lead to extinguish
+      // Variant B: one leads to extinguish, one to destroy
+      const step1FollowUps = variant === 'A'
+        ? [
+            {
+              triggerOnOptionIndex: 0,
+              delayMinTicks: 1,
+              delayMaxTicks: 2,
+              candidates: [{ requestId: `FIREV4_S${n}_${variant}_END_EXT`, weight: 1 }],
+            },
+            {
+              triggerOnOptionIndex: 1,
+              delayMinTicks: 1,
+              delayMaxTicks: 2,
+              candidates: [{ requestId: `FIREV4_S${n}_${variant}_END_EXT`, weight: 1 }],
+            },
+          ]
+        : [
+            {
+              triggerOnOptionIndex: 0,
+              delayMinTicks: 1,
+              delayMaxTicks: 2,
+              candidates: [{ requestId: `FIREV4_S${n}_${variant}_END_EXT`, weight: 1 }],
+            },
+            {
+              triggerOnOptionIndex: 1,
+              delayMinTicks: 1,
+              delayMaxTicks: 2,
+              candidates: [{ requestId: `FIREV4_S${n}_${variant}_END_DEST`, weight: 1 }],
+            },
+          ];
+
+      requests.push({
+        id: `FIREV4_S${n}_${variant}_STEP1`,
+        chainId,
+        chainRole: 'member',
+        canTriggerRandomly: false,
+        advancesTick: false,
+        portraitId: 'advisor',
+        title: '🔥 Fire Response',
+        text: variant === 'A'
+          ? 'The fire rages on. Your people are fighting hard to save the building.'
+          : 'The fire is spreading. A decision must be made — fight or focus resources elsewhere.',
+        options:
+          variant === 'A'
+            ? [
+                { text: 'Organize a bucket brigade', effects: { satisfaction: -2 } },
+                { text: 'Seek aid from neighbors', effects: { gold: -5 } },
+              ]
+            : [
+                { text: 'Fight the fire hard', effects: { gold: -10, satisfaction: -2 } },
+                {
+                  text: 'Focus on other buildings',
+                  effects: { fireRisk: 3, triggerFireOutbreak: true, fireOutbreakBypassCap: false },
+                },
+              ],
+        followUps: step1FollowUps,
+      });
+
+      // ── END_EXT (end, 2 options, advances tick) → extinguish assigned ─
+      requests.push({
+        id: `FIREV4_S${n}_${variant}_END_EXT`,
+        chainId,
+        chainRole: 'end',
+        canTriggerRandomly: false,
+        advancesTick: true,
+        portraitId: 'advisor',
+        chainRestartCooldownTicks: 0,
+        title: '🔥 Fire Extinguished',
+        text: 'The fire is finally out. The building is damaged but intact. It is time to rebuild trust.',
+        options: [
+          { text: 'Standard cleanup', effects: { fireRisk: -5 } },
+          { text: 'Invest in prevention', effects: { fireRisk: -12, gold: -20 } },
+        ],
+      });
+
+      // ── END_DEST (end, 2 options, advances tick) → destroy assigned ─
+      // Only emitted for variant B
+      if (variant === 'B') {
+        requests.push({
+          id: `FIREV4_S${n}_${variant}_END_DEST`,
+          chainId,
+          chainRole: 'end',
+          canTriggerRandomly: false,
+          advancesTick: true,
+          portraitId: 'advisor',
+          chainRestartCooldownTicks: 0,
+          title: '💥 Building Destroyed by Fire',
+          text: 'The fire has destroyed the building. The ruins remain — repairs can be organized later.',
+          options: [
+            { text: 'Clear the debris', effects: { fireRisk: -3 } },
+            { text: 'Leave it for now', effects: { satisfaction: -5 } },
+          ],
+        });
+      }
+    }
+  }
+
+  return requests;
+}
+
+/**
+ * Repair Chain Requests V4 (3 requests per slot, 10 slots = 30 requests)
+ *
+ * For each slot n=1..10:
+ *   REPAIRV4_S{n}_START    (start, 1 option, no tick)
+ *   REPAIRV4_S{n}_PROGRESS (member, 2 options, no tick)
+ *   REPAIRV4_S{n}_END      (end, 2 options, advances tick)
+ *     option 0 = Reconstruct → unit becomes functional, slot cleared
+ *     option 1 = Leave destroyed → chainActive=false, slot stays assigned
+ */
+function generateRepairV4ChainRequests(): Request[] {
+  const requests: Request[] = [];
+
+  for (let n = 1; n <= 10; n++) {
+    const chainId = `REPAIRV4_S${n}`;
+
     requests.push({
-      id: `FIRE_S${n}_START`,
-      title: `🔥 Fire! (Slot ${n})`,
-      text: `A fire has broken out in part of the settlement! Smoke rises and panic spreads among the villagers.`,
-      canTriggerRandomly: false,
-      advancesTick: false,
-      portraitId: 'advisor',
+      id: `REPAIRV4_S${n}_START`,
       chainId,
       chainRole: 'start',
-      options: [
-        { text: 'Assess the situation', effects: {} },
-      ],
-      followUps: [
-        {
-          triggerOnOptionIndex: 0,
-          delayMinTicks: 2,
-          delayMaxTicks: 4,
-          candidates: [{ requestId: `FIRE_S${n}_DECISION`, weight: 1 }],
-        },
-      ],
-    });
-
-    // DECISION
-    requests.push({
-      id: `FIRE_S${n}_DECISION`,
-      title: `🔥 Fire Response (Slot ${n})`,
-      text: `The fire rages on. You must decide how to respond before it spreads further.`,
       canTriggerRandomly: false,
       advancesTick: false,
       portraitId: 'advisor',
-      chainId,
-      chainRole: 'member',
+      title: '🛠 Repair Work Begins',
+      text: 'Your workers have started assessing the destroyed building. Plans are being drawn up for reconstruction.',
       options: [
-        { text: 'Send a bucket brigade', effects: { satisfaction: -5 } },
-        { text: 'Let it burn, focus elsewhere', effects: { fireRisk: 5 } },
+        { text: 'Review the damage', effects: {} },
       ],
       followUps: [
         {
           triggerOnOptionIndex: 0,
-          delayMinTicks: 2,
-          delayMaxTicks: 4,
-          candidates: [{ requestId: `FIRE_S${n}_ESCALATE`, weight: 1 }],
-        },
-        {
-          triggerOnOptionIndex: 1,
-          delayMinTicks: 2,
-          delayMaxTicks: 4,
-          candidates: [{ requestId: `FIRE_S${n}_ESCALATE`, weight: 1 }],
+          delayMinTicks: 1,
+          delayMaxTicks: 2,
+          candidates: [{ requestId: `REPAIRV4_S${n}_PROGRESS`, weight: 1 }],
         },
       ],
     });
 
-    // ESCALATE
     requests.push({
-      id: `FIRE_S${n}_ESCALATE`,
-      title: `🔥 Fire Spreads (Slot ${n})`,
-      text: `The fire has spread to nearby structures! The situation is becoming dire.`,
+      id: `REPAIRV4_S${n}_PROGRESS`,
+      chainId,
+      chainRole: 'member',
       canTriggerRandomly: false,
       advancesTick: false,
       portraitId: 'advisor',
-      chainId,
-      chainRole: 'member',
+      title: '🛠 Repair Progress',
+      text: 'The repair work is underway. The craftsmen need direction on how to proceed.',
       options: [
-        { text: 'Mobilize all hands', effects: { gold: -10, health: -2 } },
-        { text: 'Salvage what you can', effects: { fireRisk: 10 } },
+        { text: 'Push for full reconstruction', effects: { satisfaction: 2 } },
+        { text: 'Conserve resources', effects: { gold: 5 } },
       ],
       followUps: [
         {
           triggerOnOptionIndex: 0,
-          delayMinTicks: 2,
-          delayMaxTicks: 3,
-          candidates: [{ requestId: `FIRE_S${n}_END`, weight: 1 }],
+          delayMinTicks: 1,
+          delayMaxTicks: 2,
+          candidates: [{ requestId: `REPAIRV4_S${n}_END`, weight: 1 }],
         },
         {
           triggerOnOptionIndex: 1,
-          delayMinTicks: 2,
-          delayMaxTicks: 3,
-          candidates: [{ requestId: `FIRE_S${n}_END`, weight: 1 }],
+          delayMinTicks: 1,
+          delayMaxTicks: 2,
+          candidates: [{ requestId: `REPAIRV4_S${n}_END`, weight: 1 }],
         },
       ],
     });
 
-    // END
     requests.push({
-      id: `FIRE_S${n}_END`,
-      title: `🔥 Fire Resolved (Slot ${n})`,
-      text: `The fire is finally under control. Now is the time to deal with the aftermath.`,
+      id: `REPAIRV4_S${n}_END`,
+      chainId,
+      chainRole: 'end',
       canTriggerRandomly: false,
       advancesTick: true,
       portraitId: 'advisor',
-      chainId,
-      chainRole: 'end',
+      chainRestartCooldownTicks: 0,
+      title: '🛠 Repair Outcome',
+      text: 'The time has come to decide the fate of the destroyed building.',
       options: [
-        { text: 'Standard cleanup', effects: { fireRisk: -10 } },
-        { text: 'Invest in prevention', effects: { fireRisk: -20, gold: -30 } },
+        {
+          // Option 0: Reconstruct (state.ts clears slot → unit becomes functional)
+          text: 'Reconstruct the building',
+          effects: { gold: -15, satisfaction: 5 },
+        },
+        {
+          // Option 1: Leave destroyed (state.ts sets chainActive=false, slot stays)
+          text: 'Leave it as ruins for now',
+          effects: { satisfaction: -3 },
+        },
       ],
     });
   }
@@ -6964,4 +7097,7 @@ function generateFireChainRequests(): Request[] {
   return requests;
 }
 
-export const fireChainRequests = generateFireChainRequests();
+export const fireChainRequests = [
+  ...generateFireV4ChainRequests(),
+  ...generateRepairV4ChainRequests(),
+];

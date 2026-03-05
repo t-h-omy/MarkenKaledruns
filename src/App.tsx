@@ -296,10 +296,6 @@ function App() {
       spawnFlyingDeltas(optionIndex, option.effects)
     }
     
-    // Check if this is a fire info "To Construction" action
-    const isFireInfoRequest = gameState.currentRequestId.startsWith('FIRE_INFO::')
-    const openConstructionAfter = isFireInfoRequest && option?.text === 'To Construction'
-    
     // If combat request and Option A (index 0), pass combatCommit
     if (currentRequest?.combat && optionIndex === 0) {
       dispatch({ type: 'CHOOSE_OPTION', optionIndex, combatCommit })
@@ -309,11 +305,6 @@ function App() {
       dispatch({ type: 'CHOOSE_OPTION', optionIndex, authorityCommit: committedAmount })
     } else {
       dispatch({ type: 'CHOOSE_OPTION', optionIndex })
-    }
-    
-    // Open construction overlay after dispatching if "To Construction" was chosen
-    if (openConstructionAfter) {
-      openConstructionScreen()
     }
   }
   
@@ -562,21 +553,36 @@ function App() {
                   </div>
                 )}
 
-                {/* Fire chain tag + context line */}
+                {/* Fire chain tag + context line (V4) */}
                 {(() => {
-                  const fireSlotMatch = gameState.currentRequestId.match(/^FIRE_S(\d+)_(START|DECISION|ESCALATE|END)$/)
-                  if (!fireSlotMatch) return null
-                  const slotIndex = parseInt(fireSlotMatch[1], 10)
+                  // Match FIREV4 fire chains or REPAIRV4 repair chains
+                  const fireMatch = gameState.currentRequestId.match(/^FIREV4_S(\d+)_([AB])_/)
+                  const repairMatch = gameState.currentRequestId.match(/^REPAIRV4_S(\d+)_/)
+                  const slotIndex = fireMatch
+                    ? parseInt(fireMatch[1], 10)
+                    : repairMatch
+                    ? parseInt(repairMatch[1], 10)
+                    : null
+                  if (slotIndex === null) return null
                   const slot = gameState.fire.slots.find(s => s.slotIndex === slotIndex)
                   const targetId = slot?.targetBuildingId
                   const targetDef = targetId ? getBuildingDef(targetId) : null
-                  const targetTracking = targetId ? gameState.buildingTracking[targetId] : null
+                  const isRepair = !!repairMatch
+                  const unitOrdinal = slot?.targetUnitOrdinal
+                  const unitStatus = slot?.unitStatus
                   return (
                     <div className="request-panel__fireContext fire-chain-info">
-                      <div className="fire-chain-tag">🔥 Fire (Slot {slotIndex})</div>
-                      {targetDef && targetTracking && (
+                      <div className="fire-chain-tag">
+                        {isRepair ? '🛠 Repair' : '🔥 Fire'}
+                      </div>
+                      {targetDef && (
                         <div className="fire-chain-context">
-                          Affected: {targetDef.icon} {targetDef.displayName} | 🔥 {targetTracking.onFireCount} | 🧱 {targetTracking.destroyedCount}
+                          Affected: {targetDef.icon} {targetDef.displayName}
+                          {unitOrdinal !== undefined && ` • Unit ${unitOrdinal}`}
+                          {unitStatus === 'on_fire' && ' • Status: 🔥'}
+                          {unitStatus === 'destroyed' && ' • Status: 💥 Destroyed'}
+                          {' '}
+                          <span className="fire-chain-inactive-chip">Inactive</span>
                         </div>
                       )}
                     </div>
@@ -1017,10 +1023,10 @@ function App() {
           farmers={gameState.stats.farmers}
           gold={gameState.stats.gold}
           buildingTracking={gameState.buildingTracking}
+          fireSlots={gameState.fire.slots}
           highlightedBuilding={highlightedBuildingId ?? undefined}
           onBuild={(buildingId) => dispatch({ type: 'BUILD_BUILDING', buildingId })}
-          onExtinguish={(buildingId) => dispatch({ type: 'EXTINGUISH_ONE', buildingId })}
-          onRepair={(buildingId) => dispatch({ type: 'REPAIR_ONE', buildingId })}
+          onStartRepairChain={(buildingId) => dispatch({ type: 'START_REPAIR_CHAIN', buildingId })}
         />
         
         {/* Log Screen Overlay */}

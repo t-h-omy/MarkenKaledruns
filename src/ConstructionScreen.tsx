@@ -5,6 +5,7 @@ import BuildMultipleModal from './BuildMultipleModal'
 import type { BuildingStatus } from './BuildingCard'
 import { BUILDING_DEFINITIONS, calculateRequiredBuildings, getBuildingDef } from './game/buildings'
 import type { BuildingDefinition, BuildingTracking } from './game/buildings'
+import type { FireIncidentSlotState } from './game/models'
 
 interface ConstructionScreenProps {
   isOpen: boolean;
@@ -12,10 +13,10 @@ interface ConstructionScreenProps {
   farmers: number;
   gold: number;
   buildingTracking: Record<string, BuildingTracking>;
+  fireSlots: FireIncidentSlotState[];
   highlightedBuilding?: string;
   onBuild: (buildingId: string) => void;
-  onExtinguish?: (buildingId: string) => void;
-  onRepair?: (buildingId: string) => void;
+  onStartRepairChain?: (buildingId: string) => void;
 }
 
 function ConstructionScreen({ 
@@ -24,10 +25,10 @@ function ConstructionScreen({
   farmers, 
   gold, 
   buildingTracking, 
+  fireSlots,
   highlightedBuilding,
   onBuild,
-  onExtinguish,
-  onRepair
+  onStartRepairChain,
 }: ConstructionScreenProps) {
   const highlightedBuildingRef = useRef<HTMLDivElement>(null)
   const [buildMultipleModalOpen, setBuildMultipleModalOpen] = useState(false)
@@ -156,6 +157,13 @@ function ConstructionScreen({
             const required = calculateRequiredBuildings(def, farmers)
             const isHighlighted = highlightedBuilding === def.id
             
+            // Compute locked vs repairable destroyed counts from fire slots (V4)
+            const slotsForBuilding = fireSlots.filter(
+              s => s.assigned && s.targetBuildingId === def.id && s.unitStatus === 'destroyed'
+            )
+            const lockedDestroyedCount = slotsForBuilding.filter(s => s.chainActive).length
+            const repairableDestroyedCount = slotsForBuilding.filter(s => !s.chainActive).length
+            
             return (
               <div 
                 key={def.id} 
@@ -170,10 +178,11 @@ function ConstructionScreen({
                   requiredCount={required}
                   status={status}
                   isHighlighted={isHighlighted}
+                  lockedDestroyedCount={lockedDestroyedCount}
+                  repairableDestroyedCount={repairableDestroyedCount}
                   onBuild={onBuild}
                   onBuildMultiple={handleOpenBuildMultiple}
-                  onExtinguish={onExtinguish}
-                  onRepair={onRepair}
+                  onStartRepairChain={onStartRepairChain}
                 />
               </div>
             )
