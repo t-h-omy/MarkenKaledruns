@@ -163,7 +163,7 @@ export interface GameState {
   gameOverReason?: string;
   scheduledEvents: ScheduledEvent[];
   /** Track chain status: active means chain has started but not completed */
-  chainStatus: Record<string, { active: boolean; completedTick?: number }>;
+  chainStatus: Record<string, { active: boolean; completedTick?: number; cooldownTicks?: number }>;
   /** Track how many times each request has been triggered */
   requestTriggerCounts: Record<string, number>;
   /** Track unlock tokens for event requirements */
@@ -1809,8 +1809,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         // Mark chain as active when started
         chainStatus[currentRequest.chainId] = { active: true };
       } else if (currentRequest.chainRole === 'end') {
-        // Mark chain as completed (inactive) when ended
-        chainStatus[currentRequest.chainId] = { active: false, completedTick: state.tick };
+        // Mark chain as completed (inactive) when ended; store cooldown from this end node
+        chainStatus[currentRequest.chainId] = { active: false, completedTick: state.tick, cooldownTicks: currentRequest.chainRestartCooldownTicks };
       }
     }
 

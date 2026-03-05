@@ -382,7 +382,9 @@ Dead-ends occur when the player **cannot afford either option** or when the chai
 
 ### 3.7 Chain Restart Cooldown
 
-Set `chainRestartCooldownTicks` on the `start` request to prevent the chain from immediately re-triggering after completion.
+Set `chainRestartCooldownTicks` on **every** `end` request (all nodes with `chainRole: 'end'`) to prevent the chain from immediately re-triggering after completion. Do **not** set it on the start request.
+
+The engine records this value when a chain end node resolves and uses it to gate the chain's start node from randomly re-triggering until the cooldown expires.
 
 | Chain Type | Recommended Cooldown |
 |------------|---------------------|
@@ -390,7 +392,16 @@ Set `chainRestartCooldownTicks` on the `start` request to prevent the chain from
 | Medium (6–10 events) | 40–60 ticks |
 | Large (10+ events) | 80–100+ ticks |
 
-### 3.8 Weighted Candidates
+### 3.8 Chain Singletons — One Active Instance at a Time
+
+A chain can only be active **once** at any given time — never in parallel. The engine enforces this rule automatically in two ways:
+
+1. **Random pool**: Once a chain's start node fires, it is excluded from random selection until the chain completes.
+2. **Scheduled events**: Even if a chain start node were accidentally scheduled as a follow-up, the engine will skip it if the chain is already active. This is a safety net — it does not mean chain starts are expected to appear in follow-ups.
+
+**Design rule:** Never reference a chain's `start` node in any `followUps.candidates` list (of any event, including another chain). Chain starts must only fire via the random pool.
+
+### 3.9 Weighted Candidates
 
 When a follow-up has multiple candidates, use weights to control probability:
 
@@ -407,7 +418,7 @@ candidates: [
 - Use asymmetric weights (e.g. 3:1, 2:1) to make one path more likely.
 - Authority follow-up boosts **add** to these weights, so start with lower base weights if you want authority investment to have a strong relative impact.
 
-### 3.9 Validation Checklist
+### 3.10 Validation Checklist
 
 Before adding a chain to `requests.ts`, verify:
 
@@ -423,7 +434,8 @@ Before adding a chain to `requests.ts`, verify:
 - [ ] At least one option per request does **not** deduct `landForces` directly
 - [ ] At least one option per request has affordable effects for a player in a bad state
 - [ ] Chain end requests have `chainRole: 'end'`
-- [ ] `chainRestartCooldownTicks` is set on the start request
+- [ ] `chainRestartCooldownTicks` is set on **every** end request (not on the start request)
+- [ ] The chain's start node is **not** referenced in any `followUps.candidates` list (chains are singletons — §3.8)
 - [ ] `portraitId` uses only one of the 30 defined character keys (see §4.1)
 
 ---
@@ -627,7 +639,6 @@ Minimal small chain (4 requests) as a starting skeleton:
   id: 'CHAIN_EXAMPLE_START',
   chainId: 'EXAMPLE',
   chainRole: 'start',
-  chainRestartCooldownTicks: 40,
   title: 'The Inciting Event',
   text: 'Something has happened. What will you do?',
   portraitId: 'advisor',
@@ -709,6 +720,7 @@ Minimal small chain (4 requests) as a starting skeleton:
   chainId: 'EXAMPLE',
   chainRole: 'end',
   canTriggerRandomly: false,
+  chainRestartCooldownTicks: 40,
   title: 'Resolution',
   text: 'The situation has resolved. Your village endures.',
   portraitId: 'advisor',

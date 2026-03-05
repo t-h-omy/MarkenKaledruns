@@ -265,9 +265,9 @@ export function pickNextRequest(
       }
       
       // Check cooldown after completion
-      if (status && !status.active && status.completedTick !== undefined && request.chainRestartCooldownTicks !== undefined) {
+      if (status && !status.active && status.completedTick !== undefined && status.cooldownTicks !== undefined) {
         const ticksSinceCompletion = tick - status.completedTick;
-        if (ticksSinceCompletion < request.chainRestartCooldownTicks) {
+        if (ticksSinceCompletion < status.cooldownTicks) {
           return false; // Still on cooldown
         }
       }
@@ -404,6 +404,15 @@ export function pickNextRequest(
             const triggerCount = requestTriggerCounts[scheduledRequest.id] || 0;
             if (triggerCount >= scheduledRequest.maxTriggers) {
               continue; // Skip this scheduled event, try next
+            }
+          }
+
+          // A chain can only be active once at a time. Skip a chain start that would
+          // launch a chain that is already in progress.
+          if (scheduledRequest.chainId && scheduledRequest.chainRole === 'start') {
+            const status = chainStatus[scheduledRequest.chainId];
+            if (status && status.active) {
+              continue; // Chain already active — skip to prevent parallel instances
             }
           }
           
