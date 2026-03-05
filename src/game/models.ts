@@ -227,7 +227,7 @@ export interface Request {
   chainId?: string;
   /** Explicitly marks the role of this request in a chain */
   chainRole?: 'start' | 'member' | 'end';
-  /** Cooldown in ticks before chain can start randomly again after completion (only meaningful on start or end) */
+  /** Cooldown in ticks before chain can start randomly again after completion. Must be set on every end node (chainRole: 'end') of the chain. */
   chainRestartCooldownTicks?: number;
   /** Maximum number of times this request can trigger across entire game run (undefined = unlimited) */
   maxTriggers?: number;
