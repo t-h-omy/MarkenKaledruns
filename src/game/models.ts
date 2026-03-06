@@ -250,6 +250,13 @@ export interface Request {
   authorityMax?: number;
   /** Optional portrait to display on the request screen (key from portrait registry) */
   portraitId?: PortraitId;
+  /**
+   * If set, this fire chain START request is only eligible when a fire breaks out in one
+   * of these building type IDs. Undefined means the chain applies to all building types.
+   * Only checked during outbreak variant selection (V4 Section 5.6) — set this field only
+   * on START requests (chainRole='start') of FIREV4 chains.
+   */
+  fireChainAllowedBuildingTypes?: string[];
 }
 
 // ─── Fire System V4 Types ────────────────────────────────────────────

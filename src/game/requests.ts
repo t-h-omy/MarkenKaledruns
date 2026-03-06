@@ -6855,114 +6855,101 @@ export function validateRequests(): void {
 }
 
 /**
- * Fire Chain Requests V4 (80 per slot×variant + 30 repair chains)
+ * Fire Chain Requests V4
  *
- * For each slot n=1..10 and variant V=A|B:
- *   FIREV4_S{n}_{V}_START  (start, 1 option, no tick)
- *   FIREV4_S{n}_{V}_STEP1  (member, 2 options, no tick)
- *   FIREV4_S{n}_{V}_END_EXT  (end, 2 options, advances tick) → extinguish assigned unit
- *   FIREV4_S{n}_{V}_END_DEST (end, 2 options, advances tick) → destroy assigned unit
+ * Three chain variants are generated for each of the 10 incident slots:
  *
- * For each slot n=1..10:
- *   REPAIRV4_S{n}_START  (start, 1 option, no tick)
- *   REPAIRV4_S{n}_PROGRESS (member, 2 options, no tick)
- *   REPAIRV4_S{n}_END  (end, 2 options, advances tick) → option 0=reconstruct, option 1=leave destroyed
+ *   Variant A — "Community Response" (all building types)
+ *     FIREV4_S{n}_A_START    (start, 1 option, tickless)
+ *     FIREV4_S{n}_A_STEP1   (member, 2 options, tickless)
+ *     FIREV4_S{n}_A_END_EXT  (end, 2 options, advances tick) → extinguish
+ *     FIREV4_S{n}_A_END_DEST (end, 2 options, advances tick) → destroy
+ *
+ *   Variant B — "Raging Inferno" (all building types)
+ *     FIREV4_S{n}_B_START    (start, 1 option, tickless)
+ *     FIREV4_S{n}_B_STEP1   (member, 2 options, tickless)
+ *     FIREV4_S{n}_B_END_EXT  (end, 2 options, advances tick) → extinguish
+ *     FIREV4_S{n}_B_END_DEST (end, 2 options, advances tick) → destroy
+ *
+ *   Variant C — "Farmstead Emergency" (farmstead only)
+ *     FIREV4_S{n}_C_START    (start, 1 option, tickless)
+ *     FIREV4_S{n}_C_STEP1   (member, 2 options, tickless)
+ *     FIREV4_S{n}_C_END_EXT  (end, 2 options, advances tick) → extinguish
+ *     FIREV4_S{n}_C_END_DEST (end, 2 options, advances tick) → destroy
+ *
+ * V4 requirements satisfied per chain:
+ *  - At least one option leads to extinguish (END_EXT)
+ *  - At least one option leads to destroy (END_DEST)
+ *  - At least one option triggers a new fire outbreak
  */
 function generateFireV4ChainRequests(): Request[] {
   const requests: Request[] = [];
 
   for (let n = 1; n <= 10; n++) {
-    for (const variant of ['A', 'B'] as const) {
-      const chainId = `FIREV4_S${n}_${variant}`;
+    // ── VARIANT A: Community Response (all building types) ─────────────────
+    {
+      const v = 'A';
+      const chainId = `FIREV4_S${n}_${v}`;
 
-      // ── START (1 option, tickless) ──────────────────────────────────
+      // START
       requests.push({
-        id: `FIREV4_S${n}_${variant}_START`,
+        id: `FIREV4_S${n}_${v}_START`,
         chainId,
         chainRole: 'start',
         canTriggerRandomly: false,
         advancesTick: false,
         portraitId: 'advisor',
         title: '🔥 Fire!',
-        text: variant === 'A'
-          ? 'A fire has broken out in a building! The villagers are scrambling to contain it.'
-          : 'Flames erupt without warning. The smoke rises thick and fast.',
+        text: 'A fire has broken out! Panic spreads through the settlement as smoke darkens the sky.',
         options: [
-          { text: 'Assess the situation', effects: {} },
+          { text: 'Sound the alarm', effects: {} },
         ],
         followUps: [
           {
             triggerOnOptionIndex: 0,
             delayMinTicks: 1,
             delayMaxTicks: 2,
-            candidates: [{ requestId: `FIREV4_S${n}_${variant}_STEP1`, weight: 1 }],
+            candidates: [{ requestId: `FIREV4_S${n}_${v}_STEP1`, weight: 1 }],
           },
         ],
       });
 
-      // ── STEP1 (member, 2 options, tickless) ────────────────────────
-      // Variant A: both options lead to extinguish
-      // Variant B: one leads to extinguish, one to destroy
-      const step1FollowUps = variant === 'A'
-        ? [
-            {
-              triggerOnOptionIndex: 0,
-              delayMinTicks: 1,
-              delayMaxTicks: 2,
-              candidates: [{ requestId: `FIREV4_S${n}_${variant}_END_EXT`, weight: 1 }],
-            },
-            {
-              triggerOnOptionIndex: 1,
-              delayMinTicks: 1,
-              delayMaxTicks: 2,
-              candidates: [{ requestId: `FIREV4_S${n}_${variant}_END_EXT`, weight: 1 }],
-            },
-          ]
-        : [
-            {
-              triggerOnOptionIndex: 0,
-              delayMinTicks: 1,
-              delayMaxTicks: 2,
-              candidates: [{ requestId: `FIREV4_S${n}_${variant}_END_EXT`, weight: 1 }],
-            },
-            {
-              triggerOnOptionIndex: 1,
-              delayMinTicks: 1,
-              delayMaxTicks: 2,
-              candidates: [{ requestId: `FIREV4_S${n}_${variant}_END_DEST`, weight: 1 }],
-            },
-          ];
-
+      // STEP1 — option 0 leads to extinguish, option 1 sacrifices building to protect others
       requests.push({
-        id: `FIREV4_S${n}_${variant}_STEP1`,
+        id: `FIREV4_S${n}_${v}_STEP1`,
         chainId,
         chainRole: 'member',
         canTriggerRandomly: false,
         advancesTick: false,
         portraitId: 'advisor',
         title: '🔥 Fire Response',
-        text: variant === 'A'
-          ? 'The fire rages on. Your people are fighting hard to save the building.'
-          : 'The fire is spreading. A decision must be made — fight or focus resources elsewhere.',
-        options:
-          variant === 'A'
-            ? [
-                { text: 'Organize a bucket brigade', effects: { satisfaction: -2 } },
-                { text: 'Seek aid from neighbors', effects: { gold: -5 } },
-              ]
-            : [
-                { text: 'Fight the fire hard', effects: { gold: -10, satisfaction: -2 } },
-                {
-                  text: 'Focus on other buildings',
-                  effects: { fireRisk: 3, triggerFireOutbreak: true, fireOutbreakBypassCap: false },
-                },
-              ],
-        followUps: step1FollowUps,
+        text: 'The villagers gather with buckets and tools. How should the effort be organized?',
+        options: [
+          { text: 'Form a bucket brigade', effects: { satisfaction: -2 } },
+          {
+            text: 'Sacrifice this building — protect the others',
+            effects: { fireRisk: 3, triggerFireOutbreak: true, fireOutbreakBypassCap: false },
+          },
+        ],
+        followUps: [
+          {
+            triggerOnOptionIndex: 0,
+            delayMinTicks: 1,
+            delayMaxTicks: 2,
+            candidates: [{ requestId: `FIREV4_S${n}_${v}_END_EXT`, weight: 1 }],
+          },
+          {
+            triggerOnOptionIndex: 1,
+            delayMinTicks: 1,
+            delayMaxTicks: 2,
+            candidates: [{ requestId: `FIREV4_S${n}_${v}_END_DEST`, weight: 1 }],
+          },
+        ],
       });
 
-      // ── END_EXT (end, 2 options, advances tick) → extinguish assigned ─
+      // END_EXT — extinguish path
       requests.push({
-        id: `FIREV4_S${n}_${variant}_END_EXT`,
+        id: `FIREV4_S${n}_${v}_END_EXT`,
         chainId,
         chainRole: 'end',
         canTriggerRandomly: false,
@@ -6970,32 +6957,222 @@ function generateFireV4ChainRequests(): Request[] {
         portraitId: 'advisor',
         chainRestartCooldownTicks: 0,
         title: '🔥 Fire Extinguished',
-        text: 'The fire is finally out. The building is damaged but intact. It is time to rebuild trust.',
+        text: 'The bucket brigade worked through the night. The fire is out and the building stands — battered but intact.',
         options: [
-          { text: 'Standard cleanup', effects: { fireRisk: -5 } },
-          { text: 'Invest in prevention', effects: { fireRisk: -12, gold: -20 } },
+          { text: 'Begin repairs', effects: { fireRisk: -5 } },
+          { text: 'Invest in fire prevention', effects: { fireRisk: -12, gold: -20 } },
         ],
       });
 
-      // ── END_DEST (end, 2 options, advances tick) → destroy assigned ─
-      // Only emitted for variant B
-      if (variant === 'B') {
-        requests.push({
-          id: `FIREV4_S${n}_${variant}_END_DEST`,
-          chainId,
-          chainRole: 'end',
-          canTriggerRandomly: false,
-          advancesTick: true,
-          portraitId: 'advisor',
-          chainRestartCooldownTicks: 0,
-          title: '💥 Building Destroyed by Fire',
-          text: 'The fire has destroyed the building. The ruins remain — repairs can be organized later.',
-          options: [
-            { text: 'Clear the debris', effects: { fireRisk: -3 } },
-            { text: 'Leave it for now', effects: { satisfaction: -5 } },
-          ],
-        });
-      }
+      // END_DEST — destroy path
+      requests.push({
+        id: `FIREV4_S${n}_${v}_END_DEST`,
+        chainId,
+        chainRole: 'end',
+        canTriggerRandomly: false,
+        advancesTick: true,
+        portraitId: 'advisor',
+        chainRestartCooldownTicks: 0,
+        title: '💥 Building Lost to Fire',
+        text: 'The building is gone. By letting it burn you shielded the surrounding structures. The ruins can be cleared later.',
+        options: [
+          { text: 'Clear the rubble', effects: { fireRisk: -3, satisfaction: -3 } },
+          { text: 'Leave it for now', effects: { satisfaction: -6 } },
+        ],
+      });
+    }
+
+    // ── VARIANT B: Raging Inferno (all building types) ─────────────────────
+    {
+      const v = 'B';
+      const chainId = `FIREV4_S${n}_${v}`;
+
+      // START
+      requests.push({
+        id: `FIREV4_S${n}_${v}_START`,
+        chainId,
+        chainRole: 'start',
+        canTriggerRandomly: false,
+        advancesTick: false,
+        portraitId: 'advisor',
+        title: '🔥 Raging Fire!',
+        text: 'Flames erupt without warning — thick smoke and raging heat push people back. This fire is fierce.',
+        options: [
+          { text: 'Assess the damage', effects: {} },
+        ],
+        followUps: [
+          {
+            triggerOnOptionIndex: 0,
+            delayMinTicks: 1,
+            delayMaxTicks: 2,
+            candidates: [{ requestId: `FIREV4_S${n}_${v}_STEP1`, weight: 1 }],
+          },
+        ],
+      });
+
+      // STEP1 — option 0 fights at cost (extinguish), option 1 abandons (destroy + bypass-cap outbreak)
+      requests.push({
+        id: `FIREV4_S${n}_${v}_STEP1`,
+        chainId,
+        chainRole: 'member',
+        canTriggerRandomly: false,
+        advancesTick: false,
+        portraitId: 'advisor',
+        title: '🔥 Desperate Measures',
+        text: 'The fire rages with brutal force. Options are limited — every second counts.',
+        options: [
+          { text: 'Spend gold to hire help', effects: { gold: -10, satisfaction: -2 } },
+          {
+            text: 'Let it burn — contain the spread',
+            effects: { satisfaction: -8, triggerFireOutbreak: true, fireOutbreakBypassCap: true },
+          },
+        ],
+        followUps: [
+          {
+            triggerOnOptionIndex: 0,
+            delayMinTicks: 1,
+            delayMaxTicks: 2,
+            candidates: [{ requestId: `FIREV4_S${n}_${v}_END_EXT`, weight: 1 }],
+          },
+          {
+            triggerOnOptionIndex: 1,
+            delayMinTicks: 1,
+            delayMaxTicks: 2,
+            candidates: [{ requestId: `FIREV4_S${n}_${v}_END_DEST`, weight: 1 }],
+          },
+        ],
+      });
+
+      // END_EXT — extinguish path
+      requests.push({
+        id: `FIREV4_S${n}_${v}_END_EXT`,
+        chainId,
+        chainRole: 'end',
+        canTriggerRandomly: false,
+        advancesTick: true,
+        portraitId: 'advisor',
+        chainRestartCooldownTicks: 0,
+        title: '🔥 Fire Defeated',
+        text: 'Gold well spent. The hired hands held the line and the building survived, though the costs were steep.',
+        options: [
+          { text: 'Recover and rebuild', effects: { fireRisk: -6 } },
+          { text: 'Commission a fire watch', effects: { fireRisk: -15, gold: -25 } },
+        ],
+      });
+
+      // END_DEST — destroy path
+      requests.push({
+        id: `FIREV4_S${n}_${v}_END_DEST`,
+        chainId,
+        chainRole: 'end',
+        canTriggerRandomly: false,
+        advancesTick: true,
+        portraitId: 'advisor',
+        chainRestartCooldownTicks: 0,
+        title: '💥 Building Destroyed by Fire',
+        text: 'The inferno consumed the building. The surrounding structures were spared, but the loss weighs heavily on the people.',
+        options: [
+          { text: 'Organize salvage crews', effects: { fireRisk: -4, satisfaction: -4 } },
+          { text: 'Mourn and move on', effects: { satisfaction: -8 } },
+        ],
+      });
+    }
+
+    // ── VARIANT C: Farmstead Emergency (farmstead only) ────────────────────
+    {
+      const v = 'C';
+      const chainId = `FIREV4_S${n}_${v}`;
+
+      // START — fireChainAllowedBuildingTypes restricts this chain to farmstead fires only
+      requests.push({
+        id: `FIREV4_S${n}_${v}_START`,
+        chainId,
+        chainRole: 'start',
+        canTriggerRandomly: false,
+        advancesTick: false,
+        portraitId: 'farmer',
+        title: '🔥 Farmstead Ablaze!',
+        text: 'Your farmstead is ablaze! Smoke billows from the roof as frantic workers scramble to save the livestock.',
+        options: [
+          { text: 'Rush to help', effects: {} },
+        ],
+        fireChainAllowedBuildingTypes: ['farmstead'],
+        followUps: [
+          {
+            triggerOnOptionIndex: 0,
+            delayMinTicks: 1,
+            delayMaxTicks: 2,
+            candidates: [{ requestId: `FIREV4_S${n}_${v}_STEP1`, weight: 1 }],
+          },
+        ],
+      });
+
+      // STEP1 — option 0 saves the grain stores (extinguish), option 1 saves the people (destroy + outbreak)
+      requests.push({
+        id: `FIREV4_S${n}_${v}_STEP1`,
+        chainId,
+        chainRole: 'member',
+        canTriggerRandomly: false,
+        advancesTick: false,
+        portraitId: 'farmer',
+        title: '🔥 Farmstead in Flames',
+        text: 'Flames tear through the farmstead. The harvest stores and livestock are at risk — a hard choice must be made.',
+        options: [
+          { text: 'Form a chain to save the grain stores', effects: { gold: 5, satisfaction: -3 } }, // salvageable grain earns gold
+          {
+            text: 'Let it burn — get everyone to safety',
+            effects: { farmers: -1, triggerFireOutbreak: true, fireOutbreakBypassCap: false },
+          },
+        ],
+        followUps: [
+          {
+            triggerOnOptionIndex: 0,
+            delayMinTicks: 1,
+            delayMaxTicks: 2,
+            candidates: [{ requestId: `FIREV4_S${n}_${v}_END_EXT`, weight: 1 }],
+          },
+          {
+            triggerOnOptionIndex: 1,
+            delayMinTicks: 1,
+            delayMaxTicks: 2,
+            candidates: [{ requestId: `FIREV4_S${n}_${v}_END_DEST`, weight: 1 }],
+          },
+        ],
+      });
+
+      // END_EXT — extinguish path
+      requests.push({
+        id: `FIREV4_S${n}_${v}_END_EXT`,
+        chainId,
+        chainRole: 'end',
+        canTriggerRandomly: false,
+        advancesTick: true,
+        portraitId: 'farmer',
+        chainRestartCooldownTicks: 0,
+        title: '🔥 Farmstead Saved',
+        text: 'The workers held back the flames. The farmstead stands and the grain stores were rescued — a hard-won victory.',
+        options: [
+          { text: 'Patch the roof and carry on', effects: { fireRisk: -5 } },
+          { text: 'Build a stone fire break', effects: { fireRisk: -12, gold: -15 } },
+        ],
+      });
+
+      // END_DEST — destroy path
+      requests.push({
+        id: `FIREV4_S${n}_${v}_END_DEST`,
+        chainId,
+        chainRole: 'end',
+        canTriggerRandomly: false,
+        advancesTick: true,
+        portraitId: 'farmer',
+        chainRestartCooldownTicks: 0,
+        title: '💥 Farmstead Destroyed',
+        text: 'The farmstead is ash. All workers escaped safely, but the loss of a home and harvest leaves families destitute.',
+        options: [
+          { text: 'Distribute emergency provisions', effects: { gold: -10, satisfaction: 3, fireRisk: -3 } },
+          { text: 'Appeal for help from neighbors', effects: { fireRisk: -2, satisfaction: -4 } },
+        ],
+      });
     }
   }
 

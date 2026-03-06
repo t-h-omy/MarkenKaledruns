@@ -56,7 +56,7 @@ export interface ScheduledEvent {
   /** Tick when this event was scheduled (for FIFO ordering) */
   scheduledAtTick: number;
   /** Priority of the scheduled event (default: "normal") */
-  priority?: "info" | "normal";
+  priority?: "info" | "fire" | "normal";
   /** 
    * Authority commit context from the event that scheduled this.
    * Used for debugging and potential future features (e.g., showing player
@@ -644,8 +644,26 @@ function attemptFireOutbreak(
   const ordIdx = Math.floor(getRandomValue() * candidateOrdinals.length);
   const targetUnitOrdinal = candidateOrdinals[ordIdx];
 
-  // 8. Pick variant randomly (A or B)
-  const variant = getRandomValue() < 0.5 ? 'A' : 'B';
+  // 8. Select a fire chain variant compatible with this building type.
+  //    Scan all FIREV4 START requests for this slot and filter by fireChainAllowedBuildingTypes.
+  const slotStarters = fireChainRequests.filter(
+    r => r.id.startsWith(`FIREV4_S${freeSlot.slotIndex}_`) && r.chainRole === 'start'
+  );
+  const eligibleStarters = slotStarters.filter(
+    r => !r.fireChainAllowedBuildingTypes || r.fireChainAllowedBuildingTypes.includes(targetDef.id)
+  );
+  if (eligibleStarters.length === 0) {
+    return { fireState, scheduledEvents };
+  }
+  const starterIdx = Math.floor(getRandomValue() * eligibleStarters.length);
+  const chosenStarter = eligibleStarters[starterIdx];
+  // Extract variant from "FIREV4_S{n}_{variant}_START"
+  const variantMatch = chosenStarter.id.match(/^FIREV4_S\d+_(.+)_START$/);
+  if (!variantMatch) {
+    console.warn(`[Fire Outbreak] Malformed fire chain START request ID: ${chosenStarter.id}`);
+    return { fireState, scheduledEvents };
+  }
+  const variant = variantMatch[1];
 
   // 9. Assign the slot
   const newSlots = fireState.slots.map(s =>
@@ -667,7 +685,8 @@ function attemptFireOutbreak(
 
   // 10. Building tracking sync happens in the caller via syncBuildingTrackingFromSlots.
 
-  // 11. Schedule the START request at next tick with high priority
+  // 11. Schedule the START request immediately at the next tick with fire priority
+  // (highest priority among non-info scheduled events — V4 Section 5.6)
   const startRequestId = `FIREV4_S${freeSlot.slotIndex}_${variant}_START`;
   const newScheduledEvents = [
     ...scheduledEvents,
@@ -675,7 +694,7 @@ function attemptFireOutbreak(
       targetTick: currentTick + 1,
       requestId: startRequestId,
       scheduledAtTick: currentTick,
-      priority: 'normal' as const,
+      priority: 'fire' as const,
     },
   ];
 
@@ -1749,7 +1768,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     let updatedFire = state.fire;
 
     // FIREV4_S{n}_{V}_END_EXT → extinguish: clear slot assignment, unit becomes functional
-    const fireEndExtMatch = state.currentRequestId.match(/^FIREV4_S(\d+)_([AB])_END_EXT$/);
+    const fireEndExtMatch = state.currentRequestId.match(/^FIREV4_S(\d+)_([A-Z]+)_END_EXT$/);
     if (fireEndExtMatch) {
       const slotIndex = parseInt(fireEndExtMatch[1], 10);
       const newSlots = updatedFire.slots.map(s =>
@@ -1762,7 +1781,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     // FIREV4_S{n}_{V}_END_DEST → destroy: unitStatus becomes 'destroyed', chainActive=false
-    const fireEndDestMatch = state.currentRequestId.match(/^FIREV4_S(\d+)_([AB])_END_DEST$/);
+    const fireEndDestMatch = state.currentRequestId.match(/^FIREV4_S(\d+)_([A-Z]+)_END_DEST$/);
     if (fireEndDestMatch) {
       const slotIndex = parseInt(fireEndDestMatch[1], 10);
       const newSlots = updatedFire.slots.map(s =>
