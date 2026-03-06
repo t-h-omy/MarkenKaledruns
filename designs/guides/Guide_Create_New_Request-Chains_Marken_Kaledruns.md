@@ -732,3 +732,278 @@ Minimal small chain (4 requests) as a starting skeleton:
 ```
 
 This gives you a diamond-shaped chain (start → two paths → shared end) with 4 requests, consistent portraits, safe effects, and proper chain metadata. Expand from here.
+
+---
+
+## 9. Fire Request Chains (V4 System)
+
+Fire chains are a special category of request chain triggered automatically when a building catches fire. They differ from regular event chains in several important ways: they are always slot-bound, they must resolve the fire incident (extinguish or destroy the building), and some options can spread fire to other buildings.
+
+### 9.1 Overview
+
+When a fire breaks out (via the outbreak formula in `state.ts`), the engine:
+
+1. Picks a random functional building unit as the target.
+2. Assigns it to a free incident slot (1–10).
+3. Selects a fire chain variant compatible with the building type (see Section 9.4).
+4. Schedules the chain's START request at the next tick with the highest non-info priority.
+
+Every fire chain is therefore:
+- **Slot-specific** — IDs encode the slot index: `FIREV4_S{n}_{VARIANT}_*`
+- **Automatically started** — never triggered by player action directly
+- **Resolution-guaranteed** — every branch must reach either `END_EXT` (extinguish) or `END_DEST` (destroy the building)
+
+### 9.2 Chain Structure
+
+Each fire chain variant consists of **exactly 5 requests per slot**:
+
+| Node      | ID pattern                        | Role     | Options | advancesTick |
+|-----------|-----------------------------------|----------|---------|--------------|
+| START     | `FIREV4_S{n}_{V}_START`           | start    | **2**   | false        |
+| STEP1     | `FIREV4_S{n}_{V}_STEP1`           | member   | 2       | false        |
+| STEP1B    | `FIREV4_S{n}_{V}_STEP1B`          | member   | 2       | false        |
+| END_EXT   | `FIREV4_S{n}_{V}_END_EXT`         | end      | 2       | **true**     |
+| END_DEST  | `FIREV4_S{n}_{V}_END_DEST`        | end      | 2       | **true**     |
+
+The branching shape is always:
+
+```
+START (2 options) ──► STEP1   (option 0 → extinguish or destroy)
+                  └──► STEP1B  (option 1 → extinguish or destroy)
+```
+
+Both STEP1 and STEP1B must offer at least one path to `END_EXT` and at least one path to `END_DEST`.
+
+### 9.3 The START Decision Rule
+
+> **Rule: Every fire START request must present an immediate player decision (2 options).**
+>
+> A fire START must never show a single "acknowledge" button. The player must face a meaningful
+> choice from the very first moment the fire breaks out. Each option should lead to a distinctly
+> different STEP (STEP1 or STEP1B), with different characters, tone, risks, and rewards.
+
+This rule is enforced by `validateRequests()` in `requests.ts`, which treats FIREV4 START requests
+like all other non-info requests (2 options required). Do not add FIREV4 START IDs to the
+single-option exemption list.
+
+**Good START options contrast meaningfully:**
+- Public response vs quiet cover-up
+- Fight the fire vs protect the perimeter
+- Save the people vs save the goods
+- Trust an expert vs act without them
+
+**Bad START options are synonyms:**
+- "Help the villagers" vs "Aid the settlers" ← these are the same choice
+
+### 9.4 Building-Specific vs General Chains
+
+Each building type in the game can have:
+- **1 dedicated fire chain variant** — with content and characters specific to that building type
+- **General chains** — usable for all building types
+
+Current chain assignments (as of V4):
+
+| Variant | Name                  | Building restriction        |
+|---------|-----------------------|-----------------------------|
+| A       | Community Response    | All buildings (general)     |
+| B       | Raging Inferno        | All buildings (general)     |
+| D       | Night Watch Failure   | All buildings (general)     |
+| E       | Wandering Embers      | All buildings (general)     |
+| C       | Farmstead Emergency   | `farmstead` only            |
+| F       | Marketplace Blaze     | `marketplace` only          |
+| G       | Bakery Oven Disaster  | `bakery` only               |
+| H       | Brewery Explosion     | `brewery` only              |
+| I       | Firewood Depot Fire   | `firewood` only             |
+| J       | Well Fire             | `well` only                 |
+
+To restrict a chain to a specific building type, set `fireChainAllowedBuildingTypes` **only on the START request**:
+
+```typescript
+{
+  id: `FIREV4_S${n}_G_START`,
+  chainRole: 'start',
+  fireChainAllowedBuildingTypes: ['bakery'],   // ← only triggered for bakery fires
+  ...
+}
+```
+
+If `fireChainAllowedBuildingTypes` is `undefined`, the chain applies to all building types.
+
+At outbreak time, `attemptFireOutbreak()` in `state.ts` collects all START requests for the free slot, filters by `fireChainAllowedBuildingTypes` against the burning building type, then picks one uniformly at random via the seeded RNG.
+
+### 9.5 Fire Spread
+
+Some chain options can trigger a new fire outbreak as a consequence of a risky player decision. Add the following to an option's `effects` to spread fire:
+
+```typescript
+effects: {
+  triggerFireOutbreak: true,
+  fireOutbreakBypassCap: false,  // true = ignores the concurrent-fire cap
+}
+```
+
+**When to add fire spread:**
+- On options where the player makes an objectively bad or reckless decision (e.g., pouring water on a grease fire, abandoning a position while embers fly)
+- As a risk/reward trade-off for faster or cheaper solutions
+- Thematically: whenever the narrative reason for fire spreading exists (scattered embers, barrel explosions, uncontrolled abandonment)
+
+**When NOT to add fire spread:**
+- On the "correct" or careful option — fire spread should only reward recklessness
+- On END_EXT or END_DEST nodes — fire spread belongs on STEP nodes, where the player still has a choice to make
+
+Use `fireOutbreakBypassCap: true` only when the fire spread is catastrophic (e.g., barrel explosions). Normal fire spread should leave `bypassCap: false`.
+
+### 9.6 Required Fields for Every Fire Chain Request
+
+All fire chain requests (FIREV4 and REPAIRV4) must include:
+
+```typescript
+{
+  id: string;                      // Must match pattern FIREV4_S{n}_{V}_{ROLE}
+  chainId: string;                 // Must be FIREV4_S{n}_{V}
+  chainRole: 'start' | 'member' | 'end';
+  canTriggerRandomly: false;       // ALWAYS false — fire chains never trigger randomly
+  advancesTick: false | true;      // false for START/STEP, true for END nodes
+  portraitId: PortraitId;          // Must be a valid portrait key
+  title: string;                   // Non-empty
+  text: string;                    // Non-empty, sets the scene
+  options: Option[];               // Always 2 (except REPAIRV4 STARTs which have 1)
+  chainRestartCooldownTicks: 0;    // Required on every 'end' node
+}
+```
+
+### 9.7 Adding a New Fire Chain Variant
+
+Follow these steps to add a new fire chain variant (e.g., Variant `K`):
+
+1. **Choose a theme and character** — The chain should have a memorable character who drives the narrative. Give them a name and a clear personality.
+
+2. **Decide building restriction** — Is this general (all buildings) or specific to one building type? If specific, set `fireChainAllowedBuildingTypes` on the START.
+
+3. **Design the START decision** — Write two contrasting options that immediately branch the chain. Follow the START Decision Rule (Section 9.3).
+
+4. **Design STEP1 and STEP1B** — Each STEP is a consequential middle decision:
+   - One option leads to `END_EXT` (extinguish)
+   - One option leads to `END_DEST` (destroy)
+   - At least one option in the chain (STEP1 or STEP1B) should carry `triggerFireOutbreak: true` on a risky path
+
+5. **Write END_EXT and END_DEST** — These are aftermath cards. The fire is already resolved. The options represent how the player responds to the outcome (rebuild, punish, compensate, etc.).
+
+6. **Add the variant inside `generateFireV4ChainRequests()`** — Add a new `{ }` block inside the `for (let n = 1; n <= 10; n++)` loop, following the same pattern as existing variants.
+
+7. **Validate** — Run the app in development mode (`npm run dev`) to trigger `validateRequests()`. Fix any reported errors.
+
+#### Minimal example — new general variant K
+
+```typescript
+// ── VARIANT K: Mill Fire (mill only) ────────────────────────────────────
+// Character: Miller Oskar — practical and calm under pressure
+{
+  const v = 'K';
+  const chainId = `FIREV4_S${n}_${v}`;
+
+  requests.push({
+    id: `FIREV4_S${n}_${v}_START`,
+    chainId,
+    chainRole: 'start',
+    canTriggerRandomly: false,
+    advancesTick: false,
+    portraitId: 'craftsman',
+    title: '🔥 The Mill is on Fire!',
+    text: 'Miller Oskar runs up: "The millstone cracked — the grain dust ignited! It can blow the whole floor!" Two options snap into your mind.',
+    options: [
+      { text: 'Seal the mill — prevent the dust from spreading!', effects: { gold: -5 } },
+      { text: 'Soak the floor with water — kill the dust before it explodes!', effects: {} },
+    ],
+    // fireChainAllowedBuildingTypes: ['mill'],   // uncomment if building-specific
+    followUps: [
+      { triggerOnOptionIndex: 0, delayMinTicks: 1, delayMaxTicks: 2, candidates: [{ requestId: `FIREV4_S${n}_${v}_STEP1`, weight: 1 }] },
+      { triggerOnOptionIndex: 1, delayMinTicks: 1, delayMaxTicks: 2, candidates: [{ requestId: `FIREV4_S${n}_${v}_STEP1B`, weight: 1 }] },
+    ],
+  });
+
+  requests.push({
+    id: `FIREV4_S${n}_${v}_STEP1`,
+    chainId,
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    advancesTick: false,
+    portraitId: 'craftsman',
+    title: '🔥 Sealed but Burning',
+    text: 'The sealing holds — no explosion. But the fire inside still needs fighting.',
+    options: [
+      { text: 'Extinguish through the hatch — careful but slow', effects: { fireRisk: -8 } },
+      { text: 'Abandon the mill — it\'s too risky to enter', effects: { satisfaction: -4 } },
+    ],
+    followUps: [
+      { triggerOnOptionIndex: 0, delayMinTicks: 1, delayMaxTicks: 2, candidates: [{ requestId: `FIREV4_S${n}_${v}_END_EXT`, weight: 1 }] },
+      { triggerOnOptionIndex: 1, delayMinTicks: 1, delayMaxTicks: 2, candidates: [{ requestId: `FIREV4_S${n}_${v}_END_DEST`, weight: 1 }] },
+    ],
+  });
+
+  requests.push({
+    id: `FIREV4_S${n}_${v}_STEP1B`,
+    chainId,
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    advancesTick: false,
+    portraitId: 'craftsman',
+    title: '🔥 Wet Floor, Rising Smoke',
+    text: 'The water quenches some of the dust — but the wooden beams are already burning. Oskar: "We can still get in there!"',
+    options: [
+      { text: 'Push in and fight the fire directly', effects: { satisfaction: -2, fireRisk: -6 } },
+      { text: 'Too dangerous — pull back before the beams go!', effects: { triggerFireOutbreak: true, fireOutbreakBypassCap: false } },
+    ],
+    followUps: [
+      { triggerOnOptionIndex: 0, delayMinTicks: 1, delayMaxTicks: 2, candidates: [{ requestId: `FIREV4_S${n}_${v}_END_EXT`, weight: 1 }] },
+      { triggerOnOptionIndex: 1, delayMinTicks: 1, delayMaxTicks: 2, candidates: [{ requestId: `FIREV4_S${n}_${v}_END_DEST`, weight: 1 }] },
+    ],
+  });
+
+  requests.push({
+    id: `FIREV4_S${n}_${v}_END_EXT`,
+    chainId,
+    chainRole: 'end',
+    canTriggerRandomly: false,
+    advancesTick: true,
+    portraitId: 'craftsman',
+    chainRestartCooldownTicks: 0,
+    title: '🔥 Mill Fire Contained',
+    text: 'The mill stands. Oskar is already planning which millstone to replace first.',
+    options: [
+      { text: 'Commission a safer milling setup', effects: { fireRisk: -8, gold: -15 } },
+      { text: 'Business as usual — Oskar will manage', effects: { satisfaction: 2 } },
+    ],
+  });
+
+  requests.push({
+    id: `FIREV4_S${n}_${v}_END_DEST`,
+    chainId,
+    chainRole: 'end',
+    canTriggerRandomly: false,
+    advancesTick: true,
+    portraitId: 'craftsman',
+    chainRestartCooldownTicks: 0,
+    title: '💥 Mill Destroyed',
+    text: 'The mill is gone. Grain will have to be ground by hand until it\'s rebuilt. Oskar stares at the ruins without a word.',
+    options: [
+      { text: 'Help Oskar rebuild as fast as possible', effects: { gold: -20, satisfaction: 3 } },
+      { text: 'Let Oskar handle reconstruction himself', effects: { satisfaction: -3 } },
+    ],
+  });
+}
+```
+
+### 9.8 Repair Chains
+
+After a building is destroyed, a repair chain can be started from the Construction screen (when `chainActive=false`). Repair chains use the prefix `REPAIRV4_S{n}_*` and follow a simpler structure:
+
+```
+REPAIRV4_S{n}_START     (start, 1 option, tickless)
+REPAIRV4_S{n}_PROGRESS  (member, 2 options, tickless)
+REPAIRV4_S{n}_END       (end, 2 options, advances tick)
+  option 0 → Reconstruct (clears slot, unit becomes functional)
+  option 1 → Leave destroyed (chainActive=false, slot stays assigned)
+```
+
+Repair START requests intentionally have **1 option** (they are informational) and are exempt from the 2-option rule. They are not fire START requests, so the START Decision Rule (Section 9.3) does not apply.
