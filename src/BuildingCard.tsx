@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react'
 import './BuildingCard.css'
 import type { BuildingDefinition, BuildingTracking } from './game/buildings'
 import { hasAnyBuildingState, getEffectiveBuildingCount } from './game/buildings'
-import { FIRE_SYSTEM_CONFIG } from './game/state'
 
 export type BuildingStatus = 'locked' | 'available' | 'needed' | 'no-gold' | 'fulfilled'
 
@@ -18,10 +17,13 @@ interface BuildingCardProps {
   requiredCount: number;
   status: BuildingStatus;
   isHighlighted?: boolean;
+  /** Number of destroyed units whose repair chain is currently active (cannot repair) */
+  lockedDestroyedCount: number;
+  /** Number of destroyed units whose repair chain is inactive (can start repair) */
+  repairableDestroyedCount: number;
   onBuild: (buildingId: string) => void;
   onBuildMultiple?: (buildingId: string) => void;
-  onExtinguish?: (buildingId: string) => void;
-  onRepair?: (buildingId: string) => void;
+  onStartRepairChain?: (buildingId: string) => void;
 }
 
 function BuildingCard({
@@ -32,10 +34,11 @@ function BuildingCard({
   requiredCount,
   status,
   isHighlighted = false,
+  lockedDestroyedCount,
+  repairableDestroyedCount,
   onBuild,
   onBuildMultiple,
-  onExtinguish,
-  onRepair
+  onStartRepairChain,
 }: BuildingCardProps) {
   const built = tracking.buildingCount
   const shortage = Math.max(0, requiredCount - built)
@@ -169,47 +172,39 @@ function BuildingCard({
           <div className="building-card-actions">
             {hasAnyBuildingState(tracking) ? (
               <>
-                {/* State status line */}
+                {/* State status breakdown */}
                 <div className="building-state-status">
-                  {tracking.onFireCount > 0 && <span className="state-tag state-fire">🔥 {tracking.onFireCount}</span>}
-                  {tracking.destroyedCount > 0 && <span className="state-tag state-destroyed">🧱 {tracking.destroyedCount}</span>}
+                  {tracking.onFireCount > 0 && (
+                    <span className="state-tag state-fire">🔥 On fire: {tracking.onFireCount}</span>
+                  )}
+                  {tracking.destroyedCount > 0 && (
+                    <>
+                      <span className="state-tag state-destroyed">💥 Destroyed: {tracking.destroyedCount}</span>
+                      {lockedDestroyedCount > 0 && (
+                        <span className="state-tag state-locked">🔒 Locked: {lockedDestroyedCount}</span>
+                      )}
+                      {repairableDestroyedCount > 0 && (
+                        <span className="state-tag state-repairable">🛠 Repairable: {repairableDestroyedCount}</span>
+                      )}
+                    </>
+                  )}
                   {tracking.onStrikeCount > 0 && <span className="state-tag state-strike">⚑ {tracking.onStrikeCount}</span>}
                   <span className="state-effective">Effective: {getEffectiveBuildingCount(tracking)} / {tracking.buildingCount}</span>
                 </div>
-                {/* Primary state action button */}
-                {tracking.onFireCount > 0 ? (() => {
-                  // extinguishCost.gold is negative (e.g. -15) since it's an effect; display absolute value
-                  const extinguishGoldCost = Math.abs(FIRE_SYSTEM_CONFIG.extinguishCost.gold ?? 0);
-                  const canAfford = gold >= extinguishGoldCost;
-                  return (
-                    <button
-                      className={`building-state-action-button state-action-fire${!canAfford ? ' state-action-disabled' : ''}`}
-                      onClick={() => canAfford && onExtinguish?.(definition.id)}
-                      disabled={!canAfford}
-                    >
-                      🔥 Extinguish Fire (1) — {extinguishGoldCost}g
-                      {!canAfford && <span className="state-action-no-gold"> (not enough gold)</span>}
-                    </button>
-                  );
-                })() : tracking.destroyedCount > 0 ? (() => {
-                  const repairGoldCost = Math.ceil(definition.cost * FIRE_SYSTEM_CONFIG.repairCostPercentOfBuildCost);
-                  const canAfford = gold >= repairGoldCost;
-                  return (
-                    <button
-                      className={`building-state-action-button state-action-repair${!canAfford ? ' state-action-disabled' : ''}`}
-                      onClick={() => canAfford && onRepair?.(definition.id)}
-                      disabled={!canAfford}
-                    >
-                      🧱 Repair (1) — {repairGoldCost}g
-                      {!canAfford && <span className="state-action-no-gold"> (not enough gold)</span>}
-                    </button>
-                  );
-                })() : tracking.onStrikeCount > 0 ? (
+                {/* Repair chain action (V4): only show for destroyed, not for on_fire */}
+                {repairableDestroyedCount > 0 ? (
                   <button
-                    className="building-state-action-button state-action-strike"
+                    className="building-state-action-button state-action-repair"
+                    onClick={() => onStartRepairChain?.(definition.id)}
+                  >
+                    🛠 Repair building
+                  </button>
+                ) : lockedDestroyedCount > 0 && tracking.onFireCount === 0 ? (
+                  <button
+                    className="building-state-action-button state-action-disabled"
                     disabled
                   >
-                    ⚑ End Strike (1) — not implemented
+                    🔒 Repair locked until incident resolves
                   </button>
                 ) : null}
               </>

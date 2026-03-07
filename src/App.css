@@ -1651,3 +1651,16 @@
   color: #ccc;
   margin-top: 0.15rem;
 }
+
+.fire-chain-inactive-chip {
+  display: inline-block;
+  background: rgba(200, 200, 200, 0.18);
+  color: #aaa;
+  border-radius: 3px;
+  padding: 0.05rem 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  vertical-align: middle;
+  margin-left: 0.3rem;
+}

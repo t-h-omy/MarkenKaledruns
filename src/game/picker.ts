@@ -188,8 +188,8 @@ export function pickNextRequest(
   let stats: Stats;
   let actualLastRequestId: string;
   let tick: number = 0;
-  let scheduledEvents: Array<{ targetTick: number; requestId: string; scheduledAtTick: number; priority?: "info" | "normal" }> = [];
-  let chainStatus: Record<string, { active: boolean; completedTick?: number }> = {};
+  let scheduledEvents: Array<{ targetTick: number; requestId: string; scheduledAtTick: number; priority?: "info" | "fire" | "normal" }> = [];
+  let chainStatus: Record<string, { active: boolean; completedTick?: number; cooldownTicks?: number }> = {};
   let requestTriggerCounts: Record<string, number> = {};
   let gameState: GameState | null = null;
 
@@ -289,8 +289,10 @@ export function pickNextRequest(
   const dueEvents = scheduledEvents.filter(event => event.targetTick <= tick);
   
   if (dueEvents.length > 0) {
-    // Separate info and normal priority events
+    // Separate events by priority tier
     const infoEvents = dueEvents.filter(event => event.priority === "info");
+    // 'fire' priority: fire chain START events — highest priority among non-info events (V4 Section 5.6)
+    const fireEvents = dueEvents.filter(event => event.priority === "fire");
     const normalEvents = dueEvents.filter(event => event.priority === "normal" || event.priority === undefined);
     
     // Helper to process events in priority order
@@ -431,6 +433,12 @@ export function pickNextRequest(
     if (infoEvents.length > 0) {
       const infoRequest = processEvents(infoEvents);
       if (infoRequest) return infoRequest;
+    }
+    
+    // Priority 1a.5: Process fire chain events (highest priority among non-info scheduled events)
+    if (fireEvents.length > 0) {
+      const fireRequest = processEvents(fireEvents);
+      if (fireRequest) return fireRequest;
     }
     
     // Priority 1b: Process normal priority events

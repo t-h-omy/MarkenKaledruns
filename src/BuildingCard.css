@@ -409,6 +409,16 @@
   color: #c47832;
 }
 
+.state-locked {
+  background: rgba(120, 80, 160, 0.2);
+  color: #aa66cc;
+}
+
+.state-repairable {
+  background: rgba(60, 140, 100, 0.2);
+  color: #5cbf8a;
+}
+
 .state-strike {
   background: rgba(200, 200, 0, 0.2);
   color: #cccc00;

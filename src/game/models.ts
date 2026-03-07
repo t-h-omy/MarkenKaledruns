@@ -45,6 +45,13 @@ export interface Effect {
   landForces?: number;
   /** Change in authority level */
   authority?: number;
+  /**
+   * If true, trigger a new fire outbreak (V4 fire system).
+   * Uses the standard outbreak logic; bypassCap controls whether the concurrent-fire cap is enforced.
+   */
+  triggerFireOutbreak?: boolean;
+  /** When triggerFireOutbreak is true, set this to true to bypass the concurrent-fire cap */
+  fireOutbreakBypassCap?: boolean;
 }
 
 /**
@@ -243,91 +250,74 @@ export interface Request {
   authorityMax?: number;
   /** Optional portrait to display on the request screen (key from portrait registry) */
   portraitId?: PortraitId;
+  /**
+   * If set, this fire chain START request is only eligible when a fire breaks out in one
+   * of these building type IDs. Undefined means the chain applies to all building types.
+   * Only checked during outbreak variant selection (V4 Section 5.6) — set this field only
+   * on START requests (chainRole='start') of FIREV4 chains.
+   */
+  fireChainAllowedBuildingTypes?: string[];
 }
 
-// ─── Fire System V3 Types ────────────────────────────────────────────
+// ─── Fire System V4 Types ────────────────────────────────────────────
 
 /**
- * Fire chain severity tier.
+ * V4 incident slot – ties one building unit to one request chain.
+ * Replaces the V3 FireChainSlotState.
  */
-export type FireTier = 'minor' | 'major' | 'catastrophic';
-
-/**
- * Runtime state for a single fire chain slot (1..10).
- */
-export interface FireChainSlotState {
+export interface FireIncidentSlotState {
   /** Slot index, always 1..10 */
   slotIndex: number;
-  /** Whether this slot has an active fire chain */
-  active: boolean;
-  /** Severity tier of the active fire chain */
-  tier?: FireTier;
-  /** Building type targeted by this fire chain */
+  /** Whether this slot is currently assigned to an incident */
+  assigned: boolean;
+  /** Whether a request chain is actively running right now */
+  chainActive: boolean;
+  /** Kind of chain currently in the slot */
+  chainKind?: 'fire' | 'repair';
+  /** Variant of the fire chain (e.g. 'A' | 'B') */
+  chainVariantId?: string;
+  /** Building type targeted by this incident */
   targetBuildingId?: string;
-  /** Tick when this fire chain started */
+  /** Ordinal of the specific building unit (1..buildingCount) */
+  targetUnitOrdinal?: number;
+  /** Current status of the targeted unit */
+  unitStatus?: 'on_fire' | 'destroyed';
+  /** Tick when this incident was assigned */
+  assignedTick?: number;
+  /** Tick when the current chain started */
   startedTick?: number;
-  /** Number of on-fire units initially applied by this chain */
-  initialOnFireApplied?: number;
-  /** Whether this chain was aborted by manual extinguish */
-  abortedByManualExtinguish?: boolean;
 }
 
 /**
- * A queued fire info message to be shown as a synthetic info request on the next tick.
- */
-export interface FireInfoMessage {
-  /** Type of fire info message */
-  type: 'SPREAD_OR_DESTROY' | 'ALL_EXTINGUISHED_ABORT';
-  /** Map of building IDs to newly on-fire count deltas */
-  newOnFireByBuildingId?: Record<string, number>;
-  /** Map of building IDs to newly destroyed count deltas */
-  newDestroyedByBuildingId?: Record<string, number>;
-}
-
-/**
- * Fire runtime state container on GameState.
+ * Fire runtime state container on GameState (V4).
  */
 export interface FireState {
-  /** Fixed 10 fire chain slots */
-  slots: FireChainSlotState[];
-  /** Queued info messages for next tick */
-  pendingInfoQueue: FireInfoMessage[];
+  /** Fixed 10 incident slots */
+  slots: FireIncidentSlotState[];
 }
 
 /**
- * Tier rules for fire chain probability and initial damage.
- */
-export interface FireTierRule {
-  tier: FireTier;
-  minFireRisk: number;
-  maxFireRisk: number;
-  weight: number;
-  initialOnFireMin: number;
-  initialOnFireMax: number;
-}
-
-/**
- * Configuration for the fire system.
+ * Configuration for the fire system (V4).
  */
 export interface FireSystemConfig {
+  /** Intercept for the linear outbreak chance formula */
   baseOffset: number;
+  /** Slope for the linear outbreak chance formula */
   factor: number;
+  /** Minimum outbreak chance (%) */
   chanceMin: number;
+  /** Maximum outbreak chance (%) */
   chanceMax: number;
 
-  maxConcurrentChainsByRisk: Array<{ minRisk: number; maxRisk: number; maxChains: number }>;
+  /**
+   * Maximum simultaneous on_fire incidents by fireRisk band.
+   * Natural outbreaks are blocked when this cap is reached.
+   */
+  maxConcurrentByRisk: Array<{ minRisk: number; maxRisk: number; maxFires: number }>;
 
-  spreadChancePerBurningBuilding: number;
-  destroyChancePerBurningBuilding: number;
-
-  /** Repair cost as a fraction of the original build cost (0.75 = 75%) */
+  /** Repair cost as a fraction of the original build cost (0.5 = 50%) */
   repairCostPercentOfBuildCost: number;
-
-  extinguishCost: Effect;
-  repairCostOverride?: Effect;
 
   /** Fixed: 10 */
   chainSlots: number;
-
-  tierRules: FireTierRule[];
 }
