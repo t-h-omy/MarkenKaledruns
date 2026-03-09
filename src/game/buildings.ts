@@ -3,6 +3,9 @@
  * Replaces the old Needs system with proactive building mechanics.
  */
 
+/** Number of farmers housed per farmstead building. Used for capacity checks and overcrowding. */
+export const FARMERS_PER_FARMSTEAD = 20;
+
 /**
  * Definition of a building type that can be constructed by the player.
  */

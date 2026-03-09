@@ -8,7 +8,7 @@ import { infoRequests, authorityInfoRequests, eventRequests, fireChainRequests }
 import { pickNextRequest, selectWeightedCandidate, getRandomValue, resetRandom } from './picker';
 import { needModifiers } from './modifiers';
 import type { BuildingTracking } from './buildings';
-import { BUILDING_DEFINITIONS, BUILDING_UNLOCK_GROUPS, isBuildingActive, calculateRequiredBuildings, getBuildingDef, createInitialBuildingTracking, hasAnyBuildingState, getEffectiveBuildingCount } from './buildings';
+import { BUILDING_DEFINITIONS, BUILDING_UNLOCK_GROUPS, isBuildingActive, calculateRequiredBuildings, getBuildingDef, createInitialBuildingTracking, hasAnyBuildingState, getEffectiveBuildingCount, FARMERS_PER_FARMSTEAD } from './buildings';
 import { isDistrictComplete, getDistrictDef } from './districts';
 
 /**
@@ -517,7 +517,7 @@ function applyOvercrowdingPenalties(
 ): { stats: Stats; changes: AppliedChange[] } {
   const farmsteadTracking = buildingTracking['farmstead'];
   const farmsteadCount = farmsteadTracking ? getEffectiveBuildingCount(farmsteadTracking) : 0;
-  const capacity = farmsteadCount * 20;
+  const capacity = farmsteadCount * FARMERS_PER_FARMSTEAD;
   const overflow = Math.max(0, stats.farmers - capacity);
 
   if (overflow === 0) {
@@ -812,15 +812,31 @@ function checkBuildingReminders(
  * Applies baseline rules according to POF_SPEC.md:
  * - gold += floor(0.1 * (farmers * (satisfaction / 100)))
  * - farmers += floor(health / 10)
+ *
+ * Positive baseline population growth is hard-capped by farmstead capacity.
+ * Negative growth (population loss) still applies normally.
+ * Event-based population gains are NOT affected (they bypass this function).
  */
-function applyBaseline(stats: Stats): Stats {
+function applyBaseline(stats: Stats, buildingTracking: Record<string, BuildingTracking>): Stats {
   const goldIncome = Math.floor(0.15 * (stats.farmers * ((stats.satisfaction-10) / 100)));
   const farmerGrowth = Math.floor((stats.health+20) / 41);
+
+  const farmsteadTracking = buildingTracking['farmstead'];
+  const farmsteadCapacity = (farmsteadTracking ? getEffectiveBuildingCount(farmsteadTracking) : 0) * FARMERS_PER_FARMSTEAD;
+
+  // Only apply positive baseline growth if below farmstead capacity
+  // Negative growth (population loss) still applies normally
+  let appliedGrowth: number;
+  if (farmerGrowth > 0 && stats.farmers >= farmsteadCapacity) {
+    appliedGrowth = 0; // Block baseline growth — capacity reached
+  } else {
+    appliedGrowth = farmerGrowth;
+  }
 
   return {
     ...stats,
     gold: stats.gold + goldIncome,
-    farmers: stats.farmers + farmerGrowth,
+    farmers: stats.farmers + appliedGrowth,
   };
 }
 
@@ -1989,7 +2005,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     // 2. Apply baseline rules and track separately
     const beforeBaseline = { ...stats };
     const farmersBefore = stats.farmers;
-    stats = applyBaseline(stats);
+    stats = applyBaseline(stats, updatedBuildingTracking);
     stats = clampStats(stats);
     const farmersAfter = stats.farmers;
 

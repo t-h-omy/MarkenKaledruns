@@ -308,6 +308,8 @@ gold += floor(0.1 × farmers × (satisfaction - 10) / 100)
 farmers += floor((health - 25) / 20)
 ```
 
+**Population growth cap:** Positive baseline growth is hard-capped by farmstead capacity (`FARMERS_PER_FARMSTEAD = 20` per farmstead). If `farmers >= farmsteadCapacity`, baseline growth is blocked (set to 0). Negative baseline growth (population loss) still applies normally. Event-based population gains (via `Effect`) are **not** blocked by this cap — they bypass the baseline formula and can push population above capacity, triggering overcrowding mechanics.
+
 ### 6.3 Overcrowding
 
 When farmers exceed farmstead capacity (each farmstead houses 20 farmers), overcrowding penalties apply in tiers:
