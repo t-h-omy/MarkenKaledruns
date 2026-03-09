@@ -4756,6 +4756,7 @@ export const eventRequests: Request[] = [
     portraitId: 'craftsman',
     options: [
       { text: 'TOO BAD', effects: {landForces: -3, authority: -1} },
+      { text: 'WE\'LL MANAGE', effects: {satisfaction: -2} },
     ],
   },
   {
@@ -4832,10 +4833,17 @@ export const eventRequests: Request[] = [
     portraitId: 'arkanat_mage',
     options: [
       { text: 'SEE HIM OUT', effects: { authority: 1 } },
+      { text: 'GOOD RIDDANCE', effects: { satisfaction: 1 } },
     ],
     followUps: [
       {
         triggerOnOptionIndex: 0,
+        delayMinTicks: 0,
+        delayMaxTicks: 0,
+        candidates: [{ requestId: 'CHAIN_ARKANAT_DEBRIEF', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
         delayMinTicks: 0,
         delayMaxTicks: 0,
         candidates: [{ requestId: 'CHAIN_ARKANAT_DEBRIEF', weight: 1 }],
@@ -4917,6 +4925,7 @@ export const eventRequests: Request[] = [
     portraitId: 'advisor',
     options: [
       { text: 'NOTED', effects: {} },
+      { text: 'WE\'RE PREPARED', effects: {} },
     ],
   },
 
@@ -5053,6 +5062,7 @@ export const eventRequests: Request[] = [
     portraitId: 'advisor',
     options: [
       { text: 'MOVE FORWARD', effects: {} },
+      { text: 'LET IT GO', effects: {} },
     ],
   },
 

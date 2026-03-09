@@ -367,8 +367,12 @@ main.tsx
       ├─ Game Over Screen                 # Bankruptcy display + restart button
       ├─ <ConstructionScreen />           # src/ConstructionScreen.tsx (overlay)
       │    ├─ Active Construction Panel   # Shows current build progress (when active)
-      │    └─ <BuildingCard />[]          # src/BuildingCard.tsx (one per building type)
-      │         └─ <BuildMultipleModal /> # src/BuildMultipleModal.tsx (bulk build dialog)
+      │    ├─ Capacity Buildings Section  # Farmstead, Bakery, Brewery, Firewood, Well
+      │    └─ District Sections[]         # Commerce, Military, Faith/Relief
+      │         ├─ District Header        # Name, completion progress (e.g. "1/2 complete")
+      │         ├─ Completion Hint        # "Completing this district unlocks advanced event chains"
+      │         └─ <BuildingCard />[]     # District buildings with strategic info
+      │              └─ <BuildMultipleModal /> # src/BuildMultipleModal.tsx (only for repeatable buildings)
       └─ <LogScreen />                    # src/LogScreen.tsx (decision history overlay)
 ```
 
@@ -377,9 +381,9 @@ main.tsx
 | Component | File | Description |
 |-----------|------|-------------|
 | `App` | `App.tsx` | Main game component. Manages all game state via `useReducer`. Renders stats, requests, options, combat UI, modals. Contains animation logic for stat changes and flying deltas. Request-screen JSX is grouped in `renderRequestPanel()` using BEM-style layout: `request-panel__header` (portrait + content), `request-panel__options` with `decision-card` buttons containing `decision-card__label` and `decision-card__effects`. Effect chips include icons matching the top resource bar emoji (💰 Gold, 😊 Satisfaction, ❤️ Health, 🔥 Fire Risk, 👨‍🌾 Farmers, ⚔️ Land Forces, 👑 Authority) via the `EFFECT_ICONS` lookup. Portrait is resolved from `currentRequest.portraitId` via the portrait registry (`PORTRAITS`); placeholder is shown when no portrait is defined. Portrait stays left of the text on all screen sizes using a responsive clamped width (`clamp(128px, 28vw, 220px)`), `aspect-ratio: 2/3` (3:2 vertical), and `align-self: flex-start` to ensure consistent proportions across all requests. Request text area uses `flex: 1` to grow naturally and `overflow-y: auto` with a responsive `max-height` via `clamp()` so most texts render without a scrollbar while very long texts scroll internally, keeping option cards visible. Root `.app` container uses `100dvh`/`100svh` viewport units with `env(safe-area-inset-bottom)` padding so the bottom action bar (LOG / CONSTRUCTION) stays visible and tappable on mobile browsers while browser navigation bars are visible. `viewport-fit=cover` is set in `index.html`. Request UI uses a medieval / light high-fantasy visual theme via CSS variables (`--mk-*`) defined in `:root`: dark stone surfaces, muted gold headings, ivory body text, readable positive/negative/neutral effect chips, and restrained royal-blue interactive accents with visible focus rings. |
-| `ConstructionScreen` | `ConstructionScreen.tsx` | Full-screen overlay showing all buildings as a grid. Opened via a button in the main UI. Shows building states (locked/unlocked/built/deficit). When `activeConstruction` is set, displays an **Active Construction Panel** at the top showing the building name, icon, district name, remaining ticks, and a progress bar. All build buttons on other cards are disabled with "Construction in progress" text while a build is active. The currently-building card receives a distinct visual state (golden animated border). Receives `activeConstruction` and `currentTick` as props from `App`. |
-| `BuildingCard` | `BuildingCard.tsx` | Individual card displaying one building type: icon, name, description, cost, progress (built/required). When building has no active state: shows build buttons. When building has active state (fire/destroyed/strike): hides build controls and shows state action button (extinguish/repair) with state counts and effective count display. Accepts `constructionActive` boolean (disables build buttons with "Construction in progress" when true) and `activelyBuilding` boolean (shows "Building..." state with animated golden styling). |
-| `BuildMultipleModal` | `BuildMultipleModal.tsx` | Modal dialog for building multiple instances at once. Shows cost calculation and gold validation. |
+| `ConstructionScreen` | `ConstructionScreen.tsx` | Full-screen overlay showing buildings grouped by district sections. **Capacity Buildings** section at top (Farmstead, Bakery, etc.), followed by **district sections** (Commerce, Military, Faith/Relief). Each district section shows a header with the district name, completion progress (e.g., "1/2 buildings complete" or "✅ District Complete"), and a hint about unlocking event chains. Completed districts get green-tinted styling. When `activeConstruction` is set, displays an **Active Construction Panel** at the top showing the building name, icon, district name, remaining ticks, and a progress bar. All build buttons on other cards are disabled with "Construction in progress" text while a build is active. Non-repeatable district buildings that are already built show a "✅ Built" overlay badge. Build Multiple is only offered for repeatable buildings with shortage > 1. Receives `activeConstruction`, `currentTick`, and `completedDistricts` as props from `App`. |
+| `BuildingCard` | `BuildingCard.tsx` | Individual card displaying one building type: icon, name, description, cost, progress (built/required). Shows **district name tag** (📍) for district buildings, **construction time range** (⏱ Build: X–Y turns), **repeatable indicator** (♻️ Repeatable / 🔒 One-time construction), and **event chain hints** (italic text for buildings with `eventChainUnlocksOnComplete`). Non-repeatable buildings already built show "✅ Already Built" badge and disabled build button. When building has active state (fire/destroyed/strike): hides build controls and shows state action button (extinguish/repair) with state counts and effective count display. Accepts `constructionActive` boolean (disables build buttons with "Construction in progress" when true) and `activelyBuilding` boolean (shows "Building..." state with animated golden styling). |
+| `BuildMultipleModal` | `BuildMultipleModal.tsx` | Modal dialog for building multiple instances at once. Only available for repeatable buildings. Shows cost calculation and gold validation. |
 | `LogScreen` | `LogScreen.tsx` | Full-screen overlay listing all past decisions in reverse chronological order. Shows tick, source, option chosen, and stat deltas. Closeable with Escape key. |
 
 ### Styling
@@ -389,10 +393,10 @@ All styling is in plain CSS files co-located with their components. No CSS-in-JS
 | CSS File | Lines | Scope |
 |----------|-------|-------|
 | `App.css` | ~1650 | Main game layout, stats bars, request panel (BEM layout), decision cards, options, animations, medieval theme variables |
-| `BuildingCard.css` | ~385 | Building card appearance and states |
+| `BuildingCard.css` | ~560 | Building card appearance, states, district tags, build time, event hints |
 | `LogScreen.css` | ~275 | Decision log layout and entries |
 | `BuildMultipleModal.css` | ~230 | Bulk build modal styling |
-| `ConstructionScreen.css` | ~145 | Construction overlay grid layout |
+| `ConstructionScreen.css` | ~300 | Construction overlay, district sections, completion indicators |
 | `index.css` | ~40 | Global resets and base styles |
 
 ---
