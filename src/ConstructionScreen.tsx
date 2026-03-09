@@ -98,6 +98,10 @@ function ConstructionScreen({
     handleCloseBuildMultiple()
   }
   
+  /** Whether Build Multiple should be offered for this building */
+  const shouldShowBuildMultiple = (def: BuildingDefinition, shortage: number) =>
+    def.repeatable && shortage > 1
+  
   // Calculate building status
   const getBuildingStatus = (def: BuildingDefinition): BuildingStatus => {
     const tracking = buildingTracking[def.id]
@@ -253,7 +257,7 @@ function ConstructionScreen({
                     lockedDestroyedCount={lockedDestroyedCount}
                     repairableDestroyedCount={repairableDestroyedCount}
                     onBuild={onBuild}
-                    onBuildMultiple={def.repeatable && shortage > 1 ? handleOpenBuildMultiple : undefined}
+                    onBuildMultiple={shouldShowBuildMultiple(def, shortage) ? handleOpenBuildMultiple : undefined}
                     onStartRepairChain={onStartRepairChain}
                     constructionActive={!!activeConstruction}
                     activelyBuilding={activeConstruction?.buildingId === def.id}
@@ -318,7 +322,7 @@ function ConstructionScreen({
                       lockedDestroyedCount={lockedDestroyedCount}
                       repairableDestroyedCount={repairableDestroyedCount}
                       onBuild={onBuild}
-                      onBuildMultiple={def.repeatable && shortage > 1 ? handleOpenBuildMultiple : undefined}
+                      onBuildMultiple={shouldShowBuildMultiple(def, shortage) ? handleOpenBuildMultiple : undefined}
                       onStartRepairChain={onStartRepairChain}
                       constructionActive={!!activeConstruction}
                       activelyBuilding={activeConstruction?.buildingId === def.id}

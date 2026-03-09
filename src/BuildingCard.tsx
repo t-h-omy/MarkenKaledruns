@@ -52,6 +52,9 @@ function BuildingCard({
   const canBuild = status !== 'locked' && gold >= definition.cost && !constructionActive
   const isNonRepeatableBuilt = !definition.repeatable && built >= 1
   const districtDef = definition.districtId ? getDistrictDef(definition.districtId) : undefined
+  const eventChainHint = definition.eventChainUnlocksOnComplete?.length
+    ? `Unlocks ${definition.eventChainUnlocksOnComplete.join(', ').replace(/_/g, ' ')} event chains`
+    : undefined
   
   // Animation states
   const [showBuildSuccess, setShowBuildSuccess] = useState(false)
@@ -173,9 +176,9 @@ function BuildingCard({
             <div className="building-repeatable-indicator">
               {definition.repeatable ? '♻️ Repeatable' : '🔒 One-time construction'}
             </div>
-            {definition.eventChainUnlocksOnComplete && definition.eventChainUnlocksOnComplete.length > 0 && (
+            {eventChainHint && (
               <div className="building-event-hint">
-                Unlocks {definition.eventChainUnlocksOnComplete.join(', ').replace(/_/g, ' ')} event chains
+                {eventChainHint}
               </div>
             )}
           </div>
