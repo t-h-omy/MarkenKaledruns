@@ -826,12 +826,7 @@ function applyBaseline(stats: Stats, buildingTracking: Record<string, BuildingTr
 
   // Only apply positive baseline growth if below farmstead capacity
   // Negative growth (population loss) still applies normally
-  let appliedGrowth: number;
-  if (farmerGrowth > 0 && stats.farmers >= farmsteadCapacity) {
-    appliedGrowth = 0; // Block baseline growth — capacity reached
-  } else {
-    appliedGrowth = farmerGrowth;
-  }
+  const appliedGrowth = (farmerGrowth > 0 && stats.farmers >= farmsteadCapacity) ? 0 : farmerGrowth;
 
   return {
     ...stats,
