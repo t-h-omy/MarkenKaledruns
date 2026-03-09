@@ -1,9 +1,9 @@
 /* Building Card Component Styles */
 
 .building-card {
-  background: #1a1a1a;
+  background: var(--mk-bg-panel);
   border-radius: 12px;
-  border-left: 4px solid #555;
+  border-left: 4px solid var(--mk-border);
   padding: 1.25rem;
   margin-bottom: 1rem;
   transition: all 0.3s ease;
@@ -127,7 +127,7 @@
 .building-card-name {
   font-size: 1.2rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--mk-text-primary);
 }
 
 /* Status Badge */
@@ -178,18 +178,18 @@
 
 /* Description */
 .building-card-description {
-  color: #9ca3af;
+  color: var(--mk-text-muted);
   font-size: 0.9rem;
   line-height: 1.5;
   margin-bottom: 1rem;
   font-style: italic;
   padding: 0.5rem 0;
-  border-bottom: 1px solid #2a2a2a;
+  border-bottom: 1px solid var(--mk-bg-panel-2);
 }
 
 /* Locked Message */
 .building-locked-message {
-  color: #9ca3af;
+  color: var(--mk-text-muted);
   font-size: 0.95rem;
   text-align: center;
   padding: 1rem;
@@ -208,7 +208,7 @@
 
 .building-stat {
   font-size: 0.9rem;
-  color: #d1d5db;
+  color: var(--mk-text-secondary);
   display: flex;
   align-items: baseline;
   gap: 0.25rem;
@@ -227,10 +227,10 @@
 
 .building-progress-bar {
   height: 1rem;
-  background: #2a2a2a;
+  background: var(--mk-bg-panel-2);
   border-radius: 8px;
   overflow: hidden;
-  border: 1px solid #3a3a3a;
+  border: 1px solid var(--mk-border);
   margin-bottom: 0.5rem;
 }
 
@@ -265,7 +265,7 @@
 
 .building-progress-label {
   font-size: 0.8rem;
-  color: #9ca3af;
+  color: var(--mk-text-muted);
   text-align: center;
 }
 
@@ -277,7 +277,7 @@
   justify-content: center;
   margin-top: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid #2a2a2a;
+  border-top: 1px solid var(--mk-divider);
 }
 
 .building-build-button {
@@ -308,8 +308,8 @@
 /* Disabled state styling (when locked or insufficient gold) */
 .building-locked .building-build-button,
 .building-no-gold .building-build-button {
-  background: #3a3a3a;
-  color: #6b7280;
+  background: var(--mk-button-surface);
+  color: var(--mk-text-muted);
   cursor: not-allowed;
   opacity: 0.6;
   box-shadow: none;
@@ -317,7 +317,7 @@
 
 .building-locked .building-build-button:hover,
 .building-no-gold .building-build-button:hover {
-  background: #3a3a3a;
+  background: var(--mk-button-surface);
   transform: none;
   box-shadow: none;
 }
@@ -349,8 +349,8 @@
 
 .building-locked .building-build-multiple-button,
 .building-no-gold .building-build-multiple-button {
-  background: #3a3a3a;
-  color: #6b7280;
+  background: var(--mk-button-surface);
+  color: var(--mk-text-muted);
   cursor: not-allowed;
   opacity: 0.6;
   box-shadow: none;
@@ -358,7 +358,7 @@
 
 .building-locked .building-build-multiple-button:hover,
 .building-no-gold .building-build-multiple-button:hover {
-  background: #3a3a3a;
+  background: var(--mk-button-surface);
   transform: none;
   box-shadow: none;
 }
@@ -439,15 +439,15 @@
 
 /* Build button blocked by another construction */
 .building-build-button.building-build-button-blocked {
-  background: #3a3a3a;
-  color: #6b7280;
+  background: var(--mk-button-surface);
+  color: var(--mk-text-muted);
   cursor: not-allowed;
   opacity: 0.6;
   box-shadow: none;
 }
 
 .building-build-button.building-build-button-blocked:hover {
-  background: #3a3a3a;
+  background: var(--mk-button-surface);
   transform: none;
   box-shadow: none;
 }
@@ -495,7 +495,7 @@
 
 .state-effective {
   margin-left: auto;
-  color: #999;
+  color: var(--mk-text-muted);
   font-size: 0.75rem;
 }
 
@@ -547,29 +547,29 @@
 
 .building-district-tag {
   font-size: 0.75rem;
-  color: #9ca3af;
+  color: var(--mk-text-muted);
   margin-bottom: 0.5rem;
   padding: 0.15rem 0.5rem;
-  background: rgba(100, 108, 255, 0.1);
-  border: 1px solid rgba(100, 108, 255, 0.25);
+  background: rgba(79, 103, 163, 0.1);
+  border: 1px solid rgba(79, 103, 163, 0.25);
   border-radius: 4px;
   display: inline-block;
 }
 
 .building-build-time {
   font-size: 0.85rem;
-  color: #d1d5db;
+  color: var(--mk-text-secondary);
 }
 
 .building-repeatable-indicator {
   font-size: 0.8rem;
-  color: #9ca3af;
+  color: var(--mk-text-muted);
   font-weight: 600;
 }
 
 .building-event-hint {
   font-size: 0.8rem;
-  color: #9ca3af;
+  color: var(--mk-text-muted);
   font-style: italic;
   margin-top: 0.25rem;
 }

@@ -16,15 +16,15 @@
 /* Centered Scrollable Panel */
 .construction-screen-panel {
   position: relative;
-  background: #2a2a2a;
-  border: 2px solid #646cff;
+  background: var(--mk-bg-panel-2);
+  border: 2px solid var(--mk-accent-blue);
   border-radius: 12px;
   max-width: 900px;
   width: 100%;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--mk-shadow-panel);
   overflow: hidden;
 }
 
@@ -36,9 +36,9 @@
   width: 2.5rem;
   height: 2.5rem;
   background: rgba(255, 255, 255, 0.1);
-  border: 2px solid #646cff;
+  border: 2px solid var(--mk-accent-blue);
   border-radius: 50%;
-  color: #fff;
+  color: var(--mk-text-primary);
   font-size: 1.5rem;
   cursor: pointer;
   transition: all 0.2s;
@@ -49,7 +49,7 @@
 }
 
 .construction-close-btn:hover {
-  background: #646cff;
+  background: var(--mk-accent-blue);
   transform: scale(1.1);
 }
 
@@ -60,14 +60,14 @@
 /* Header Section */
 .construction-header {
   padding: 1.5rem 2rem;
-  border-bottom: 2px solid #444;
-  background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+  border-bottom: 2px solid var(--mk-border);
+  background: linear-gradient(135deg, var(--mk-bg-panel-2) 0%, var(--mk-bg-panel) 100%);
 }
 
 .construction-header h2 {
   margin: 0 0 0.75rem 0;
   font-size: 1.5rem;
-  color: #ffd700;
+  color: var(--mk-heading-gold);
   text-align: center;
 }
 
@@ -76,7 +76,7 @@
   justify-content: center;
   gap: 2rem;
   font-size: 0.9rem;
-  color: #d1d5db;
+  color: var(--mk-text-secondary);
   font-weight: 600;
 }
 
@@ -88,7 +88,7 @@
 }
 
 .construction-placeholder {
-  color: #aaa;
+  color: var(--mk-text-muted);
   text-align: center;
   padding: 2rem;
 }
@@ -125,28 +125,28 @@
 .active-construction-title {
   font-weight: 700;
   font-size: 0.95rem;
-  color: #fbbf24;
+  color: var(--mk-heading-gold);
 }
 
 .active-construction-district {
   font-size: 0.8rem;
-  color: #9ca3af;
+  color: var(--mk-text-muted);
   margin-top: 0.1rem;
 }
 
 .active-construction-ticks {
   font-size: 0.85rem;
-  color: #d1d5db;
+  color: var(--mk-text-secondary);
   font-weight: 600;
   white-space: nowrap;
 }
 
 .active-construction-progress-bar {
   height: 0.5rem;
-  background: #2a2a2a;
+  background: var(--mk-bg-panel-2);
   border-radius: 4px;
   overflow: hidden;
-  border: 1px solid #3a3a3a;
+  border: 1px solid var(--mk-border);
   margin-bottom: 0.35rem;
 }
 
@@ -160,7 +160,7 @@
 
 .active-construction-progress-label {
   font-size: 0.75rem;
-  color: #9ca3af;
+  color: var(--mk-text-muted);
   text-align: center;
 }
 
@@ -173,8 +173,8 @@
 .district-section {
   margin-bottom: 2rem;
   padding: 1rem;
-  background: rgba(26, 26, 26, 0.6);
-  border: 1px solid #3a3a3a;
+  background: rgba(33, 29, 24, 0.6);
+  border: 1px solid var(--mk-border);
   border-radius: 10px;
 }
 
@@ -187,7 +187,7 @@
 .district-section-header {
   font-size: 1.15rem;
   font-weight: 700;
-  color: #fbbf24;
+  color: var(--mk-heading-gold);
   margin-bottom: 0.35rem;
 }
 
@@ -198,15 +198,15 @@
 .capacity-section > .district-section-header {
   font-size: 1.15rem;
   font-weight: 700;
-  color: #fbbf24;
+  color: var(--mk-heading-gold);
   margin-bottom: 0.75rem;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid #3a3a3a;
+  border-bottom: 1px solid var(--mk-border);
 }
 
 .district-section-progress {
   font-size: 0.85rem;
-  color: #d1d5db;
+  color: var(--mk-text-secondary);
   margin-bottom: 0.25rem;
 }
 
@@ -217,7 +217,7 @@
 
 .district-section-hint {
   font-size: 0.8rem;
-  color: #9ca3af;
+  color: var(--mk-text-muted);
   font-style: italic;
   margin-bottom: 1rem;
 }
@@ -253,7 +253,7 @@
   top: 0.5rem;
   right: 0.5rem;
   background: rgba(16, 185, 129, 0.9);
-  color: #fff;
+  color: var(--mk-text-primary);
   font-size: 0.75rem;
   font-weight: 700;
   padding: 0.2rem 0.6rem;

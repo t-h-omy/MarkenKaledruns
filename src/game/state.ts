@@ -529,11 +529,11 @@ function applyOvercrowdingPenalties(
   let satisfactionPenalty: number;
   let fireRiskIncrease: number;
 
-  if (overflow <= 20) {
+  if (overflow <= 10) {
     healthPenalty = -1;
     satisfactionPenalty = -1;
     fireRiskIncrease = 1;
-  } else if (overflow <= 40) {
+  } else if (overflow <= 25) {
     healthPenalty = -2;
     satisfactionPenalty = -2;
     fireRiskIncrease = 2;

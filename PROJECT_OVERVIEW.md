@@ -300,12 +300,12 @@ main.tsx (entry point)
 
 **Gold income:**
 ```
-gold += floor(0.1 × farmers × (satisfaction - 10) / 100)
+gold += floor(0.15 × farmers × (satisfaction - 10) / 100)
 ```
 
 **Population growth:**
 ```
-farmers += floor((health - 25) / 20)
+farmers += floor((health + 20) / 41)
 ```
 
 **Population growth cap:** Positive baseline growth is hard-capped by farmstead capacity (`FARMERS_PER_FARMSTEAD = 20` per farmstead). If `farmers >= farmsteadCapacity`, baseline growth is blocked (set to 0). Negative baseline growth (population loss) still applies normally. Event-based population gains (via `Effect`) are **not** blocked by this cap — they bypass the baseline formula and can push population above capacity, triggering overcrowding mechanics.
