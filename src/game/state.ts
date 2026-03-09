@@ -147,6 +147,20 @@ export interface PendingAuthorityCheck {
 }
 
 /**
+ * Represents a building currently under construction.
+ */
+export interface ActiveConstruction {
+  /** ID of the building being constructed */
+  buildingId: string;
+  /** Tick when construction started */
+  startedAtTick: number;
+  /** Tick when construction will complete */
+  completionTick: number;
+  /** Profile used for this construction (e.g. 'default', future architect profiles) */
+  constructionProfileId: string;
+}
+
+/**
  * Complete game state
  */
 export interface GameState {
@@ -178,6 +192,8 @@ export interface GameState {
   fire: FireState;
   /** Set of completed district IDs (value is always true for completed districts) */
   completedDistricts: Record<string, true>;
+  /** Currently active construction, or null if nothing is being built */
+  activeConstruction?: ActiveConstruction | null;
 }
 
 /**
@@ -268,6 +284,7 @@ export const initialState: GameState = {
     slots: createInitialFireSlots(),
   },
   completedDistricts: {},
+  activeConstruction: null,
 };
 
 /**
@@ -2531,4 +2548,15 @@ export function initializeGame(): GameState {
     ...initialState,
     currentRequestId: firstRequest.id,
   };
+}
+
+/**
+ * Returns the construction profile ID for a given building and game state.
+ * Stub for future architect system — currently always returns 'default'.
+ */
+export function getConstructionProfileForBuild(
+  _buildingId: string,
+  _state: GameState
+): string {
+  return 'default';
 }

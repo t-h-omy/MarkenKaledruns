@@ -194,7 +194,7 @@ main.tsx (entry point)
 |------|-------------|
 | `models.ts` | `Stats`, `Effect`, `Request`, `Option`, `AuthorityCheck`, `AuthorityCheckResult`, `CombatSpec`, `FollowUp`, `WeightedCandidate`, `AuthorityFollowUpBoost` |
 | `portraits/index.ts` | `PORTRAITS`, `PortraitId` |
-| `state.ts` | `GameState`, `GameAction`, `gameReducer`, `initializeGame`, `getCurrentRequest`, `initialState`, `AppliedChange`, `LogEntry`, `ScheduledEvent`, `ScheduledCombat`, `ActiveCombat`, `PendingAuthorityCheck`, `ModifierHook`, `applyOptionWithModifiers`, `hasUnlock`, `meetsRequirements`, `syncBuildingUnlockTokens`, `FIRE_SYSTEM_CONFIG` |
+| `state.ts` | `GameState`, `GameAction`, `gameReducer`, `initializeGame`, `getCurrentRequest`, `initialState`, `AppliedChange`, `LogEntry`, `ScheduledEvent`, `ScheduledCombat`, `ActiveCombat`, `ActiveConstruction`, `PendingAuthorityCheck`, `ModifierHook`, `applyOptionWithModifiers`, `hasUnlock`, `meetsRequirements`, `syncBuildingUnlockTokens`, `getConstructionProfileForBuild`, `FIRE_SYSTEM_CONFIG` |
 | `requests.ts` | `infoRequests`, `eventRequests`, `authorityInfoRequests`, `fireChainRequests`, `validateRequests` |
 | `picker.ts` | `pickNextRequest`, `selectWeightedCandidate`, `seedRandom`, `resetRandom`, `getRandomValue` |
 | `buildings.ts` | `BUILDING_DEFINITIONS`, `BUILDING_UNLOCK_GROUPS`, `BuildingDefinition`, `BuildingTracking`, `BuildingUnlockGroup`, `isBuildingActive`, `calculateRequiredBuildings`, `getBuildingDef`, `createInitialBuildingTracking`, `getEffectiveBuildingCount`, `hasAnyBuildingState`, `getUnlockedGroups`, `getUnlockGroupForBuilding` |
@@ -410,6 +410,7 @@ interface GameState {
   pendingAuthorityChecks: PendingAuthorityCheck[];  // Authority checks resolving next tick
   fire: FireState;                       // Fire System V3 runtime state
   completedDistricts: Record<string, true>;  // Completed district IDs
+  activeConstruction?: ActiveConstruction | null;  // Building currently under construction
 }
 ```
 
@@ -523,6 +524,11 @@ Same request is never shown twice in a row (`lastRequestId` check).
 | 🍺 Brewery | `brewery` | capacity | ✅ | — | 100 farmers | 70g | 150 | Unlocks "Tavern After Work" event | `building:brewery` | 3–6 |
 | 🪵 Firewood Supply | `firewood` | capacity | ✅ | — | 170 farmers | 200g | 180 | 25% chance to halve fire risk increases | — | 4–7 |
 | 💧 Central Well | `well` | capacity | ✅ | — | 250 farmers | 300g | 200 | 50% chance for +1 health on health gains | — | 4–8 |
+| 🍻 Tavern | `tavern` | district | ❌ | `commerce` | 30 farmers | 25g | — | Establishes Commerce District presence | `building:tavern` | 3–6 |
+| 🛡️ Garrison | `garrison` | district | ❌ | `military` | 60 farmers | 35g | — | Establishes Military District presence | `building:garrison` | 4–7 |
+| ⛩ Shrine | `shrine` | district | ❌ | `faith` | 60 farmers | 30g | — | Establishes Faith/Relief District presence | `building:shrine` | 3–6 |
+| ⚔ Training Yard | `training_yard` | district | ❌ | `military` | 100 farmers | 50g | — | Completes Military District | `building:training_yard` | 4–8 |
+| 🩺 Healer's House | `healers_house` | district | ❌ | `faith` | 100 farmers | 45g | — | Completes Faith/Relief District | `building:healers_house` | 3–7 |
 
 ### Building Interface Fields
 
