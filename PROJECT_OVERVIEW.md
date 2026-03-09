@@ -31,7 +31,7 @@
 
 **Die Marken Kaledruns** is a turn-based village management strategy game built as a Progressive Web App (PWA). The player governs a settlement by responding to events (called "requests"), managing resources, constructing buildings, commanding military forces, and navigating political authority. The game ends when gold drops to **-50** (bankruptcy).
 
-- **Version**: 1.3.0
+- **Version**: 1.3.3
 - **Package name**: `pof-prototype`
 - **Repository**: `t-h-omy/MarkenKaledruns`
 
@@ -138,7 +138,7 @@ MarkenKaledruns/
 ├── tsconfig.node.json                     # TypeScript node/build config
 ├── eslint.config.js                       # ESLint flat config
 ├── .gitignore                             # Git ignore rules
-└── *.md                                   # Various documentation files (see §17)
+└── PROJECT_OVERVIEW.md                    # Authoritative project overview
 ```
 
 ### Source File Sizes (approximate)
@@ -759,26 +759,7 @@ The app registers a service worker via `vite-plugin-pwa`:
 | File | Description |
 |------|-------------|
 | `README.md` | Main project documentation: setup, tech stack, game overview, deployment |
-| `POF_SPEC.md` | Core game specification: all 25 base events, effects, formulas, selection rules |
-| `IMPLEMENTATION.md` | Implementation details: building system, fail states, event gating |
-| `IMPLEMENTATION_SUMMARY.md` | Summary of implemented features |
-| `AUTHORITY_DESIGN.md` | Authority system deep-dive: bands, commits, boosts, ego tests, balancing |
-| `DEPLOYMENT_GUIDE.md` | GitHub Pages deployment instructions |
-| `DEPLOYMENT_FIX_SUMMARY.md` | Fixes for deployment issues |
-| `DEPLOYMENT_ISSUE_EXPLAINED.md` | Explanation of deployment problems |
-| `DEPLOYMENT_UPDATE_FIX.md` | Deployment update fixes |
-| `ALL_BRANCH_DEPLOYMENT.md` | Multi-branch deployment strategy |
-| `GITHUB_PAGES.md` | GitHub Pages configuration notes |
-| `GH_PAGES_PREVIEWS.md` | Branch preview setup |
-| `README_DEPLOY.md` | Deployment-specific readme |
-| `WORKFLOW_MIGRATION.md` | CI/CD workflow migration notes |
-| `WORKFLOW_REFERENCE.md` | Workflow configuration reference |
-| `VERSION_DISPLAY.md` | Version display in the UI |
-| `VERSION_GUIDE.md` | Version management guide |
-| `FIX_SUMMARY.md` | Bug fix summaries |
-| `SUMMARY.md` | General project summary |
-| `TESTING.md` | Testing approach documentation |
-| `VERIFICATION.md` | Verification procedures |
+| `PROJECT_OVERVIEW.md` | Authoritative project overview: architecture, systems, and design reference |
 | `designs/CONSTRUCTION_SCREEN_DESIGN.md` | Construction screen UI/UX design spec |
 | `designs/fire-design-v3.md` | Fire System V3 design specification (superseded) |
 | `designs/FIRE SYSTEM V4.md` | Fire System V4 design specification (active) |
