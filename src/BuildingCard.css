@@ -43,6 +43,22 @@
   box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
 }
 
+/* Newly unlocked building glow */
+.building-card.building-newly-unlocked {
+  border-left-color: #818cf8;
+  box-shadow: 0 0 12px rgba(129, 140, 248, 0.3);
+  animation: newly-unlocked-glow 2.5s ease-in-out infinite;
+}
+
+@keyframes newly-unlocked-glow {
+  0%, 100% {
+    box-shadow: 0 0 12px rgba(129, 140, 248, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(129, 140, 248, 0.5);
+  }
+}
+
 /* Build success flash animation */
 .building-card.building-success-flash {
   animation: success-flash 1s ease-out;

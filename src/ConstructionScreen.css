@@ -226,6 +226,24 @@
   color: #10b981;
 }
 
+.district-new-banner {
+  background: linear-gradient(135deg, rgba(129, 140, 248, 0.15) 0%, rgba(99, 102, 241, 0.08) 100%);
+  border: 1px solid rgba(129, 140, 248, 0.4);
+  border-radius: 6px;
+  padding: 0.4rem 0.75rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #a5b4fc;
+  text-align: center;
+  animation: new-banner-pulse 2s ease-in-out infinite;
+}
+
+@keyframes new-banner-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
 .building-already-built-wrapper {
   position: relative;
 }

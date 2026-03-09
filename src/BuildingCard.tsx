@@ -29,6 +29,8 @@ interface BuildingCardProps {
   constructionActive?: boolean;
   /** Whether THIS building is the one currently under construction */
   activelyBuilding?: boolean;
+  /** Whether this building was recently unlocked (for visual highlighting) */
+  isNewlyUnlocked?: boolean;
 }
 
 function BuildingCard({
@@ -46,6 +48,7 @@ function BuildingCard({
   onStartRepairChain,
   constructionActive = false,
   activelyBuilding = false,
+  isNewlyUnlocked = false,
 }: BuildingCardProps) {
   const built = tracking.buildingCount
   const shortage = Math.max(0, requiredCount - built)
@@ -120,7 +123,8 @@ function BuildingCard({
     showBuildSuccess ? 'building-success-flash' : '',
     showBuildError ? 'building-error-shake' : '',
     activelyBuilding ? 'building-actively-building' : '',
-    constructionActive && !activelyBuilding ? 'building-construction-blocked' : ''
+    constructionActive && !activelyBuilding ? 'building-construction-blocked' : '',
+    isNewlyUnlocked ? 'building-newly-unlocked' : ''
   ].filter(Boolean).join(' ')
   
   return (

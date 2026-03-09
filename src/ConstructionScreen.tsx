@@ -9,6 +9,9 @@ import type { FireIncidentSlotState } from './game/models'
 import type { ActiveConstruction } from './game/state'
 import { DISTRICT_DEFINITIONS, getDistrictDef } from './game/districts'
 
+/** Number of ticks a building is considered "newly unlocked" after its threshold is crossed */
+const NEWLY_UNLOCKED_TICKS = 15
+
 interface ConstructionScreenProps {
   isOpen: boolean;
   onClose: () => void;
@@ -101,6 +104,13 @@ function ConstructionScreen({
   /** Whether Build Multiple should be offered for this building */
   const shouldShowBuildMultiple = (def: BuildingDefinition, shortage: number) =>
     def.repeatable && shortage > 1
+  
+  /** Whether a building was recently unlocked */
+  const isBuildingNewlyUnlocked = (buildingId: string): boolean => {
+    const tracking = buildingTracking[buildingId]
+    if (!tracking?.unlockedAtTick) return false
+    return currentTick - tracking.unlockedAtTick < NEWLY_UNLOCKED_TICKS
+  }
   
   // Calculate building status
   const getBuildingStatus = (def: BuildingDefinition): BuildingStatus => {
@@ -261,6 +271,7 @@ function ConstructionScreen({
                     onStartRepairChain={onStartRepairChain}
                     constructionActive={!!activeConstruction}
                     activelyBuilding={activeConstruction?.buildingId === def.id}
+                    isNewlyUnlocked={isBuildingNewlyUnlocked(def.id)}
                   />
                 </div>
               )
@@ -268,7 +279,10 @@ function ConstructionScreen({
           </div>
           
           {/* District Sections */}
-          {districtSections.map(({ district, buildings, builtCount, complete }) => (
+          {districtSections.map(({ district, buildings, builtCount, complete }) => {
+            const hasNewlyUnlocked = buildings.some(b => isBuildingNewlyUnlocked(b.definition.id))
+            
+            return (
             <div 
               key={district.id} 
               className={`district-section${complete ? ' district-complete' : ''}`}
@@ -284,6 +298,11 @@ function ConstructionScreen({
               <div className="district-section-hint">
                 Completing this district unlocks advanced event chains
               </div>
+              {hasNewlyUnlocked && !complete && (
+                <div className="district-new-banner">
+                  🆕 New buildings available! Choose your village's direction
+                </div>
+              )}
               
               {buildings.map(({ definition: def, status }) => {
                 const tracking = buildingTracking[def.id]
@@ -326,12 +345,14 @@ function ConstructionScreen({
                       onStartRepairChain={onStartRepairChain}
                       constructionActive={!!activeConstruction}
                       activelyBuilding={activeConstruction?.buildingId === def.id}
+                      isNewlyUnlocked={isBuildingNewlyUnlocked(def.id)}
                     />
                   </div>
                 )
               })}
             </div>
-          ))}
+            )
+          })}
         </div>
       </div>
       
