@@ -2069,14 +2069,15 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     // Update building tracking (detect newly required buildings, etc.)
     let buildingTracking = { ...updatedBuildingTracking };
 
-    // 2c2. Check construction completion
+    // 2c2. Check construction completion (checked against next tick: tick + 1)
     let activeConstruction = state.activeConstruction ?? null;
     let completedDistricts = { ...state.completedDistricts };
     if (activeConstruction && state.tick + 1 >= activeConstruction.completionTick) {
-      // Build a temporary state for completeConstruction
+      // Build a temporary state for completeConstruction.
+      // We pass the current tick — completeConstruction schedules events for tick + 1.
       const tempState: GameState = {
         ...state,
-        tick: state.tick, // current tick (completion runs before tick increment display)
+        tick: state.tick, // current tick; completeConstruction schedules events for tick + 1
         buildingTracking,
         unlocks,
         chainStatus,
@@ -2317,7 +2318,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       constructionProfileId: getConstructionProfileForBuild(action.buildingId, state),
     };
 
-    // Schedule construction start info request as tickless event (same tick)
+    // Schedule construction start info request as tickless event (same tick).
+    // Uses state.tick (current) so it's shown immediately, unlike the construction
+    // end info request which is scheduled for tick + 1 (shown on the completing tick).
     const scheduledEvents = [...state.scheduledEvents];
     scheduledEvents.push({
       targetTick: state.tick,
