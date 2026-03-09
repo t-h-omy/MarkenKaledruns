@@ -526,3 +526,34 @@
   color: #999;
   cursor: not-allowed;
 }
+
+/* ─── District Tag, Build Time, Repeatable & Event Hints ─────────────── */
+
+.building-district-tag {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-bottom: 0.5rem;
+  padding: 0.15rem 0.5rem;
+  background: rgba(100, 108, 255, 0.1);
+  border: 1px solid rgba(100, 108, 255, 0.25);
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.building-build-time {
+  font-size: 0.85rem;
+  color: #d1d5db;
+}
+
+.building-repeatable-indicator {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  font-weight: 600;
+}
+
+.building-event-hint {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  font-style: italic;
+  margin-top: 0.25rem;
+}

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import './BuildingCard.css'
 import type { BuildingDefinition, BuildingTracking } from './game/buildings'
 import { hasAnyBuildingState, getEffectiveBuildingCount } from './game/buildings'
+import { getDistrictDef } from './game/districts'
 
 export type BuildingStatus = 'locked' | 'available' | 'needed' | 'no-gold' | 'fulfilled'
 
@@ -49,6 +50,8 @@ function BuildingCard({
   const built = tracking.buildingCount
   const shortage = Math.max(0, requiredCount - built)
   const canBuild = status !== 'locked' && gold >= definition.cost && !constructionActive
+  const isNonRepeatableBuilt = !definition.repeatable && built >= 1
+  const districtDef = definition.districtId ? getDistrictDef(definition.districtId) : undefined
   
   // Animation states
   const [showBuildSuccess, setShowBuildSuccess] = useState(false)
@@ -125,9 +128,14 @@ function BuildingCard({
           {definition.icon} {definition.displayName}
         </span>
         <span className={`building-status-badge status-${status}`}>
-          {getStatusLabel()}
+          {isNonRepeatableBuilt ? '✅ Already Built' : getStatusLabel()}
         </span>
       </div>
+      
+      {/* District Name Tag */}
+      {districtDef && (
+        <div className="building-district-tag">📍 {districtDef.name}</div>
+      )}
       
       {/* Description */}
       <div className="building-card-description">
@@ -159,6 +167,17 @@ function BuildingCard({
             <div className="building-stat">
               💰 Cost: {definition.cost} Gold per building
             </div>
+            <div className="building-build-time">
+              ⏱ Build: {definition.constructionTicksMin}–{definition.constructionTicksMax} turns
+            </div>
+            <div className="building-repeatable-indicator">
+              {definition.repeatable ? '♻️ Repeatable' : '🔒 One-time construction'}
+            </div>
+            {definition.eventChainUnlocksOnComplete && definition.eventChainUnlocksOnComplete.length > 0 && (
+              <div className="building-event-hint">
+                Unlocks {definition.eventChainUnlocksOnComplete.join(', ').replace(/_/g, ' ')} event chains
+              </div>
+            )}
           </div>
           
           {/* Progress Bar */}
@@ -235,19 +254,30 @@ function BuildingCard({
                   </button>
                 ) : (
                   <>
-                    <button
-                      className="building-build-button"
-                      onClick={handleBuildClick}
-                    >
-                      BUILD {definition.displayName.toUpperCase()}
-                    </button>
-                    {shortage > 1 && onBuildMultiple && (
+                    {isNonRepeatableBuilt ? (
                       <button
-                        className="building-build-multiple-button"
-                        onClick={handleBuildMultipleClick}
+                        className="building-build-button building-build-button-blocked"
+                        disabled
                       >
-                        BUILD MULTIPLE...
+                        ✅ Already Built
                       </button>
+                    ) : (
+                      <>
+                        <button
+                          className="building-build-button"
+                          onClick={handleBuildClick}
+                        >
+                          BUILD {definition.displayName.toUpperCase()}
+                        </button>
+                        {definition.repeatable && shortage > 1 && onBuildMultiple && (
+                          <button
+                            className="building-build-multiple-button"
+                            onClick={handleBuildMultipleClick}
+                          >
+                            BUILD MULTIPLE...
+                          </button>
+                        )}
+                      </>
                     )}
                   </>
                 )}

@@ -1029,6 +1029,7 @@ function App() {
           onStartRepairChain={(buildingId) => dispatch({ type: 'START_REPAIR_CHAIN', buildingId })}
           activeConstruction={gameState.activeConstruction}
           currentTick={gameState.tick}
+          completedDistricts={gameState.completedDistricts}
         />
         
         {/* Log Screen Overlay */}

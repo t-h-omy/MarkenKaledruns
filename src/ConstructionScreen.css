@@ -164,6 +164,86 @@
   text-align: center;
 }
 
+/* ─── District & Capacity Sections ──────────────────────────────────── */
+
+.capacity-section {
+  margin-bottom: 2rem;
+}
+
+.district-section {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: rgba(26, 26, 26, 0.6);
+  border: 1px solid #3a3a3a;
+  border-radius: 10px;
+}
+
+.district-section.district-complete {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.06);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.15);
+}
+
+.district-section-header {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #fbbf24;
+  margin-bottom: 0.35rem;
+}
+
+.district-complete .district-section-header {
+  color: #4ade80;
+}
+
+.capacity-section > .district-section-header {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #fbbf24;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #3a3a3a;
+}
+
+.district-section-progress {
+  font-size: 0.85rem;
+  color: #d1d5db;
+  margin-bottom: 0.25rem;
+}
+
+.district-complete .district-section-progress {
+  color: #4ade80;
+  font-weight: 600;
+}
+
+.district-section-hint {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  font-style: italic;
+  margin-bottom: 1rem;
+}
+
+.district-complete .district-section-hint {
+  color: #10b981;
+}
+
+.building-already-built-wrapper {
+  position: relative;
+}
+
+.building-already-built-overlay {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: rgba(16, 185, 129, 0.9);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  z-index: 5;
+  letter-spacing: 0.5px;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .construction-screen-overlay {

@@ -7,7 +7,7 @@ import { BUILDING_DEFINITIONS, calculateRequiredBuildings, getBuildingDef } from
 import type { BuildingDefinition, BuildingTracking } from './game/buildings'
 import type { FireIncidentSlotState } from './game/models'
 import type { ActiveConstruction } from './game/state'
-import { getDistrictDef } from './game/districts'
+import { DISTRICT_DEFINITIONS, getDistrictDef } from './game/districts'
 
 interface ConstructionScreenProps {
   isOpen: boolean;
@@ -23,6 +23,8 @@ interface ConstructionScreenProps {
   activeConstruction?: ActiveConstruction | null;
   /** Current game tick, used to compute remaining construction time */
   currentTick: number;
+  /** Set of completed district IDs */
+  completedDistricts: Record<string, true>;
 }
 
 function ConstructionScreen({ 
@@ -37,6 +39,7 @@ function ConstructionScreen({
   onStartRepairChain,
   activeConstruction,
   currentTick,
+  completedDistricts,
 }: ConstructionScreenProps) {
   const highlightedBuildingRef = useRef<HTMLDivElement>(null)
   const [buildMultipleModalOpen, setBuildMultipleModalOpen] = useState(false)
@@ -112,30 +115,46 @@ function ConstructionScreen({
     return 'fulfilled'
   }
   
-  // Sort buildings by urgency/status priority (memoized to avoid recalculating on every render)
-  const sortedBuildings = useMemo(() => {
-    // Define status priority (lower number = higher priority)
+  // Group buildings by section: capacity vs district, sorted within each group
+  const { capacityBuildings, districtSections } = useMemo(() => {
     const statusPriority: Record<BuildingStatus, number> = {
-      'needed': 1,      // Most urgent - needs building and can afford
-      'no-gold': 2,     // Urgent but can't afford
-      'available': 3,   // Can build but not urgent
-      'fulfilled': 4,   // Requirements met
-      'locked': 5       // Not yet unlocked
+      'needed': 1,
+      'no-gold': 2,
+      'available': 3,
+      'fulfilled': 4,
+      'locked': 5
     }
     
-    // Create array of buildings with their status
-    const buildingsWithStatus = BUILDING_DEFINITIONS.map(def => ({
-      definition: def,
-      status: getBuildingStatus(def)
-    }))
-    
-    // Sort by status priority, then by original sortOrder for ties
-    return [...buildingsWithStatus].sort((a, b) => {
+    const sortByStatus = (
+      a: { definition: BuildingDefinition; status: BuildingStatus },
+      b: { definition: BuildingDefinition; status: BuildingStatus }
+    ) => {
       const priorityDiff = statusPriority[a.status] - statusPriority[b.status]
       if (priorityDiff !== 0) return priorityDiff
       return a.definition.sortOrder - b.definition.sortOrder
+    }
+    
+    const capacity = BUILDING_DEFINITIONS
+      .filter(def => def.category === 'capacity')
+      .map(def => ({ definition: def, status: getBuildingStatus(def) }))
+      .sort(sortByStatus)
+    
+    const sections = DISTRICT_DEFINITIONS.map(district => {
+      const buildings = BUILDING_DEFINITIONS
+        .filter(def => def.districtId === district.id)
+        .map(def => ({ definition: def, status: getBuildingStatus(def) }))
+        .sort(sortByStatus)
+      
+      const builtCount = district.buildingIds.filter(
+        id => (buildingTracking[id]?.buildingCount ?? 0) >= 1
+      ).length
+      const complete = !!completedDistricts[district.id]
+      
+      return { district, buildings, builtCount, complete }
     })
-  }, [buildingTracking, farmers, gold])
+    
+    return { capacityBuildings: capacity, districtSections: sections }
+  }, [buildingTracking, farmers, gold, completedDistricts])
   
   if (!isOpen) return null
   
@@ -196,47 +215,119 @@ function ConstructionScreen({
           );
         })()}
 
-        {/* Building Cards */}
+        {/* Building Cards — grouped by section */}
         <div className="construction-content">
-          {sortedBuildings.map(({ definition: def, status }) => {
-            const tracking = buildingTracking[def.id]
-            if (!tracking) return null
-            
-            const required = calculateRequiredBuildings(def, farmers)
-            const isHighlighted = highlightedBuilding === def.id
-            
-            // Compute locked vs repairable destroyed counts from fire slots (V4)
-            const slotsForBuilding = fireSlots.filter(
-              s => s.assigned && s.targetBuildingId === def.id && s.unitStatus === 'destroyed'
-            )
-            const lockedDestroyedCount = slotsForBuilding.filter(s => s.chainActive).length
-            const repairableDestroyedCount = slotsForBuilding.filter(s => !s.chainActive).length
-            
-            return (
-              <div 
-                key={def.id} 
-                id={`building-card-${def.id}`}
-                ref={isHighlighted ? highlightedBuildingRef : null}
-              >
-                <BuildingCard
-                  definition={def}
-                  tracking={tracking}
-                  farmers={farmers}
-                  gold={gold}
-                  requiredCount={required}
-                  status={status}
-                  isHighlighted={isHighlighted}
-                  lockedDestroyedCount={lockedDestroyedCount}
-                  repairableDestroyedCount={repairableDestroyedCount}
-                  onBuild={onBuild}
-                  onBuildMultiple={handleOpenBuildMultiple}
-                  onStartRepairChain={onStartRepairChain}
-                  constructionActive={!!activeConstruction}
-                  activelyBuilding={activeConstruction?.buildingId === def.id}
-                />
+          {/* Capacity Buildings Section */}
+          <div className="capacity-section">
+            <div className="district-section-header">
+              🏠 Capacity Buildings
+            </div>
+            {capacityBuildings.map(({ definition: def, status }) => {
+              const tracking = buildingTracking[def.id]
+              if (!tracking) return null
+              
+              const required = calculateRequiredBuildings(def, farmers)
+              const isHighlighted = highlightedBuilding === def.id
+              const shortage = Math.max(0, required - tracking.buildingCount)
+              
+              const slotsForBuilding = fireSlots.filter(
+                s => s.assigned && s.targetBuildingId === def.id && s.unitStatus === 'destroyed'
+              )
+              const lockedDestroyedCount = slotsForBuilding.filter(s => s.chainActive).length
+              const repairableDestroyedCount = slotsForBuilding.filter(s => !s.chainActive).length
+              
+              return (
+                <div 
+                  key={def.id} 
+                  id={`building-card-${def.id}`}
+                  ref={isHighlighted ? highlightedBuildingRef : null}
+                >
+                  <BuildingCard
+                    definition={def}
+                    tracking={tracking}
+                    farmers={farmers}
+                    gold={gold}
+                    requiredCount={required}
+                    status={status}
+                    isHighlighted={isHighlighted}
+                    lockedDestroyedCount={lockedDestroyedCount}
+                    repairableDestroyedCount={repairableDestroyedCount}
+                    onBuild={onBuild}
+                    onBuildMultiple={def.repeatable && shortage > 1 ? handleOpenBuildMultiple : undefined}
+                    onStartRepairChain={onStartRepairChain}
+                    constructionActive={!!activeConstruction}
+                    activelyBuilding={activeConstruction?.buildingId === def.id}
+                  />
+                </div>
+              )
+            })}
+          </div>
+          
+          {/* District Sections */}
+          {districtSections.map(({ district, buildings, builtCount, complete }) => (
+            <div 
+              key={district.id} 
+              className={`district-section${complete ? ' district-complete' : ''}`}
+            >
+              <div className="district-section-header">
+                🏛️ {district.name}
               </div>
-            )
-          })}
+              <div className="district-section-progress">
+                {complete 
+                  ? '✅ District Complete' 
+                  : `${builtCount}/${district.buildingIds.length} buildings complete`}
+              </div>
+              <div className="district-section-hint">
+                Completing this district unlocks advanced event chains
+              </div>
+              
+              {buildings.map(({ definition: def, status }) => {
+                const tracking = buildingTracking[def.id]
+                if (!tracking) return null
+                
+                const required = calculateRequiredBuildings(def, farmers)
+                const isHighlighted = highlightedBuilding === def.id
+                const shortage = Math.max(0, required - tracking.buildingCount)
+                
+                const slotsForBuilding = fireSlots.filter(
+                  s => s.assigned && s.targetBuildingId === def.id && s.unitStatus === 'destroyed'
+                )
+                const lockedDestroyedCount = slotsForBuilding.filter(s => s.chainActive).length
+                const repairableDestroyedCount = slotsForBuilding.filter(s => !s.chainActive).length
+                
+                const isAlreadyBuilt = !def.repeatable && tracking.buildingCount >= 1
+                
+                return (
+                  <div 
+                    key={def.id} 
+                    id={`building-card-${def.id}`}
+                    ref={isHighlighted ? highlightedBuildingRef : null}
+                    className={isAlreadyBuilt ? 'building-already-built-wrapper' : undefined}
+                  >
+                    {isAlreadyBuilt && (
+                      <div className="building-already-built-overlay">✅ Built</div>
+                    )}
+                    <BuildingCard
+                      definition={def}
+                      tracking={tracking}
+                      farmers={farmers}
+                      gold={gold}
+                      requiredCount={required}
+                      status={status}
+                      isHighlighted={isHighlighted}
+                      lockedDestroyedCount={lockedDestroyedCount}
+                      repairableDestroyedCount={repairableDestroyedCount}
+                      onBuild={onBuild}
+                      onBuildMultiple={def.repeatable && shortage > 1 ? handleOpenBuildMultiple : undefined}
+                      onStartRepairChain={onStartRepairChain}
+                      constructionActive={!!activeConstruction}
+                      activelyBuilding={activeConstruction?.buildingId === def.id}
+                    />
+                  </div>
+                )
+              })}
+            </div>
+          ))}
         </div>
       </div>
       
