@@ -8,7 +8,7 @@ import { infoRequests, authorityInfoRequests, eventRequests, fireChainRequests }
 import { pickNextRequest, selectWeightedCandidate, getRandomValue, resetRandom } from './picker';
 import { needModifiers } from './modifiers';
 import type { BuildingTracking } from './buildings';
-import { BUILDING_DEFINITIONS, isBuildingActive, calculateRequiredBuildings, getBuildingDef, createInitialBuildingTracking, hasAnyBuildingState, getEffectiveBuildingCount } from './buildings';
+import { BUILDING_DEFINITIONS, BUILDING_UNLOCK_GROUPS, isBuildingActive, calculateRequiredBuildings, getBuildingDef, createInitialBuildingTracking, hasAnyBuildingState, getEffectiveBuildingCount } from './buildings';
 
 /**
  * Represents a single applied change to a stat
@@ -450,12 +450,14 @@ export function syncBuildingUnlockTokens(
 
 /**
  * Detects newly unlocked buildings by comparing farmers before and after a tick.
+ * Checks both individual building thresholds and grouped unlock thresholds.
  * Returns the first building ID that was just unlocked, or null.
  */
 function detectNewlyUnlockedBuildings(
   farmersBefore: number,
   farmersAfter: number
 ): string | null {
+  // Check individual building thresholds
   for (const def of BUILDING_DEFINITIONS) {
     const wasUnlocked = farmersBefore >= def.unlockThreshold;
     const isUnlocked = farmersAfter >= def.unlockThreshold;
@@ -464,6 +466,24 @@ function detectNewlyUnlockedBuildings(
       return def.id;
     }
   }
+
+  // Check grouped unlock thresholds
+  for (const group of BUILDING_UNLOCK_GROUPS) {
+    const wasUnlocked = farmersBefore >= group.populationThreshold;
+    const isUnlocked = farmersAfter >= group.populationThreshold;
+
+    if (!wasUnlocked && isUnlocked) {
+      // Prefer returning a building that only exists in the group (not in BUILDING_DEFINITIONS),
+      // since buildings in BUILDING_DEFINITIONS are already checked by the first loop above.
+      const newBuilding = group.buildingIds.find(
+        id => !BUILDING_DEFINITIONS.some(def => def.id === id)
+      );
+      if (newBuilding) return newBuilding;
+      // Fallback: return the first building in the group
+      return group.buildingIds[0] ?? null;
+    }
+  }
+
   return null;
 }
 

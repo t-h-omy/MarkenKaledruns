@@ -197,7 +197,7 @@ main.tsx (entry point)
 | `state.ts` | `GameState`, `GameAction`, `gameReducer`, `initializeGame`, `getCurrentRequest`, `initialState`, `AppliedChange`, `LogEntry`, `ScheduledEvent`, `ScheduledCombat`, `ActiveCombat`, `PendingAuthorityCheck`, `ModifierHook`, `applyOptionWithModifiers`, `hasUnlock`, `meetsRequirements`, `syncBuildingUnlockTokens`, `FIRE_SYSTEM_CONFIG` |
 | `requests.ts` | `infoRequests`, `eventRequests`, `authorityInfoRequests`, `fireChainRequests`, `validateRequests` |
 | `picker.ts` | `pickNextRequest`, `selectWeightedCandidate`, `seedRandom`, `resetRandom`, `getRandomValue` |
-| `buildings.ts` | `BUILDING_DEFINITIONS`, `BuildingDefinition`, `BuildingTracking`, `isBuildingActive`, `calculateRequiredBuildings`, `getBuildingDef`, `createInitialBuildingTracking`, `getEffectiveBuildingCount`, `hasAnyBuildingState` |
+| `buildings.ts` | `BUILDING_DEFINITIONS`, `BUILDING_UNLOCK_GROUPS`, `BuildingDefinition`, `BuildingTracking`, `BuildingUnlockGroup`, `isBuildingActive`, `calculateRequiredBuildings`, `getBuildingDef`, `createInitialBuildingTracking`, `getEffectiveBuildingCount`, `hasAnyBuildingState`, `getUnlockedGroups`, `getUnlockGroupForBuilding` |
 | `districts.ts` | `DISTRICT_DEFINITIONS`, `DistrictDefinition`, `getDistrictDef`, `isDistrictComplete` |
 | `modifiers.ts` | `firewoodModifier`, `wellModifier`, `needModifiers` |
 
@@ -592,6 +592,26 @@ interface BuildingTracking {
 ```
 
 **Effective Count**: `effectiveCount = buildingCount - onFireCount - destroyedCount - onStrikeCount`. Only effective buildings count toward requirements and capacity. Buildings with any active state cannot have more built until all states are cleared (**build lock**).
+
+### Grouped Building Unlocks
+
+Buildings unlock in **groups** at population milestones rather than individually. When farmers reach a group's threshold, all buildings in that group become available simultaneously, creating strategic choice pressure. Unchosen buildings remain available indefinitely. Farmstead (threshold 0) is always available and is not part of any unlock group.
+
+```typescript
+interface BuildingUnlockGroup {
+  id: string;
+  populationThreshold: number;
+  buildingIds: string[];
+}
+```
+
+| Group | ID | Threshold | Buildings |
+|-------|----|-----------|-----------|
+| Tier 1 | `tier_1_choice` | 30 farmers | `marketplace`, `tavern` |
+| Tier 2 | `tier_2_choice` | 60 farmers | `garrison`, `shrine` |
+| Tier 3 | `tier_3_choice` | 100 farmers | `training_yard`, `healers_house` |
+
+The `detectNewlyUnlockedBuildings` function checks both individual building thresholds and grouped unlock thresholds when population changes each tick.
 
 ### 10.1 District System
 

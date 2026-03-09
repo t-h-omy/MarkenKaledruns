@@ -276,3 +276,53 @@ export function getEffectiveBuildingCount(tracking: BuildingTracking): number {
 export function hasAnyBuildingState(tracking: BuildingTracking): boolean {
   return tracking.onFireCount > 0 || tracking.destroyedCount > 0 || tracking.onStrikeCount > 0;
 }
+
+/**
+ * A group of buildings that all unlock together at the same population milestone.
+ * When farmers reach the populationThreshold, all buildings in the group become available.
+ */
+export interface BuildingUnlockGroup {
+  /** Stable unique identifier for this unlock group */
+  id: string;
+  /** Farmer count required to unlock all buildings in this group */
+  populationThreshold: number;
+  /** Building IDs that unlock together at this threshold */
+  buildingIds: string[];
+}
+
+/**
+ * Grouped building unlock tiers. When population crosses a group's threshold,
+ * all buildings in that group become available simultaneously, creating strategic choice pressure.
+ * Farmstead (threshold 0) is always available and NOT part of any unlock group.
+ */
+export const BUILDING_UNLOCK_GROUPS: BuildingUnlockGroup[] = [
+  {
+    id: 'tier_1_choice',
+    populationThreshold: 30,
+    buildingIds: ['marketplace', 'tavern'],
+  },
+  {
+    id: 'tier_2_choice',
+    populationThreshold: 60,
+    buildingIds: ['garrison', 'shrine'],
+  },
+  {
+    id: 'tier_3_choice',
+    populationThreshold: 100,
+    buildingIds: ['training_yard', 'healers_house'],
+  },
+];
+
+/**
+ * Get all unlock groups whose threshold is met at a given farmer count.
+ */
+export function getUnlockedGroups(farmers: number): BuildingUnlockGroup[] {
+  return BUILDING_UNLOCK_GROUPS.filter(g => farmers >= g.populationThreshold);
+}
+
+/**
+ * Get the unlock group that a specific building belongs to, if any.
+ */
+export function getUnlockGroupForBuilding(buildingId: string): BuildingUnlockGroup | undefined {
+  return BUILDING_UNLOCK_GROUPS.find(g => g.buildingIds.includes(buildingId));
+}
