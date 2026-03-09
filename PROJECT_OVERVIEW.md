@@ -145,19 +145,19 @@ MarkenKaledruns/
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| `src/game/requests.ts` | ~5380 | All event/request definitions (incl. 40 fire chain requests) |
-| `src/game/state.ts` | ~2670 | Reducer, game loop, all game logic (incl. fire system engine) |
+| `src/game/requests.ts` | ~9340 | All event/request definitions (incl. 80 generated fire/repair chain requests) |
+| `src/game/state.ts` | ~2745 | Reducer, game loop, all game logic (incl. fire system engine) |
 | `src/App.tsx` | ~1030 | Main UI component (incl. request-panel BEM layout, portrait wiring, fire chain tag/context) |
 | `src/App.css` | ~1650 | All main game styles (incl. portrait img, fire chain info styles) |
 | `src/game/picker.ts` | ~560 | Request selection & RNG |
-| `src/BuildingCard.css` | ~455 | Building card styles (incl. fire state action styles) |
+| `src/BuildingCard.css` | ~575 | Building card styles (incl. fire state action styles) |
 | `src/game/models.ts` | ~335 | Core type definitions (incl. fire types, PortraitId on Request) |
 | `src/LogScreen.css` | ~275 | Log screen styles |
 | `src/BuildMultipleModal.css` | ~230 | Modal styles |
-| `src/BuildingCard.tsx` | ~230 | Building card UI (incl. state action buttons) |
-| `src/game/buildings.ts` | ~220 | Building system (incl. effective count helpers) |
-| `src/ConstructionScreen.tsx` | ~200 | Construction UI |
-| `src/ConstructionScreen.css` | ~145 | Construction styles |
+| `src/BuildingCard.tsx` | ~300 | Building card UI (incl. state action buttons) |
+| `src/game/buildings.ts` | ~430 | Building system (incl. effective count helpers) |
+| `src/ConstructionScreen.tsx` | ~370 | Construction UI |
+| `src/ConstructionScreen.css` | ~315 | Construction styles |
 | `src/LogScreen.tsx` | ~135 | Log viewer UI |
 | `src/BuildMultipleModal.tsx` | ~125 | Bulk build modal UI |
 | `src/game/modifiers.ts` | ~100 | Effect modifiers |
@@ -330,7 +330,7 @@ Crises trigger automatically when thresholds are crossed:
 | Disease Wave | `health < 30` | `EVT_CRISIS_DISEASE` | Active |
 | Unrest | `satisfaction < 30` | `EVT_CRISIS_UNREST` | Active |
 
-Priority order: Disease > Unrest. Fire crises are now handled by the slot-based Fire System V3 (see [Section 18](#18-fire-system-v3)).
+Priority order: Disease > Unrest. Fire crises are now handled by the slot-based Fire System V4 (see [Section 18](#18-fire-system-v4)).
 
 ### 6.5 Game Over
 
@@ -424,7 +424,7 @@ interface GameState {
   scheduledCombats: ScheduledCombat[];   // Future battles
   activeCombat?: ActiveCombat;           // In-progress battle
   pendingAuthorityChecks: PendingAuthorityCheck[];  // Authority checks resolving next tick
-  fire: FireState;                       // Fire System V3 runtime state
+  fire: FireState;                       // Fire System V4 runtime state
   completedDistricts: Record<string, true>;  // Completed district IDs
   activeConstruction?: ActiveConstruction | null;  // Building currently under construction
 }
@@ -449,14 +449,14 @@ The game uses React's `useReducer` with an immutable update pattern (spread oper
 
 ### Request Types
 
-The game has **~346 request definitions** (approximate — update when adding/removing requests) split into four arrays:
+The game has **~441 request definitions** split into four arrays (361 declarative + 80 generated):
 
 | Array | Count | Purpose |
 |-------|-------|---------|
-| `infoRequests` | ~36 | Tickless information/tutorial screens (building unlocks, construction start/end, district completion, reminders) |
-| `eventRequests` | ~238+ | Main gameplay events, chains, authority events, building-gated events |
-| `authorityInfoRequests` | ~32 | Authority check feedback (success/failure info screens) |
-| `fireChainRequests` | 40 | Fire System V3 slot chain requests (10 slots × 4 per slot) |
+| `infoRequests` | 30 | Tickless information/tutorial screens (building unlocks, construction start/end, district completion, reminders) |
+| `eventRequests` | 281 | Main gameplay events, chains, authority events, building-gated events |
+| `authorityInfoRequests` | 50 | Authority check feedback (success/failure info screens) |
+| `fireChainRequests` | 80 (generated) | Fire System V4 slot chain requests (5 per slot × 10 = 50) + Repair V4 requests (3 per slot × 10 = 30) |
 
 ### Request Interface
 
@@ -517,7 +517,7 @@ interface Request {
 | `ARKANAT_INSPECTOR` | `CHAIN_ARKANAT_INSPECTOR_START` | ~6 events | Inspector encounter chain |
 | `EGO_INSULT` | `CHAIN_EGO_INSULT_START` | ~6 events | Authority ego test chain |
 | `RIVER_PIRATES` | `CHAIN_RIVER_PIRATES_START` | ~6 events | River pirates chain |
-| `CHAIN_FIRE_SLOT_1..10` | `FIRE_S{n}_START` | 4 per slot (×10 = 40) | Fire System V3 chain slots (see [Section 18](#18-fire-system-v3)) |
+| `CHAIN_FIRE_SLOT_1..10` | `FIRE_S{n}_START` | 5 per slot (×10 = 50) | Fire System V4 chain slots (see [Section 18](#18-fire-system-v4)) |
 | `marketplace_core` | `CHAIN_MARKETPLACE_CORE_START` | 3 events | Merchant dispute chain (requires `building:marketplace`) |
 | `tavern_core` | `CHAIN_TAVERN_CORE_START` | 3 events | Tavern intrigue chain (requires `building:tavern`) |
 | `garrison_core` | `CHAIN_GARRISON_CORE_START` | 3 events | Guard demands chain (requires `building:garrison`) |
@@ -544,7 +544,7 @@ Priority order:
 1. **Active Combat** → return synthetic combat round request
 2. **Scheduled Events** (targetTick ≤ current tick, FIFO order, info priority first)
 3. **Due Combats** → return synthetic combat start request (crisis still takes priority over combat start)
-4. **Crisis Events** (Disease → Unrest; fire crises replaced by Fire System V3 chain slots)
+4. **Crisis Events** (Disease → Unrest; fire crises replaced by Fire System V4 chain slots)
 5. **Random Event** from eligible pool (excludes: last request, crisis IDs, `canTriggerRandomly: false`, maxTriggers reached, locked chains, unmet requirements, authority range mismatch)
 6. **Fallback**: any non-crisis event → any event → error
 
@@ -584,8 +584,6 @@ interface BuildingDefinition {
   benefitId: string;
   benefitDescription: string;
   unlockToken?: string;
-  /** @deprecated Use constructionStartInfoRequestId / constructionEndInfoRequestId */
-  firstBuildInfoRequestId?: string;
   reminderRequestId?: string;
   reminderDelayTicks: number;
   sortOrder: number;
@@ -627,8 +625,8 @@ Each building has persistent runtime tracking:
 ```typescript
 interface BuildingTracking {
   buildingCount: number;        // Built count (never decreases)
-  onFireCount: number;          // Currently burning units (Fire System V3)
-  destroyedCount: number;       // Destroyed units (Fire System V3)
+  onFireCount: number;          // Currently burning units (Fire System V4)
+  destroyedCount: number;       // Destroyed units (Fire System V4)
   onStrikeCount: number;        // Units on strike (reserved for future use)
   unlockedAtTick?: number;      // When first unlocked
   lastRequirementTick?: number; // When last required

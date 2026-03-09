@@ -30,11 +30,6 @@ export interface BuildingDefinition {
   benefitDescription: string;
   /** Unlock token set when first built (for event gating, e.g. 'building:marketplace') */
   unlockToken?: string;
-  /**
-   * Info request ID scheduled on first build (0→1)
-   * @deprecated Use constructionStartInfoRequestId / constructionEndInfoRequestId instead.
-   */
-  firstBuildInfoRequestId?: string;
   /** Reminder request ID shown when building is needed but not built */
   reminderRequestId?: string;
   /** Ticks to wait before showing reminder after unlock/requirement */
@@ -118,7 +113,6 @@ export const BUILDING_DEFINITIONS: BuildingDefinition[] = [
     benefitId: 'marketplace',
     benefitDescription: 'Unlocks event "Market Day"',
     unlockToken: 'building:marketplace',
-    firstBuildInfoRequestId: 'INFO_NEED_MARKETPLACE',
     reminderRequestId: 'REMINDER_MARKETPLACE',
     reminderDelayTicks: 10,
     sortOrder: 1,
@@ -141,7 +135,6 @@ export const BUILDING_DEFINITIONS: BuildingDefinition[] = [
     populationPerBuilding: 120,
     benefitId: 'bakery',
     benefitDescription: '10% chance per tick for +1 farmer growth',
-    firstBuildInfoRequestId: 'INFO_NEED_BREAD',
     reminderRequestId: 'REMINDER_BAKERY',
     reminderDelayTicks: 10,
     sortOrder: 2,
@@ -163,7 +156,6 @@ export const BUILDING_DEFINITIONS: BuildingDefinition[] = [
     benefitId: 'brewery',
     benefitDescription: 'Unlocks event "Tavern After Work"',
     unlockToken: 'building:brewery',
-    firstBuildInfoRequestId: 'INFO_NEED_BEER',
     reminderRequestId: 'REMINDER_BREWERY',
     reminderDelayTicks: 12,
     sortOrder: 3,
@@ -184,7 +176,6 @@ export const BUILDING_DEFINITIONS: BuildingDefinition[] = [
     populationPerBuilding: 180,
     benefitId: 'firewood',
     benefitDescription: '25% chance to halve fire risk increases',
-    firstBuildInfoRequestId: 'INFO_NEED_FIREWOOD',
     reminderRequestId: 'REMINDER_FIREWOOD',
     reminderDelayTicks: 12,
     sortOrder: 4,
@@ -205,7 +196,6 @@ export const BUILDING_DEFINITIONS: BuildingDefinition[] = [
     populationPerBuilding: 200,
     benefitId: 'well',
     benefitDescription: '50% chance for +1 health on health gains',
-    firstBuildInfoRequestId: 'INFO_NEED_WELL',
     reminderRequestId: 'REMINDER_WELL',
     reminderDelayTicks: 15,
     sortOrder: 5,
