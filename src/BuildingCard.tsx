@@ -26,6 +26,8 @@ interface BuildingCardProps {
   onStartRepairChain?: (buildingId: string) => void;
   /** Whether another construction is currently in progress (disables building) */
   constructionActive?: boolean;
+  /** Whether THIS building is the one currently under construction */
+  activelyBuilding?: boolean;
 }
 
 function BuildingCard({
@@ -42,6 +44,7 @@ function BuildingCard({
   onBuildMultiple,
   onStartRepairChain,
   constructionActive = false,
+  activelyBuilding = false,
 }: BuildingCardProps) {
   const built = tracking.buildingCount
   const shortage = Math.max(0, requiredCount - built)
@@ -109,7 +112,9 @@ function BuildingCard({
     `building-${status}`,
     isHighlighted ? 'building-highlighted' : '',
     showBuildSuccess ? 'building-success-flash' : '',
-    showBuildError ? 'building-error-shake' : ''
+    showBuildError ? 'building-error-shake' : '',
+    activelyBuilding ? 'building-actively-building' : '',
+    constructionActive && !activelyBuilding ? 'building-construction-blocked' : ''
   ].filter(Boolean).join(' ')
   
   return (
@@ -213,19 +218,38 @@ function BuildingCard({
               </>
             ) : (
               <>
-                <button
-                  className="building-build-button"
-                  onClick={handleBuildClick}
-                >
-                  BUILD {definition.displayName.toUpperCase()}
-                </button>
-                {shortage > 1 && onBuildMultiple && (
+                {activelyBuilding ? (
                   <button
-                    className="building-build-multiple-button"
-                    onClick={handleBuildMultipleClick}
+                    className="building-build-button building-build-button-active"
+                    disabled
                   >
-                    BUILD MULTIPLE...
+                    🏗️ BUILDING...
                   </button>
+                ) : constructionActive ? (
+                  <button
+                    className="building-build-button building-build-button-blocked"
+                    disabled
+                    title="Construction in progress"
+                  >
+                    ⏳ Construction in progress
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      className="building-build-button"
+                      onClick={handleBuildClick}
+                    >
+                      BUILD {definition.displayName.toUpperCase()}
+                    </button>
+                    {shortage > 1 && onBuildMultiple && (
+                      <button
+                        className="building-build-multiple-button"
+                        onClick={handleBuildMultipleClick}
+                      >
+                        BUILD MULTIPLE...
+                      </button>
+                    )}
+                  </>
                 )}
               </>
             )}

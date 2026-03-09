@@ -7,6 +7,7 @@ import { BUILDING_DEFINITIONS, calculateRequiredBuildings, getBuildingDef } from
 import type { BuildingDefinition, BuildingTracking } from './game/buildings'
 import type { FireIncidentSlotState } from './game/models'
 import type { ActiveConstruction } from './game/state'
+import { getDistrictDef } from './game/districts'
 
 interface ConstructionScreenProps {
   isOpen: boolean;
@@ -20,6 +21,8 @@ interface ConstructionScreenProps {
   onStartRepairChain?: (buildingId: string) => void;
   /** Currently active construction, or null/undefined if nothing is being built */
   activeConstruction?: ActiveConstruction | null;
+  /** Current game tick, used to compute remaining construction time */
+  currentTick: number;
 }
 
 function ConstructionScreen({ 
@@ -33,6 +36,7 @@ function ConstructionScreen({
   onBuild,
   onStartRepairChain,
   activeConstruction,
+  currentTick,
 }: ConstructionScreenProps) {
   const highlightedBuildingRef = useRef<HTMLDivElement>(null)
   const [buildMultipleModalOpen, setBuildMultipleModalOpen] = useState(false)
@@ -152,6 +156,46 @@ function ConstructionScreen({
           </div>
         </div>
         
+        {/* Active Construction Panel */}
+        {activeConstruction && (() => {
+          const activeDef = getBuildingDef(activeConstruction.buildingId);
+          const remainingTicks = Math.max(0, activeConstruction.completionTick - currentTick);
+          const totalDuration = activeConstruction.completionTick - activeConstruction.startedAtTick;
+          const elapsed = totalDuration - remainingTicks;
+          const progressPercent = totalDuration > 0 ? Math.min(100, (elapsed / totalDuration) * 100) : 100;
+          const districtDef = activeDef?.districtId ? getDistrictDef(activeDef.districtId) : undefined;
+          
+          return (
+            <div className="active-construction-panel">
+              <div className="active-construction-header">
+                <span className="active-construction-icon">{activeDef?.icon ?? '🏗️'}</span>
+                <div className="active-construction-info">
+                  <span className="active-construction-title">
+                    Building: {activeDef?.displayName ?? activeConstruction.buildingId}
+                  </span>
+                  {districtDef && (
+                    <span className="active-construction-district">
+                      📍 {districtDef.name}
+                    </span>
+                  )}
+                </div>
+                <span className="active-construction-ticks">
+                  ⏱ {remainingTicks} tick{remainingTicks !== 1 ? 's' : ''} remaining
+                </span>
+              </div>
+              <div className="active-construction-progress-bar">
+                <div
+                  className="active-construction-progress-fill"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+              <div className="active-construction-progress-label">
+                {Math.round(progressPercent)}% complete
+              </div>
+            </div>
+          );
+        })()}
+
         {/* Building Cards */}
         <div className="construction-content">
           {sortedBuildings.map(({ definition: def, status }) => {
@@ -188,6 +232,7 @@ function ConstructionScreen({
                   onBuildMultiple={handleOpenBuildMultiple}
                   onStartRepairChain={onStartRepairChain}
                   constructionActive={!!activeConstruction}
+                  activelyBuilding={activeConstruction?.buildingId === def.id}
                 />
               </div>
             )
