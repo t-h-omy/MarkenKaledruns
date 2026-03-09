@@ -6,6 +6,7 @@ import type { BuildingStatus } from './BuildingCard'
 import { BUILDING_DEFINITIONS, calculateRequiredBuildings, getBuildingDef } from './game/buildings'
 import type { BuildingDefinition, BuildingTracking } from './game/buildings'
 import type { FireIncidentSlotState } from './game/models'
+import type { ActiveConstruction } from './game/state'
 
 interface ConstructionScreenProps {
   isOpen: boolean;
@@ -17,6 +18,8 @@ interface ConstructionScreenProps {
   highlightedBuilding?: string;
   onBuild: (buildingId: string) => void;
   onStartRepairChain?: (buildingId: string) => void;
+  /** Currently active construction, or null/undefined if nothing is being built */
+  activeConstruction?: ActiveConstruction | null;
 }
 
 function ConstructionScreen({ 
@@ -29,6 +32,7 @@ function ConstructionScreen({
   highlightedBuilding,
   onBuild,
   onStartRepairChain,
+  activeConstruction,
 }: ConstructionScreenProps) {
   const highlightedBuildingRef = useRef<HTMLDivElement>(null)
   const [buildMultipleModalOpen, setBuildMultipleModalOpen] = useState(false)
@@ -183,6 +187,7 @@ function ConstructionScreen({
                   onBuild={onBuild}
                   onBuildMultiple={handleOpenBuildMultiple}
                   onStartRepairChain={onStartRepairChain}
+                  constructionActive={!!activeConstruction}
                 />
               </div>
             )

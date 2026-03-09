@@ -1027,6 +1027,7 @@ function App() {
           highlightedBuilding={highlightedBuildingId ?? undefined}
           onBuild={(buildingId) => dispatch({ type: 'BUILD_BUILDING', buildingId })}
           onStartRepairChain={(buildingId) => dispatch({ type: 'START_REPAIR_CHAIN', buildingId })}
+          activeConstruction={gameState.activeConstruction}
         />
         
         {/* Log Screen Overlay */}

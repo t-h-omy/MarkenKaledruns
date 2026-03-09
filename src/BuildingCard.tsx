@@ -24,6 +24,8 @@ interface BuildingCardProps {
   onBuild: (buildingId: string) => void;
   onBuildMultiple?: (buildingId: string) => void;
   onStartRepairChain?: (buildingId: string) => void;
+  /** Whether another construction is currently in progress (disables building) */
+  constructionActive?: boolean;
 }
 
 function BuildingCard({
@@ -39,10 +41,11 @@ function BuildingCard({
   onBuild,
   onBuildMultiple,
   onStartRepairChain,
+  constructionActive = false,
 }: BuildingCardProps) {
   const built = tracking.buildingCount
   const shortage = Math.max(0, requiredCount - built)
-  const canBuild = status !== 'locked' && gold >= definition.cost
+  const canBuild = status !== 'locked' && gold >= definition.cost && !constructionActive
   
   // Animation states
   const [showBuildSuccess, setShowBuildSuccess] = useState(false)

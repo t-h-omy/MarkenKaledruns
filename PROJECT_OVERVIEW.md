@@ -194,7 +194,7 @@ main.tsx (entry point)
 |------|-------------|
 | `models.ts` | `Stats`, `Effect`, `Request`, `Option`, `AuthorityCheck`, `AuthorityCheckResult`, `CombatSpec`, `FollowUp`, `WeightedCandidate`, `AuthorityFollowUpBoost` |
 | `portraits/index.ts` | `PORTRAITS`, `PortraitId` |
-| `state.ts` | `GameState`, `GameAction`, `gameReducer`, `initializeGame`, `getCurrentRequest`, `initialState`, `AppliedChange`, `LogEntry`, `ScheduledEvent`, `ScheduledCombat`, `ActiveCombat`, `ActiveConstruction`, `PendingAuthorityCheck`, `ModifierHook`, `applyOptionWithModifiers`, `hasUnlock`, `meetsRequirements`, `syncBuildingUnlockTokens`, `getConstructionProfileForBuild`, `FIRE_SYSTEM_CONFIG` |
+| `state.ts` | `GameState`, `GameAction`, `gameReducer`, `initializeGame`, `getCurrentRequest`, `initialState`, `AppliedChange`, `LogEntry`, `ScheduledEvent`, `ScheduledCombat`, `ActiveCombat`, `ActiveConstruction`, `PendingAuthorityCheck`, `ModifierHook`, `applyOptionWithModifiers`, `hasUnlock`, `meetsRequirements`, `syncBuildingUnlockTokens`, `getConstructionProfileForBuild`, `canStartConstruction`, `rollConstructionDuration`, `completeConstruction`, `FIRE_SYSTEM_CONFIG` |
 | `requests.ts` | `infoRequests`, `eventRequests`, `authorityInfoRequests`, `fireChainRequests`, `validateRequests` |
 | `picker.ts` | `pickNextRequest`, `selectWeightedCandidate`, `seedRandom`, `resetRandom`, `getRandomValue` |
 | `buildings.ts` | `BUILDING_DEFINITIONS`, `BUILDING_UNLOCK_GROUPS`, `BuildingDefinition`, `BuildingTracking`, `BuildingUnlockGroup`, `isBuildingActive`, `calculateRequiredBuildings`, `getBuildingDef`, `createInitialBuildingTracking`, `getEffectiveBuildingCount`, `hasAnyBuildingState`, `getUnlockedGroups`, `getUnlockGroupForBuilding` |
@@ -239,12 +239,20 @@ main.tsx (entry point)
    └─ Pick next request
 
 3. BUILDING (action: BUILD_BUILDING)
+   ├─ Validate no active construction in progress (one at a time)
    ├─ Validate no active building state (build lock: rejects if any onFireCount/destroyedCount/onStrikeCount > 0)
-   ├─ Deduct gold cost
-   ├─ Increment building count
-   ├─ Set unlock token (if first build)
-   ├─ Schedule info request (if first build and defined)
-   └─ Log the construction
+   ├─ Validate repeatability (non-repeatable buildings cannot be built more than once)
+   ├─ Deduct gold cost (immediate)
+   ├─ Roll random construction duration (seeded RNG, min–max from BuildingDefinition)
+   ├─ Set activeConstruction = { buildingId, startedAtTick, completionTick, constructionProfileId }
+   ├─ Schedule construction start info request (tickless)
+   └─ Log the construction start
+   (Construction completes during tick-advance when tick >= completionTick:
+     ├─ Increment building count
+     ├─ Apply unlockTokensOnComplete + eventChainUnlocksOnComplete
+     ├─ Check district completion → mark district complete + apply district rewards
+     ├─ Schedule construction end info request + district completion info
+     └─ Clear activeConstruction to null)
 
 4. FIRE ACTIONS (reducer-only)
    ├─ EXTINGUISH_ONE → validate onFireCount > 0, apply cost, decrement
@@ -419,7 +427,7 @@ interface GameState {
 | Action | Fields | Description |
 |--------|--------|-------------|
 | `CHOOSE_OPTION` | `optionIndex`, `combatCommit?`, `authorityCommit?` | Player selects an event option |
-| `BUILD_BUILDING` | `buildingId` | Player constructs a building |
+| `BUILD_BUILDING` | `buildingId` | Starts timed construction (gold deducted immediately, buildingCount increments on completion) |
 | `EXTINGUISH_ONE` | `buildingId` | Extinguish one burning building unit (costs gold + satisfaction) |
 | `REPAIR_ONE` | `buildingId` | Repair one destroyed building unit (costs 75% of build cost) |
 
