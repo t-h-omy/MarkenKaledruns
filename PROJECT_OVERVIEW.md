@@ -198,6 +198,7 @@ main.tsx (entry point)
 | `requests.ts` | `infoRequests`, `eventRequests`, `authorityInfoRequests`, `fireChainRequests`, `validateRequests` |
 | `picker.ts` | `pickNextRequest`, `selectWeightedCandidate`, `seedRandom`, `resetRandom`, `getRandomValue` |
 | `buildings.ts` | `BUILDING_DEFINITIONS`, `BuildingDefinition`, `BuildingTracking`, `isBuildingActive`, `calculateRequiredBuildings`, `getBuildingDef`, `createInitialBuildingTracking`, `getEffectiveBuildingCount`, `hasAnyBuildingState` |
+| `districts.ts` | `DISTRICT_DEFINITIONS`, `DistrictDefinition`, `getDistrictDef`, `isDistrictComplete` |
 | `modifiers.ts` | `firewoodModifier`, `wellModifier`, `needModifiers` |
 
 ---
@@ -408,6 +409,7 @@ interface GameState {
   activeCombat?: ActiveCombat;           // In-progress battle
   pendingAuthorityChecks: PendingAuthorityCheck[];  // Authority checks resolving next tick
   fire: FireState;                       // Fire System V3 runtime state
+  completedDistricts: Record<string, true>;  // Completed district IDs
 }
 ```
 
@@ -590,6 +592,33 @@ interface BuildingTracking {
 ```
 
 **Effective Count**: `effectiveCount = buildingCount - onFireCount - destroyedCount - onStrikeCount`. Only effective buildings count toward requirements and capacity. Buildings with any active state cannot have more built until all states are cleared (**build lock**).
+
+### 10.1 District System
+
+Districts are themed groups of buildings. When all buildings in a district have been built at least once, the district is considered **complete**, granting unlock tokens and event chain unlocks.
+
+#### District Definitions
+
+```typescript
+interface DistrictDefinition {
+  id: string;
+  name: string;
+  buildingIds: string[];
+  completionUnlockTokens: string[];
+  completionEventChainUnlocks: string[];
+  completionInfoRequestId?: string;
+}
+```
+
+| District | ID | Buildings | Completion Tokens | Completion Chains | Completion Info Request |
+|----------|----|-----------|-------------------|-------------------|------------------------|
+| Commerce District | `commerce` | `marketplace`, `tavern` | `district:commerce_complete` | `chain:commerce_major` | `INFO_DISTRICT_COMMERCE_COMPLETE` |
+| Military District | `military` | `garrison`, `training_yard` | `district:military_complete` | `chain:military_major` | `INFO_DISTRICT_MILITARY_COMPLETE` |
+| Faith/Relief District | `faith` | `shrine`, `healers_house` | `district:faith_complete` | `chain:faith_major` | `INFO_DISTRICT_FAITH_COMPLETE` |
+
+#### Completion Check
+
+A district is complete when every building in `buildingIds` has `buildingCount >= 1` in `buildingTracking`. Completed districts are tracked in `GameState.completedDistricts`.
 
 ---
 

@@ -176,6 +176,8 @@ export interface GameState {
   pendingAuthorityChecks: PendingAuthorityCheck[];
   /** Fire system runtime state (slots and pending info queue) */
   fire: FireState;
+  /** Set of completed district IDs (value is always true for completed districts) */
+  completedDistricts: Record<string, true>;
 }
 
 /**
@@ -265,6 +267,7 @@ export const initialState: GameState = {
   fire: {
     slots: createInitialFireSlots(),
   },
+  completedDistricts: {},
 };
 
 /**
@@ -1893,6 +1896,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         scheduledCombats,
         pendingAuthorityChecks: state.pendingAuthorityChecks,
         fire: updatedFire,
+        completedDistricts: state.completedDistricts,
       };
     }
 
@@ -1916,6 +1920,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         scheduledCombats,
         pendingAuthorityChecks: state.pendingAuthorityChecks,
         fire: updatedFire,
+        completedDistricts: state.completedDistricts,
       });
 
       // Return state with same tick, updated stats/unlocks/log, new request
@@ -1935,6 +1940,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         scheduledCombats,
         pendingAuthorityChecks: state.pendingAuthorityChecks,
         fire: updatedFire,
+        completedDistricts: state.completedDistricts,
       };
     }
 
@@ -2069,6 +2075,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         scheduledCombats,
         pendingAuthorityChecks: state.pendingAuthorityChecks,
         fire: fireState,
+        completedDistricts: state.completedDistricts,
       };
     }
 
@@ -2131,6 +2138,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       scheduledCombats,
       pendingAuthorityChecks,
       fire: fireState,
+      completedDistricts: state.completedDistricts,
     });
 
     // 4.5. Check if the picked request was a scheduled event with committed authority
@@ -2174,6 +2182,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       scheduledCombats,
       pendingAuthorityChecks,
       fire: fireState,
+      completedDistricts: state.completedDistricts,
     };
   }
 
