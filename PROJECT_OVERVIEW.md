@@ -513,14 +513,53 @@ Same request is never shown twice in a row (`lastRequestId` check).
 
 ### Building Definitions
 
-| Building | ID | Unlock | Cost | Pop/Building | Benefit | Unlock Token |
-|----------|----|--------|------|-------------|---------|-------------|
-| 🏠 Farmstead | `farmstead` | 0 farmers | 10g | 20 | Houses farmers (prevents overcrowding) | — |
-| 🏪 Marketplace | `marketplace` | 30 farmers | 20g | 100 | Unlocks "Market Day" event | `building:marketplace` |
-| 🍞 Bakery | `bakery` | 60 farmers | 40g | 120 | 10% chance per tick for +1 farmer growth | — |
-| 🍺 Brewery | `brewery` | 100 farmers | 70g | 150 | Unlocks "Tavern After Work" event | `building:brewery` |
-| 🪵 Firewood Supply | `firewood` | 170 farmers | 200g | 180 | 25% chance to halve fire risk increases | — |
-| 💧 Central Well | `well` | 250 farmers | 300g | 200 | 50% chance for +1 health on health gains | — |
+| Building | ID | Category | Repeatable | District | Unlock | Cost | Pop/Building | Benefit | Unlock Token | Construction Ticks |
+|----------|----|----------|------------|----------|--------|------|-------------|---------|-------------|-------------------|
+| 🏠 Farmstead | `farmstead` | capacity | ✅ | — | 0 farmers | 10g | 20 | Houses farmers (prevents overcrowding) | — | 2–4 |
+| 🏪 Marketplace | `marketplace` | district | ❌ | `commerce` | 30 farmers | 20g | 100 | Unlocks "Market Day" event | `building:marketplace` | 4–8 |
+| 🍞 Bakery | `bakery` | capacity | ✅ | — | 60 farmers | 40g | 120 | 10% chance per tick for +1 farmer growth | — | 3–6 |
+| 🍺 Brewery | `brewery` | capacity | ✅ | — | 100 farmers | 70g | 150 | Unlocks "Tavern After Work" event | `building:brewery` | 3–6 |
+| 🪵 Firewood Supply | `firewood` | capacity | ✅ | — | 170 farmers | 200g | 180 | 25% chance to halve fire risk increases | — | 4–7 |
+| 💧 Central Well | `well` | capacity | ✅ | — | 250 farmers | 300g | 200 | 50% chance for +1 health on health gains | — | 4–8 |
+
+### Building Interface Fields
+
+```typescript
+interface BuildingDefinition {
+  id: string;
+  displayName: string;
+  icon: string;
+  description: string;
+  unlockThreshold: number;
+  cost: number;
+  populationPerBuilding?: number;
+  benefitId: string;
+  benefitDescription: string;
+  unlockToken?: string;
+  /** @deprecated Use constructionStartInfoRequestId / constructionEndInfoRequestId */
+  firstBuildInfoRequestId?: string;
+  reminderRequestId?: string;
+  reminderDelayTicks: number;
+  sortOrder: number;
+  category: 'capacity' | 'district';
+  repeatable: boolean;
+  districtId?: string;
+  constructionTicksMin: number;
+  constructionTicksMax: number;
+  constructionStartInfoRequestId: string;
+  constructionEndInfoRequestId: string;
+  unlockTokensOnComplete?: string[];
+  eventChainUnlocksOnComplete?: string[];
+}
+```
+
+- **category**: `'capacity'` buildings add population capacity and can scale; `'district'` buildings establish unique districts (built once).
+- **repeatable**: Whether the building can be constructed multiple times.
+- **districtId**: Only set for `'district'`-category buildings; identifies which district is established.
+- **constructionTicksMin / constructionTicksMax**: The random range for how many ticks construction takes.
+- **constructionStartInfoRequestId / constructionEndInfoRequestId**: Info request IDs shown when construction begins and ends. Naming convention: `INFO_CONSTRUCT_START_{ID}` / `INFO_CONSTRUCT_END_{ID}`.
+- **unlockTokensOnComplete**: Tokens granted when construction completes (e.g. for event gating).
+- **eventChainUnlocksOnComplete**: Event chain IDs unlocked when construction completes.
 
 ### Building Scaling Formula
 

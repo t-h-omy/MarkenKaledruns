@@ -27,7 +27,10 @@ export interface BuildingDefinition {
   benefitDescription: string;
   /** Unlock token set when first built (for event gating, e.g. 'building:marketplace') */
   unlockToken?: string;
-  /** Info request ID scheduled on first build (0→1) */
+  /**
+   * Info request ID scheduled on first build (0→1)
+   * @deprecated Use constructionStartInfoRequestId / constructionEndInfoRequestId instead.
+   */
   firstBuildInfoRequestId?: string;
   /** Reminder request ID shown when building is needed but not built */
   reminderRequestId?: string;
@@ -35,6 +38,24 @@ export interface BuildingDefinition {
   reminderDelayTicks: number;
   /** Display order in Build Screen (lower = higher) */
   sortOrder: number;
+  /** Whether this building adds capacity or establishes a district */
+  category: 'capacity' | 'district';
+  /** Whether this building can be built multiple times */
+  repeatable: boolean;
+  /** District identifier for district-category buildings */
+  districtId?: string;
+  /** Minimum construction duration in ticks */
+  constructionTicksMin: number;
+  /** Maximum construction duration in ticks */
+  constructionTicksMax: number;
+  /** Info request ID shown when construction starts */
+  constructionStartInfoRequestId: string;
+  /** Info request ID shown when construction ends */
+  constructionEndInfoRequestId: string;
+  /** Unlock tokens granted when construction completes */
+  unlockTokensOnComplete?: string[];
+  /** Event chain IDs unlocked when construction completes */
+  eventChainUnlocksOnComplete?: string[];
 }
 
 /**
@@ -76,6 +97,12 @@ export const BUILDING_DEFINITIONS: BuildingDefinition[] = [
     reminderRequestId: 'REMINDER_FARMSTEAD',
     reminderDelayTicks: 8,
     sortOrder: 0,
+    category: 'capacity',
+    repeatable: true,
+    constructionTicksMin: 2,
+    constructionTicksMax: 4,
+    constructionStartInfoRequestId: 'INFO_CONSTRUCT_START_FARMSTEAD',
+    constructionEndInfoRequestId: 'INFO_CONSTRUCT_END_FARMSTEAD',
   },
   {
     id: 'marketplace',
@@ -92,6 +119,13 @@ export const BUILDING_DEFINITIONS: BuildingDefinition[] = [
     reminderRequestId: 'REMINDER_MARKETPLACE',
     reminderDelayTicks: 10,
     sortOrder: 1,
+    category: 'district',
+    repeatable: false,
+    districtId: 'commerce',
+    constructionTicksMin: 4,
+    constructionTicksMax: 8,
+    constructionStartInfoRequestId: 'INFO_CONSTRUCT_START_MARKETPLACE',
+    constructionEndInfoRequestId: 'INFO_CONSTRUCT_END_MARKETPLACE',
   },
   {
     id: 'bakery',
@@ -107,6 +141,12 @@ export const BUILDING_DEFINITIONS: BuildingDefinition[] = [
     reminderRequestId: 'REMINDER_BAKERY',
     reminderDelayTicks: 10,
     sortOrder: 2,
+    category: 'capacity',
+    repeatable: true,
+    constructionTicksMin: 3,
+    constructionTicksMax: 6,
+    constructionStartInfoRequestId: 'INFO_CONSTRUCT_START_BAKERY',
+    constructionEndInfoRequestId: 'INFO_CONSTRUCT_END_BAKERY',
   },
   {
     id: 'brewery',
@@ -123,6 +163,12 @@ export const BUILDING_DEFINITIONS: BuildingDefinition[] = [
     reminderRequestId: 'REMINDER_BREWERY',
     reminderDelayTicks: 12,
     sortOrder: 3,
+    category: 'capacity',
+    repeatable: true,
+    constructionTicksMin: 3,
+    constructionTicksMax: 6,
+    constructionStartInfoRequestId: 'INFO_CONSTRUCT_START_BREWERY',
+    constructionEndInfoRequestId: 'INFO_CONSTRUCT_END_BREWERY',
   },
   {
     id: 'firewood',
@@ -138,6 +184,12 @@ export const BUILDING_DEFINITIONS: BuildingDefinition[] = [
     reminderRequestId: 'REMINDER_FIREWOOD',
     reminderDelayTicks: 12,
     sortOrder: 4,
+    category: 'capacity',
+    repeatable: true,
+    constructionTicksMin: 4,
+    constructionTicksMax: 7,
+    constructionStartInfoRequestId: 'INFO_CONSTRUCT_START_FIREWOOD',
+    constructionEndInfoRequestId: 'INFO_CONSTRUCT_END_FIREWOOD',
   },
   {
     id: 'well',
@@ -153,6 +205,12 @@ export const BUILDING_DEFINITIONS: BuildingDefinition[] = [
     reminderRequestId: 'REMINDER_WELL',
     reminderDelayTicks: 15,
     sortOrder: 5,
+    category: 'capacity',
+    repeatable: true,
+    constructionTicksMin: 4,
+    constructionTicksMax: 8,
+    constructionStartInfoRequestId: 'INFO_CONSTRUCT_START_WELL',
+    constructionEndInfoRequestId: 'INFO_CONSTRUCT_END_WELL',
   },
 ];
 
