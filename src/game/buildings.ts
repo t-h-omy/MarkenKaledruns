@@ -129,7 +129,6 @@ export const BUILDING_DEFINITIONS: BuildingDefinition[] = [
     constructionTicksMax: 8,
     constructionStartInfoRequestId: 'INFO_CONSTRUCT_START_MARKETPLACE',
     constructionEndInfoRequestId: 'INFO_CONSTRUCT_END_MARKETPLACE',
-    unlockTokensOnComplete: ['building:marketplace_built'],
     eventChainUnlocksOnComplete: ['marketplace_core'],
   },
   {
@@ -236,7 +235,6 @@ export const BUILDING_DEFINITIONS: BuildingDefinition[] = [
     constructionTicksMax: 6,
     constructionStartInfoRequestId: 'INFO_CONSTRUCT_START_TAVERN',
     constructionEndInfoRequestId: 'INFO_CONSTRUCT_END_TAVERN',
-    unlockTokensOnComplete: ['building:tavern_built'],
     eventChainUnlocksOnComplete: ['tavern_core'],
   },
   {
@@ -258,7 +256,6 @@ export const BUILDING_DEFINITIONS: BuildingDefinition[] = [
     constructionTicksMax: 7,
     constructionStartInfoRequestId: 'INFO_CONSTRUCT_START_GARRISON',
     constructionEndInfoRequestId: 'INFO_CONSTRUCT_END_GARRISON',
-    unlockTokensOnComplete: ['building:garrison_built'],
     eventChainUnlocksOnComplete: ['garrison_core'],
   },
   {
@@ -280,7 +277,6 @@ export const BUILDING_DEFINITIONS: BuildingDefinition[] = [
     constructionTicksMax: 6,
     constructionStartInfoRequestId: 'INFO_CONSTRUCT_START_SHRINE',
     constructionEndInfoRequestId: 'INFO_CONSTRUCT_END_SHRINE',
-    unlockTokensOnComplete: ['building:shrine_built'],
     eventChainUnlocksOnComplete: ['shrine_core'],
   },
   {
@@ -302,7 +298,6 @@ export const BUILDING_DEFINITIONS: BuildingDefinition[] = [
     constructionTicksMax: 8,
     constructionStartInfoRequestId: 'INFO_CONSTRUCT_START_TRAINING_YARD',
     constructionEndInfoRequestId: 'INFO_CONSTRUCT_END_TRAINING_YARD',
-    unlockTokensOnComplete: ['building:training_yard_built'],
     eventChainUnlocksOnComplete: ['training_yard_core'],
   },
   {
@@ -324,7 +319,6 @@ export const BUILDING_DEFINITIONS: BuildingDefinition[] = [
     constructionTicksMax: 7,
     constructionStartInfoRequestId: 'INFO_CONSTRUCT_START_HEALERS_HOUSE',
     constructionEndInfoRequestId: 'INFO_CONSTRUCT_END_HEALERS_HOUSE',
-    unlockTokensOnComplete: ['building:healers_house_built'],
     eventChainUnlocksOnComplete: ['healers_house_core'],
   },
 ];
