@@ -444,12 +444,12 @@ The game uses React's `useReducer` with an immutable update pattern (spread oper
 
 ### Request Types
 
-The game has **~273 request definitions** (approximate — update when adding/removing requests) split into four arrays:
+The game has **~346 request definitions** (approximate — update when adding/removing requests) split into four arrays:
 
 | Array | Count | Purpose |
 |-------|-------|---------|
-| `infoRequests` | ~11 | Tickless information/tutorial screens (building unlocks, reminders) |
-| `eventRequests` | ~190+ | Main gameplay events, chains, authority events |
+| `infoRequests` | ~36 | Tickless information/tutorial screens (building unlocks, construction start/end, district completion, reminders) |
+| `eventRequests` | ~238+ | Main gameplay events, chains, authority events, building-gated events |
 | `authorityInfoRequests` | ~32 | Authority check feedback (success/failure info screens) |
 | `fireChainRequests` | 40 | Fire System V3 slot chain requests (10 slots × 4 per slot) |
 
@@ -488,6 +488,18 @@ interface Request {
 **Building-Gated Events:**
 - `EVENT_MARKET_DAY` (requires `building:marketplace`)
 - `EVENT_TAVERN_AFTER_WORK` (requires `building:brewery`)
+- `EVENT_MARKET_BOOM` / `EVENT_MARKET_FRAUD` (requires `building:marketplace`)
+- `EVENT_TAVERN_CELEBRATION` / `EVENT_TAVERN_BRAWL` (requires `building:tavern`)
+- `EVENT_GARRISON_PATROL` / `EVENT_GARRISON_DEMANDS` (requires `building:garrison`)
+- `EVENT_TRAINING_EXCELLENCE` / `EVENT_TRAINING_INJURY` (requires `building:training_yard`)
+- `EVENT_SHRINE_BLESSING` / `EVENT_SHRINE_SUPERSTITION` (requires `building:shrine`)
+- `EVENT_HEALERS_CURE` / `EVENT_HEALERS_SHORTAGE` (requires `building:healers_house`)
+
+**Construction Info Requests** (11 start + 11 end = 22, in `infoRequests`):
+- `INFO_CONSTRUCT_START_{BUILDING}` / `INFO_CONSTRUCT_END_{BUILDING}` for farmstead, marketplace, bakery, brewery, firewood, well, tavern, garrison, shrine, training_yard, healers_house
+
+**District Completion Info Requests** (3, in `infoRequests`):
+- `INFO_DISTRICT_COMMERCE_COMPLETE`, `INFO_DISTRICT_MILITARY_COMPLETE`, `INFO_DISTRICT_FAITH_COMPLETE`
 
 **Event Chains:**
 
@@ -501,6 +513,18 @@ interface Request {
 | `EGO_INSULT` | `CHAIN_EGO_INSULT_START` | ~6 events | Authority ego test chain |
 | `RIVER_PIRATES` | `CHAIN_RIVER_PIRATES_START` | ~6 events | River pirates chain |
 | `CHAIN_FIRE_SLOT_1..10` | `FIRE_S{n}_START` | 4 per slot (×10 = 40) | Fire System V3 chain slots (see [Section 18](#18-fire-system-v3)) |
+| `marketplace_core` | `CHAIN_MARKETPLACE_CORE_START` | 3 events | Merchant dispute chain (requires `building:marketplace`) |
+| `tavern_core` | `CHAIN_TAVERN_CORE_START` | 3 events | Tavern intrigue chain (requires `building:tavern`) |
+| `garrison_core` | `CHAIN_GARRISON_CORE_START` | 3 events | Guard demands chain (requires `building:garrison`) |
+| `training_yard_core` | `CHAIN_TRAINING_CORE_START` | 3 events | Training accident chain (requires `building:training_yard`) |
+| `shrine_core` | `CHAIN_SHRINE_CORE_START` | 3 events | Pilgrim request chain (requires `building:shrine`) |
+| `healers_house_core` | `CHAIN_HEALERS_CORE_START` | 3 events | Herb shortage chain (requires `building:healers_house`) |
+| `commerce_guild_pressure` | `CHAIN_COMMERCE_GUILD_START` | 3 events | Guild politics chain (requires `district:commerce_complete`) |
+| `commerce_prosperity` | `CHAIN_COMMERCE_PROSPER_START` | 3 events | Trade prosperity chain (requires `district:commerce_complete`) |
+| `military_mobilization` | `CHAIN_MILITARY_MOBIL_START` | 3 events | Mobilization chain (requires `district:military_complete`) |
+| `military_politics` | `CHAIN_MILITARY_POLITICS_START` | 3 events | Military power struggle chain (requires `district:military_complete`) |
+| `faith_pilgrimage` | `CHAIN_FAITH_PILGRIM_START` | 3 events | Pilgrimage chain (requires `district:faith_complete`) |
+| `faith_doctrine` | `CHAIN_FAITH_DOCTRINE_START` | 3 events | Doctrinal dispute chain (requires `district:faith_complete`) |
 
 **Authority Events:**
 - Low authority (0–33): `EVT_LOW_AUTHORITY`, `EVT_LOW_GUARD_INSUBORDINATION`, `EVT_LOW_SABOTAGE`, `EVT_LOW_PETITION_DENIED`, `EVT_LOW_DEBT_COLLECTOR`, `EVT_LOW_COUNCIL_REVOLT`, `EVT_LOW_BANDITS_MOCK`, `EVT_LOW_FARMERS_LEAVE`, `EVT_LOW_MERCHANT_EXTORTION`, `EVT_LOW_AUTHORITY_CRISIS`
