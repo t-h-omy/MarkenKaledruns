@@ -3,6 +3,9 @@
  * Replaces the old Needs system with proactive building mechanics.
  */
 
+/** Number of farmers housed per farmstead building. Used for capacity checks and overcrowding. */
+export const FARMERS_PER_FARMSTEAD = 20;
+
 /**
  * Definition of a building type that can be constructed by the player.
  */
@@ -27,14 +30,30 @@ export interface BuildingDefinition {
   benefitDescription: string;
   /** Unlock token set when first built (for event gating, e.g. 'building:marketplace') */
   unlockToken?: string;
-  /** Info request ID scheduled on first build (0→1) */
-  firstBuildInfoRequestId?: string;
   /** Reminder request ID shown when building is needed but not built */
   reminderRequestId?: string;
   /** Ticks to wait before showing reminder after unlock/requirement */
   reminderDelayTicks: number;
   /** Display order in Build Screen (lower = higher) */
   sortOrder: number;
+  /** Whether this building adds capacity or establishes a district */
+  category: 'capacity' | 'district';
+  /** Whether this building can be built multiple times */
+  repeatable: boolean;
+  /** District identifier for district-category buildings */
+  districtId?: string;
+  /** Minimum construction duration in ticks */
+  constructionTicksMin: number;
+  /** Maximum construction duration in ticks */
+  constructionTicksMax: number;
+  /** Info request ID shown when construction starts */
+  constructionStartInfoRequestId: string;
+  /** Info request ID shown when construction ends */
+  constructionEndInfoRequestId: string;
+  /** Unlock tokens granted when construction completes */
+  unlockTokensOnComplete?: string[];
+  /** Event chain IDs unlocked when construction completes */
+  eventChainUnlocksOnComplete?: string[];
 }
 
 /**
@@ -76,6 +95,12 @@ export const BUILDING_DEFINITIONS: BuildingDefinition[] = [
     reminderRequestId: 'REMINDER_FARMSTEAD',
     reminderDelayTicks: 8,
     sortOrder: 0,
+    category: 'capacity',
+    repeatable: true,
+    constructionTicksMin: 2,
+    constructionTicksMax: 4,
+    constructionStartInfoRequestId: 'INFO_CONSTRUCT_START_FARMSTEAD',
+    constructionEndInfoRequestId: 'INFO_CONSTRUCT_END_FARMSTEAD',
   },
   {
     id: 'marketplace',
@@ -88,10 +113,17 @@ export const BUILDING_DEFINITIONS: BuildingDefinition[] = [
     benefitId: 'marketplace',
     benefitDescription: 'Unlocks event "Market Day"',
     unlockToken: 'building:marketplace',
-    firstBuildInfoRequestId: 'INFO_NEED_MARKETPLACE',
     reminderRequestId: 'REMINDER_MARKETPLACE',
     reminderDelayTicks: 10,
     sortOrder: 1,
+    category: 'district',
+    repeatable: false,
+    districtId: 'commerce',
+    constructionTicksMin: 4,
+    constructionTicksMax: 8,
+    constructionStartInfoRequestId: 'INFO_CONSTRUCT_START_MARKETPLACE',
+    constructionEndInfoRequestId: 'INFO_CONSTRUCT_END_MARKETPLACE',
+    eventChainUnlocksOnComplete: ['marketplace_core'],
   },
   {
     id: 'bakery',
@@ -103,10 +135,15 @@ export const BUILDING_DEFINITIONS: BuildingDefinition[] = [
     populationPerBuilding: 120,
     benefitId: 'bakery',
     benefitDescription: '10% chance per tick for +1 farmer growth',
-    firstBuildInfoRequestId: 'INFO_NEED_BREAD',
     reminderRequestId: 'REMINDER_BAKERY',
     reminderDelayTicks: 10,
     sortOrder: 2,
+    category: 'capacity',
+    repeatable: true,
+    constructionTicksMin: 3,
+    constructionTicksMax: 6,
+    constructionStartInfoRequestId: 'INFO_CONSTRUCT_START_BAKERY',
+    constructionEndInfoRequestId: 'INFO_CONSTRUCT_END_BAKERY',
   },
   {
     id: 'brewery',
@@ -119,10 +156,15 @@ export const BUILDING_DEFINITIONS: BuildingDefinition[] = [
     benefitId: 'brewery',
     benefitDescription: 'Unlocks event "Tavern After Work"',
     unlockToken: 'building:brewery',
-    firstBuildInfoRequestId: 'INFO_NEED_BEER',
     reminderRequestId: 'REMINDER_BREWERY',
     reminderDelayTicks: 12,
     sortOrder: 3,
+    category: 'capacity',
+    repeatable: true,
+    constructionTicksMin: 3,
+    constructionTicksMax: 6,
+    constructionStartInfoRequestId: 'INFO_CONSTRUCT_START_BREWERY',
+    constructionEndInfoRequestId: 'INFO_CONSTRUCT_END_BREWERY',
   },
   {
     id: 'firewood',
@@ -134,10 +176,15 @@ export const BUILDING_DEFINITIONS: BuildingDefinition[] = [
     populationPerBuilding: 180,
     benefitId: 'firewood',
     benefitDescription: '25% chance to halve fire risk increases',
-    firstBuildInfoRequestId: 'INFO_NEED_FIREWOOD',
     reminderRequestId: 'REMINDER_FIREWOOD',
     reminderDelayTicks: 12,
     sortOrder: 4,
+    category: 'capacity',
+    repeatable: true,
+    constructionTicksMin: 4,
+    constructionTicksMax: 7,
+    constructionStartInfoRequestId: 'INFO_CONSTRUCT_START_FIREWOOD',
+    constructionEndInfoRequestId: 'INFO_CONSTRUCT_END_FIREWOOD',
   },
   {
     id: 'well',
@@ -149,10 +196,120 @@ export const BUILDING_DEFINITIONS: BuildingDefinition[] = [
     populationPerBuilding: 200,
     benefitId: 'well',
     benefitDescription: '50% chance for +1 health on health gains',
-    firstBuildInfoRequestId: 'INFO_NEED_WELL',
     reminderRequestId: 'REMINDER_WELL',
     reminderDelayTicks: 15,
     sortOrder: 5,
+    category: 'capacity',
+    repeatable: true,
+    constructionTicksMin: 4,
+    constructionTicksMax: 8,
+    constructionStartInfoRequestId: 'INFO_CONSTRUCT_START_WELL',
+    constructionEndInfoRequestId: 'INFO_CONSTRUCT_END_WELL',
+  },
+  {
+    id: 'tavern',
+    displayName: 'Tavern',
+    icon: '\u{1F37B}',
+    description: 'A lively gathering place where locals swap stories and forge alliances over mugs of ale.',
+    unlockThreshold: 30,
+    cost: 25,
+    benefitId: 'tavern',
+    benefitDescription: 'Establishes Commerce District presence',
+    unlockToken: 'building:tavern',
+    reminderDelayTicks: 10,
+    sortOrder: 6,
+    category: 'district',
+    repeatable: false,
+    districtId: 'commerce',
+    constructionTicksMin: 3,
+    constructionTicksMax: 6,
+    constructionStartInfoRequestId: 'INFO_CONSTRUCT_START_TAVERN',
+    constructionEndInfoRequestId: 'INFO_CONSTRUCT_END_TAVERN',
+    eventChainUnlocksOnComplete: ['tavern_core'],
+  },
+  {
+    id: 'garrison',
+    displayName: 'Garrison',
+    icon: '\u{1F6E1}',
+    description: 'A fortified barracks where soldiers train and stand ready to defend the village.',
+    unlockThreshold: 60,
+    cost: 35,
+    benefitId: 'garrison',
+    benefitDescription: 'Establishes Military District presence',
+    unlockToken: 'building:garrison',
+    reminderDelayTicks: 10,
+    sortOrder: 7,
+    category: 'district',
+    repeatable: false,
+    districtId: 'military',
+    constructionTicksMin: 4,
+    constructionTicksMax: 7,
+    constructionStartInfoRequestId: 'INFO_CONSTRUCT_START_GARRISON',
+    constructionEndInfoRequestId: 'INFO_CONSTRUCT_END_GARRISON',
+    eventChainUnlocksOnComplete: ['garrison_core'],
+  },
+  {
+    id: 'shrine',
+    displayName: 'Shrine',
+    icon: '\u{26E9}',
+    description: 'A place of quiet devotion where villagers seek blessings and spiritual guidance.',
+    unlockThreshold: 60,
+    cost: 30,
+    benefitId: 'shrine',
+    benefitDescription: 'Establishes Faith/Relief District presence',
+    unlockToken: 'building:shrine',
+    reminderDelayTicks: 10,
+    sortOrder: 8,
+    category: 'district',
+    repeatable: false,
+    districtId: 'faith',
+    constructionTicksMin: 3,
+    constructionTicksMax: 6,
+    constructionStartInfoRequestId: 'INFO_CONSTRUCT_START_SHRINE',
+    constructionEndInfoRequestId: 'INFO_CONSTRUCT_END_SHRINE',
+    eventChainUnlocksOnComplete: ['shrine_core'],
+  },
+  {
+    id: 'training_yard',
+    displayName: 'Training Yard',
+    icon: '\u{2694}',
+    description: 'An open training ground where militia and soldiers hone their combat skills.',
+    unlockThreshold: 100,
+    cost: 50,
+    benefitId: 'training_yard',
+    benefitDescription: 'Completes Military District',
+    unlockToken: 'building:training_yard',
+    reminderDelayTicks: 12,
+    sortOrder: 9,
+    category: 'district',
+    repeatable: false,
+    districtId: 'military',
+    constructionTicksMin: 4,
+    constructionTicksMax: 8,
+    constructionStartInfoRequestId: 'INFO_CONSTRUCT_START_TRAINING_YARD',
+    constructionEndInfoRequestId: 'INFO_CONSTRUCT_END_TRAINING_YARD',
+    eventChainUnlocksOnComplete: ['training_yard_core'],
+  },
+  {
+    id: 'healers_house',
+    displayName: "Healer's House",
+    icon: '\u{1FA7A}',
+    description: 'A humble dwelling where the village healer tends to the sick and wounded.',
+    unlockThreshold: 100,
+    cost: 45,
+    benefitId: 'healers_house',
+    benefitDescription: 'Completes Faith/Relief District',
+    unlockToken: 'building:healers_house',
+    reminderDelayTicks: 12,
+    sortOrder: 10,
+    category: 'district',
+    repeatable: false,
+    districtId: 'faith',
+    constructionTicksMin: 3,
+    constructionTicksMax: 7,
+    constructionStartInfoRequestId: 'INFO_CONSTRUCT_START_HEALERS_HOUSE',
+    constructionEndInfoRequestId: 'INFO_CONSTRUCT_END_HEALERS_HOUSE',
+    eventChainUnlocksOnComplete: ['healers_house_core'],
   },
 ];
 
@@ -174,7 +331,9 @@ export function isBuildingActive(
 export function calculateRequiredBuildings(def: BuildingDefinition, farmers: number): number {
   if (farmers < def.unlockThreshold) return 0;
   if (!def.populationPerBuilding) return 1;
-  return 1 + Math.floor((farmers - def.unlockThreshold) / def.populationPerBuilding);
+  const required = 1 + Math.floor((farmers - def.unlockThreshold) / def.populationPerBuilding);
+  // Non-repeatable buildings can only ever require 1
+  return def.repeatable ? required : Math.min(required, 1);
 }
 
 /**
@@ -217,4 +376,54 @@ export function getEffectiveBuildingCount(tracking: BuildingTracking): number {
  */
 export function hasAnyBuildingState(tracking: BuildingTracking): boolean {
   return tracking.onFireCount > 0 || tracking.destroyedCount > 0 || tracking.onStrikeCount > 0;
+}
+
+/**
+ * A group of buildings that all unlock together at the same population milestone.
+ * When farmers reach the populationThreshold, all buildings in the group become available.
+ */
+export interface BuildingUnlockGroup {
+  /** Stable unique identifier for this unlock group */
+  id: string;
+  /** Farmer count required to unlock all buildings in this group */
+  populationThreshold: number;
+  /** Building IDs that unlock together at this threshold */
+  buildingIds: string[];
+}
+
+/**
+ * Grouped building unlock tiers. When population crosses a group's threshold,
+ * all buildings in that group become available simultaneously, creating strategic choice pressure.
+ * Farmstead (threshold 0) is always available and NOT part of any unlock group.
+ */
+export const BUILDING_UNLOCK_GROUPS: BuildingUnlockGroup[] = [
+  {
+    id: 'tier_1_choice',
+    populationThreshold: 30,
+    buildingIds: ['marketplace', 'tavern'],
+  },
+  {
+    id: 'tier_2_choice',
+    populationThreshold: 60,
+    buildingIds: ['garrison', 'shrine'],
+  },
+  {
+    id: 'tier_3_choice',
+    populationThreshold: 100,
+    buildingIds: ['training_yard', 'healers_house'],
+  },
+];
+
+/**
+ * Get all unlock groups whose threshold is met at a given farmer count.
+ */
+export function getUnlockedGroups(farmers: number): BuildingUnlockGroup[] {
+  return BUILDING_UNLOCK_GROUPS.filter(g => farmers >= g.populationThreshold);
+}
+
+/**
+ * Get the unlock group that a specific building belongs to, if any.
+ */
+export function getUnlockGroupForBuilding(buildingId: string): BuildingUnlockGroup | undefined {
+  return BUILDING_UNLOCK_GROUPS.find(g => g.buildingIds.includes(buildingId));
 }

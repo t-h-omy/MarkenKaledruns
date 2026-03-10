@@ -16,15 +16,15 @@
 /* Centered Scrollable Panel */
 .construction-screen-panel {
   position: relative;
-  background: #2a2a2a;
-  border: 2px solid #646cff;
+  background: var(--mk-bg-panel-2);
+  border: 2px solid var(--mk-accent-blue);
   border-radius: 12px;
   max-width: 900px;
   width: 100%;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--mk-shadow-panel);
   overflow: hidden;
 }
 
@@ -36,9 +36,9 @@
   width: 2.5rem;
   height: 2.5rem;
   background: rgba(255, 255, 255, 0.1);
-  border: 2px solid #646cff;
+  border: 2px solid var(--mk-accent-blue);
   border-radius: 50%;
-  color: #fff;
+  color: var(--mk-text-primary);
   font-size: 1.5rem;
   cursor: pointer;
   transition: all 0.2s;
@@ -49,7 +49,7 @@
 }
 
 .construction-close-btn:hover {
-  background: #646cff;
+  background: var(--mk-accent-blue);
   transform: scale(1.1);
 }
 
@@ -60,14 +60,14 @@
 /* Header Section */
 .construction-header {
   padding: 1.5rem 2rem;
-  border-bottom: 2px solid #444;
-  background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+  border-bottom: 2px solid var(--mk-border);
+  background: linear-gradient(135deg, var(--mk-bg-panel-2) 0%, var(--mk-bg-panel) 100%);
 }
 
 .construction-header h2 {
   margin: 0 0 0.75rem 0;
   font-size: 1.5rem;
-  color: #ffd700;
+  color: var(--mk-heading-gold);
   text-align: center;
 }
 
@@ -76,7 +76,7 @@
   justify-content: center;
   gap: 2rem;
   font-size: 0.9rem;
-  color: #d1d5db;
+  color: var(--mk-text-secondary);
   font-weight: 600;
 }
 
@@ -88,9 +88,178 @@
 }
 
 .construction-placeholder {
-  color: #aaa;
+  color: var(--mk-text-muted);
   text-align: center;
   padding: 2rem;
+}
+
+/* ─── Active Construction Panel ──────────────────────────────────────── */
+.active-construction-panel {
+  margin: 0 2rem;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.12) 0%, rgba(245, 158, 11, 0.06) 100%);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  border-radius: 8px;
+  margin-top: 1rem;
+}
+
+.active-construction-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.6rem;
+}
+
+.active-construction-icon {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.active-construction-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.active-construction-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--mk-heading-gold);
+}
+
+.active-construction-district {
+  font-size: 0.8rem;
+  color: var(--mk-text-muted);
+  margin-top: 0.1rem;
+}
+
+.active-construction-ticks {
+  font-size: 0.85rem;
+  color: var(--mk-text-secondary);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.active-construction-progress-bar {
+  height: 0.5rem;
+  background: var(--mk-bg-panel-2);
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid var(--mk-border);
+  margin-bottom: 0.35rem;
+}
+
+.active-construction-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%);
+  border-radius: 4px;
+  transition: width 0.5s ease;
+  box-shadow: 0 0 6px rgba(251, 191, 36, 0.4);
+}
+
+.active-construction-progress-label {
+  font-size: 0.75rem;
+  color: var(--mk-text-muted);
+  text-align: center;
+}
+
+/* ─── District & Capacity Sections ──────────────────────────────────── */
+
+.capacity-section {
+  margin-bottom: 2rem;
+}
+
+.district-section {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: rgba(33, 29, 24, 0.6);
+  border: 1px solid var(--mk-border);
+  border-radius: 10px;
+}
+
+.district-section.district-complete {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.06);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.15);
+}
+
+.district-section-header {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--mk-heading-gold);
+  margin-bottom: 0.35rem;
+}
+
+.district-complete .district-section-header {
+  color: #4ade80;
+}
+
+.capacity-section > .district-section-header {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--mk-heading-gold);
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--mk-border);
+}
+
+.district-section-progress {
+  font-size: 0.85rem;
+  color: var(--mk-text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.district-complete .district-section-progress {
+  color: #4ade80;
+  font-weight: 600;
+}
+
+.district-section-hint {
+  font-size: 0.8rem;
+  color: var(--mk-text-muted);
+  font-style: italic;
+  margin-bottom: 1rem;
+}
+
+.district-complete .district-section-hint {
+  color: #10b981;
+}
+
+.district-new-banner {
+  background: linear-gradient(135deg, rgba(129, 140, 248, 0.15) 0%, rgba(99, 102, 241, 0.08) 100%);
+  border: 1px solid rgba(129, 140, 248, 0.4);
+  border-radius: 6px;
+  padding: 0.4rem 0.75rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #a5b4fc;
+  text-align: center;
+  animation: new-banner-pulse 2s ease-in-out infinite;
+}
+
+@keyframes new-banner-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+.building-already-built-wrapper {
+  position: relative;
+}
+
+.building-already-built-overlay {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: rgba(16, 185, 129, 0.9);
+  color: var(--mk-text-primary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  z-index: 5;
+  letter-spacing: 0.5px;
 }
 
 /* Responsive Design */
@@ -121,6 +290,11 @@
     width: 2rem;
     height: 2rem;
     font-size: 1.2rem;
+  }
+
+  .active-construction-panel {
+    margin: 0.75rem 1rem;
+    padding: 0.75rem 1rem;
   }
 }
 

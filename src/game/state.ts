@@ -8,7 +8,8 @@ import { infoRequests, authorityInfoRequests, eventRequests, fireChainRequests }
 import { pickNextRequest, selectWeightedCandidate, getRandomValue, resetRandom } from './picker';
 import { needModifiers } from './modifiers';
 import type { BuildingTracking } from './buildings';
-import { BUILDING_DEFINITIONS, isBuildingActive, calculateRequiredBuildings, getBuildingDef, createInitialBuildingTracking, hasAnyBuildingState, getEffectiveBuildingCount } from './buildings';
+import { BUILDING_DEFINITIONS, BUILDING_UNLOCK_GROUPS, isBuildingActive, calculateRequiredBuildings, getBuildingDef, createInitialBuildingTracking, hasAnyBuildingState, getEffectiveBuildingCount, FARMERS_PER_FARMSTEAD } from './buildings';
+import { isDistrictComplete, getDistrictDef } from './districts';
 
 /**
  * Represents a single applied change to a stat
@@ -31,7 +32,7 @@ export interface LogEntry {
   tick: number;
   requestId: string;
   optionText: string;
-  source: 'Request Decision' | 'Tax Income' | 'Population Growth' | 'Combat Commit' | 'Overcrowding' | 'Building Constructed';
+  source: 'Request Decision' | 'Tax Income' | 'Population Growth' | 'Combat Commit' | 'Overcrowding' | 'Building Constructed' | 'Construction Started' | 'Construction Complete';
   deltas: {
     gold?: number;
     satisfaction?: number;
@@ -147,6 +148,20 @@ export interface PendingAuthorityCheck {
 }
 
 /**
+ * Represents a building currently under construction.
+ */
+export interface ActiveConstruction {
+  /** ID of the building being constructed */
+  buildingId: string;
+  /** Tick when construction started */
+  startedAtTick: number;
+  /** Tick when construction will complete */
+  completionTick: number;
+  /** Profile used for this construction (e.g. 'default', future architect profiles) */
+  constructionProfileId: string;
+}
+
+/**
  * Complete game state
  */
 export interface GameState {
@@ -176,6 +191,10 @@ export interface GameState {
   pendingAuthorityChecks: PendingAuthorityCheck[];
   /** Fire system runtime state (slots and pending info queue) */
   fire: FireState;
+  /** Set of completed district IDs (value is always true for completed districts) */
+  completedDistricts: Record<string, true>;
+  /** Currently active construction, or null if nothing is being built */
+  activeConstruction?: ActiveConstruction | null;
 }
 
 /**
@@ -265,6 +284,8 @@ export const initialState: GameState = {
   fire: {
     slots: createInitialFireSlots(),
   },
+  completedDistricts: {},
+  activeConstruction: null,
 };
 
 /**
@@ -447,12 +468,14 @@ export function syncBuildingUnlockTokens(
 
 /**
  * Detects newly unlocked buildings by comparing farmers before and after a tick.
+ * Checks both individual building thresholds and grouped unlock thresholds.
  * Returns the first building ID that was just unlocked, or null.
  */
 function detectNewlyUnlockedBuildings(
   farmersBefore: number,
   farmersAfter: number
 ): string | null {
+  // Check individual building thresholds
   for (const def of BUILDING_DEFINITIONS) {
     const wasUnlocked = farmersBefore >= def.unlockThreshold;
     const isUnlocked = farmersAfter >= def.unlockThreshold;
@@ -461,6 +484,24 @@ function detectNewlyUnlockedBuildings(
       return def.id;
     }
   }
+
+  // Check grouped unlock thresholds
+  for (const group of BUILDING_UNLOCK_GROUPS) {
+    const wasUnlocked = farmersBefore >= group.populationThreshold;
+    const isUnlocked = farmersAfter >= group.populationThreshold;
+
+    if (!wasUnlocked && isUnlocked) {
+      // Prefer returning a building that only exists in the group (not in BUILDING_DEFINITIONS),
+      // since buildings in BUILDING_DEFINITIONS are already checked by the first loop above.
+      const newBuilding = group.buildingIds.find(
+        id => !BUILDING_DEFINITIONS.some(def => def.id === id)
+      );
+      if (newBuilding) return newBuilding;
+      // Fallback: return the first building in the group
+      return group.buildingIds[0] ?? null;
+    }
+  }
+
   return null;
 }
 
@@ -476,7 +517,7 @@ function applyOvercrowdingPenalties(
 ): { stats: Stats; changes: AppliedChange[] } {
   const farmsteadTracking = buildingTracking['farmstead'];
   const farmsteadCount = farmsteadTracking ? getEffectiveBuildingCount(farmsteadTracking) : 0;
-  const capacity = farmsteadCount * 20;
+  const capacity = farmsteadCount * FARMERS_PER_FARMSTEAD;
   const overflow = Math.max(0, stats.farmers - capacity);
 
   if (overflow === 0) {
@@ -488,11 +529,11 @@ function applyOvercrowdingPenalties(
   let satisfactionPenalty: number;
   let fireRiskIncrease: number;
 
-  if (overflow <= 20) {
+  if (overflow <= 10) {
     healthPenalty = -1;
     satisfactionPenalty = -1;
     fireRiskIncrease = 1;
-  } else if (overflow <= 40) {
+  } else if (overflow <= 25) {
     healthPenalty = -2;
     satisfactionPenalty = -2;
     fireRiskIncrease = 2;
@@ -771,15 +812,31 @@ function checkBuildingReminders(
  * Applies baseline rules according to POF_SPEC.md:
  * - gold += floor(0.1 * (farmers * (satisfaction / 100)))
  * - farmers += floor(health / 10)
+ *
+ * Positive baseline population growth is hard-capped by farmstead capacity.
+ * Negative growth (population loss) still applies normally.
+ * Event-based population gains are NOT affected (they bypass this function).
  */
-function applyBaseline(stats: Stats): Stats {
+function applyBaseline(stats: Stats, buildingTracking: Record<string, BuildingTracking>): Stats {
   const goldIncome = Math.floor(0.15 * (stats.farmers * ((stats.satisfaction-10) / 100)));
   const farmerGrowth = Math.floor((stats.health+20) / 41);
+
+  const farmsteadTracking = buildingTracking['farmstead'];
+  const farmsteadCapacity = (farmsteadTracking ? getEffectiveBuildingCount(farmsteadTracking) : 0) * FARMERS_PER_FARMSTEAD;
+
+  // Only apply positive baseline growth if below farmstead capacity
+  // Negative growth (population loss) still applies normally
+  // Cap positive growth so farmers never exceed farmstead capacity
+  let appliedGrowth = farmerGrowth;
+  if (farmerGrowth > 0) {
+    const headroom = farmsteadCapacity - stats.farmers;
+    appliedGrowth = headroom <= 0 ? 0 : Math.min(farmerGrowth, headroom);
+  }
 
   return {
     ...stats,
     gold: stats.gold + goldIncome,
-    farmers: stats.farmers + farmerGrowth,
+    farmers: stats.farmers + appliedGrowth,
   };
 }
 
@@ -1743,10 +1800,10 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     // Sync building-based unlock tokens
-    const unlocks = syncBuildingUnlockTokens(state.buildingTracking, state.unlocks);
+    let unlocks = syncBuildingUnlockTokens(state.buildingTracking, state.unlocks);
 
     // Track chain state and request trigger counts
-    const chainStatus = { ...state.chainStatus };
+    let chainStatus = { ...state.chainStatus };
     const requestTriggerCounts = { ...state.requestTriggerCounts };
     
     // Increment trigger count for current request
@@ -1893,6 +1950,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         scheduledCombats,
         pendingAuthorityChecks: state.pendingAuthorityChecks,
         fire: updatedFire,
+        completedDistricts: state.completedDistricts,
+        activeConstruction: state.activeConstruction,
       };
     }
 
@@ -1916,6 +1975,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         scheduledCombats,
         pendingAuthorityChecks: state.pendingAuthorityChecks,
         fire: updatedFire,
+        completedDistricts: state.completedDistricts,
+        activeConstruction: state.activeConstruction,
       });
 
       // Return state with same tick, updated stats/unlocks/log, new request
@@ -1935,6 +1996,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         scheduledCombats,
         pendingAuthorityChecks: state.pendingAuthorityChecks,
         fire: updatedFire,
+        completedDistricts: state.completedDistricts,
+        activeConstruction: state.activeConstruction,
       };
     }
 
@@ -1942,7 +2005,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     // 2. Apply baseline rules and track separately
     const beforeBaseline = { ...stats };
     const farmersBefore = stats.farmers;
-    stats = applyBaseline(stats);
+    stats = applyBaseline(stats, updatedBuildingTracking);
     stats = clampStats(stats);
     const farmersAfter = stats.farmers;
 
@@ -1976,7 +2039,10 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     // 2b. Apply bakery building effect (10% chance for +1 farmer growth)
-    if (isBuildingActive(updatedBuildingTracking, 'bakery') && Math.random() < 0.10) {
+    // Bakery growth is also capped by farmstead capacity
+    const fstTracking = updatedBuildingTracking['farmstead'];
+    const farmsteadCap = (fstTracking ? getEffectiveBuildingCount(fstTracking) : 0) * FARMERS_PER_FARMSTEAD;
+    if (isBuildingActive(updatedBuildingTracking, 'bakery') && Math.random() < 0.10 && stats.farmers < farmsteadCap) {
       const beforeBakery = { ...stats };
       stats.farmers += 1;
       stats = clampStats(stats);
@@ -2021,6 +2087,35 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     // Update building tracking (detect newly required buildings, etc.)
     let buildingTracking = { ...updatedBuildingTracking };
+
+    // 2c2. Check construction completion (checked against next tick: tick + 1)
+    let activeConstruction = state.activeConstruction ?? null;
+    let completedDistricts = { ...state.completedDistricts };
+    if (activeConstruction && state.tick + 1 >= activeConstruction.completionTick) {
+      // Build a temporary state for completeConstruction.
+      // We pass the current tick — completeConstruction schedules events for tick + 1.
+      const tempState: GameState = {
+        ...state,
+        tick: state.tick, // current tick; completeConstruction schedules events for tick + 1
+        buildingTracking,
+        unlocks,
+        chainStatus,
+        scheduledEvents,
+        completedDistricts,
+        activeConstruction,
+      };
+      const completedState = completeConstruction(tempState);
+      // Pull out the updated fields
+      buildingTracking = completedState.buildingTracking;
+      unlocks = completedState.unlocks;
+      chainStatus = completedState.chainStatus;
+      scheduledEvents = completedState.scheduledEvents;
+      completedDistricts = completedState.completedDistricts;
+      activeConstruction = null;
+      // Add completion log entries
+      newLog.push(...completedState.log.slice(state.log.length));
+    }
+
     // Update unlockedAtTick for newly unlocked buildings
     if (newlyUnlockedBuilding) {
       const tracking = buildingTracking[newlyUnlockedBuilding];
@@ -2069,6 +2164,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         scheduledCombats,
         pendingAuthorityChecks: state.pendingAuthorityChecks,
         fire: fireState,
+        completedDistricts,
+        activeConstruction,
       };
     }
 
@@ -2131,6 +2228,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       scheduledCombats,
       pendingAuthorityChecks,
       fire: fireState,
+      completedDistricts,
+      activeConstruction,
     });
 
     // 4.5. Check if the picked request was a scheduled event with committed authority
@@ -2174,10 +2273,12 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       scheduledCombats,
       pendingAuthorityChecks,
       fire: fireState,
+      completedDistricts,
+      activeConstruction,
     };
   }
 
-  // Handle BUILD_BUILDING action
+  // Handle BUILD_BUILDING action — starts timed construction (does NOT complete instantly)
   if (action.type === 'BUILD_BUILDING') {
     if (state.gameOver) return state;
 
@@ -2187,9 +2288,21 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return state;
     }
 
+    // Validate: no active construction (one at a time)
+    if (state.activeConstruction) {
+      console.error('Cannot start construction: another construction is already in progress');
+      return state;
+    }
+
     // Validate: building unlocked
     if (state.stats.farmers < def.unlockThreshold) {
       console.error('Building not unlocked:', action.buildingId, 'Need', def.unlockThreshold, 'farmers, have', state.stats.farmers);
+      return state;
+    }
+
+    // Validate: repeatability — non-repeatable buildings cannot be built more than once
+    if (!def.repeatable && (state.buildingTracking[action.buildingId]?.buildingCount ?? 0) >= 1) {
+      console.error('Building not repeatable and already built:', action.buildingId);
       return state;
     }
 
@@ -2210,56 +2323,38 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return state;
     }
 
-    // Deduct gold
+    // Deduct gold immediately
     const newStats = clampStats({ ...state.stats, gold: state.stats.gold - def.cost });
 
-    // Increment building count
-    const oldTracking = state.buildingTracking[action.buildingId] ?? {
-      buildingCount: 0,
-      onFireCount: 0,
-      destroyedCount: 0,
-      onStrikeCount: 0,
-      reminderScheduled: false,
-      reminderCooldownUntil: 0,
-    };
-    const wasFirstBuild = oldTracking.buildingCount === 0;
-    const newTracking = {
-      ...oldTracking,
-      buildingCount: oldTracking.buildingCount + 1,
-      reminderScheduled: false, // Reset reminder state
+    // Roll random construction duration using seeded RNG
+    const duration = rollConstructionDuration(def.constructionTicksMin, def.constructionTicksMax);
+
+    // Set active construction
+    const activeConstruction: ActiveConstruction = {
+      buildingId: action.buildingId,
+      startedAtTick: state.tick,
+      completionTick: state.tick + duration,
+      constructionProfileId: getConstructionProfileForBuild(action.buildingId, state),
     };
 
-    const buildingTracking = {
-      ...state.buildingTracking,
-      [action.buildingId]: newTracking,
-    };
-
-    // Schedule info request on first build
+    // Schedule construction start info request as tickless event (same tick).
+    // Uses state.tick (current) so it's shown immediately, unlike the construction
+    // end info request which is scheduled for tick + 1 (shown on the completing tick).
     const scheduledEvents = [...state.scheduledEvents];
-    if (wasFirstBuild && def.firstBuildInfoRequestId) {
-      const alreadyScheduled = scheduledEvents.some(
-        event => event.requestId === def.firstBuildInfoRequestId && event.targetTick === state.tick + 1
-      );
-      if (!alreadyScheduled) {
-        scheduledEvents.push({
-          targetTick: state.tick + 1,
-          requestId: def.firstBuildInfoRequestId,
-          scheduledAtTick: state.tick,
-          priority: 'info',
-        });
-      }
-    }
+    scheduledEvents.push({
+      targetTick: state.tick,
+      requestId: def.constructionStartInfoRequestId,
+      scheduledAtTick: state.tick,
+      priority: 'info',
+    });
 
-    // Sync unlock tokens
-    const unlocks = syncBuildingUnlockTokens(buildingTracking, state.unlocks);
-
-    // Create log entry
+    // Create log entry for construction start
     const beforeStats = state.stats;
     const logEntry = createLogEntry(
       state.tick,
-      `BUILD_${action.buildingId.toUpperCase()}`,
-      `Built ${def.displayName}`,
-      'Building Constructed',
+      `BUILD_START_${action.buildingId.toUpperCase()}`,
+      `Started construction of ${def.displayName} (${duration} ticks)`,
+      'Construction Started',
       beforeStats,
       newStats
     );
@@ -2267,8 +2362,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     return {
       ...state,
       stats: newStats,
-      buildingTracking,
-      unlocks,
+      activeConstruction,
       scheduledEvents,
       log: [...state.log, logEntry],
     };
@@ -2501,5 +2595,159 @@ export function initializeGame(): GameState {
   return {
     ...initialState,
     currentRequestId: firstRequest.id,
+  };
+}
+
+/**
+ * Returns the construction profile ID for a given building and game state.
+ * Stub for future architect system — currently always returns 'default'.
+ */
+export function getConstructionProfileForBuild(
+  _buildingId: string,
+  _state: GameState
+): string {
+  return 'default';
+}
+
+/**
+ * Check whether a new construction can be started for the given building.
+ * Returns true if all preconditions are met:
+ *   - No active construction in progress
+ *   - Building definition exists
+ *   - Building is unlocked (farmers >= threshold)
+ *   - Non-repeatable buildings haven't already been built
+ *   - No active fire/destroyed/strike state on the building
+ *   - Enough gold to pay the cost
+ */
+export function canStartConstruction(state: GameState, buildingId: string): boolean {
+  if (state.activeConstruction) return false;
+  const def = getBuildingDef(buildingId);
+  if (!def) return false;
+  if (state.stats.farmers < def.unlockThreshold) return false;
+  if (!def.repeatable && (state.buildingTracking[buildingId]?.buildingCount ?? 0) >= 1) return false;
+  const tracking = state.buildingTracking[buildingId];
+  if (tracking && hasAnyBuildingState(tracking)) return false;
+  if (state.stats.gold < def.cost) return false;
+  return true;
+}
+
+/**
+ * Roll a random construction duration in ticks (inclusive on both ends)
+ * using the seeded RNG for determinism.
+ */
+export function rollConstructionDuration(min: number, max: number): number {
+  const range = max - min + 1;
+  return min + Math.floor(getRandomValue() * range);
+}
+
+/**
+ * Complete the active construction: increment buildingCount, apply unlock tokens,
+ * check district completion, schedule info events, and clear activeConstruction.
+ */
+export function completeConstruction(state: GameState): GameState {
+  const ac = state.activeConstruction;
+  if (!ac) return state;
+
+  const def = getBuildingDef(ac.buildingId);
+  if (!def) return state;
+
+  // 1. Increment building count
+  const oldTracking = state.buildingTracking[ac.buildingId] ?? {
+    buildingCount: 0,
+    onFireCount: 0,
+    destroyedCount: 0,
+    onStrikeCount: 0,
+    reminderScheduled: false,
+    reminderCooldownUntil: 0,
+  };
+  const newTracking = {
+    ...oldTracking,
+    buildingCount: oldTracking.buildingCount + 1,
+    reminderScheduled: false,
+  };
+  const buildingTracking = {
+    ...state.buildingTracking,
+    [ac.buildingId]: newTracking,
+  };
+
+  // 2. Sync building-based unlock tokens (handles def.unlockToken automatically)
+  const unlocks = syncBuildingUnlockTokens(buildingTracking, { ...state.unlocks });
+
+  // 3. Apply unlockTokensOnComplete from building definition
+  if (def.unlockTokensOnComplete) {
+    for (const token of def.unlockTokensOnComplete) {
+      unlocks[token] = true;
+    }
+  }
+
+  // 4. Apply eventChainUnlocksOnComplete from building definition
+  const chainStatus = { ...state.chainStatus };
+  if (def.eventChainUnlocksOnComplete) {
+    for (const chainId of def.eventChainUnlocksOnComplete) {
+      if (!chainStatus[chainId]) {
+        chainStatus[chainId] = { active: false };
+      }
+    }
+  }
+
+  // 5. Schedule construction end info request
+  const scheduledEvents = [...state.scheduledEvents];
+  scheduledEvents.push({
+    targetTick: state.tick + 1,
+    requestId: def.constructionEndInfoRequestId,
+    scheduledAtTick: state.tick,
+    priority: 'info',
+  });
+
+  // 6. Check district completion
+  const completedDistricts = { ...state.completedDistricts };
+  if (def.districtId && !completedDistricts[def.districtId]) {
+    if (isDistrictComplete(def.districtId, buildingTracking)) {
+      completedDistricts[def.districtId] = true;
+
+      const district = getDistrictDef(def.districtId);
+      if (district) {
+        // Apply district completion unlock tokens
+        for (const token of district.completionUnlockTokens) {
+          unlocks[token] = true;
+        }
+        // Apply district completion event chain unlocks
+        for (const chainId of district.completionEventChainUnlocks) {
+          if (!chainStatus[chainId]) {
+            chainStatus[chainId] = { active: false };
+          }
+        }
+        // Schedule district completion info request
+        if (district.completionInfoRequestId) {
+          scheduledEvents.push({
+            targetTick: state.tick + 1,
+            requestId: district.completionInfoRequestId,
+            scheduledAtTick: state.tick,
+            priority: 'info',
+          });
+        }
+      }
+    }
+  }
+
+  // 7. Create log entry for construction completion
+  const logEntry = createLogEntry(
+    state.tick,
+    `BUILD_${ac.buildingId.toUpperCase()}`,
+    `Construction of ${def.displayName} complete`,
+    'Construction Complete',
+    state.stats,
+    state.stats
+  );
+
+  return {
+    ...state,
+    buildingTracking,
+    unlocks,
+    chainStatus,
+    scheduledEvents,
+    completedDistricts,
+    activeConstruction: null,
+    log: [...state.log, logEntry],
   };
 }

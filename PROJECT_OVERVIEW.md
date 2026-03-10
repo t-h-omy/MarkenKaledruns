@@ -145,19 +145,19 @@ MarkenKaledruns/
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| `src/game/requests.ts` | ~5380 | All event/request definitions (incl. 40 fire chain requests) |
-| `src/game/state.ts` | ~2670 | Reducer, game loop, all game logic (incl. fire system engine) |
+| `src/game/requests.ts` | ~9340 | All event/request definitions (incl. 80 generated fire/repair chain requests) |
+| `src/game/state.ts` | ~2745 | Reducer, game loop, all game logic (incl. fire system engine) |
 | `src/App.tsx` | ~1030 | Main UI component (incl. request-panel BEM layout, portrait wiring, fire chain tag/context) |
 | `src/App.css` | ~1650 | All main game styles (incl. portrait img, fire chain info styles) |
 | `src/game/picker.ts` | ~560 | Request selection & RNG |
-| `src/BuildingCard.css` | ~455 | Building card styles (incl. fire state action styles) |
+| `src/BuildingCard.css` | ~575 | Building card styles (incl. fire state action styles) |
 | `src/game/models.ts` | ~335 | Core type definitions (incl. fire types, PortraitId on Request) |
 | `src/LogScreen.css` | ~275 | Log screen styles |
 | `src/BuildMultipleModal.css` | ~230 | Modal styles |
-| `src/BuildingCard.tsx` | ~230 | Building card UI (incl. state action buttons) |
-| `src/game/buildings.ts` | ~220 | Building system (incl. effective count helpers) |
-| `src/ConstructionScreen.tsx` | ~200 | Construction UI |
-| `src/ConstructionScreen.css` | ~145 | Construction styles |
+| `src/BuildingCard.tsx` | ~300 | Building card UI (incl. state action buttons) |
+| `src/game/buildings.ts` | ~430 | Building system (incl. effective count helpers) |
+| `src/ConstructionScreen.tsx` | ~370 | Construction UI |
+| `src/ConstructionScreen.css` | ~315 | Construction styles |
 | `src/LogScreen.tsx` | ~135 | Log viewer UI |
 | `src/BuildMultipleModal.tsx` | ~125 | Bulk build modal UI |
 | `src/game/modifiers.ts` | ~100 | Effect modifiers |
@@ -194,10 +194,11 @@ main.tsx (entry point)
 |------|-------------|
 | `models.ts` | `Stats`, `Effect`, `Request`, `Option`, `AuthorityCheck`, `AuthorityCheckResult`, `CombatSpec`, `FollowUp`, `WeightedCandidate`, `AuthorityFollowUpBoost` |
 | `portraits/index.ts` | `PORTRAITS`, `PortraitId` |
-| `state.ts` | `GameState`, `GameAction`, `gameReducer`, `initializeGame`, `getCurrentRequest`, `initialState`, `AppliedChange`, `LogEntry`, `ScheduledEvent`, `ScheduledCombat`, `ActiveCombat`, `PendingAuthorityCheck`, `ModifierHook`, `applyOptionWithModifiers`, `hasUnlock`, `meetsRequirements`, `syncBuildingUnlockTokens`, `FIRE_SYSTEM_CONFIG` |
+| `state.ts` | `GameState`, `GameAction`, `gameReducer`, `initializeGame`, `getCurrentRequest`, `initialState`, `AppliedChange`, `LogEntry`, `ScheduledEvent`, `ScheduledCombat`, `ActiveCombat`, `ActiveConstruction`, `PendingAuthorityCheck`, `ModifierHook`, `applyOptionWithModifiers`, `hasUnlock`, `meetsRequirements`, `syncBuildingUnlockTokens`, `getConstructionProfileForBuild`, `canStartConstruction`, `rollConstructionDuration`, `completeConstruction`, `FIRE_SYSTEM_CONFIG` |
 | `requests.ts` | `infoRequests`, `eventRequests`, `authorityInfoRequests`, `fireChainRequests`, `validateRequests` |
 | `picker.ts` | `pickNextRequest`, `selectWeightedCandidate`, `seedRandom`, `resetRandom`, `getRandomValue` |
-| `buildings.ts` | `BUILDING_DEFINITIONS`, `BuildingDefinition`, `BuildingTracking`, `isBuildingActive`, `calculateRequiredBuildings`, `getBuildingDef`, `createInitialBuildingTracking`, `getEffectiveBuildingCount`, `hasAnyBuildingState` |
+| `buildings.ts` | `BUILDING_DEFINITIONS`, `BUILDING_UNLOCK_GROUPS`, `BuildingDefinition`, `BuildingTracking`, `BuildingUnlockGroup`, `isBuildingActive`, `calculateRequiredBuildings`, `getBuildingDef`, `createInitialBuildingTracking`, `getEffectiveBuildingCount`, `hasAnyBuildingState`, `getUnlockedGroups`, `getUnlockGroupForBuilding` |
+| `districts.ts` | `DISTRICT_DEFINITIONS`, `DistrictDefinition`, `getDistrictDef`, `isDistrictComplete` |
 | `modifiers.ts` | `firewoodModifier`, `wellModifier`, `needModifiers` |
 
 ---
@@ -238,12 +239,20 @@ main.tsx (entry point)
    └─ Pick next request
 
 3. BUILDING (action: BUILD_BUILDING)
+   ├─ Validate no active construction in progress (one at a time)
    ├─ Validate no active building state (build lock: rejects if any onFireCount/destroyedCount/onStrikeCount > 0)
-   ├─ Deduct gold cost
-   ├─ Increment building count
-   ├─ Set unlock token (if first build)
-   ├─ Schedule info request (if first build and defined)
-   └─ Log the construction
+   ├─ Validate repeatability (non-repeatable buildings cannot be built more than once)
+   ├─ Deduct gold cost (immediate)
+   ├─ Roll random construction duration (seeded RNG, min–max from BuildingDefinition)
+   ├─ Set activeConstruction = { buildingId, startedAtTick, completionTick, constructionProfileId }
+   ├─ Schedule construction start info request (tickless)
+   └─ Log the construction start
+   (Construction completes during tick-advance when tick >= completionTick:
+     ├─ Increment building count
+     ├─ Apply unlockTokensOnComplete + eventChainUnlocksOnComplete
+     ├─ Check district completion → mark district complete + apply district rewards
+     ├─ Schedule construction end info request + district completion info
+     └─ Clear activeConstruction to null)
 
 4. FIRE ACTIONS (reducer-only)
    ├─ EXTINGUISH_ONE → validate onFireCount > 0, apply cost, decrement
@@ -291,13 +300,15 @@ main.tsx (entry point)
 
 **Gold income:**
 ```
-gold += floor(0.1 × farmers × (satisfaction - 10) / 100)
+gold += floor(0.15 × farmers × (satisfaction - 10) / 100)
 ```
 
 **Population growth:**
 ```
-farmers += floor((health - 25) / 20)
+farmers += floor((health + 20) / 41)
 ```
+
+**Population growth cap:** Positive baseline growth is hard-capped by farmstead capacity (`FARMERS_PER_FARMSTEAD = 20` per farmstead). If `farmers >= farmsteadCapacity`, baseline growth is blocked (set to 0). Negative baseline growth (population loss) still applies normally. Event-based population gains (via `Effect`) are **not** blocked by this cap — they bypass the baseline formula and can push population above capacity, triggering overcrowding mechanics.
 
 ### 6.3 Overcrowding
 
@@ -319,7 +330,7 @@ Crises trigger automatically when thresholds are crossed:
 | Disease Wave | `health < 30` | `EVT_CRISIS_DISEASE` | Active |
 | Unrest | `satisfaction < 30` | `EVT_CRISIS_UNREST` | Active |
 
-Priority order: Disease > Unrest. Fire crises are now handled by the slot-based Fire System V3 (see [Section 18](#18-fire-system-v3)).
+Priority order: Disease > Unrest. Fire crises are now handled by the slot-based Fire System V4 (see [Section 18](#18-fire-system-v4)).
 
 ### 6.5 Game Over
 
@@ -355,8 +366,14 @@ main.tsx
       │   └─ Success threshold display
       ├─ Game Over Screen                 # Bankruptcy display + restart button
       ├─ <ConstructionScreen />           # src/ConstructionScreen.tsx (overlay)
-      │    └─ <BuildingCard />[]          # src/BuildingCard.tsx (one per building type)
-      │         └─ <BuildMultipleModal /> # src/BuildMultipleModal.tsx (bulk build dialog)
+      │    ├─ Active Construction Panel   # Shows current build progress (when active)
+      │    ├─ Capacity Buildings Section  # Farmstead, Bakery, Brewery, Firewood, Well
+      │    └─ District Sections[]         # Commerce, Military, Faith/Relief
+      │         ├─ District Header        # Name, completion progress (e.g. "1/2 complete")
+      │         ├─ Completion Hint        # "Completing this district unlocks advanced event chains"
+      │         ├─ New Buildings Banner   # "🆕 New buildings available!" (when newly unlocked)
+      │         └─ <BuildingCard />[]     # District buildings with strategic info
+      │              └─ <BuildMultipleModal /> # src/BuildMultipleModal.tsx (only for repeatable buildings)
       └─ <LogScreen />                    # src/LogScreen.tsx (decision history overlay)
 ```
 
@@ -365,9 +382,9 @@ main.tsx
 | Component | File | Description |
 |-----------|------|-------------|
 | `App` | `App.tsx` | Main game component. Manages all game state via `useReducer`. Renders stats, requests, options, combat UI, modals. Contains animation logic for stat changes and flying deltas. Request-screen JSX is grouped in `renderRequestPanel()` using BEM-style layout: `request-panel__header` (portrait + content), `request-panel__options` with `decision-card` buttons containing `decision-card__label` and `decision-card__effects`. Effect chips include icons matching the top resource bar emoji (💰 Gold, 😊 Satisfaction, ❤️ Health, 🔥 Fire Risk, 👨‍🌾 Farmers, ⚔️ Land Forces, 👑 Authority) via the `EFFECT_ICONS` lookup. Portrait is resolved from `currentRequest.portraitId` via the portrait registry (`PORTRAITS`); placeholder is shown when no portrait is defined. Portrait stays left of the text on all screen sizes using a responsive clamped width (`clamp(128px, 28vw, 220px)`), `aspect-ratio: 2/3` (3:2 vertical), and `align-self: flex-start` to ensure consistent proportions across all requests. Request text area uses `flex: 1` to grow naturally and `overflow-y: auto` with a responsive `max-height` via `clamp()` so most texts render without a scrollbar while very long texts scroll internally, keeping option cards visible. Root `.app` container uses `100dvh`/`100svh` viewport units with `env(safe-area-inset-bottom)` padding so the bottom action bar (LOG / CONSTRUCTION) stays visible and tappable on mobile browsers while browser navigation bars are visible. `viewport-fit=cover` is set in `index.html`. Request UI uses a medieval / light high-fantasy visual theme via CSS variables (`--mk-*`) defined in `:root`: dark stone surfaces, muted gold headings, ivory body text, readable positive/negative/neutral effect chips, and restrained royal-blue interactive accents with visible focus rings. |
-| `ConstructionScreen` | `ConstructionScreen.tsx` | Full-screen overlay showing all buildings as a grid. Opened via a button in the main UI. Shows building states (locked/unlocked/built/deficit). |
-| `BuildingCard` | `BuildingCard.tsx` | Individual card displaying one building type: icon, name, description, cost, progress (built/required). When building has no active state: shows build buttons. When building has active state (fire/destroyed/strike): hides build controls and shows state action button (extinguish/repair) with state counts and effective count display. |
-| `BuildMultipleModal` | `BuildMultipleModal.tsx` | Modal dialog for building multiple instances at once. Shows cost calculation and gold validation. |
+| `ConstructionScreen` | `ConstructionScreen.tsx` | Full-screen overlay showing buildings grouped by district sections. **Capacity Buildings** section at top (Farmstead, Bakery, etc.), followed by **district sections** (Commerce, Military, Faith/Relief). Each district section shows a header with the district name, completion progress (e.g., "1/2 buildings complete" or "✅ District Complete"), and a hint about unlocking event chains. Completed districts get green-tinted styling. When `activeConstruction` is set, displays an **Active Construction Panel** at the top showing the building name, icon, district name, remaining ticks, and a progress bar. All build buttons on other cards are disabled with "Construction in progress" text while a build is active. Non-repeatable district buildings that are already built show a "✅ Built" overlay badge. Build Multiple is only offered for repeatable buildings with shortage > 1. **Newly-unlocked buildings** (within `NEWLY_UNLOCKED_TICKS` = 15 ticks of their `unlockedAtTick`) get a purple glow animation. District sections with newly-unlocked buildings show a "🆕 New buildings available! Choose your village's direction" banner. Receives `activeConstruction`, `currentTick`, and `completedDistricts` as props from `App`. |
+| `BuildingCard` | `BuildingCard.tsx` | Individual card displaying one building type: icon, name, description, cost, progress (built/required). Shows **district name tag** (📍) for district buildings, **construction time range** (⏱ Build: X–Y turns), **repeatable indicator** (♻️ Repeatable / 🔒 One-time construction), and **event chain hints** (italic text for buildings with `eventChainUnlocksOnComplete`). Non-repeatable buildings already built show "✅ Already Built" badge and disabled build button. **Newly-unlocked buildings** display a purple glowing border via `isNewlyUnlocked` prop. When building has active state (fire/destroyed/strike): hides build controls and shows state action button (extinguish/repair) with state counts and effective count display. Accepts `constructionActive` boolean (disables build buttons with "Construction in progress" when true) and `activelyBuilding` boolean (shows "Building..." state with animated golden styling). |
+| `BuildMultipleModal` | `BuildMultipleModal.tsx` | Modal dialog for building multiple instances at once. Only available for repeatable buildings. Shows cost calculation and gold validation. |
 | `LogScreen` | `LogScreen.tsx` | Full-screen overlay listing all past decisions in reverse chronological order. Shows tick, source, option chosen, and stat deltas. Closeable with Escape key. |
 
 ### Styling
@@ -377,10 +394,10 @@ All styling is in plain CSS files co-located with their components. No CSS-in-JS
 | CSS File | Lines | Scope |
 |----------|-------|-------|
 | `App.css` | ~1650 | Main game layout, stats bars, request panel (BEM layout), decision cards, options, animations, medieval theme variables |
-| `BuildingCard.css` | ~385 | Building card appearance and states |
+| `BuildingCard.css` | ~560 | Building card appearance, states, district tags, build time, event hints |
 | `LogScreen.css` | ~275 | Decision log layout and entries |
 | `BuildMultipleModal.css` | ~230 | Bulk build modal styling |
-| `ConstructionScreen.css` | ~145 | Construction overlay grid layout |
+| `ConstructionScreen.css` | ~300 | Construction overlay, district sections, completion indicators |
 | `index.css` | ~40 | Global resets and base styles |
 
 ---
@@ -407,7 +424,9 @@ interface GameState {
   scheduledCombats: ScheduledCombat[];   // Future battles
   activeCombat?: ActiveCombat;           // In-progress battle
   pendingAuthorityChecks: PendingAuthorityCheck[];  // Authority checks resolving next tick
-  fire: FireState;                       // Fire System V3 runtime state
+  fire: FireState;                       // Fire System V4 runtime state
+  completedDistricts: Record<string, true>;  // Completed district IDs
+  activeConstruction?: ActiveConstruction | null;  // Building currently under construction
 }
 ```
 
@@ -416,7 +435,7 @@ interface GameState {
 | Action | Fields | Description |
 |--------|--------|-------------|
 | `CHOOSE_OPTION` | `optionIndex`, `combatCommit?`, `authorityCommit?` | Player selects an event option |
-| `BUILD_BUILDING` | `buildingId` | Player constructs a building |
+| `BUILD_BUILDING` | `buildingId` | Starts timed construction (gold deducted immediately, buildingCount increments on completion) |
 | `EXTINGUISH_ONE` | `buildingId` | Extinguish one burning building unit (costs gold + satisfaction) |
 | `REPAIR_ONE` | `buildingId` | Repair one destroyed building unit (costs 75% of build cost) |
 
@@ -430,14 +449,14 @@ The game uses React's `useReducer` with an immutable update pattern (spread oper
 
 ### Request Types
 
-The game has **~273 request definitions** (approximate — update when adding/removing requests) split into four arrays:
+The game has **~441 request definitions** split into four arrays (361 declarative + 80 generated):
 
 | Array | Count | Purpose |
 |-------|-------|---------|
-| `infoRequests` | ~11 | Tickless information/tutorial screens (building unlocks, reminders) |
-| `eventRequests` | ~190+ | Main gameplay events, chains, authority events |
-| `authorityInfoRequests` | ~32 | Authority check feedback (success/failure info screens) |
-| `fireChainRequests` | 40 | Fire System V3 slot chain requests (10 slots × 4 per slot) |
+| `infoRequests` | 30 | Tickless information/tutorial screens (building unlocks, construction start/end, district completion, reminders) |
+| `eventRequests` | 281 | Main gameplay events, chains, authority events, building-gated events |
+| `authorityInfoRequests` | 50 | Authority check feedback (success/failure info screens) |
+| `fireChainRequests` | 80 (generated) | Fire System V4 slot chain requests (5 per slot × 10 = 50) + Repair V4 requests (3 per slot × 10 = 30) |
 
 ### Request Interface
 
@@ -474,6 +493,18 @@ interface Request {
 **Building-Gated Events:**
 - `EVENT_MARKET_DAY` (requires `building:marketplace`)
 - `EVENT_TAVERN_AFTER_WORK` (requires `building:brewery`)
+- `EVENT_MARKET_BOOM` / `EVENT_MARKET_FRAUD` (requires `building:marketplace`)
+- `EVENT_TAVERN_CELEBRATION` / `EVENT_TAVERN_BRAWL` (requires `building:tavern`)
+- `EVENT_GARRISON_PATROL` / `EVENT_GARRISON_DEMANDS` (requires `building:garrison`)
+- `EVENT_TRAINING_EXCELLENCE` / `EVENT_TRAINING_INJURY` (requires `building:training_yard`)
+- `EVENT_SHRINE_BLESSING` / `EVENT_SHRINE_SUPERSTITION` (requires `building:shrine`)
+- `EVENT_HEALERS_CURE` / `EVENT_HEALERS_SHORTAGE` (requires `building:healers_house`)
+
+**Construction Info Requests** (11 start + 11 end = 22, in `infoRequests`):
+- `INFO_CONSTRUCT_START_{BUILDING}` / `INFO_CONSTRUCT_END_{BUILDING}` for farmstead, marketplace, bakery, brewery, firewood, well, tavern, garrison, shrine, training_yard, healers_house
+
+**District Completion Info Requests** (3, in `infoRequests`):
+- `INFO_DISTRICT_COMMERCE_COMPLETE`, `INFO_DISTRICT_MILITARY_COMPLETE`, `INFO_DISTRICT_FAITH_COMPLETE`
 
 **Event Chains:**
 
@@ -486,7 +517,19 @@ interface Request {
 | `ARKANAT_INSPECTOR` | `CHAIN_ARKANAT_INSPECTOR_START` | ~6 events | Inspector encounter chain |
 | `EGO_INSULT` | `CHAIN_EGO_INSULT_START` | ~6 events | Authority ego test chain |
 | `RIVER_PIRATES` | `CHAIN_RIVER_PIRATES_START` | ~6 events | River pirates chain |
-| `CHAIN_FIRE_SLOT_1..10` | `FIRE_S{n}_START` | 4 per slot (×10 = 40) | Fire System V3 chain slots (see [Section 18](#18-fire-system-v3)) |
+| `CHAIN_FIRE_SLOT_1..10` | `FIRE_S{n}_START` | 5 per slot (×10 = 50) | Fire System V4 chain slots (see [Section 18](#18-fire-system-v4)) |
+| `marketplace_core` | `CHAIN_MARKETPLACE_CORE_START` | 3 events | Merchant dispute chain (requires `building:marketplace`) |
+| `tavern_core` | `CHAIN_TAVERN_CORE_START` | 3 events | Tavern intrigue chain (requires `building:tavern`) |
+| `garrison_core` | `CHAIN_GARRISON_CORE_START` | 3 events | Guard demands chain (requires `building:garrison`) |
+| `training_yard_core` | `CHAIN_TRAINING_CORE_START` | 3 events | Training accident chain (requires `building:training_yard`) |
+| `shrine_core` | `CHAIN_SHRINE_CORE_START` | 3 events | Pilgrim request chain (requires `building:shrine`) |
+| `healers_house_core` | `CHAIN_HEALERS_CORE_START` | 3 events | Herb shortage chain (requires `building:healers_house`) |
+| `commerce_guild_pressure` | `CHAIN_COMMERCE_GUILD_START` | 3 events | Guild politics chain (requires `district:commerce_complete`) |
+| `commerce_prosperity` | `CHAIN_COMMERCE_PROSPER_START` | 3 events | Trade prosperity chain (requires `district:commerce_complete`) |
+| `military_mobilization` | `CHAIN_MILITARY_MOBIL_START` | 3 events | Mobilization chain (requires `district:military_complete`) |
+| `military_politics` | `CHAIN_MILITARY_POLITICS_START` | 3 events | Military power struggle chain (requires `district:military_complete`) |
+| `faith_pilgrimage` | `CHAIN_FAITH_PILGRIM_START` | 3 events | Pilgrimage chain (requires `district:faith_complete`) |
+| `faith_doctrine` | `CHAIN_FAITH_DOCTRINE_START` | 3 events | Doctrinal dispute chain (requires `district:faith_complete`) |
 
 **Authority Events:**
 - Low authority (0–33): `EVT_LOW_AUTHORITY`, `EVT_LOW_GUARD_INSUBORDINATION`, `EVT_LOW_SABOTAGE`, `EVT_LOW_PETITION_DENIED`, `EVT_LOW_DEBT_COLLECTOR`, `EVT_LOW_COUNCIL_REVOLT`, `EVT_LOW_BANDITS_MOCK`, `EVT_LOW_FARMERS_LEAVE`, `EVT_LOW_MERCHANT_EXTORTION`, `EVT_LOW_AUTHORITY_CRISIS`
@@ -501,7 +544,7 @@ Priority order:
 1. **Active Combat** → return synthetic combat round request
 2. **Scheduled Events** (targetTick ≤ current tick, FIFO order, info priority first)
 3. **Due Combats** → return synthetic combat start request (crisis still takes priority over combat start)
-4. **Crisis Events** (Disease → Unrest; fire crises replaced by Fire System V3 chain slots)
+4. **Crisis Events** (Disease → Unrest; fire crises replaced by Fire System V4 chain slots)
 5. **Random Event** from eligible pool (excludes: last request, crisis IDs, `canTriggerRandomly: false`, maxTriggers reached, locked chains, unmet requirements, authority range mismatch)
 6. **Fallback**: any non-crisis event → any event → error
 
@@ -513,14 +556,56 @@ Same request is never shown twice in a row (`lastRequestId` check).
 
 ### Building Definitions
 
-| Building | ID | Unlock | Cost | Pop/Building | Benefit | Unlock Token |
-|----------|----|--------|------|-------------|---------|-------------|
-| 🏠 Farmstead | `farmstead` | 0 farmers | 10g | 20 | Houses farmers (prevents overcrowding) | — |
-| 🏪 Marketplace | `marketplace` | 30 farmers | 20g | 100 | Unlocks "Market Day" event | `building:marketplace` |
-| 🍞 Bakery | `bakery` | 60 farmers | 40g | 120 | 10% chance per tick for +1 farmer growth | — |
-| 🍺 Brewery | `brewery` | 100 farmers | 70g | 150 | Unlocks "Tavern After Work" event | `building:brewery` |
-| 🪵 Firewood Supply | `firewood` | 170 farmers | 200g | 180 | 25% chance to halve fire risk increases | — |
-| 💧 Central Well | `well` | 250 farmers | 300g | 200 | 50% chance for +1 health on health gains | — |
+| Building | ID | Category | Repeatable | District | Unlock | Cost | Pop/Building | Benefit | Unlock Token | Construction Ticks |
+|----------|----|----------|------------|----------|--------|------|-------------|---------|-------------|-------------------|
+| 🏠 Farmstead | `farmstead` | capacity | ✅ | — | 0 farmers | 10g | 20 | Houses farmers (prevents overcrowding) | — | 2–4 |
+| 🏪 Marketplace | `marketplace` | district | ❌ | `commerce` | 30 farmers | 20g | 100 | Unlocks "Market Day" event | `building:marketplace` | 4–8 |
+| 🍞 Bakery | `bakery` | capacity | ✅ | — | 60 farmers | 40g | 120 | 10% chance per tick for +1 farmer growth | — | 3–6 |
+| 🍺 Brewery | `brewery` | capacity | ✅ | — | 100 farmers | 70g | 150 | Unlocks "Tavern After Work" event | `building:brewery` | 3–6 |
+| 🪵 Firewood Supply | `firewood` | capacity | ✅ | — | 170 farmers | 200g | 180 | 25% chance to halve fire risk increases | — | 4–7 |
+| 💧 Central Well | `well` | capacity | ✅ | — | 250 farmers | 300g | 200 | 50% chance for +1 health on health gains | — | 4–8 |
+| 🍻 Tavern | `tavern` | district | ❌ | `commerce` | 30 farmers | 25g | — | Establishes Commerce District presence | `building:tavern` | 3–6 |
+| 🛡️ Garrison | `garrison` | district | ❌ | `military` | 60 farmers | 35g | — | Establishes Military District presence | `building:garrison` | 4–7 |
+| ⛩ Shrine | `shrine` | district | ❌ | `faith` | 60 farmers | 30g | — | Establishes Faith/Relief District presence | `building:shrine` | 3–6 |
+| ⚔ Training Yard | `training_yard` | district | ❌ | `military` | 100 farmers | 50g | — | Completes Military District | `building:training_yard` | 4–8 |
+| 🩺 Healer's House | `healers_house` | district | ❌ | `faith` | 100 farmers | 45g | — | Completes Faith/Relief District | `building:healers_house` | 3–7 |
+
+### Building Interface Fields
+
+```typescript
+interface BuildingDefinition {
+  id: string;
+  displayName: string;
+  icon: string;
+  description: string;
+  unlockThreshold: number;
+  cost: number;
+  populationPerBuilding?: number;
+  benefitId: string;
+  benefitDescription: string;
+  unlockToken?: string;
+  reminderRequestId?: string;
+  reminderDelayTicks: number;
+  sortOrder: number;
+  category: 'capacity' | 'district';
+  repeatable: boolean;
+  districtId?: string;
+  constructionTicksMin: number;
+  constructionTicksMax: number;
+  constructionStartInfoRequestId: string;
+  constructionEndInfoRequestId: string;
+  unlockTokensOnComplete?: string[];
+  eventChainUnlocksOnComplete?: string[];
+}
+```
+
+- **category**: `'capacity'` buildings add population capacity and can scale; `'district'` buildings establish unique districts (built once).
+- **repeatable**: Whether the building can be constructed multiple times.
+- **districtId**: Only set for `'district'`-category buildings; identifies which district is established.
+- **constructionTicksMin / constructionTicksMax**: The random range for how many ticks construction takes.
+- **constructionStartInfoRequestId / constructionEndInfoRequestId**: Info request IDs shown when construction begins and ends. Naming convention: `INFO_CONSTRUCT_START_{ID}` / `INFO_CONSTRUCT_END_{ID}`.
+- **unlockTokensOnComplete**: Tokens granted when construction completes (e.g. for event gating).
+- **eventChainUnlocksOnComplete**: Event chain IDs unlocked when construction completes.
 
 ### Building Scaling Formula
 
@@ -540,8 +625,8 @@ Each building has persistent runtime tracking:
 ```typescript
 interface BuildingTracking {
   buildingCount: number;        // Built count (never decreases)
-  onFireCount: number;          // Currently burning units (Fire System V3)
-  destroyedCount: number;       // Destroyed units (Fire System V3)
+  onFireCount: number;          // Currently burning units (Fire System V4)
+  destroyedCount: number;       // Destroyed units (Fire System V4)
   onStrikeCount: number;        // Units on strike (reserved for future use)
   unlockedAtTick?: number;      // When first unlocked
   lastRequirementTick?: number; // When last required
@@ -551,6 +636,53 @@ interface BuildingTracking {
 ```
 
 **Effective Count**: `effectiveCount = buildingCount - onFireCount - destroyedCount - onStrikeCount`. Only effective buildings count toward requirements and capacity. Buildings with any active state cannot have more built until all states are cleared (**build lock**).
+
+### Grouped Building Unlocks
+
+Buildings unlock in **groups** at population milestones rather than individually. When farmers reach a group's threshold, all buildings in that group become available simultaneously, creating strategic choice pressure. Unchosen buildings remain available indefinitely. Farmstead (threshold 0) is always available and is not part of any unlock group.
+
+```typescript
+interface BuildingUnlockGroup {
+  id: string;
+  populationThreshold: number;
+  buildingIds: string[];
+}
+```
+
+| Group | ID | Threshold | Buildings |
+|-------|----|-----------|-----------|
+| Tier 1 | `tier_1_choice` | 30 farmers | `marketplace`, `tavern` |
+| Tier 2 | `tier_2_choice` | 60 farmers | `garrison`, `shrine` |
+| Tier 3 | `tier_3_choice` | 100 farmers | `training_yard`, `healers_house` |
+
+The `detectNewlyUnlockedBuildings` function checks both individual building thresholds and grouped unlock thresholds when population changes each tick.
+
+### 10.1 District System
+
+Districts are themed groups of buildings. When all buildings in a district have been built at least once, the district is considered **complete**, granting unlock tokens and event chain unlocks.
+
+#### District Definitions
+
+```typescript
+interface DistrictDefinition {
+  id: string;
+  name: string;
+  buildingIds: string[];
+  completionUnlockTokens: string[];
+  completionEventChainUnlocks: string[];
+  completionInfoRequestId?: string;
+}
+```
+
+| District | ID | Buildings | Completion Tokens | Completion Chains | Completion Info Request |
+|----------|----|-----------|-------------------|-------------------|------------------------|
+| Commerce District | `commerce` | `marketplace`, `tavern` | `district:commerce_complete` | `chain:commerce_major` | `INFO_DISTRICT_COMMERCE_COMPLETE` |
+| Military District | `military` | `garrison`, `training_yard` | `district:military_complete` | `chain:military_major` | `INFO_DISTRICT_MILITARY_COMPLETE` |
+| Faith/Relief District | `faith` | `shrine`, `healers_house` | `district:faith_complete` | `chain:faith_major` | `INFO_DISTRICT_FAITH_COMPLETE` |
+
+#### Completion Check
+
+A district is complete when every building in `buildingIds` has `buildingCount >= 1` in `buildingTracking`. Completed districts are tracked in `GameState.completedDistricts`.
 
 ---
 

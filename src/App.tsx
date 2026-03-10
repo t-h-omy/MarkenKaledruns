@@ -2,7 +2,7 @@ import { useReducer, useState, useEffect, useRef } from 'react'
 import './App.css'
 import { gameReducer, initializeGame, getCurrentRequest } from './game/state'
 import type { Effect } from './game/models'
-import { BUILDING_DEFINITIONS, calculateRequiredBuildings, getBuildingDef } from './game/buildings'
+import { BUILDING_DEFINITIONS, calculateRequiredBuildings, getBuildingDef, FARMERS_PER_FARMSTEAD } from './game/buildings'
 import type { BuildingDefinition } from './game/buildings'
 import { PORTRAITS } from './assets/portraits'
 import ConstructionScreen from './ConstructionScreen'
@@ -396,7 +396,7 @@ function App() {
 
   // Calculate overcrowding info (removed build panel, overcrowding tier not needed here)
   const farmsteadCount = gameState.buildingTracking['farmstead']?.buildingCount ?? 0
-  const farmsteadCapacity = farmsteadCount * 20
+  const farmsteadCapacity = farmsteadCount * FARMERS_PER_FARMSTEAD
   const farmsteadOverflow = Math.max(0, gameState.stats.farmers - farmsteadCapacity)
 
   // Check if an option would cause invalid state (negative farmers or landForces)
@@ -1027,6 +1027,9 @@ function App() {
           highlightedBuilding={highlightedBuildingId ?? undefined}
           onBuild={(buildingId) => dispatch({ type: 'BUILD_BUILDING', buildingId })}
           onStartRepairChain={(buildingId) => dispatch({ type: 'START_REPAIR_CHAIN', buildingId })}
+          activeConstruction={gameState.activeConstruction}
+          currentTick={gameState.tick}
+          completedDistricts={gameState.completedDistricts}
         />
         
         {/* Log Screen Overlay */}

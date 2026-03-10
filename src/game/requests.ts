@@ -84,6 +84,240 @@ export const infoRequests: Request[] = [
       },
     ],
   },
+
+  // ── Construction Start Info Requests ──────────────────────────────────
+
+  {
+    id: 'INFO_CONSTRUCT_START_FARMSTEAD',
+    title: 'Farmstead Under Construction',
+    text: 'Workers have begun clearing land and laying foundations for a new farmstead. The sound of axes and hammers echoes across the fields as timber is cut and earth is turned.',
+    canTriggerRandomly: false,
+    advancesTick: false,
+    portraitId: 'advisor',
+    options: [{ text: 'Acknowledged', effects: {} }],
+  },
+  {
+    id: 'INFO_CONSTRUCT_START_MARKETPLACE',
+    title: 'Marketplace Under Construction',
+    text: 'Craftsmen have begun erecting stalls and paving the central square for your new marketplace. Merchants already gather at the edges, eager to claim the best positions once it opens.',
+    canTriggerRandomly: false,
+    advancesTick: false,
+    portraitId: 'craftsman',
+    options: [{ text: 'Acknowledged', effects: {} }],
+  },
+  {
+    id: 'INFO_CONSTRUCT_START_BAKERY',
+    title: 'Bakery Under Construction',
+    text: 'Masons are building the great stone oven that will become the heart of your bakery. The scent of fresh mortar mixes with anticipation as villagers look forward to daily bread.',
+    canTriggerRandomly: false,
+    advancesTick: false,
+    portraitId: 'craftsman',
+    options: [{ text: 'Acknowledged', effects: {} }],
+  },
+  {
+    id: 'INFO_CONSTRUCT_START_BREWERY',
+    title: 'Brewery Under Construction',
+    text: 'Coopers and brewers work side by side, assembling barrels and vats for the new brewery. The promise of ale has lifted spirits across the village considerably.',
+    canTriggerRandomly: false,
+    advancesTick: false,
+    portraitId: 'craftsman',
+    options: [{ text: 'Acknowledged', effects: {} }],
+  },
+  {
+    id: 'INFO_CONSTRUCT_START_FIREWOOD',
+    title: 'Firewood Camp Under Construction',
+    text: 'Woodcutters have established a clearing and begun building storage shelters for the firewood operation. A steady supply of fuel will keep hearths burning through the harshest winters.',
+    canTriggerRandomly: false,
+    advancesTick: false,
+    portraitId: 'advisor',
+    options: [{ text: 'Acknowledged', effects: {} }],
+  },
+  {
+    id: 'INFO_CONSTRUCT_START_WELL',
+    title: 'Well Under Construction',
+    text: 'Diggers have struck damp earth and are now deepening the shaft for the village well. Clean water will soon flow freely, a blessing for health and morale alike.',
+    canTriggerRandomly: false,
+    advancesTick: false,
+    portraitId: 'advisor',
+    options: [{ text: 'Acknowledged', effects: {} }],
+  },
+  {
+    id: 'INFO_CONSTRUCT_START_TAVERN',
+    title: 'Tavern Under Construction',
+    text: 'Carpenters raise the sturdy oak frame of your new tavern. Already, a bard has been spotted tuning his lute nearby, clearly planning to be the first performer on opening night.',
+    canTriggerRandomly: false,
+    advancesTick: false,
+    portraitId: 'advisor',
+    options: [{ text: 'Acknowledged', effects: {} }],
+  },
+  {
+    id: 'INFO_CONSTRUCT_START_GARRISON',
+    title: 'Garrison Under Construction',
+    text: 'Stone walls rise as masons and soldiers work together to build the garrison. The structure will serve as both barracks and armory, a symbol of your commitment to the village\'s defense.',
+    canTriggerRandomly: false,
+    advancesTick: false,
+    portraitId: 'advisor',
+    options: [{ text: 'Acknowledged', effects: {} }],
+  },
+  {
+    id: 'INFO_CONSTRUCT_START_SHRINE',
+    title: 'Shrine Under Construction',
+    text: 'Villagers lay the first sacred stones of the shrine with reverence and prayer. The village priest oversees each placement, ensuring the holy site is built according to ancient traditions.',
+    canTriggerRandomly: false,
+    advancesTick: false,
+    portraitId: 'advisor',
+    options: [{ text: 'Acknowledged', effects: {} }],
+  },
+  {
+    id: 'INFO_CONSTRUCT_START_TRAINING_YARD',
+    title: 'Training Yard Under Construction',
+    text: 'The clang of hammers rings out as posts are driven into the ground for the training yard. Straw dummies and weapon racks are already being prepared for the recruits who will soon drill here.',
+    canTriggerRandomly: false,
+    advancesTick: false,
+    portraitId: 'advisor',
+    options: [{ text: 'Acknowledged', effects: {} }],
+  },
+  {
+    id: 'INFO_CONSTRUCT_START_HEALERS_HOUSE',
+    title: 'Healer\'s House Under Construction',
+    text: 'Herbalists and builders collaborate on the healer\'s house, ensuring proper ventilation and storage for precious remedies. A garden of medicinal herbs is already being planted beside the foundation.',
+    canTriggerRandomly: false,
+    advancesTick: false,
+    portraitId: 'advisor',
+    options: [{ text: 'Acknowledged', effects: {} }],
+  },
+
+  // ── Construction End Info Requests ────────────────────────────────────
+
+  {
+    id: 'INFO_CONSTRUCT_END_FARMSTEAD',
+    title: 'Farmstead Complete',
+    text: 'The farmstead stands ready, its fields plowed and fences mended. Farmers move in with their families, eager to work the land and bring in the harvest.',
+    canTriggerRandomly: false,
+    advancesTick: false,
+    portraitId: 'farmer',
+    options: [{ text: 'Acknowledged', effects: {} }],
+  },
+  {
+    id: 'INFO_CONSTRUCT_END_MARKETPLACE',
+    title: 'Marketplace Complete',
+    text: 'The marketplace opens its gates to a bustling crowd of traders and townsfolk. Colorful banners hang from every stall, and the air fills with the calls of merchants hawking their wares.',
+    canTriggerRandomly: false,
+    advancesTick: false,
+    portraitId: 'merchant',
+    options: [{ text: 'Acknowledged', effects: {} }],
+  },
+  {
+    id: 'INFO_CONSTRUCT_END_BAKERY',
+    title: 'Bakery Complete',
+    text: 'The first loaves emerge golden and fragrant from the great oven. Villagers queue eagerly as the baker proudly displays the fruits of the new bakery\'s labor.',
+    canTriggerRandomly: false,
+    advancesTick: false,
+    portraitId: 'craftsman',
+    options: [{ text: 'Acknowledged', effects: {} }],
+  },
+  {
+    id: 'INFO_CONSTRUCT_END_BREWERY',
+    title: 'Brewery Complete',
+    text: 'The first barrel is tapped to cheers and celebration. The brewery\'s master brewer raises a tankard and toasts to the village\'s prosperity and good health.',
+    canTriggerRandomly: false,
+    advancesTick: false,
+    portraitId: 'craftsman',
+    options: [{ text: 'Acknowledged', effects: {} }],
+  },
+  {
+    id: 'INFO_CONSTRUCT_END_FIREWOOD',
+    title: 'Firewood Camp Complete',
+    text: 'Stacks of split timber line the storage shelters, ready for distribution. The woodcutters report that supply lines are established and the village will not want for warmth.',
+    canTriggerRandomly: false,
+    advancesTick: false,
+    portraitId: 'craftsman',
+    options: [{ text: 'Acknowledged', effects: {} }],
+  },
+  {
+    id: 'INFO_CONSTRUCT_END_WELL',
+    title: 'Well Complete',
+    text: 'Crystal-clear water is drawn from the newly completed well to applause from the gathered crowd. The village healer confirms it is pure and wholesome for drinking.',
+    canTriggerRandomly: false,
+    advancesTick: false,
+    portraitId: 'healer',
+    options: [{ text: 'Acknowledged', effects: {} }],
+  },
+  {
+    id: 'INFO_CONSTRUCT_END_TAVERN',
+    title: 'Tavern Complete',
+    text: 'The tavern doors swing open to reveal a warm hearth, sturdy tables, and a well-stocked bar. A bard strikes up a merry tune as the first patrons settle in for the evening.',
+    canTriggerRandomly: false,
+    advancesTick: false,
+    portraitId: 'bard',
+    options: [{ text: 'Acknowledged', effects: {} }],
+  },
+  {
+    id: 'INFO_CONSTRUCT_END_GARRISON',
+    title: 'Garrison Complete',
+    text: 'The garrison stands tall and formidable, its walls thick and gates iron-bound. The captain of the guard salutes as the first patrol marches out to secure the village perimeter.',
+    canTriggerRandomly: false,
+    advancesTick: false,
+    portraitId: 'guard',
+    options: [{ text: 'Acknowledged', effects: {} }],
+  },
+  {
+    id: 'INFO_CONSTRUCT_END_SHRINE',
+    title: 'Shrine Complete',
+    text: 'Incense smoke curls upward as the village priest consecrates the completed shrine. Villagers kneel in prayer, grateful for a place of solace and spiritual guidance.',
+    canTriggerRandomly: false,
+    advancesTick: false,
+    portraitId: 'village_priest',
+    options: [{ text: 'Acknowledged', effects: {} }],
+  },
+  {
+    id: 'INFO_CONSTRUCT_END_TRAINING_YARD',
+    title: 'Training Yard Complete',
+    text: 'The training yard is ready for its first recruits. Weapon racks gleam with polished steel, and the drill sergeant barks orders as young men and women form ranks for the first time.',
+    canTriggerRandomly: false,
+    advancesTick: false,
+    portraitId: 'military_advisor',
+    options: [{ text: 'Acknowledged', effects: {} }],
+  },
+  {
+    id: 'INFO_CONSTRUCT_END_HEALERS_HOUSE',
+    title: 'Healer\'s House Complete',
+    text: 'The healer hangs bundles of dried herbs from the rafters and arranges salves on neatly labeled shelves. The village now has a proper place of healing, and the sick already line up at the door.',
+    canTriggerRandomly: false,
+    advancesTick: false,
+    portraitId: 'healer',
+    options: [{ text: 'Acknowledged', effects: {} }],
+  },
+
+  // ── District Completion Info Requests ─────────────────────────────────
+
+  {
+    id: 'INFO_DISTRICT_COMMERCE_COMPLETE',
+    title: 'Commerce District Established',
+    text: 'With both the marketplace and the tavern operational, a true commerce district has taken shape. Merchants and tavernkeepers coordinate trade, and coin flows more freely than ever before.',
+    canTriggerRandomly: false,
+    advancesTick: false,
+    portraitId: 'merchant',
+    options: [{ text: 'Acknowledged', effects: {} }],
+  },
+  {
+    id: 'INFO_DISTRICT_MILITARY_COMPLETE',
+    title: 'Military District Established',
+    text: 'The garrison and training yard together form a formidable military district. Soldiers drill with discipline and purpose, and the village\'s defenses have never been stronger.',
+    canTriggerRandomly: false,
+    advancesTick: false,
+    portraitId: 'military_advisor',
+    options: [{ text: 'Acknowledged', effects: {} }],
+  },
+  {
+    id: 'INFO_DISTRICT_FAITH_COMPLETE',
+    title: 'Faith and Relief District Established',
+    text: 'The shrine and healer\'s house stand side by side, offering spiritual comfort and physical remedy in equal measure. Pilgrims and the ailing alike find solace in this sacred quarter of the village.',
+    canTriggerRandomly: false,
+    advancesTick: false,
+    portraitId: 'village_priest',
+    options: [{ text: 'Acknowledged', effects: {} }],
+  },
 ];
 
 /**
@@ -4522,6 +4756,7 @@ export const eventRequests: Request[] = [
     portraitId: 'craftsman',
     options: [
       { text: 'TOO BAD', effects: {landForces: -3, authority: -1} },
+      { text: 'WE\'LL MANAGE', effects: {satisfaction: -2} },
     ],
   },
   {
@@ -4598,10 +4833,17 @@ export const eventRequests: Request[] = [
     portraitId: 'arkanat_mage',
     options: [
       { text: 'SEE HIM OUT', effects: { authority: 1 } },
+      { text: 'GOOD RIDDANCE', effects: { satisfaction: 1 } },
     ],
     followUps: [
       {
         triggerOnOptionIndex: 0,
+        delayMinTicks: 0,
+        delayMaxTicks: 0,
+        candidates: [{ requestId: 'CHAIN_ARKANAT_DEBRIEF', weight: 1 }],
+      },
+      {
+        triggerOnOptionIndex: 1,
         delayMinTicks: 0,
         delayMaxTicks: 0,
         candidates: [{ requestId: 'CHAIN_ARKANAT_DEBRIEF', weight: 1 }],
@@ -4683,6 +4925,7 @@ export const eventRequests: Request[] = [
     portraitId: 'advisor',
     options: [
       { text: 'NOTED', effects: {} },
+      { text: 'WE\'RE PREPARED', effects: {} },
     ],
   },
 
@@ -4819,6 +5062,7 @@ export const eventRequests: Request[] = [
     portraitId: 'advisor',
     options: [
       { text: 'MOVE FORWARD', effects: {} },
+      { text: 'LET IT GO', effects: {} },
     ],
   },
 
@@ -6301,6 +6545,787 @@ export const eventRequests: Request[] = [
     options: [
       { text: 'EXPAND THE ARRANGEMENT', effects: { gold: 10, satisfaction: -2 } },
       { text: 'FORMALIZE THE TRADE', effects: { gold: 5, satisfaction: 1 } },
+    ],
+  },
+
+  // ══════════════════════════════════════════════════════════════════════
+  //  BUILDING EVENT CHAINS (6 chains × 3 events = 18 events)
+  // ══════════════════════════════════════════════════════════════════════
+
+  // ── Marketplace Core Chain ────────────────────────────────────────────
+
+  {
+    id: 'CHAIN_MARKETPLACE_CORE_START',
+    chainId: 'marketplace_core',
+    chainRole: 'start',
+    canTriggerRandomly: true,
+    requires: ['building:marketplace'],
+    portraitId: 'merchant',
+    title: 'Stall Dispute',
+    text: 'Two prominent merchants nearly come to blows over the prime stall location at the market square. Their apprentices have drawn lines in the dirt, and other traders are choosing sides. If left unchecked, this petty quarrel could disrupt all trade.',
+    options: [
+      { text: 'ASSIGN STALLS BY LOTTERY', effects: { satisfaction: 1, gold: -2 } },
+      { text: 'AWARD BY SENIORITY', effects: { authority: 1, satisfaction: -1 } },
+    ],
+    followUps: [
+      { triggerOnOptionIndex: 0, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_MARKETPLACE_CORE_QUARREL', weight: 1 }] },
+      { triggerOnOptionIndex: 1, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_MARKETPLACE_CORE_QUARREL', weight: 1 }] },
+    ],
+  },
+  {
+    id: 'CHAIN_MARKETPLACE_CORE_QUARREL',
+    chainId: 'marketplace_core',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    portraitId: 'merchant',
+    title: 'Guild Politics',
+    text: 'The stall dispute has escalated into a guild matter. The merchant guild demands the right to self-govern market affairs, challenging your authority over trade regulation. Refusing could spark a boycott, but yielding sets a dangerous precedent.',
+    options: [
+      { text: 'ALLOW GUILD OVERSIGHT', effects: { gold: 3, authority: -2 } },
+      { text: 'REASSERT YOUR AUTHORITY', effects: { authority: 2, gold: -3 } },
+    ],
+    followUps: [
+      { triggerOnOptionIndex: 0, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_MARKETPLACE_CORE_END', weight: 1 }] },
+      { triggerOnOptionIndex: 1, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_MARKETPLACE_CORE_END', weight: 1 }] },
+    ],
+  },
+  {
+    id: 'CHAIN_MARKETPLACE_CORE_END',
+    chainId: 'marketplace_core',
+    chainRole: 'end',
+    chainRestartCooldownTicks: 50,
+    canTriggerRandomly: false,
+    portraitId: 'merchant',
+    title: 'Market Resolution',
+    text: 'The dust settles on the marketplace conflict. The merchants present two proposals: a formal charter granting them limited self-governance, or a renewed oath of fealty to your direct rule. Either way, trade must resume.',
+    options: [
+      { text: 'SIGN THE CHARTER', effects: { gold: 4, authority: -1, satisfaction: 2 } },
+      { text: 'DEMAND THE OATH', effects: { authority: 3, gold: -2, satisfaction: -1 } },
+    ],
+  },
+
+  // ── Tavern Core Chain ─────────────────────────────────────────────────
+
+  {
+    id: 'CHAIN_TAVERN_CORE_START',
+    chainId: 'tavern_core',
+    chainRole: 'start',
+    canTriggerRandomly: true,
+    requires: ['building:tavern'],
+    portraitId: 'bard',
+    title: 'Whispers at the Tavern',
+    text: 'The tavern bard pulls you aside after his set, voice low. He has overheard a group of hooded strangers arranging a secret meeting in the back room tonight. Their coin purses are heavy, and their accents foreign.',
+    options: [
+      { text: 'EAVESDROP ON THE MEETING', effects: { authority: 1, satisfaction: -1 } },
+      { text: 'CONFRONT THEM DIRECTLY', effects: { authority: -1, landForces: 1 } },
+    ],
+    followUps: [
+      { triggerOnOptionIndex: 0, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_TAVERN_CORE_INTRIGUE', weight: 1 }] },
+      { triggerOnOptionIndex: 1, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_TAVERN_CORE_INTRIGUE', weight: 1 }] },
+    ],
+  },
+  {
+    id: 'CHAIN_TAVERN_CORE_INTRIGUE',
+    chainId: 'tavern_core',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    portraitId: 'bard',
+    title: 'The Mysterious Stranger',
+    text: 'The strangers\' leader reveals himself — a displaced noble from a neighboring realm, seeking allies for a claim to his lost lands. He offers generous payment for your village\'s support, but entangling in foreign politics is risky business.',
+    options: [
+      { text: 'HEAR HIS PROPOSAL', effects: { gold: 3, satisfaction: -1 } },
+      { text: 'SEND HIM AWAY', effects: { satisfaction: 1, gold: -1 } },
+    ],
+    followUps: [
+      { triggerOnOptionIndex: 0, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_TAVERN_CORE_END', weight: 1 }] },
+      { triggerOnOptionIndex: 1, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_TAVERN_CORE_END', weight: 1 }] },
+    ],
+  },
+  {
+    id: 'CHAIN_TAVERN_CORE_END',
+    chainId: 'tavern_core',
+    chainRole: 'end',
+    chainRestartCooldownTicks: 55,
+    canTriggerRandomly: false,
+    portraitId: 'bard',
+    title: 'The Truth Revealed',
+    text: 'The bard\'s investigation uncovers the full truth: the stranger\'s cause is genuine but his enemies are powerful. Supporting him could bring wealth or ruin. The tavern patrons wait with bated breath for your final word.',
+    options: [
+      { text: 'PLEDGE SUPPORT', effects: { gold: 5, landForces: -2, authority: 1 } },
+      { text: 'REMAIN NEUTRAL', effects: { satisfaction: 2, gold: -2 } },
+    ],
+  },
+
+  // ── Garrison Core Chain ───────────────────────────────────────────────
+
+  {
+    id: 'CHAIN_GARRISON_CORE_START',
+    chainId: 'garrison_core',
+    chainRole: 'start',
+    canTriggerRandomly: true,
+    requires: ['building:garrison'],
+    portraitId: 'guard',
+    title: 'Guard Demands',
+    text: 'The garrison guards line up before you, their sergeant at the front. They demand better equipment — proper steel instead of rusted hand-me-downs. Morale is low and desertions loom if their plea goes unanswered.',
+    options: [
+      { text: 'FUND NEW EQUIPMENT', effects: { gold: -5, landForces: 3 } },
+      { text: 'DENY THE REQUEST', effects: { gold: 2, landForces: -2 } },
+    ],
+    followUps: [
+      { triggerOnOptionIndex: 0, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_GARRISON_CORE_TENSION', weight: 1 }] },
+      { triggerOnOptionIndex: 1, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_GARRISON_CORE_TENSION', weight: 1 }] },
+    ],
+  },
+  {
+    id: 'CHAIN_GARRISON_CORE_TENSION',
+    chainId: 'garrison_core',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    portraitId: 'guard',
+    title: 'Discipline Erodes',
+    text: 'Tension festers in the barracks. Two guards were caught brawling over rations, and the night watch has grown lax. The sergeant warns that without intervention, the garrison could become more threat than protection.',
+    options: [
+      { text: 'ENFORCE STRICT DISCIPLINE', effects: { authority: 2, satisfaction: -2 } },
+      { text: 'OFFER BETTER CONDITIONS', effects: { gold: -3, satisfaction: 2 } },
+    ],
+    followUps: [
+      { triggerOnOptionIndex: 0, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_GARRISON_CORE_END', weight: 1 }] },
+      { triggerOnOptionIndex: 1, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_GARRISON_CORE_END', weight: 1 }] },
+    ],
+  },
+  {
+    id: 'CHAIN_GARRISON_CORE_END',
+    chainId: 'garrison_core',
+    chainRole: 'end',
+    chainRestartCooldownTicks: 55,
+    canTriggerRandomly: false,
+    portraitId: 'guard',
+    title: 'Order Restored',
+    text: 'The garrison crisis comes to a head. The sergeant proposes either a formal military code with harsh punishments, or a soldier\'s council that gives the guards a voice. The choice will define the garrison\'s character for seasons to come.',
+    options: [
+      { text: 'ESTABLISH THE CODE', effects: { authority: 3, landForces: 2, satisfaction: -2 } },
+      { text: 'FORM THE COUNCIL', effects: { satisfaction: 3, landForces: 1, authority: -2 } },
+    ],
+  },
+
+  // ── Training Yard Core Chain ──────────────────────────────────────────
+
+  {
+    id: 'CHAIN_TRAINING_CORE_START',
+    chainId: 'training_yard_core',
+    chainRole: 'start',
+    canTriggerRandomly: true,
+    requires: ['building:training_yard'],
+    portraitId: 'military_advisor',
+    title: 'Training Accident',
+    text: 'A recruit collapses during drills, badly injured by a blunted training sword that proved sharper than expected. The other recruits are shaken, and whispers of sabotage spread through the ranks.',
+    options: [
+      { text: 'INVESTIGATE IMMEDIATELY', effects: { authority: 1, gold: -2 } },
+      { text: 'CALL IT AN ACCIDENT', effects: { satisfaction: -1, gold: 1 } },
+    ],
+    followUps: [
+      { triggerOnOptionIndex: 0, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_TRAINING_CORE_INVESTIGATION', weight: 1 }] },
+      { triggerOnOptionIndex: 1, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_TRAINING_CORE_INVESTIGATION', weight: 1 }] },
+    ],
+  },
+  {
+    id: 'CHAIN_TRAINING_CORE_INVESTIGATION',
+    chainId: 'training_yard_core',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    portraitId: 'military_advisor',
+    title: 'The Investigation',
+    text: 'Your inquiry reveals the training equipment has been poorly maintained — or perhaps tampered with. A disgruntled former recruit with a grudge is the prime suspect, but the drill master also bears responsibility for lax oversight.',
+    options: [
+      { text: 'ARREST THE SUSPECT', effects: { authority: 2, satisfaction: -1 } },
+      { text: 'REFORM TRAINING PRACTICES', effects: { gold: -3, health: 1 } },
+    ],
+    followUps: [
+      { triggerOnOptionIndex: 0, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_TRAINING_CORE_END', weight: 1 }] },
+      { triggerOnOptionIndex: 1, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_TRAINING_CORE_END', weight: 1 }] },
+    ],
+  },
+  {
+    id: 'CHAIN_TRAINING_CORE_END',
+    chainId: 'training_yard_core',
+    chainRole: 'end',
+    chainRestartCooldownTicks: 60,
+    canTriggerRandomly: false,
+    portraitId: 'military_advisor',
+    title: 'Reforms and Consequences',
+    text: 'The training yard incident concludes. The military advisor presents options: invest in proper armorer oversight and safer equipment, or push harder training despite the risks to build a stronger fighting force.',
+    options: [
+      { text: 'INVEST IN SAFETY', effects: { gold: -4, health: 2, satisfaction: 1 } },
+      { text: 'INTENSIFY TRAINING', effects: { landForces: 3, health: -2, satisfaction: -1 } },
+    ],
+  },
+
+  // ── Shrine Core Chain ─────────────────────────────────────────────────
+
+  {
+    id: 'CHAIN_SHRINE_CORE_START',
+    chainId: 'shrine_core',
+    chainRole: 'start',
+    canTriggerRandomly: true,
+    requires: ['building:shrine'],
+    portraitId: 'village_priest',
+    title: 'The Pilgrim\'s Request',
+    text: 'A weary pilgrim arrives at the shrine, claiming to carry a holy relic that must be enshrined here according to an ancient prophecy. The village priest is both awed and suspicious — the relic could be genuine or a clever forgery.',
+    options: [
+      { text: 'WELCOME THE PILGRIM', effects: { satisfaction: 2, gold: -2 } },
+      { text: 'DEMAND PROOF OF AUTHENTICITY', effects: { authority: 1, satisfaction: -1 } },
+    ],
+    followUps: [
+      { triggerOnOptionIndex: 0, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_SHRINE_CORE_RITUAL', weight: 1 }] },
+      { triggerOnOptionIndex: 1, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_SHRINE_CORE_RITUAL', weight: 1 }] },
+    ],
+  },
+  {
+    id: 'CHAIN_SHRINE_CORE_RITUAL',
+    chainId: 'shrine_core',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    portraitId: 'village_priest',
+    title: 'The Ritual',
+    text: 'The village priest insists that a sacred ritual must be performed to test the relic\'s power. The ceremony requires rare incense and a full day of fasting. Some villagers are devout; others grumble about superstition and lost work.',
+    options: [
+      { text: 'FUND THE RITUAL', effects: { gold: -3, satisfaction: 1 } },
+      { text: 'KEEP IT SIMPLE', effects: { gold: -1, authority: -1 } },
+    ],
+    followUps: [
+      { triggerOnOptionIndex: 0, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_SHRINE_CORE_END', weight: 1 }] },
+      { triggerOnOptionIndex: 1, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_SHRINE_CORE_END', weight: 1 }] },
+    ],
+  },
+  {
+    id: 'CHAIN_SHRINE_CORE_END',
+    chainId: 'shrine_core',
+    chainRole: 'end',
+    chainRestartCooldownTicks: 55,
+    canTriggerRandomly: false,
+    portraitId: 'village_priest',
+    title: 'Spiritual Outcome',
+    text: 'The ritual is complete. Whether miracle or coincidence, a sense of peace settles over the village. The priest interprets the signs and asks whether to enshrine the relic permanently or return it to the pilgrim for safekeeping.',
+    options: [
+      { text: 'ENSHRINE THE RELIC', effects: { satisfaction: 3, health: 1, gold: -2 } },
+      { text: 'RETURN IT TO THE PILGRIM', effects: { gold: 2, satisfaction: -1 } },
+    ],
+  },
+
+  // ── Healer's House Core Chain ─────────────────────────────────────────
+
+  {
+    id: 'CHAIN_HEALERS_CORE_START',
+    chainId: 'healers_house_core',
+    chainRole: 'start',
+    canTriggerRandomly: true,
+    requires: ['building:healers_house'],
+    portraitId: 'healer',
+    title: 'Herb Shortage',
+    text: 'The village healer reports with grave concern that critical medicinal herbs have run dangerously low. A blight struck the herb garden, and without fresh supplies, she cannot treat the next outbreak of illness that surely will come.',
+    options: [
+      { text: 'SEND AN EXPEDITION', effects: { gold: -3, farmers: -1 } },
+      { text: 'BUY FROM TRAVELLING MERCHANTS', effects: { gold: -5, satisfaction: 1 } },
+    ],
+    followUps: [
+      { triggerOnOptionIndex: 0, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_HEALERS_CORE_SEARCH', weight: 1 }] },
+      { triggerOnOptionIndex: 1, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_HEALERS_CORE_SEARCH', weight: 1 }] },
+    ],
+  },
+  {
+    id: 'CHAIN_HEALERS_CORE_SEARCH',
+    chainId: 'healers_house_core',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    portraitId: 'healer',
+    title: 'Expedition for Ingredients',
+    text: 'The search for rare herbs leads deep into the surrounding wilds. The foragers discover a hidden grove rich with medicinal plants, but it lies in territory claimed by a reclusive hermit who demands payment for passage.',
+    options: [
+      { text: 'PAY THE HERMIT', effects: { gold: -3, health: 2 } },
+      { text: 'GATHER BY FORCE', effects: { authority: 1, satisfaction: -2 } },
+    ],
+    followUps: [
+      { triggerOnOptionIndex: 0, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_HEALERS_CORE_END', weight: 1 }] },
+      { triggerOnOptionIndex: 1, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_HEALERS_CORE_END', weight: 1 }] },
+    ],
+  },
+  {
+    id: 'CHAIN_HEALERS_CORE_END',
+    chainId: 'healers_house_core',
+    chainRole: 'end',
+    chainRestartCooldownTicks: 50,
+    canTriggerRandomly: false,
+    portraitId: 'healer',
+    title: 'The Medicine\'s Fate',
+    text: 'The healer works through the night, grinding herbs and brewing tinctures. She presents two approaches: a potent but risky elixir that could cure much but harm some, or a gentler remedy that is safe but treats fewer ailments.',
+    options: [
+      { text: 'BREW THE POTENT ELIXIR', effects: { health: 4, satisfaction: -1, gold: -2 } },
+      { text: 'PREPARE THE GENTLE REMEDY', effects: { health: 2, satisfaction: 2, gold: -1 } },
+    ],
+  },
+
+  // ══════════════════════════════════════════════════════════════════════
+  //  STANDALONE BUILDING EVENTS (12 events)
+  // ══════════════════════════════════════════════════════════════════════
+
+  {
+    id: 'EVENT_MARKET_BOOM',
+    title: 'Market Boom',
+    text: 'A caravan of foreign traders has arrived, drawn by the reputation of your marketplace. They bring exotic goods and generous coin, eager to establish long-term trade routes through your village.',
+    canTriggerRandomly: true,
+    requires: ['building:marketplace'],
+    portraitId: 'merchant',
+    options: [
+      { text: 'WELCOME THEM WARMLY', effects: { gold: 5, satisfaction: 1, farmers: -1 } },
+      { text: 'LEVY AN IMPORT TAX', effects: { gold: 3, authority: 1, satisfaction: -1 } },
+    ],
+  },
+  {
+    id: 'EVENT_MARKET_FRAUD',
+    title: 'Market Fraud',
+    text: 'A cunning swindler has been selling counterfeit goods at the market — fake remedies and watered-down ale. Several villagers fell ill, and trust in the marketplace is shaken.',
+    canTriggerRandomly: true,
+    requires: ['building:marketplace'],
+    portraitId: 'merchant',
+    options: [
+      { text: 'HUNT DOWN THE SWINDLER', effects: { gold: -2, authority: 2, satisfaction: 1 } },
+      { text: 'TIGHTEN MARKET REGULATIONS', effects: { gold: -3, satisfaction: -1, health: 1 } },
+    ],
+  },
+  {
+    id: 'EVENT_TAVERN_CELEBRATION',
+    title: 'Tavern Celebration',
+    text: 'A spontaneous festival erupts at the tavern after a bountiful harvest. The bard leads the villagers in song and dance, and for one glorious evening the troubles of the world feel far away.',
+    canTriggerRandomly: true,
+    requires: ['building:tavern'],
+    portraitId: 'bard',
+    options: [
+      { text: 'JOIN THE FESTIVITIES', effects: { satisfaction: 3, gold: -2, authority: -1 } },
+      { text: 'PROVIDE FREE DRINKS', effects: { satisfaction: 2, gold: -4, health: -1 } },
+    ],
+  },
+  {
+    id: 'EVENT_TAVERN_BRAWL',
+    title: 'Tavern Brawl',
+    text: 'A violent brawl erupts between farmers and off-duty guards at the tavern. Tables are smashed, teeth are lost, and the tavernkeeper begs for your intervention before someone is killed.',
+    canTriggerRandomly: true,
+    requires: ['building:tavern'],
+    portraitId: 'guard',
+    options: [
+      { text: 'SEND IN THE GUARDS', effects: { authority: 2, satisfaction: -2, landForces: -1 } },
+      { text: 'LET THEM SETTLE IT', effects: { satisfaction: -1, health: -1 } },
+    ],
+  },
+  {
+    id: 'EVENT_GARRISON_PATROL',
+    title: 'Successful Patrol',
+    text: 'The garrison patrol returns with good news — they intercepted a bandit scouting party at the village borders. The bandits fled at the sight of your well-armed guards, and a cache of stolen goods was recovered.',
+    canTriggerRandomly: true,
+    requires: ['building:garrison'],
+    portraitId: 'guard',
+    options: [
+      { text: 'DISTRIBUTE THE GOODS', effects: { gold: 3, satisfaction: 2, authority: -1 } },
+      { text: 'STOCK THE GARRISON ARMORY', effects: { landForces: 2, gold: 2, satisfaction: -1 } },
+    ],
+  },
+  {
+    id: 'EVENT_GARRISON_DEMANDS',
+    title: 'Garrison Overreach',
+    text: 'The garrison captain demands the right to levy a "security tax" on merchants entering the village. He argues the guards deserve better pay, but the merchants see it as nothing more than a shakedown.',
+    canTriggerRandomly: true,
+    requires: ['building:garrison'],
+    portraitId: 'military_advisor',
+    options: [
+      { text: 'APPROVE THE TAX', effects: { gold: 3, landForces: 1, satisfaction: -3 } },
+      { text: 'DENY THE REQUEST', effects: { satisfaction: 1, landForces: -2, authority: 1 } },
+    ],
+  },
+  {
+    id: 'EVENT_TRAINING_EXCELLENCE',
+    title: 'Training Excellence',
+    text: 'A talented recruit has distinguished herself in the training yard, besting every opponent and mastering sword and bow alike. Her prowess inspires the other recruits, and the drill master beams with pride.',
+    canTriggerRandomly: true,
+    requires: ['building:training_yard'],
+    portraitId: 'military_advisor',
+    options: [
+      { text: 'PROMOTE HER TO SERGEANT', effects: { landForces: 3, satisfaction: 1, gold: -2 } },
+      { text: 'SEND HER TO TRAIN OTHERS', effects: { landForces: 2, farmers: -1, authority: 1 } },
+    ],
+  },
+  {
+    id: 'EVENT_TRAINING_INJURY',
+    title: 'Training Injury',
+    text: 'A training exercise goes wrong when a sparring bout turns too aggressive. A promising recruit suffers a broken arm, and the healer reports the injury could have been far worse. Morale at the training yard has taken a hit.',
+    canTriggerRandomly: true,
+    requires: ['building:training_yard'],
+    portraitId: 'healer',
+    options: [
+      { text: 'COMPENSATE THE RECRUIT', effects: { gold: -3, satisfaction: 1, health: 1 } },
+      { text: 'TOUGHEN THE RULES', effects: { authority: 1, satisfaction: -2, landForces: 1 } },
+    ],
+  },
+  {
+    id: 'EVENT_SHRINE_BLESSING',
+    title: 'Shrine Blessing',
+    text: 'During morning prayers, a shaft of golden light illuminates the shrine\'s altar. The village priest declares it a divine blessing, and villagers flock to the shrine seeking guidance, hope, and healing.',
+    canTriggerRandomly: true,
+    requires: ['building:shrine'],
+    portraitId: 'village_priest',
+    options: [
+      { text: 'HOLD A PUBLIC CEREMONY', effects: { satisfaction: 3, health: 1, gold: -2 } },
+      { text: 'OFFER PRIVATE BLESSINGS', effects: { satisfaction: 1, authority: 2, gold: -1 } },
+    ],
+  },
+  {
+    id: 'EVENT_SHRINE_SUPERSTITION',
+    title: 'Rising Superstition',
+    text: 'Strange omens appear near the shrine — an owl hooting at midday, cracks in the altar stone. Fearful villagers demand elaborate protective rituals, while the priest insists calm reasoning will prevail over superstition.',
+    canTriggerRandomly: true,
+    requires: ['building:shrine'],
+    portraitId: 'village_priest',
+    options: [
+      { text: 'PERFORM PROTECTIVE RITES', effects: { gold: -3, satisfaction: 2, authority: -1 } },
+      { text: 'COUNSEL AGAINST SUPERSTITION', effects: { authority: 2, satisfaction: -2 } },
+    ],
+  },
+  {
+    id: 'EVENT_HEALERS_CURE',
+    title: 'Miraculous Cure',
+    text: 'The village healer discovers a new herbal compound that cures a persistent fever plaguing several families. Word of her skill spreads, and travelers arrive seeking treatment, bringing coin and gratitude.',
+    canTriggerRandomly: true,
+    requires: ['building:healers_house'],
+    portraitId: 'healer',
+    options: [
+      { text: 'TREAT ALL COMERS', effects: { health: 3, satisfaction: 2, gold: -2 } },
+      { text: 'CHARGE FOR TREATMENT', effects: { gold: 4, health: 1, satisfaction: -1 } },
+    ],
+  },
+  {
+    id: 'EVENT_HEALERS_SHORTAGE',
+    title: 'Medicine Shortage',
+    text: 'The healer\'s stores of bandages and poultices are nearly exhausted after treating a string of injuries from fieldwork. Without resupply, the next illness or accident could prove far more dangerous.',
+    canTriggerRandomly: true,
+    requires: ['building:healers_house'],
+    portraitId: 'healer',
+    options: [
+      { text: 'FUND EMERGENCY SUPPLIES', effects: { gold: -4, health: 2, satisfaction: 1 } },
+      { text: 'RATION REMAINING STORES', effects: { health: -1, satisfaction: -1, gold: 1 } },
+    ],
+  },
+
+  // ══════════════════════════════════════════════════════════════════════
+  //  DISTRICT EVENT CHAINS (6 chains × 3 events = 18 events)
+  // ══════════════════════════════════════════════════════════════════════
+
+  // ── Commerce: Guild Pressure Chain ────────────────────────────────────
+
+  {
+    id: 'CHAIN_COMMERCE_GUILD_START',
+    chainId: 'commerce_guild_pressure',
+    chainRole: 'start',
+    canTriggerRandomly: true,
+    requires: ['district:commerce_complete'],
+    portraitId: 'merchant',
+    title: 'Guild Leaders Demand Power',
+    text: 'The combined merchants of marketplace and tavern have formed a powerful commerce guild. Their leaders arrive at your hall, demanding a seat on the village council and a say in tax policy. Their economic leverage is considerable.',
+    options: [
+      { text: 'NEGOTIATE TERMS', effects: { gold: 2, authority: -2 } },
+      { text: 'REFUSE OUTRIGHT', effects: { authority: 2, gold: -3 } },
+    ],
+    followUps: [
+      { triggerOnOptionIndex: 0, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_COMMERCE_GUILD_CONFLICT', weight: 1 }] },
+      { triggerOnOptionIndex: 1, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_COMMERCE_GUILD_CONFLICT', weight: 1 }] },
+    ],
+  },
+  {
+    id: 'CHAIN_COMMERCE_GUILD_CONFLICT',
+    chainId: 'commerce_guild_pressure',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    portraitId: 'merchant',
+    title: 'Trade Boycott',
+    text: 'The guild escalates — merchants shutter their stalls and the tavernkeeper locks the doors. A full trade boycott grips the village. Prices soar as supplies dwindle, and villagers grow restless without goods or ale.',
+    options: [
+      { text: 'MAKE CONCESSIONS', effects: { gold: -2, satisfaction: 2, authority: -2 } },
+      { text: 'BREAK THE BOYCOTT BY FORCE', effects: { authority: 3, satisfaction: -3, landForces: -1 } },
+    ],
+    followUps: [
+      { triggerOnOptionIndex: 0, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_COMMERCE_GUILD_END', weight: 1 }] },
+      { triggerOnOptionIndex: 1, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_COMMERCE_GUILD_END', weight: 1 }] },
+    ],
+  },
+  {
+    id: 'CHAIN_COMMERCE_GUILD_END',
+    chainId: 'commerce_guild_pressure',
+    chainRole: 'end',
+    chainRestartCooldownTicks: 60,
+    canTriggerRandomly: false,
+    portraitId: 'merchant',
+    title: 'Guild Accord',
+    text: 'The commerce guild crisis reaches its conclusion. A formal agreement must be drawn — either granting the guild limited self-governance over trade affairs, or firmly establishing your sole authority over all village commerce.',
+    options: [
+      { text: 'GRANT LIMITED SELF-GOVERNANCE', effects: { gold: 5, satisfaction: 2, authority: -3 } },
+      { text: 'ASSERT TOTAL CONTROL', effects: { authority: 4, gold: -2, satisfaction: -2 } },
+    ],
+  },
+
+  // ── Commerce: Prosperity Chain ────────────────────────────────────────
+
+  {
+    id: 'CHAIN_COMMERCE_PROSPER_START',
+    chainId: 'commerce_prosperity',
+    chainRole: 'start',
+    canTriggerRandomly: true,
+    requires: ['district:commerce_complete'],
+    portraitId: 'trader',
+    title: 'Prosperity Wave',
+    text: 'A golden age of commerce dawns on your village. The marketplace hums with foreign traders and the tavern overflows with coin-spending travelers. A shrewd investment now could multiply your wealth — or attract unwanted attention.',
+    options: [
+      { text: 'INVEST IN EXPANSION', effects: { gold: -5, satisfaction: 2 } },
+      { text: 'STOCKPILE THE PROFITS', effects: { gold: 4, satisfaction: -1 } },
+    ],
+    followUps: [
+      { triggerOnOptionIndex: 0, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_COMMERCE_PROSPER_PEAK', weight: 1 }] },
+      { triggerOnOptionIndex: 1, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_COMMERCE_PROSPER_PEAK', weight: 1 }] },
+    ],
+  },
+  {
+    id: 'CHAIN_COMMERCE_PROSPER_PEAK',
+    chainId: 'commerce_prosperity',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    portraitId: 'trader',
+    title: 'Peak Prosperity',
+    text: 'Your commerce district reaches its zenith. A wealthy noble offers to establish a permanent trading post, but demands exclusive rights. Meanwhile, a coalition of smaller merchants begs you to keep the market free and open to all.',
+    options: [
+      { text: 'GRANT EXCLUSIVE RIGHTS', effects: { gold: 6, satisfaction: -3, authority: 1 } },
+      { text: 'KEEP THE MARKET FREE', effects: { satisfaction: 3, gold: -1, farmers: 1 } },
+    ],
+    followUps: [
+      { triggerOnOptionIndex: 0, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_COMMERCE_PROSPER_END', weight: 1 }] },
+      { triggerOnOptionIndex: 1, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_COMMERCE_PROSPER_END', weight: 1 }] },
+    ],
+  },
+  {
+    id: 'CHAIN_COMMERCE_PROSPER_END',
+    chainId: 'commerce_prosperity',
+    chainRole: 'end',
+    chainRestartCooldownTicks: 65,
+    canTriggerRandomly: false,
+    portraitId: 'trader',
+    title: 'Legacy of Wealth',
+    text: 'The prosperity wave ebbs, but its legacy remains. The wealth generated has transformed the village, and now you must decide how to invest the surplus — in the people\'s comfort or in fortifications against those who covet your riches.',
+    options: [
+      { text: 'INVEST IN THE PEOPLE', effects: { satisfaction: 4, health: 1, gold: -3, landForces: -1 } },
+      { text: 'FORTIFY THE VILLAGE', effects: { landForces: 3, gold: -2, satisfaction: -1, fireRisk: -1 } },
+    ],
+  },
+
+  // ── Military: Mobilization Chain ──────────────────────────────────────
+
+  {
+    id: 'CHAIN_MILITARY_MOBIL_START',
+    chainId: 'military_mobilization',
+    chainRole: 'start',
+    canTriggerRandomly: true,
+    requires: ['district:military_complete'],
+    portraitId: 'military_advisor',
+    title: 'External Threat',
+    text: 'Scouts report a warband gathering beyond the hills, their numbers growing daily. Your military advisor urges full mobilization — the garrison and training yard must work in concert to prepare a defense before the enemy marches.',
+    options: [
+      { text: 'MOBILIZE IMMEDIATELY', effects: { landForces: 3, gold: -4, farmers: -2 } },
+      { text: 'STRENGTHEN DEFENSES ONLY', effects: { gold: -2, landForces: 1, farmers: -1 } },
+    ],
+    followUps: [
+      { triggerOnOptionIndex: 0, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_MILITARY_MOBIL_CAMPAIGN', weight: 1 }] },
+      { triggerOnOptionIndex: 1, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_MILITARY_MOBIL_CAMPAIGN', weight: 1 }] },
+    ],
+  },
+  {
+    id: 'CHAIN_MILITARY_MOBIL_CAMPAIGN',
+    chainId: 'military_mobilization',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    portraitId: 'military_advisor',
+    title: 'War Preparations',
+    text: 'The village transforms into a war camp. Blacksmiths forge day and night, recruits drill until they drop, and supply wagons roll toward the front. Your advisor offers a final strategic choice before the enemy arrives.',
+    options: [
+      { text: 'LAUNCH A PREEMPTIVE STRIKE', effects: { landForces: -2, authority: 3, gold: -3 } },
+      { text: 'DIG IN AND DEFEND', effects: { landForces: 2, satisfaction: -1, gold: -2 } },
+    ],
+    followUps: [
+      { triggerOnOptionIndex: 0, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_MILITARY_MOBIL_END', weight: 1 }] },
+      { triggerOnOptionIndex: 1, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_MILITARY_MOBIL_END', weight: 1 }] },
+    ],
+  },
+  {
+    id: 'CHAIN_MILITARY_MOBIL_END',
+    chainId: 'military_mobilization',
+    chainRole: 'end',
+    chainRestartCooldownTicks: 70,
+    canTriggerRandomly: false,
+    portraitId: 'military_advisor',
+    title: 'Campaign Outcome',
+    text: 'The threat has passed — for now. Your forces held, though not without cost. The military advisor reports losses and asks how to rebuild: invest in veteran soldiers or recruit fresh blood from the farming population.',
+    options: [
+      { text: 'REINFORCE WITH VETERANS', effects: { gold: -5, landForces: 4, satisfaction: 1 } },
+      { text: 'RECRUIT FROM THE FARMS', effects: { farmers: -3, landForces: 3, gold: -2 } },
+    ],
+  },
+
+  // ── Military: Politics Chain ──────────────────────────────────────────
+
+  {
+    id: 'CHAIN_MILITARY_POLITICS_START',
+    chainId: 'military_politics',
+    chainRole: 'start',
+    canTriggerRandomly: true,
+    requires: ['district:military_complete'],
+    portraitId: 'guard',
+    title: 'The Captain\'s Ambition',
+    text: 'The guard captain, emboldened by the military district\'s strength, quietly suggests that military leadership should have more influence over village governance. His loyal soldiers nod in agreement. This smells of a power play.',
+    options: [
+      { text: 'HEAR HIM OUT', effects: { authority: -1, landForces: 1 } },
+      { text: 'SHUT IT DOWN IMMEDIATELY', effects: { authority: 2, landForces: -2 } },
+    ],
+    followUps: [
+      { triggerOnOptionIndex: 0, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_MILITARY_POLITICS_SCHEME', weight: 1 }] },
+      { triggerOnOptionIndex: 1, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_MILITARY_POLITICS_SCHEME', weight: 1 }] },
+    ],
+  },
+  {
+    id: 'CHAIN_MILITARY_POLITICS_SCHEME',
+    chainId: 'military_politics',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    portraitId: 'guard',
+    title: 'Political Maneuvering',
+    text: 'The captain has been making promises to villagers — protection in exchange for political support. Some see him as a strong leader; others fear a military coup. Your spy reports he has allies among the guard, but the common folk remain loyal to you.',
+    options: [
+      { text: 'OFFER HIM A FORMAL ROLE', effects: { landForces: 2, authority: -2, satisfaction: 1 } },
+      { text: 'REASSIGN HIM TO THE FRONTIER', effects: { authority: 2, landForces: -1, satisfaction: -1 } },
+    ],
+    followUps: [
+      { triggerOnOptionIndex: 0, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_MILITARY_POLITICS_END', weight: 1 }] },
+      { triggerOnOptionIndex: 1, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_MILITARY_POLITICS_END', weight: 1 }] },
+    ],
+  },
+  {
+    id: 'CHAIN_MILITARY_POLITICS_END',
+    chainId: 'military_politics',
+    chainRole: 'end',
+    chainRestartCooldownTicks: 60,
+    canTriggerRandomly: false,
+    portraitId: 'guard',
+    title: 'Power Resolved',
+    text: 'The military-political crisis reaches its climax. The captain stands before you and the assembled village, awaiting judgment. You can either integrate military leadership into governance or reaffirm civilian supremacy once and for all.',
+    options: [
+      { text: 'CREATE A MILITARY COUNCIL', effects: { landForces: 3, authority: -3, satisfaction: 2 } },
+      { text: 'REAFFIRM CIVILIAN RULE', effects: { authority: 4, landForces: -2, satisfaction: -1 } },
+    ],
+  },
+
+  // ── Faith: Pilgrimage Chain ───────────────────────────────────────────
+
+  {
+    id: 'CHAIN_FAITH_PILGRIM_START',
+    chainId: 'faith_pilgrimage',
+    chainRole: 'start',
+    canTriggerRandomly: true,
+    requires: ['district:faith_complete'],
+    portraitId: 'village_priest',
+    title: 'Pilgrims Arrive',
+    text: 'Word of your shrine and healer\'s house has spread far. A large procession of pilgrims arrives at the village gates, seeking spiritual guidance and healing. They bring offerings, but their numbers strain your resources.',
+    options: [
+      { text: 'WELCOME ALL PILGRIMS', effects: { gold: 3, satisfaction: 1, health: -1 } },
+      { text: 'LIMIT ENTRY TO THE SICK', effects: { health: 2, satisfaction: -1, gold: 1 } },
+    ],
+    followUps: [
+      { triggerOnOptionIndex: 0, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_FAITH_PILGRIM_TENSION', weight: 1 }] },
+      { triggerOnOptionIndex: 1, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_FAITH_PILGRIM_TENSION', weight: 1 }] },
+    ],
+  },
+  {
+    id: 'CHAIN_FAITH_PILGRIM_TENSION',
+    chainId: 'faith_pilgrimage',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    portraitId: 'village_priest',
+    title: 'Pilgrims Overwhelm',
+    text: 'The pilgrim numbers have swelled beyond expectation. They camp outside the village walls, and tensions rise as food and water are shared with outsiders. Some villagers grumble, while the priest insists hospitality is a sacred duty.',
+    options: [
+      { text: 'SHARE VILLAGE RESOURCES', effects: { satisfaction: -2, health: -1, gold: -2 } },
+      { text: 'ASK PILGRIMS TO CONTRIBUTE', effects: { gold: 3, satisfaction: 1, authority: -1 } },
+    ],
+    followUps: [
+      { triggerOnOptionIndex: 0, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_FAITH_PILGRIM_END', weight: 1 }] },
+      { triggerOnOptionIndex: 1, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_FAITH_PILGRIM_END', weight: 1 }] },
+    ],
+  },
+  {
+    id: 'CHAIN_FAITH_PILGRIM_END',
+    chainId: 'faith_pilgrimage',
+    chainRole: 'end',
+    chainRestartCooldownTicks: 55,
+    canTriggerRandomly: false,
+    portraitId: 'village_priest',
+    title: 'Pilgrimage Conclusion',
+    text: 'The pilgrimage season draws to a close. The priest proposes either establishing your village as an official pilgrimage site — bringing permanent visitors and revenue — or closing the gates to preserve the village\'s quiet way of life.',
+    options: [
+      { text: 'ESTABLISH PILGRIMAGE SITE', effects: { gold: 5, satisfaction: 2, health: -2, farmers: -1 } },
+      { text: 'CLOSE THE GATES', effects: { satisfaction: -1, health: 2, authority: 2 } },
+    ],
+  },
+
+  // ── Faith: Doctrine Chain ─────────────────────────────────────────────
+
+  {
+    id: 'CHAIN_FAITH_DOCTRINE_START',
+    chainId: 'faith_doctrine',
+    chainRole: 'start',
+    canTriggerRandomly: true,
+    requires: ['district:faith_complete'],
+    portraitId: 'village_priest',
+    title: 'Doctrinal Dispute',
+    text: 'A visiting scholar challenges the village priest\'s interpretation of sacred texts. The debate draws crowds, and soon the village splits between traditionalists and reformers. Both sides look to you for a ruling.',
+    options: [
+      { text: 'SUPPORT THE PRIEST', effects: { authority: 2, satisfaction: -1 } },
+      { text: 'HEAR THE SCHOLAR', effects: { satisfaction: 1, authority: -1 } },
+    ],
+    followUps: [
+      { triggerOnOptionIndex: 0, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_FAITH_DOCTRINE_SCHISM', weight: 1 }] },
+      { triggerOnOptionIndex: 1, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_FAITH_DOCTRINE_SCHISM', weight: 1 }] },
+    ],
+  },
+  {
+    id: 'CHAIN_FAITH_DOCTRINE_SCHISM',
+    chainId: 'faith_doctrine',
+    chainRole: 'member',
+    canTriggerRandomly: false,
+    portraitId: 'village_priest',
+    title: 'Community Divides',
+    text: 'The doctrinal debate has fractured the village. Families refuse to share pews, the healer and priest argue over remedies versus prayer, and threats of a formal schism loom. Reconciliation requires wisdom — or a firm hand.',
+    options: [
+      { text: 'CALL A COUNCIL OF ELDERS', effects: { gold: -2, satisfaction: 1 } },
+      { text: 'IMPOSE A UNIFIED DOCTRINE', effects: { authority: 3, satisfaction: -3 } },
+    ],
+    followUps: [
+      { triggerOnOptionIndex: 0, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_FAITH_DOCTRINE_END', weight: 1 }] },
+      { triggerOnOptionIndex: 1, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'CHAIN_FAITH_DOCTRINE_END', weight: 1 }] },
+    ],
+  },
+  {
+    id: 'CHAIN_FAITH_DOCTRINE_END',
+    chainId: 'faith_doctrine',
+    chainRole: 'end',
+    chainRestartCooldownTicks: 60,
+    canTriggerRandomly: false,
+    portraitId: 'village_priest',
+    title: 'Faith Restored',
+    text: 'The doctrinal crisis reaches its resolution. The village can either embrace a reformed faith that incorporates new ideas alongside tradition, or reaffirm the old ways with renewed vigor. Either path reshapes the spiritual life of your people.',
+    options: [
+      { text: 'EMBRACE REFORM', effects: { satisfaction: 3, health: 1, authority: -2 } },
+      { text: 'REAFFIRM TRADITION', effects: { authority: 3, satisfaction: -1, health: -1 } },
     ],
   },
 ];

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import './BuildingCard.css'
 import type { BuildingDefinition, BuildingTracking } from './game/buildings'
 import { hasAnyBuildingState, getEffectiveBuildingCount } from './game/buildings'
+import { getDistrictDef } from './game/districts'
 
 export type BuildingStatus = 'locked' | 'available' | 'needed' | 'no-gold' | 'fulfilled'
 
@@ -24,6 +25,12 @@ interface BuildingCardProps {
   onBuild: (buildingId: string) => void;
   onBuildMultiple?: (buildingId: string) => void;
   onStartRepairChain?: (buildingId: string) => void;
+  /** Whether another construction is currently in progress (disables building) */
+  constructionActive?: boolean;
+  /** Whether THIS building is the one currently under construction */
+  activelyBuilding?: boolean;
+  /** Whether this building was recently unlocked (for visual highlighting) */
+  isNewlyUnlocked?: boolean;
 }
 
 function BuildingCard({
@@ -39,10 +46,18 @@ function BuildingCard({
   onBuild,
   onBuildMultiple,
   onStartRepairChain,
+  constructionActive = false,
+  activelyBuilding = false,
+  isNewlyUnlocked = false,
 }: BuildingCardProps) {
   const built = tracking.buildingCount
   const shortage = Math.max(0, requiredCount - built)
-  const canBuild = status !== 'locked' && gold >= definition.cost
+  const canBuild = status !== 'locked' && gold >= definition.cost && !constructionActive
+  const isNonRepeatableBuilt = !definition.repeatable && built >= 1
+  const districtDef = definition.districtId ? getDistrictDef(definition.districtId) : undefined
+  const eventChainHint = definition.eventChainUnlocksOnComplete?.length
+    ? `Unlocks ${definition.eventChainUnlocksOnComplete.join(', ').replace(/_/g, ' ')} event chains`
+    : undefined
   
   // Animation states
   const [showBuildSuccess, setShowBuildSuccess] = useState(false)
@@ -106,7 +121,10 @@ function BuildingCard({
     `building-${status}`,
     isHighlighted ? 'building-highlighted' : '',
     showBuildSuccess ? 'building-success-flash' : '',
-    showBuildError ? 'building-error-shake' : ''
+    showBuildError ? 'building-error-shake' : '',
+    activelyBuilding ? 'building-actively-building' : '',
+    constructionActive && !activelyBuilding ? 'building-construction-blocked' : '',
+    isNewlyUnlocked ? 'building-newly-unlocked' : ''
   ].filter(Boolean).join(' ')
   
   return (
@@ -117,9 +135,14 @@ function BuildingCard({
           {definition.icon} {definition.displayName}
         </span>
         <span className={`building-status-badge status-${status}`}>
-          {getStatusLabel()}
+          {isNonRepeatableBuilt ? '✅ Already Built' : getStatusLabel()}
         </span>
       </div>
+      
+      {/* District Name Tag */}
+      {districtDef && (
+        <div className="building-district-tag">📍 {districtDef.name}</div>
+      )}
       
       {/* Description */}
       <div className="building-card-description">
@@ -151,6 +174,17 @@ function BuildingCard({
             <div className="building-stat">
               💰 Cost: {definition.cost} Gold per building
             </div>
+            <div className="building-build-time">
+              ⏱ Build: {definition.constructionTicksMin}–{definition.constructionTicksMax} turns
+            </div>
+            <div className="building-repeatable-indicator">
+              {definition.repeatable ? '♻️ Repeatable' : '🔒 One-time construction'}
+            </div>
+            {eventChainHint && (
+              <div className="building-event-hint">
+                {eventChainHint}
+              </div>
+            )}
           </div>
           
           {/* Progress Bar */}
@@ -210,19 +244,49 @@ function BuildingCard({
               </>
             ) : (
               <>
-                <button
-                  className="building-build-button"
-                  onClick={handleBuildClick}
-                >
-                  BUILD {definition.displayName.toUpperCase()}
-                </button>
-                {shortage > 1 && onBuildMultiple && (
+                {activelyBuilding ? (
                   <button
-                    className="building-build-multiple-button"
-                    onClick={handleBuildMultipleClick}
+                    className="building-build-button building-build-button-active"
+                    disabled
                   >
-                    BUILD MULTIPLE...
+                    🏗️ BUILDING...
                   </button>
+                ) : constructionActive ? (
+                  <button
+                    className="building-build-button building-build-button-blocked"
+                    disabled
+                    title="Construction in progress"
+                  >
+                    ⏳ Construction in progress
+                  </button>
+                ) : (
+                  <>
+                    {isNonRepeatableBuilt ? (
+                      <button
+                        className="building-build-button building-build-button-blocked"
+                        disabled
+                      >
+                        ✅ Already Built
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          className="building-build-button"
+                          onClick={handleBuildClick}
+                        >
+                          BUILD {definition.displayName.toUpperCase()}
+                        </button>
+                        {definition.repeatable && shortage > 1 && onBuildMultiple && (
+                          <button
+                            className="building-build-multiple-button"
+                            onClick={handleBuildMultipleClick}
+                          >
+                            BUILD MULTIPLE...
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </>
                 )}
               </>
             )}
