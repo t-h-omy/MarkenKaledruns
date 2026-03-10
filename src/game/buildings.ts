@@ -331,7 +331,9 @@ export function isBuildingActive(
 export function calculateRequiredBuildings(def: BuildingDefinition, farmers: number): number {
   if (farmers < def.unlockThreshold) return 0;
   if (!def.populationPerBuilding) return 1;
-  return 1 + Math.floor((farmers - def.unlockThreshold) / def.populationPerBuilding);
+  const required = 1 + Math.floor((farmers - def.unlockThreshold) / def.populationPerBuilding);
+  // Non-repeatable buildings can only ever require 1
+  return def.repeatable ? required : Math.min(required, 1);
 }
 
 /**

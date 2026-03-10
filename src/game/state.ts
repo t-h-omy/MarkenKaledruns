@@ -826,7 +826,12 @@ function applyBaseline(stats: Stats, buildingTracking: Record<string, BuildingTr
 
   // Only apply positive baseline growth if below farmstead capacity
   // Negative growth (population loss) still applies normally
-  const appliedGrowth = (farmerGrowth > 0 && stats.farmers >= farmsteadCapacity) ? 0 : farmerGrowth;
+  // Cap positive growth so farmers never exceed farmstead capacity
+  let appliedGrowth = farmerGrowth;
+  if (farmerGrowth > 0) {
+    const headroom = farmsteadCapacity - stats.farmers;
+    appliedGrowth = headroom <= 0 ? 0 : Math.min(farmerGrowth, headroom);
+  }
 
   return {
     ...stats,
@@ -2034,7 +2039,10 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     // 2b. Apply bakery building effect (10% chance for +1 farmer growth)
-    if (isBuildingActive(updatedBuildingTracking, 'bakery') && Math.random() < 0.10) {
+    // Bakery growth is also capped by farmstead capacity
+    const fstTracking = updatedBuildingTracking['farmstead'];
+    const farmsteadCap = (fstTracking ? getEffectiveBuildingCount(fstTracking) : 0) * FARMERS_PER_FARMSTEAD;
+    if (isBuildingActive(updatedBuildingTracking, 'bakery') && Math.random() < 0.10 && stats.farmers < farmsteadCap) {
       const beforeBakery = { ...stats };
       stats.farmers += 1;
       stats = clampStats(stats);
