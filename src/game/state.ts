@@ -1824,38 +1824,11 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     let updatedBuildingTracking = state.buildingTracking;
     let updatedFire = state.fire;
 
-    // FIREV4_S{n}_{V}_END_EXT → extinguish: clear slot assignment, unit becomes functional
-    const fireEndExtMatch = state.currentRequestId.match(/^FIREV4_S(\d+)_([A-Z]+)_END_EXT$/);
-    if (fireEndExtMatch) {
-      const slotIndex = parseInt(fireEndExtMatch[1], 10);
-      const newSlots = updatedFire.slots.map(s =>
-        s.slotIndex === slotIndex
-          ? { slotIndex, assigned: false, chainActive: false }
-          : s
-      );
-      updatedFire = { ...updatedFire, slots: newSlots };
-      updatedBuildingTracking = syncBuildingTrackingFromSlots(updatedBuildingTracking, newSlots);
-    }
-
-    // FIREV4_S{n}_{V}_END_DEST → destroy: unitStatus becomes 'destroyed', chainActive=false
-    const fireEndDestMatch = state.currentRequestId.match(/^FIREV4_S(\d+)_([A-Z]+)_END_DEST$/);
-    if (fireEndDestMatch) {
-      const slotIndex = parseInt(fireEndDestMatch[1], 10);
-      const newSlots = updatedFire.slots.map(s =>
-        s.slotIndex === slotIndex && s.assigned
-          ? { ...s, unitStatus: 'destroyed' as const, chainActive: false }
-          : s
-      );
-      updatedFire = { ...updatedFire, slots: newSlots };
-      updatedBuildingTracking = syncBuildingTrackingFromSlots(updatedBuildingTracking, newSlots);
-    }
-
-    // REPAIRV4_S{n}_END: option 0 = reconstruct (clear slot), option 1 = leave destroyed
-    const repairEndMatch = state.currentRequestId.match(/^REPAIRV4_S(\d+)_END$/);
-    if (repairEndMatch) {
-      const slotIndex = parseInt(repairEndMatch[1], 10);
-      if (action.optionIndex === 0) {
-        // Reconstruct: clear slot entirely
+    // Fire chain end handling: extinguish outcome
+    if (currentRequest.fireChainOutcome === 'extinguish') {
+      const slotMatch = state.currentRequestId.match(/^FIREV4_S(\d+)_/);
+      if (slotMatch) {
+        const slotIndex = parseInt(slotMatch[1], 10);
         const newSlots = updatedFire.slots.map(s =>
           s.slotIndex === slotIndex
             ? { slotIndex, assigned: false, chainActive: false }
@@ -1863,10 +1836,46 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         );
         updatedFire = { ...updatedFire, slots: newSlots };
         updatedBuildingTracking = syncBuildingTrackingFromSlots(updatedBuildingTracking, newSlots);
-      } else {
-        // Leave destroyed: chain ends but slot stays assigned (chainActive=false)
+      }
+    }
+
+    // Fire chain end handling: destroy outcome
+    if (currentRequest.fireChainOutcome === 'destroy') {
+      const slotMatch = state.currentRequestId.match(/^FIREV4_S(\d+)_/);
+      if (slotMatch) {
+        const slotIndex = parseInt(slotMatch[1], 10);
+        const newSlots = updatedFire.slots.map(s =>
+          s.slotIndex === slotIndex && s.assigned
+            ? { ...s, unitStatus: 'destroyed' as const, chainActive: false }
+            : s
+        );
+        updatedFire = { ...updatedFire, slots: newSlots };
+        updatedBuildingTracking = syncBuildingTrackingFromSlots(updatedBuildingTracking, newSlots);
+      }
+    }
+
+    // Repair chain end handling: reconstruct outcome
+    if (currentRequest.repairChainOutcome === 'reconstruct') {
+      const slotMatch = state.currentRequestId.match(/^REPAIRV4_S(\d+)_/);
+      if (slotMatch) {
+        const slotIndex = parseInt(slotMatch[1], 10);
         const newSlots = updatedFire.slots.map(s =>
           s.slotIndex === slotIndex
+            ? { slotIndex, assigned: false, chainActive: false }
+            : s
+        );
+        updatedFire = { ...updatedFire, slots: newSlots };
+        updatedBuildingTracking = syncBuildingTrackingFromSlots(updatedBuildingTracking, newSlots);
+      }
+    }
+
+    // Repair chain end handling: leave outcome
+    if (currentRequest.repairChainOutcome === 'leave') {
+      const slotMatch = state.currentRequestId.match(/^REPAIRV4_S(\d+)_/);
+      if (slotMatch) {
+        const slotIndex = parseInt(slotMatch[1], 10);
+        const newSlots = updatedFire.slots.map(s =>
+          s.slotIndex === slotIndex && s.assigned
             ? { ...s, chainActive: false }
             : s
         );
@@ -2405,8 +2414,15 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     );
     const fire = { ...state.fire, slots: newSlots };
 
-    // Schedule the repair chain START request
-    const startRequestId = `REPAIRV4_S${targetSlot.slotIndex}_START`;
+    // Find the repair chain START request for this slot by metadata
+    const repairStartRequest = [...fireChainRequests].find(
+      r => r.repairChainSlotIndex === targetSlot.slotIndex && r.chainRole === 'start'
+    );
+    if (!repairStartRequest) {
+      console.error(`No repair chain START request found for slot ${targetSlot.slotIndex}`);
+      return state;
+    }
+    const startRequestId = repairStartRequest.id;
     const scheduledEvents = [
       ...state.scheduledEvents,
       {

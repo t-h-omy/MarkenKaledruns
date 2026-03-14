@@ -7815,7 +7815,7 @@ export function validateRequests(): void {
     const isSingleOptionRequest =
       request.id.startsWith('INFO_') ||
       request.id.startsWith('REMINDER_') ||
-      /^REPAIRV4_S\d+_START$/.test(request.id);
+      request.isSingleOptionChainNode === true;
     const expectedOptions = isSingleOptionRequest ? 1 : 2;
     if (request.options.length !== expectedOptions) {
       errors.push(
@@ -8022,6 +8022,7 @@ function generateFireV4ChainRequests(): Request[] {
         advancesTick: true,
         portraitId: 'elder',
         chainRestartCooldownTicks: 0,
+        fireChainOutcome: 'extinguish' as const,
         title: '🔥 Fire Extinguished',
         text: 'The bucket brigade worked through the night. The fire is out and the building stands — battered but intact. Gerber nods approvingly.',
         options: [
@@ -8039,6 +8040,7 @@ function generateFireV4ChainRequests(): Request[] {
         advancesTick: true,
         portraitId: 'elder',
         chainRestartCooldownTicks: 0,
+        fireChainOutcome: 'destroy' as const,
         title: '💥 Building Lost to Fire',
         text: 'The building is gone. The surrounding structures were spared, but the loss weighs on the settlement. Gerber stands silently in the ashes.',
         options: [
@@ -8153,6 +8155,7 @@ function generateFireV4ChainRequests(): Request[] {
         advancesTick: true,
         portraitId: 'guard',
         chainRestartCooldownTicks: 0,
+        fireChainOutcome: 'extinguish' as const,
         title: '🔥 Fire Defeated',
         text: 'The crew held the line. The building survived — scorched but standing. Bärtraud wipes soot from her brow. "We\'ve done harder."',
         options: [
@@ -8170,6 +8173,7 @@ function generateFireV4ChainRequests(): Request[] {
         advancesTick: true,
         portraitId: 'guard',
         chainRestartCooldownTicks: 0,
+        fireChainOutcome: 'destroy' as const,
         title: '💥 Building Destroyed by Fire',
         text: 'The inferno consumed the building. The surrounding structures were spared, but the loss weighs heavily on the people.',
         options: [
@@ -8285,6 +8289,7 @@ function generateFireV4ChainRequests(): Request[] {
         advancesTick: true,
         portraitId: 'farmer',
         chainRestartCooldownTicks: 0,
+        fireChainOutcome: 'extinguish' as const,
         title: '🔥 Farmstead Saved',
         text: 'The workers held back the flames. The farmstead stands — battered but intact. Hildegard weeps with relief.',
         options: [
@@ -8302,6 +8307,7 @@ function generateFireV4ChainRequests(): Request[] {
         advancesTick: true,
         portraitId: 'farmer',
         chainRestartCooldownTicks: 0,
+        fireChainOutcome: 'destroy' as const,
         title: '💥 Farmstead Destroyed',
         text: 'The farmstead is ash. Hildegard\'s family survived — but their home and harvest are gone. They stand in the ruins, silent.',
         options: [
@@ -8416,6 +8422,7 @@ function generateFireV4ChainRequests(): Request[] {
         advancesTick: true,
         portraitId: 'guard',
         chainRestartCooldownTicks: 0,
+        fireChainOutcome: 'extinguish' as const,
         title: '🔥 Dawn Fire Contained',
         text: 'The fire is out. The building survived. Now the question of Rolf\'s punishment hangs in the air.',
         options: [
@@ -8433,6 +8440,7 @@ function generateFireV4ChainRequests(): Request[] {
         advancesTick: true,
         portraitId: 'guard',
         chainRestartCooldownTicks: 0,
+        fireChainOutcome: 'destroy' as const,
         title: '💥 Building Lost at Dawn',
         text: 'The building burned while the night watch slept. The people are angry and they know who is to blame.',
         options: [
@@ -8547,6 +8555,7 @@ function generateFireV4ChainRequests(): Request[] {
         advancesTick: true,
         portraitId: 'craftsman',
         chainRestartCooldownTicks: 0,
+        fireChainOutcome: 'extinguish' as const,
         title: '🔥 Embers Quenched',
         text: 'The fire is out. Elsbeth wrings her hands, waiting for your judgment.',
         options: [
@@ -8564,6 +8573,7 @@ function generateFireV4ChainRequests(): Request[] {
         advancesTick: true,
         portraitId: 'craftsman',
         chainRestartCooldownTicks: 0,
+        fireChainOutcome: 'destroy' as const,
         title: '💥 Building Lost to Embers',
         text: 'The building is gone. Elsbeth sobs openly. The village knows it was her cook fire that started it.',
         options: [
@@ -8679,6 +8689,7 @@ function generateFireV4ChainRequests(): Request[] {
         advancesTick: true,
         portraitId: 'merchant',
         chainRestartCooldownTicks: 0,
+        fireChainOutcome: 'extinguish' as const,
         title: '🔥 Marketplace Saved',
         text: 'The marketplace stands. Trade can resume — though the stalls will need rebuilding. Konrad, grudgingly, tips his hat.',
         options: [
@@ -8696,6 +8707,7 @@ function generateFireV4ChainRequests(): Request[] {
         advancesTick: true,
         portraitId: 'merchant',
         chainRestartCooldownTicks: 0,
+        fireChainOutcome: 'destroy' as const,
         title: '💥 Marketplace Destroyed',
         text: 'The marketplace is rubble. Konrad stands pale and furious, tallying his losses. Trade will suffer until it is rebuilt.',
         options: [
@@ -8811,6 +8823,7 @@ function generateFireV4ChainRequests(): Request[] {
         advancesTick: true,
         portraitId: 'craftsman',
         chainRestartCooldownTicks: 0,
+        fireChainOutcome: 'extinguish' as const,
         title: '🔥 Bakery Saved',
         text: 'The fire is out. The bakery stands. Wendelin — singed but alive — bows his head in shame and relief.',
         options: [
@@ -8828,6 +8841,7 @@ function generateFireV4ChainRequests(): Request[] {
         advancesTick: true,
         portraitId: 'craftsman',
         chainRestartCooldownTicks: 0,
+        fireChainOutcome: 'destroy' as const,
         title: '💥 Bakery Destroyed',
         text: 'The bakery is gone. Wendelin stands in the ashes, wringing his apron. The village will miss the bread.',
         options: [
@@ -8943,6 +8957,7 @@ function generateFireV4ChainRequests(): Request[] {
         advancesTick: true,
         portraitId: 'craftsman',
         chainRestartCooldownTicks: 0,
+        fireChainOutcome: 'extinguish' as const,
         title: '🔥 Brewery Saved',
         text: 'The brewery stands. Kaspar grins through soot: "First round\'s on me. Or it would be, if the barrels hadn\'t gone off."',
         options: [
@@ -8960,6 +8975,7 @@ function generateFireV4ChainRequests(): Request[] {
         advancesTick: true,
         portraitId: 'craftsman',
         chainRestartCooldownTicks: 0,
+        fireChainOutcome: 'destroy' as const,
         title: '💥 Brewery Destroyed',
         text: 'The brewery is gone. Kaspar stands in the ruins, nudging a scorched barrel with his boot. The village mourns — in more ways than one.',
         options: [
@@ -9075,6 +9091,7 @@ function generateFireV4ChainRequests(): Request[] {
         advancesTick: true,
         portraitId: 'craftsman',
         chainRestartCooldownTicks: 0,
+        fireChainOutcome: 'extinguish' as const,
         title: '🔥 Firewood Depot Saved',
         text: 'The depot is singed but standing. Holzmann counts the surviving stacks grimly. "Could\'ve been worse."',
         options: [
@@ -9092,6 +9109,7 @@ function generateFireV4ChainRequests(): Request[] {
         advancesTick: true,
         portraitId: 'craftsman',
         chainRestartCooldownTicks: 0,
+        fireChainOutcome: 'destroy' as const,
         title: '💥 Firewood Depot Destroyed',
         text: 'The depot is ash. Every hearth in the village will feel the cold this winter. Holzmann stares at the sky, jaw set.',
         options: [
@@ -9207,6 +9225,7 @@ function generateFireV4ChainRequests(): Request[] {
         advancesTick: true,
         portraitId: 'elder',
         chainRestartCooldownTicks: 0,
+        fireChainOutcome: 'extinguish' as const,
         title: '🔥 Well Fire Defeated',
         text: 'The fire is out. The well survived — or is at least repairable. Ilse is already inspecting the water for contamination.',
         options: [
@@ -9224,6 +9243,7 @@ function generateFireV4ChainRequests(): Request[] {
         advancesTick: true,
         portraitId: 'elder',
         chainRestartCooldownTicks: 0,
+        fireChainOutcome: 'destroy' as const,
         title: '💥 Well Structure Damaged',
         text: 'The building is gone and the well is fouled. Ilse kneels at the rim, testing the water with a grim expression.',
         options: [
@@ -9238,14 +9258,13 @@ function generateFireV4ChainRequests(): Request[] {
 }
 
 /**
- * Repair Chain Requests V4 (3 requests per slot, 10 slots = 30 requests)
+ * Repair Chain Requests V4 (4 requests per slot, 10 slots = 40 requests)
  *
  * For each slot n=1..10:
- *   REPAIRV4_S{n}_START    (start, 1 option, no tick)
- *   REPAIRV4_S{n}_PROGRESS (member, 2 options, no tick)
- *   REPAIRV4_S{n}_END      (end, 2 options, advances tick)
- *     option 0 = Reconstruct → unit becomes functional, slot cleared
- *     option 1 = Leave destroyed → chainActive=false, slot stays assigned
+ *   REPAIRV4_S{n}_START           (start, 1 option, no tick)
+ *   REPAIRV4_S{n}_PROGRESS        (member, 2 options, no tick)
+ *   REPAIRV4_S{n}_END_RECONSTRUCT (end, 1 option, advances tick) → reconstruct
+ *   REPAIRV4_S{n}_END_LEAVE       (end, 1 option, advances tick) → leave destroyed
  */
 function generateRepairV4ChainRequests(): Request[] {
   const requests: Request[] = [];
@@ -9260,6 +9279,8 @@ function generateRepairV4ChainRequests(): Request[] {
       canTriggerRandomly: false,
       advancesTick: false,
       portraitId: 'advisor',
+      isSingleOptionChainNode: true,
+      repairChainSlotIndex: n,
       title: '🛠 Repair Work Begins',
       text: 'Your workers have started assessing the destroyed building. Plans are being drawn up for reconstruction.',
       options: [
@@ -9293,35 +9314,53 @@ function generateRepairV4ChainRequests(): Request[] {
           triggerOnOptionIndex: 0,
           delayMinTicks: 1,
           delayMaxTicks: 2,
-          candidates: [{ requestId: `REPAIRV4_S${n}_END`, weight: 1 }],
+          candidates: [{ requestId: `REPAIRV4_S${n}_END_RECONSTRUCT`, weight: 1 }],
         },
         {
           triggerOnOptionIndex: 1,
           delayMinTicks: 1,
           delayMaxTicks: 2,
-          candidates: [{ requestId: `REPAIRV4_S${n}_END`, weight: 1 }],
+          candidates: [{ requestId: `REPAIRV4_S${n}_END_LEAVE`, weight: 1 }],
         },
       ],
     });
 
+    // END: Reconstruct
     requests.push({
-      id: `REPAIRV4_S${n}_END`,
+      id: `REPAIRV4_S${n}_END_RECONSTRUCT`,
       chainId,
       chainRole: 'end',
       canTriggerRandomly: false,
       advancesTick: true,
       portraitId: 'advisor',
       chainRestartCooldownTicks: 0,
+      repairChainOutcome: 'reconstruct' as const,
+      isSingleOptionChainNode: true,
       title: '🛠 Repair Outcome',
       text: 'The time has come to decide the fate of the destroyed building.',
       options: [
         {
-          // Option 0: Reconstruct (state.ts clears slot → unit becomes functional)
           text: 'Reconstruct the building',
           effects: { gold: -15, satisfaction: 5 },
         },
+      ],
+    });
+
+    // END: Leave destroyed
+    requests.push({
+      id: `REPAIRV4_S${n}_END_LEAVE`,
+      chainId,
+      chainRole: 'end',
+      canTriggerRandomly: false,
+      advancesTick: true,
+      portraitId: 'advisor',
+      chainRestartCooldownTicks: 0,
+      repairChainOutcome: 'leave' as const,
+      isSingleOptionChainNode: true,
+      title: '🛠 Ruins Left Standing',
+      text: 'The ruins will remain for now. The slot stays open for a future repair attempt.',
+      options: [
         {
-          // Option 1: Leave destroyed (state.ts sets chainActive=false, slot stays)
           text: 'Leave it as ruins for now',
           effects: { satisfaction: -3 },
         },

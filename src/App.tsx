@@ -556,7 +556,7 @@ function App() {
                 {/* Fire chain tag + context line (V4) */}
                 {(() => {
                   // Match FIREV4 fire chains or REPAIRV4 repair chains
-                  const fireMatch = gameState.currentRequestId.match(/^FIREV4_S(\d+)_([AB])_/)
+                  const fireMatch = gameState.currentRequestId.match(/^FIREV4_S(\d+)_/)
                   const repairMatch = gameState.currentRequestId.match(/^REPAIRV4_S(\d+)_/)
                   const slotIndex = fireMatch
                     ? parseInt(fireMatch[1], 10)
