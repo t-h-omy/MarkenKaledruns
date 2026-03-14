@@ -755,15 +755,14 @@ Every fire chain is therefore:
 
 ### 9.2 Chain Structure
 
-Each fire chain variant consists of **exactly 5 requests per slot**:
+The default/recommended fire chain shape uses **5 requests per slot** (START, STEP1, STEP1B, END_EXT, END_DEST), but variants may use any number of intermediate steps and any node naming, as long as all end nodes carry `fireChainOutcome: 'extinguish'` or `fireChainOutcome: 'destroy'`.
 
-| Node      | ID pattern                        | Role     | Options | advancesTick |
-|-----------|-----------------------------------|----------|---------|--------------|
-| START     | `FIREV4_S{n}_{V}_START`           | start    | **2**   | false        |
-| STEP1     | `FIREV4_S{n}_{V}_STEP1`           | member   | 2       | false        |
-| STEP1B    | `FIREV4_S{n}_{V}_STEP1B`          | member   | 2       | false        |
-| END_EXT   | `FIREV4_S{n}_{V}_END_EXT`         | end      | 2       | **true**     |
-| END_DEST  | `FIREV4_S{n}_{V}_END_DEST`        | end      | 2       | **true**     |
+| Node      | ID pattern (recommended)            | Role     | Options | advancesTick |
+|-----------|-------------------------------------|----------|---------|--------------|
+| START     | `FIREV4_S{n}_{V}_START`             | start    | **2**   | false        |
+| (steps)   | Any name with `FIREV4_S{n}_` prefix | member   | 2       | false        |
+| End (ext) | Any name with `fireChainOutcome: 'extinguish'` | end | 2 | **true**     |
+| End (dest)| Any name with `fireChainOutcome: 'destroy'`    | end | 2 | **true**     |
 
 The branching shape is always:
 
@@ -772,7 +771,7 @@ START (2 options) ──► STEP1   (option 0 → extinguish or destroy)
                   └──► STEP1B  (option 1 → extinguish or destroy)
 ```
 
-Both STEP1 and STEP1B must offer at least one path to `END_EXT` and at least one path to `END_DEST`.
+Both STEP1 and STEP1B must offer at least one path to an extinguish end node and at least one path to a destroy end node.
 
 ### 9.3 The START Decision Rule
 
@@ -859,18 +858,25 @@ All fire chain requests (FIREV4 and REPAIRV4) must include:
 
 ```typescript
 {
-  id: string;                      // Must match pattern FIREV4_S{n}_{V}_{ROLE}
-  chainId: string;                 // Must be FIREV4_S{n}_{V}
+  id: string;                      // Must start with FIREV4_S{n}_ or REPAIRV4_S{n}_
+  chainId: string;                 // Must be FIREV4_S{n}_{V} or REPAIRV4_S{n}
   chainRole: 'start' | 'member' | 'end';
   canTriggerRandomly: false;       // ALWAYS false — fire chains never trigger randomly
   advancesTick: false | true;      // false for START/STEP, true for END nodes
   portraitId: PortraitId;          // Must be a valid portrait key
   title: string;                   // Non-empty
   text: string;                    // Non-empty, sets the scene
-  options: Option[];               // Always 2 (except REPAIRV4 STARTs which have 1)
+  options: Option[];               // Always 2 (except nodes with isSingleOptionChainNode: true)
   chainRestartCooldownTicks: 0;    // Required on every 'end' node
 }
 ```
+
+**Additional required fields on fire chain end nodes:**
+- `fireChainOutcome: 'extinguish' | 'destroy'` — replaces ID-suffix-based resolution. The reducer reads this field instead of matching `_END_EXT` / `_END_DEST` in the request ID.
+
+**Additional required fields on repair chain nodes:**
+- On START nodes: `repairChainSlotIndex: n` and `isSingleOptionChainNode: true`
+- On end nodes: `repairChainOutcome: 'reconstruct' | 'leave'` and `isSingleOptionChainNode: true`
 
 ### 9.7 Adding a New Fire Chain Variant
 
@@ -883,11 +889,11 @@ Follow these steps to add a new fire chain variant (e.g., Variant `K`):
 3. **Design the START decision** — Write two contrasting options that immediately branch the chain. Follow the START Decision Rule (Section 9.3).
 
 4. **Design STEP1 and STEP1B** — Each STEP is a consequential middle decision:
-   - One option leads to `END_EXT` (extinguish)
-   - One option leads to `END_DEST` (destroy)
+   - One option leads to an extinguish end node
+   - One option leads to a destroy end node
    - At least one option in the chain (STEP1 or STEP1B) should carry `triggerFireOutbreak: true` on a risky path
 
-5. **Write END_EXT and END_DEST** — These are aftermath cards. The fire is already resolved. The options represent how the player responds to the outcome (rebuild, punish, compensate, etc.).
+5. **Write your end nodes** — These are aftermath cards. The fire is already resolved. The options represent how the player responds to the outcome (rebuild, punish, compensate, etc.). Each end node must carry `fireChainOutcome: 'extinguish'` or `fireChainOutcome: 'destroy'`. You may name them anything — `_END_EXT` / `_END_DEST` are still fine and readable, but they are no longer required by the engine.
 
 6. **Add the variant inside `generateFireV4ChainRequests()`** — Add a new `{ }` block inside the `for (let n = 1; n <= 10; n++)` loop, following the same pattern as existing variants.
 
@@ -996,14 +1002,13 @@ Follow these steps to add a new fire chain variant (e.g., Variant `K`):
 
 ### 9.8 Repair Chains
 
-After a building is destroyed, a repair chain can be started from the Construction screen (when `chainActive=false`). Repair chains use the prefix `REPAIRV4_S{n}_*` and follow a simpler structure:
+After a building is destroyed, a repair chain can be started from the Construction screen (when `chainActive=false`). Repair chains use the prefix `REPAIRV4_S{n}_*`. The reconstruct and leave outcomes are separate end nodes, each with 1 option and a `repairChainOutcome` field. Node naming and chain length are free-form.
 
 ```
-REPAIRV4_S{n}_START     (start, 1 option, tickless)
-REPAIRV4_S{n}_PROGRESS  (member, 2 options, tickless)
-REPAIRV4_S{n}_END       (end, 2 options, advances tick)
-  option 0 → Reconstruct (clears slot, unit becomes functional)
-  option 1 → Leave destroyed (chainActive=false, slot stays assigned)
+REPAIRV4_S{n}_START              (start, 1 option, tickless, isSingleOptionChainNode: true, repairChainSlotIndex: n)
+REPAIRV4_S{n}_PROGRESS           (member, 2 options, tickless)
+REPAIRV4_S{n}_END_RECONSTRUCT    (end, 1 option, advances tick, repairChainOutcome: 'reconstruct', isSingleOptionChainNode: true)
+REPAIRV4_S{n}_END_LEAVE          (end, 1 option, advances tick, repairChainOutcome: 'leave', isSingleOptionChainNode: true)
 ```
 
-Repair START requests intentionally have **1 option** (they are informational) and are exempt from the 2-option rule. They are not fire START requests, so the START Decision Rule (Section 9.3) does not apply.
+Repair START requests and single-option end nodes must set `isSingleOptionChainNode: true` so `validateRequests()` does not flag them. Repair START nodes must also set `repairChainSlotIndex: n` so the `START_REPAIR_CHAIN` action can find the correct start request via metadata. The START Decision Rule (Section 9.3) does not apply to repair chains.

@@ -456,7 +456,7 @@ The game has **~441 request definitions** split into four arrays (361 declarativ
 | `infoRequests` | 30 | Tickless information/tutorial screens (building unlocks, construction start/end, district completion, reminders) |
 | `eventRequests` | 281 | Main gameplay events, chains, authority events, building-gated events |
 | `authorityInfoRequests` | 50 | Authority check feedback (success/failure info screens) |
-| `fireChainRequests` | 80 (generated) | Fire System V4 slot chain requests (5 per slot × 10 = 50) + Repair V4 requests (3 per slot × 10 = 30) |
+| `fireChainRequests` | 90 (generated) | Fire System V4 slot chain requests (5 per slot × 10 = 50) + Repair V4 requests (4 per slot × 10 = 40) |
 
 ### Request Interface
 
@@ -478,6 +478,11 @@ interface Request {
   authorityMin?: number;         // Min authority to show
   authorityMax?: number;         // Max authority to show
   portraitId?: PortraitId;       // Portrait to show on request screen (key from portrait registry)
+  fireChainAllowedBuildingTypes?: string[]; // Building filter for fire chain START
+  fireChainOutcome?: 'extinguish' | 'destroy'; // Fire chain end node resolution
+  repairChainOutcome?: 'reconstruct' | 'leave'; // Repair chain end node resolution
+  isSingleOptionChainNode?: boolean; // Exempt from 2-option validation
+  repairChainSlotIndex?: number; // Repair chain slot index on START nodes
 }
 ```
 
@@ -923,7 +928,7 @@ interface FireIncidentSlotState {
   assigned: boolean;             // Is this slot holding an incident?
   chainActive: boolean;          // Is a request chain currently running?
   chainKind?: 'fire' | 'repair';
-  chainVariantId?: string;       // 'A' | 'B' for fire chains
+  chainVariantId?: string;       // Any variant letter (e.g. 'A'..'J') for fire chains
   targetBuildingId?: string;
   targetUnitOrdinal?: number;    // 1..buildingCount for that type
   unitStatus?: 'on_fire' | 'destroyed';
@@ -965,23 +970,24 @@ No spread/destroy logic exists in V4.
 
 ### Fire Chain Requests (V4)
 
-For each slot `n=1..10` and variant `V=A|B`:
+Fire chains resolve via the `fireChainOutcome` field on end nodes (`'extinguish'` or `'destroy'`). Node naming is free-form. The slot index is always encoded in the prefix `FIREV4_S{n}_`.
+
+For each slot `n=1..10` and variant `V` (any letter):
 
 | Request ID | Chain Role | advancesTick |
 |------------|-----------|--------------|
 | `FIREV4_S{n}_{V}_START` | start | false |
-| `FIREV4_S{n}_{V}_STEP1` | member | false |
-| `FIREV4_S{n}_{V}_END_EXT` | end | true |
-| `FIREV4_S{n}_{V}_END_DEST` | end (variant B only) | true |
+| `FIREV4_S{n}_{V}_*` (intermediate) | member | false |
+| End node (any name) with `fireChainOutcome: 'extinguish'` | end | true |
+| End node (any name) with `fireChainOutcome: 'destroy'` | end | true |
 
-**Chain outcomes:**
-- `END_EXT`: reducer clears slot → unit becomes functional
-- `END_DEST`: reducer sets `unitStatus='destroyed'`, `chainActive=false` → slot stays assigned
-
-**Variant A** (STEP1): both options lead to `END_EXT` (extinguish)  
-**Variant B** (STEP1): option 0 → `END_EXT`, option 1 → `END_DEST` (destroy; also triggers `triggerFireOutbreak`)
+**Chain outcomes (metadata-driven):**
+- `fireChainOutcome: 'extinguish'`: reducer clears slot → unit becomes functional
+- `fireChainOutcome: 'destroy'`: reducer sets `unitStatus='destroyed'`, `chainActive=false` → slot stays assigned
 
 ### Repair Chain Requests (V4)
+
+Repair chains resolve via the `repairChainOutcome` field on end nodes (`'reconstruct'` or `'leave'`). The reconstruct and leave outcomes must be separate end nodes, each carrying the appropriate `repairChainOutcome`. Node naming and chain length are free-form.
 
 For each slot `n=1..10`:
 
@@ -989,11 +995,10 @@ For each slot `n=1..10`:
 |------------|-----------|--------------|
 | `REPAIRV4_S{n}_START` | start | false |
 | `REPAIRV4_S{n}_PROGRESS` | member | false |
-| `REPAIRV4_S{n}_END` | end | true |
+| `REPAIRV4_S{n}_END_RECONSTRUCT` | end | true |
+| `REPAIRV4_S{n}_END_LEAVE` | end | true |
 
-`REPAIRV4_S{n}_END` options:
-- **Option 0** ("Reconstruct the building"): reducer clears slot → unit becomes functional
-- **Option 1** ("Leave it as ruins for now"): reducer sets `chainActive=false` → slot stays assigned
+Repair chain START nodes must set `repairChainSlotIndex: n` and `isSingleOptionChainNode: true`. Single-option end nodes must also set `isSingleOptionChainNode: true`.
 
 ### Effect Extensions (V4)
 
@@ -1001,12 +1006,18 @@ Two new optional fields on `Effect`:
 - `triggerFireOutbreak?: boolean` — triggers an outbreak attempt immediately
 - `fireOutbreakBypassCap?: boolean` — if true, bypasses the concurrent-fire cap
 
+Four optional fields on `Request` for fire/repair chain flexibility:
+- `fireChainOutcome?: 'extinguish' | 'destroy'` — set on fire chain end nodes; drives reducer resolution
+- `repairChainOutcome?: 'reconstruct' | 'leave'` — set on repair chain end nodes; drives reducer resolution
+- `isSingleOptionChainNode?: boolean` — exempts the request from the 2-option validation rule
+- `repairChainSlotIndex?: number` — set on repair chain START nodes; used by `START_REPAIR_CHAIN` action to find the correct start request
+
 ### Actions
 
 | Action | Behavior |
 |--------|----------|
 | `BUILD_BUILDING` | Unchanged; build lock still enforced when `hasAnyBuildingState` |
-| `START_REPAIR_CHAIN` | Finds lowest-ordinal repairable incident for buildingId, activates repair chain, schedules `REPAIRV4_S{n}_START` |
+| `START_REPAIR_CHAIN` | Finds lowest-ordinal repairable incident for buildingId, activates repair chain, schedules the repair start request found via `repairChainSlotIndex` metadata |
 
 `EXTINGUISH_ONE` and `REPAIR_ONE` actions are removed in V4. Fire resolution is exclusively via request chains.
 
