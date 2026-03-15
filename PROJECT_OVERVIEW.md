@@ -75,7 +75,22 @@ MarkenKaledruns/
 │   ├── game/                              # *** CORE GAME ENGINE ***
 │   │   ├── models.ts                      # Type definitions (Stats, Effect, Request, etc.)
 │   │   ├── state.ts                       # Game state reducer, all game logic
-│   │   ├── requests.ts                    # All request/event definitions (~5300 lines)
+│   │   ├── requests/                      # Request/event definitions (directory)
+│   │   │   ├── index.ts                   # Barrel — assembles & re-exports the four arrays
+│   │   │   ├── validation.ts              # validateRequests() logic
+│   │   │   ├── info/                      # Info request definitions
+│   │   │   │   └── infoRequests.ts
+│   │   │   ├── events/                    # Standalone (non-chain) event definitions
+│   │   │   │   └── standaloneEvents.ts
+│   │   │   ├── chains/                    # One file per event chain (29 chains)
+│   │   │   │   ├── blackgeat.ts
+│   │   │   │   ├── bandit_toll.ts
+│   │   │   │   ├── merchant_guild.ts
+│   │   │   │   └── ... (29 chain files total)
+│   │   │   ├── authority/                 # Authority info request definitions
+│   │   │   │   └── authorityInfoRequests.ts
+│   │   │   └── fire/                      # Generated fire/repair chain requests
+│   │   │       └── fireChainRequests.ts
 │   │   ├── picker.ts                      # Request selection algorithm & seeded RNG
 │   │   ├── buildings.ts                   # Building definitions & utility functions
 │   │   └── modifiers.ts                   # Building-based event effect modifiers
@@ -145,7 +160,7 @@ MarkenKaledruns/
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| `src/game/requests.ts` | ~9340 | All event/request definitions (incl. 80 generated fire/repair chain requests) |
+| `src/game/requests/` | ~9780 | Request definitions directory (barrel index.ts + sub-modules; see §4 for layout) |
 | `src/game/state.ts` | ~2745 | Reducer, game loop, all game logic (incl. fire system engine) |
 | `src/App.tsx` | ~1030 | Main UI component (incl. request-panel BEM layout, portrait wiring, fire chain tag/context) |
 | `src/App.css` | ~1650 | All main game styles (incl. portrait img, fire chain info styles) |
@@ -175,7 +190,7 @@ MarkenKaledruns/
 main.tsx (entry point)
   └─ App.tsx (useReducer with gameReducer)
        ├─ gameReducer (src/game/state.ts)
-       │    ├─ reads requests from requests.ts
+       │    ├─ reads requests from requests/ (barrel index.ts)
        │    ├─ picks next request via picker.ts
        │    ├─ applies modifiers from modifiers.ts
        │    ├─ manages buildings via buildings.ts
@@ -195,7 +210,7 @@ main.tsx (entry point)
 | `models.ts` | `Stats`, `Effect`, `Request`, `Option`, `AuthorityCheck`, `AuthorityCheckResult`, `CombatSpec`, `FollowUp`, `WeightedCandidate`, `AuthorityFollowUpBoost` |
 | `portraits/index.ts` | `PORTRAITS`, `PortraitId` |
 | `state.ts` | `GameState`, `GameAction`, `gameReducer`, `initializeGame`, `getCurrentRequest`, `initialState`, `AppliedChange`, `LogEntry`, `ScheduledEvent`, `ScheduledCombat`, `ActiveCombat`, `ActiveConstruction`, `PendingAuthorityCheck`, `ModifierHook`, `applyOptionWithModifiers`, `hasUnlock`, `meetsRequirements`, `syncBuildingUnlockTokens`, `getConstructionProfileForBuild`, `canStartConstruction`, `rollConstructionDuration`, `completeConstruction`, `FIRE_SYSTEM_CONFIG` |
-| `requests.ts` | `infoRequests`, `eventRequests`, `authorityInfoRequests`, `fireChainRequests`, `validateRequests` |
+| `requests/index.ts` | `infoRequests`, `eventRequests`, `authorityInfoRequests`, `fireChainRequests`, `validateRequests` |
 | `picker.ts` | `pickNextRequest`, `selectWeightedCandidate`, `seedRandom`, `resetRandom`, `getRandomValue` |
 | `buildings.ts` | `BUILDING_DEFINITIONS`, `BUILDING_UNLOCK_GROUPS`, `BuildingDefinition`, `BuildingTracking`, `BuildingUnlockGroup`, `isBuildingActive`, `calculateRequiredBuildings`, `getBuildingDef`, `createInitialBuildingTracking`, `getEffectiveBuildingCount`, `hasAnyBuildingState`, `getUnlockedGroups`, `getUnlockGroupForBuilding` |
 | `districts.ts` | `DISTRICT_DEFINITIONS`, `DistrictDefinition`, `getDistrictDef`, `isDistrictComplete` |
