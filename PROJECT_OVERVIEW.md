@@ -292,7 +292,7 @@ main.tsx (entry point)
 | **Farmers** | 20 | Population. Drives gold income. |
 | **Satisfaction** | 60 | Morale. Affects gold income; crisis below 30. |
 | **Health** | 60 | Village health. Drives population growth; crisis below 30. |
-| **Fire Risk** | 20 | Fire danger. Crisis above 70. |
+| **Fire Risk** | 20 | Fire danger. |
 | **Land Forces** | 5 | Military units for combat. |
 | **Authority** | 20 | Political influence (0–999.999). |
 
@@ -326,7 +326,6 @@ Crises trigger automatically when thresholds are crossed:
 
 | Crisis | Trigger Condition | Request ID | Status |
 |--------|------------------|------------|--------|
-| ~~Fire Danger~~ | ~~`fireRisk > 70`~~ | ~~`EVT_CRISIS_FIRE`~~ | **Replaced by Fire System V3** |
 | Disease Wave | `health < 30` | `EVT_CRISIS_DISEASE` | Active |
 | Unrest | `satisfaction < 30` | `EVT_CRISIS_UNREST` | Active |
 
