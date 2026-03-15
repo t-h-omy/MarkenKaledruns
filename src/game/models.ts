@@ -257,6 +257,36 @@ export interface Request {
    * on START requests (chainRole='start') of FIREV4 chains.
    */
   fireChainAllowedBuildingTypes?: string[];
+  /**
+   * Fire chain resolution outcome. Set ONLY on fire chain end nodes (chainRole: 'end').
+   * - 'extinguish': reducer clears the slot → unit becomes functional again.
+   * - 'destroy': reducer sets unitStatus='destroyed', chainActive=false → slot stays assigned.
+   * When set, the reducer reads the slotIndex from the request ID (FIREV4_S{n}_*).
+   */
+  fireChainOutcome?: 'extinguish' | 'destroy';
+  /**
+   * Repair chain resolution outcome. Set ONLY on repair chain end nodes (chainRole: 'end').
+   * - 'reconstruct': reducer clears the slot → unit becomes functional again.
+   * - 'leave': reducer sets chainActive=false → slot stays assigned (building remains destroyed).
+   * Replaces the previous option-index-based branching (optionIndex === 0 = reconstruct).
+   * Each option that leads to a different outcome must lead to a DIFFERENT end node.
+   */
+  repairChainOutcome?: 'reconstruct' | 'leave';
+  /**
+   * When true, this request is treated as a single-option (info/acknowledge) request
+   * during validateRequests(). Use on repair chain START nodes and any other fire/repair
+   * chain node that intentionally has only 1 option.
+   * Replaces the ID-pattern-based single-option exemption for REPAIRV4_S{n}_START.
+   */
+  isSingleOptionChainNode?: boolean;
+  /**
+   * For repair chains: the slot index this chain belongs to.
+   * Set this on the START node of each repair chain variant.
+   * Used by START_REPAIR_CHAIN action in the reducer to schedule the correct start request
+   * without relying on a hardcoded REPAIRV4_S{n}_START naming convention.
+   * (For fire chains, the slot index continues to be read from the FIREV4_S{n}_* ID.)
+   */
+  repairChainSlotIndex?: number;
 }
 
 // ─── Fire System V4 Types ────────────────────────────────────────────
