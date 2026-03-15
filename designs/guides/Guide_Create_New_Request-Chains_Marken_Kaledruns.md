@@ -172,28 +172,37 @@ Request (REQUIRED: id, title, text, options, portraitId)
 
 ---
 
-## 3. Rational Design Approach (KPI-Driven)
+## 3. Rational and Narrative Design Approach (KPI-Driven)
+
+Creating strong request chains requires the deliberate use of professional narrative design principles, structures, and patterns. The rational design approach ensures that each chain is built as a functional game system with clear choices, meaningful consequences, and appropriate pacing. The narrative design approach ensures that each chain creates tension, supports believable motivations, and leads to satisfying dramatic outcomes. Both perspectives must be applied together from the very beginning of concept development. The goal is a request chain that is structurally solid, strategically relevant, and narratively effective.
 
 ### 3.1 Chain Sizing — How Many Members for Which Chain Size
 
 | Chain Size | Total Requests | Start | Members | Ends | Best For |
 |------------|---------------|-------|---------|------|----------|
-| **Small** | 4–6 | 1 | 2–3 | 1–2 | Single dilemma with consequences (e.g. Palisade chain) |
-| **Medium** | 6–10 | 1 | 4–7 | 2–3 | Multi-beat story with meaningful branches (e.g. River Pirates) |
-| **Large** | 10–34 | 1 | 8–30 | 2–5 | Major story arc with parallel paths (e.g. Blackgeat) |
+| **S** | 4–10 | 1 | 2–3 | 2+ | Single dilemma with consequences |
+| **M** | 10–35 | 1 | 4–7 | 4+ | Multi-beat story with meaningful branches |
+| **L** | 35–60 | 1 | 8–30 | 6+ | Story arc with parallel paths |
+| **XL** | 60-100+ | 1 | 8–30 | 8+ | Longer-term story arc with parallel paths |
 
 **Rules:**
 
-- **Start with Small (4–6).** Most chains should be this size. They're fast to author, easy to test, and don't overwhelm the event pool.
-- **Go Medium (6–10)** when the story has a clear act structure (setup → confrontation → resolution) with at least 2 meaningful branch points.
-- **Go Large (10+)** only for flagship story arcs that define an entire play session. The game currently has one large chain (Blackgeat at ~34 events). Aim for at most 2–3 large chains total.
+- **S-sized** Those often depict the "everyday" life in the Life of the Player Character. Decisions with almost immediate consequences.
+- **M-sized** when the story has a clear act structure (setup → confrontation → resolution) with at least 2 meaningful branch points.
+- **L-sized** for story arcs that define an entire play session. Follow an arc of setup → branched build-up → branched confrontation → possible story twists → branched confrontation → resolution
+- **XL-sized** for story arcs that span over multiple play sessions. Follow an arc of setup → branched build-up → branched confrontation → possible story twists → branched confrontation → resolution
+- **Chain size does not determine whether `authorityCheck` or `combat` is appropriate.** Those are driven purely by narrative fit — if the story calls for a political gamble or a military confrontation, use them regardless of chain size.
 - Every branch doubles your authoring burden. A chain with 3 binary branch points needs up to 8 end nodes.
-- Keep branching **shallow** (max 2–3 branch points) or **convergent** (branches merge back to shared nodes).
+- Branching can be **excessive** (many branches, many possible endings), **shallow** (less branch points and more linearity) or **convergent** (branches merge back to shared nodes). Or a mix of them.
+- **Excessive** branching and many possible endings are interesting for the player and the most powerful for the gameplay and replayability if the same request chain. Using excessive branching requires excessive narrative design to make all branches follow a good narrative setup and story arc. 
+- **Shallow** branching is less interesting and less replayable. It requires less request generation.
+- **convergent** branching needs high attention to story consistency: the convergent node must make sense for all branches that lead to it. The wording must feel natural. Using convergent branching decreases the amount of needed story endings, but increases the narrative complexity and needed skill.
 - Each chain member should add either a meaningful decision or a narrative beat — never filler.
 
 ### 3.2 When to Use Which Authority System
 
 The game has **two distinct authority mechanics**. Choose the right one for each situation.
+In general, one of the authority systems is to be used when the player has to convince other characters or show political dominance.
 
 #### A) Direct Authority Check (Immediate Win/Lose)
 
@@ -204,8 +213,6 @@ Uses `onSuccess` / `onFailure` with `threshold`, `minSuccessChance`, `maxSuccess
 - The request is **standalone or at a chain endpoint** — the result doesn't need to influence which follow-up appears.
 - You want **dramatic tension in a single moment** — "Will my decree succeed?"
 
-**Example scenarios:** Forcing military reforms, demanding tribute, issuing decrees, confronting rivals.
-
 **Tuning guidelines:**
 
 | Parameter | Low-Stakes | Medium-Stakes | High-Stakes |
@@ -213,17 +220,18 @@ Uses `onSuccess` / `onFailure` with `threshold`, `minSuccessChance`, `maxSuccess
 | `minCommit` | 0–5 | 5–15 | 15–25 |
 | `maxCommit` | 10–20 | 15–40 | 30–70 |
 | `minSuccessChance` | 40–50 | 30–45 | 20–35 |
-| `maxSuccessChance` | max 90 | max 85 | max 75 |
+| `maxSuccessChance` | max 90 | max 85 | max 80 |
 | `refundOnSuccessPercent` | 80–100 | 50–80 | 30–60 |
 | `extraLossOnFailure` | 0–2 | 2–5 | 5–10 |
 
 **Design intent for min/max commit and success chance ranges:** The goal is that players do **not** always commit maximum authority. The spread between `minSuccessChance` and `maxSuccessChance` combined with the commit range should create a genuine risk/reward decision:
 
-- A **fair** authority commitment should yield a **fair** success chance (~50–65%).
-- A **high-risk** commitment (near `maxCommit`) should yield a **high but never guaranteed** success chance (capped per stakes tier above).
-- A **minimal** commitment should yield a **low but non-zero** chance, so the player feels they have a shot but know they're gambling.
+- A **fair** authority commitment should yield a **fair** success chance (~75-80%).
+- A **high-risk** commitment (near `maxCommit`) should yield a **high but never guaranteed** (~85-90%) success chance (capped per stakes tier above).
+- A **low** commitment should yield a **low but non-zero** chance (~50-60%), so the player feels they have a shot but know they're gambling.
+- No commitment should be a real gamble (~10-50%)
 
-The higher the `maxCommit`, the more the player must risk to push success chances upward. This creates the tension: commit big for safety (but lose authority if it fails), or commit small and accept the lower odds.
+The higher the `maxCommit`, the more the player must risk to push success chances upward. This creates the tension: commit big for safety (but lose much authority if it fails), or commit small and accept the lower odds.
 
 Always provide `successFeedbackRequestId` and `failureFeedbackRequestId` so the player sees the outcome narratively. These are tickless info requests (`advancesTick: false`).
 
@@ -233,18 +241,16 @@ Uses `followUpBoosts` with `boostType` (`linear` / `threshold` / `stepped`).
 
 **Use when:**
 - The player is **investing authority to shape the future** — "committing political capital" to steer upcoming events.
-- The request is a **chain member** and you want the player's authority investment to influence **which follow-up request appears**.
+- The request is a **chain member** and you want the player's authority investment to influence **which follow-up request appears more likely**.
 - You want a **nuanced, less binary** outcome — not pass/fail, but a spectrum of likelihood.
-
-**Example scenarios:** Diplomatic negotiations (investing authority makes a peaceful outcome more likely), preparing for inspection (investing makes favorable report more likely).
 
 **Boost type selection:**
 
 | Type | When to Use | Typical Values |
 |------|------------|----------------|
 | `linear` | Default choice. Gradual influence proportional to commitment. | `boostValue: 2–5` |
-| `threshold` | Binary tipping point — commit enough or it doesn't matter. | `boostValue: 3–5` |
-| `stepped` | Discrete tiers of influence — each step is noticeable. | `steps: 3`, `boostValue: 1–2` per step |
+| `threshold` | Binary tipping point — commit enough or it doesn't matter. Should not be used. | `boostValue: 3–5` |
+| `stepped` | Discrete tiers of influence — each step is noticeable. Should only be used if the player feedback in the UI is clear. | `steps: 3`, `boostValue: 1–2` per step |
 
 **Key design insight:** Follow-up boosts work by adding weight to specific candidates in the `followUps.candidates` array. If a candidate has base `weight: 1` and you boost it by `+3`, it becomes effectively `weight: 4` — dramatically more likely but never certain.
 
@@ -262,12 +268,12 @@ This creates a suspenseful resource-commitment decision. Larger `prepDelay` valu
 
 | Situation | Recommended prepDelay | Rationale |
 |-----------|----------------------|-----------|
-| Immediate skirmish | 1 / 2 | Forces are only briefly unavailable |
-| Standard military operation | 2 / 4 | Player must plan around 2–4 ticks of reduced defense |
-| Major campaign / siege | 4 / 8 | Long commitment, high strategic cost |
-| Ambush (instant) | 0 / 0 | No prep time — forces fight immediately |
+| Quick military operation | 2-4 | Forces are only briefly unavailable |
+| Standard military operation | 3-6 | Player must plan around some ticks of reduced defense |
+| Major expeditionmilitary operation | 4-8 | Long commitment, high strategic cost |
+| Ambush (instant) | 0 | No prep time — forces fight immediately |
 
-**Rule:** If a request has combat, **only one option may trigger the combat.** The second option must offer a non-combat alternative (e.g. pay tribute, negotiate, flee).
+**Rule:** If a request has combat, **only one option may trigger the combat.** The second option must offer a non-combat alternative.
 
 ### 3.4 Resource Effect Design — What Should Change and by How Much
 
@@ -276,10 +282,10 @@ This creates a suspenseful resource-commitment decision. Larger `prepDelay` valu
 | Resource | Range | Initial | Dangerous Zone | Impact Feel |
 |----------|-------|---------|---------------|-------------|
 | **Gold** 💰 | -50 to ∞ | 50 | < 0 | Primary economy. Easy to drain, hard to recover. |
-| **Satisfaction** 😊 | 0–100 | 60 | < 30 (crisis) | Morale. Affects gold income. Slow to rebuild. |
-| **Health** ❤️ | 0–100 | 60 | < 30 (crisis) | Population growth driver. Slow to rebuild. |
-| **Fire Risk** 🔥 | 0–100 | 20 | > 70 (fire system) | Higher = worse. Reduction is a reward. |
-| **Farmers** 👨‍🌾 | 0 to ∞ | 20 | < 10 | Population. Gold income multiplier. Losing many is devastating. |
+| **Satisfaction** 😊 | 0–100 | 60 | < 30 | Morale. Affects gold income. Slow to rebuild. |
+| **Health** ❤️ | 0–100 | 60 | < 30 | Population growth driver. Slow to rebuild. |
+| **Fire Risk** 🔥 | 0–100 | 20 | > 70 | Higher = worse. Reduction is a reward. |
+| **Farmers** 👨‍🌾 | 0 to ∞ | 20 | < 15 | Population. Gold income multiplier. Losing many is devastating. |
 | **Land Forces** ⚔️ | 0 to ∞ | 5 | 0 (can't fight) | Military. Lost in combat. Hard to rebuild quickly. |
 | **Authority** 👑 | 0–999.999 | 20 | < 10 (constant harassment) | Political power. Committed in checks. |
 
@@ -292,9 +298,17 @@ This creates a suspenseful resource-commitment decision. Larger `prepDelay` valu
 | **Major** | ±20–40 | ±3–4 | ±3–4 | ±3–4 | ±6–12 | ±6–12 | ±3–4 |
 | **Extreme** | ±40+ | ±5–8 | ±5–8 | ±5–8 | ±12+ | ±12+ | ±5+ |
 
+Important: Gold costs are inflationary during gameplay: The more progress the player makes, the more is earned and the more expensive are the costs. This means, that the "Extreme" Gold win/loss of 40 is only extreme at game start. Later, +-40 Gold is a minor severity.
+Farmers, Land Forces and Authority are also inflationary like gold. Here are some reference points about how much of each inflationary resource the player can have after a certain play time:
+- **After 100 ticks**: Gold: 150, Farmers: 150, LandForces: 50, Authority: 80
+- **After 200 ticks**: Gold: 1000, Farmers: 400, LandForces: 100, Authority: 150
+- **After 300 ticks**: Gold: 6000, Farmers: 800, LandForces: 150, Authority: 250
+
+This needs to be taken into consideration when creating request chains for progressed game sessions (e.g. when a request chain needs a minimum Authority value, minimum farmer amount or a specific constructed building to be triggered)
+
 #### Rules for Making Options Meaningful
 
-1. **Pattern A (default): Both options should cost something different.** The classic pattern:
+1. **Pattern A (default): Both options should cost something different.** One classic pattern:
    - Option A: Costs one resource, preserves another.
    - Option B: Costs a different resource, preserves the first.
 
@@ -306,67 +320,53 @@ This creates a suspenseful resource-commitment decision. Larger `prepDelay` valu
    { text: 'REFUSE AND ARM', effects: {} }
    ```
 
-2. **Pattern B (normal): Only sporadically make one option strictly better.** If option A gives `+5 gold` and option B gives `+5 gold, +2 health`, option B is always better. Fix this by adding a cost: `{ gold: +5, fireRisk: +3 }` vs `{ health: +2, gold: -5 }`. Use options that are strictly better only sparingly, so players have to think about their choice and deal with consequences.
+2. **Pattern B: One worse choice and one better choice.** If option A gives `+5 gold` and option B gives `+5 gold, +2 health`, option B is always better. Use options that are strictly better only sparingly, so players sometimes have to "right/better" and "wrong/worse" choice.
 
-3. **Pattern C (use with care and only sporadically): One worse choice and one better choice.** Both options have a cost, but one is clearly worse. This creates situations where the player must weigh whether the "less bad" option is worth its own price, and the worse option exists as a deliberate consequence of the chain's narrative. This should be rare — it works best at chain crisis points where the story has cornered the player.
+3. **Pattern C: Outcome based on committment.** Both options cost the same resource, but one costs more of the resource than the other one. Therefore, the option with higher cost has a higher reward (or higher chance of reward), and the option with lower cost has a lower reward (or lower chance of reward). Another subtype of outcome can be: The option that costs less has less risk but lower reward, the option with higher cost has more risk but higher reward.
 
 4. **Scale effects to chain position:**
-   - **Chain start:** Light effects (±minor). The player is just entering the story.
+   - **Chain start:** Light effects (±minor to moderate). The player is just entering the story.
    - **Chain middle:** Moderate effects. Stakes are rising.
    - **Chain end:** Major to extreme effects. The payoff/consequence of the whole chain.
+   - **Chain size does not determine effect magnitude.** Effect Magnitude is driven by the narrative weight of the event, not the number of requests in the chain.
 
-5. **Match effects to the narrative.** If the story is about a trade dispute, effects should be `gold`, `satisfaction`, maybe `farmers`. Don't randomly include `landForces` unless the story justifies it.
+5. **Match effects to the narrative.** The effected resources need to fit to the narrative of the request chain and story.
 
 6. **Use at most 2–3 resources per option.** More than that is visually noisy and cognitively overwhelming.
 
 ### 3.5 Avoiding Dead-Ends
 
-Dead-ends occur when the player **cannot afford either option** or when the chain leaves the game in an unrecoverable state.
+Dead-ends occur when the player **cannot afford either option**.
 
 **Rules to prevent dead-ends:**
 
-1. **At least one option should have no hard resource gate.** If option A costs `gold: -30`, option B should either be free, cost a different resource that's unlikely to be at zero, or only cost a low amount of gold.
+1. **At least one option has no resource gate of limited ressources.** Limited resources are LandForce, Farmers and Authority. If one option uses LandForce, Farmers or Authority as must-have resources, the other Option cannot use another limited resource. Authority-commits that allow to use 0 Authority do not count as limiting option, because the player can choose 0 Authority.
 
-2. **Never require specific stat values to continue a chain.** The `requires` field should only gate chain *starts*, not members. Once a player is inside a chain, they must be able to finish it.
-
-3. **Use `authorityMin`/`authorityMax` only on chain starts**, never on chain members. If a player entered the chain, they must be able to see every member.
-
-4. **Prevent all options from deducting `landForces` directly.** At least one option in every request must **not** deduct `landForces` as an effect, so that players who have zero land forces always have a choosable option. (Combat commitment is separate — it uses a slider, and the player can commit 0 if they have 0.)
-
-5. **End chains with recovery options.** The last event in a chain should offer some form of stat recovery so the player isn't left crippled:
-   ```typescript
-   // Good: chain end with recovery
-   options: [
-     { text: 'RECOVER', effects: { health: 5 } },
-     { text: 'REPAIR', effects: { fireRisk: -5 } },
-   ]
-   ```
-
-6. **Watch cumulative drain.** If a chain costs `gold: -15` per member over 5 members, that's `-75 gold` total on the pay path. Starting gold is 50. Map out the worst-case stat trajectory of every path through your chain before finalizing it.
-
-7. **Test both extremes:** Walk through the chain assuming the player has (a) the maximum stats they could plausibly have at that point, and (b) the minimum. Both paths should remain viable.
+2. **At least one option does not require specific stat values.** This rule does not apply to chain starts. The `requires` field of chain members can only apply to one option, so that the player always has the second option available if the requirement is not fulfilled. 
 
 ### 3.6 Follow-Up Delay Tuning
+How quickly a follow-up request is triggered controls the pace of the game and the feedback-understanding of the player.
 
 #### Delay Type Definitions
 
 | Delay Type | `delayMinTicks` | `delayMaxTicks` |
 |------------|----------------|----------------|
 | **Immediate** | 0 | 0 |
-| **Quick** | 1 | 2 |
+| **Quick** | 0 | 2 |
 | **Short** | 2 | 4 |
 | **Medium** | 3 | 5 |
-| **Long** | 5 | 8 |
-| **Very Long** | 8 | 8+ |
+| **Long** | 5 | 7 |
+| **Very Long** | 7 | 7+ |
 
 #### Use Case → Delay Type Assignment
+Use the following guideline as general rule. You are also allowed to use different Delay Types, if it is required by pacing, story, needed player preparation or any other reasons.
 
 | Use Case | Delay Type |
 |----------|-----------|
 | Feedback events / info screens | Immediate |
 | Same-scene narrative continuation | Immediate |
 | Authority check result delivery | Immediate |
-| Urgent consequences (battle imminent) | Quick |
+| Urgent consequences | Quick |
 | Battle preparation follow-ups | Quick |
 | Standard chain pacing (1–2 other events in between) | Short |
 | Default follow-up when no specific timing is needed | Short |
@@ -375,22 +375,22 @@ Dead-ends occur when the player **cannot afford either option** or when the chai
 | Diplomatic responses | Medium |
 | Delayed consequences of earlier choices | Long |
 | Distant threats approaching | Long |
-| Seasonal / cyclical effects (tribute cycles) | Very Long |
+| Seasonal / cyclical effects | Very Long |
 | Long-term consequences revealing themselves | Very Long |
 
-**Default rule:** Use **Short** (`delayMinTicks: 2, delayMaxTicks: 4`) unless you have a specific narrative reason to deviate.
 
 ### 3.7 Chain Restart Cooldown
 
-Set `chainRestartCooldownTicks` on **every** `end` request (all nodes with `chainRole: 'end'`) to prevent the chain from immediately re-triggering after completion. Do **not** set it on the start request.
+Set `chainRestartCooldownTicks` on **every** `end` request (all nodes with `chainRole: 'end'`) to prevent the chain from immediately re-triggering after completion. Do **not** set it on the start request or chain members.
 
 The engine records this value when a chain end node resolves and uses it to gate the chain's start node from randomly re-triggering until the cooldown expires.
 
 | Chain Type | Recommended Cooldown |
 |------------|---------------------|
-| Small (4–6 events) | 20–40 ticks |
-| Medium (6–10 events) | 40–60 ticks |
-| Large (10+ events) | 80–100+ ticks |
+| S | 20–40 ticks |
+| M | 30–60 ticks |
+| L  | 80–100+ ticks |
+| XL  | 150+ ticks |
 
 ### 3.8 Chain Singletons — One Active Instance at a Time
 
@@ -407,10 +407,10 @@ When a follow-up has multiple candidates, use weights to control probability:
 
 ```typescript
 candidates: [
-  { requestId: 'CHAIN_X_GOOD_OUTCOME', weight: 3 },
-  { requestId: 'CHAIN_X_BAD_OUTCOME', weight: 1 },
+  { requestId: 'CHAIN_X_OUTCOME1', weight: 3 },
+  { requestId: 'CHAIN_X_OUTCOME2', weight: 1 },
 ]
-// 75% chance good, 25% chance bad
+// 75% chance for Option1, 25% for Option2
 ```
 
 **Guidelines:**
@@ -432,7 +432,6 @@ Before adding a chain to `requests.ts`, verify:
 - [ ] At most one option per request has an `authorityCheck`
 - [ ] At most one option per request triggers combat
 - [ ] At least one option per request does **not** deduct `landForces` directly
-- [ ] At least one option per request has affordable effects for a player in a bad state
 - [ ] Chain end requests have `chainRole: 'end'`
 - [ ] `chainRestartCooldownTicks` is set on **every** end request (not on the start request)
 - [ ] The chain's start node is **not** referenced in any `followUps.candidates` list (chains are singletons — §3.8)
@@ -444,9 +443,13 @@ Before adding a chain to `requests.ts`, verify:
 
 ### 4.1 Character Portraits — The 30-Character Roster
 
-The game uses a fixed roster of **30 character portrait archetypes**. All requests **must** use one of these 30 `portraitId` keys. Do not invent new portrait keys. When writing narrative text, you may give characters any name you like — the portrait represents an archetype, not a unique individual.
-
-**Key principle:** A single portrait can represent different named characters. The `envoy` portrait already represents both "Brimwulf" (Blackgeat chain) and "Lady Sigrun" (Valdren envoy chain). The player sees a face archetype — the text provides the specific identity.
+The game uses a fixed roster of **30 character portrait archetypes**. All requests **must** use one of these 30 `portraitId` keys. Do not invent new portrait keys. When writing narrative text, you may give characters any name you like — the portrait represents an archetype, not a unique individual. The name must fit to the gender of the portrait.
+An exception to this rule are the following names that have to be reused for portraits and cannot be used for other characters:
+- The player's military advisor: Feldric
+- The player's advisor: Barnwulf
+- The village priest: Garthric
+- The village healer: Dunhild
+- The player's mage advisor: Markweard
 
 **Exception: Advisor characters are NOT archetypes.** The `advisor`, `military_advisor`, and `mage_advisor` portraits represent specific, unique individuals in the game world — the player's personal advisors. Do not reuse them as generic NPCs. When these portraits appear, the narrative should reflect that it is the player's own advisor speaking.
 
@@ -499,12 +502,13 @@ All 30 portrait images are available in `src/assets/portraits/` and registered i
 
 #### The Three-Act Chain Structure
 
-Even small chains benefit from classic dramatic structure:
+All chains, from smallest to largest, benefit from classic dramatic structure:
 
 ```
 ACT 1: SETUP (chain start)
   └── Introduces the situation, stakes, and central question.
-      Player makes a directional choice (e.g., engage vs. ignore).
+      This situation, stake or central question creates an implicit promise to the player - there is now an expectation of the narrative outcome.
+      Player makes directional choices.
 
 ACT 2: CONFRONTATION (chain members)
   └── Consequences of the choice unfold.
@@ -512,61 +516,61 @@ ACT 2: CONFRONTATION (chain members)
       The player faces harder decisions with higher stakes.
 
 ACT 3: RESOLUTION (chain end)
-  └── The situation resolves based on accumulated choices.
+  └── Unexpected twists can create narrative tension
+      The situation resolves based on accumulated choices.
       Player receives payoff or punishment.
-      Recovery options are offered.
+      Light recovery options are offered if the punishment is hard.
 ```
 
 #### Branch Architecture Patterns
 
-**Pattern 1: Diamond (Recommended for small chains)**
+The following patterns can be used to create a whole graph of a request-chain. The usage of the patterns must be because of a narrative or design rationale, not just to use them.
+
+**Pattern 1: Fork (Recommended by default)**
 ```
-        START
-       /          A1       B1
+          A1
+       /     \    
+      B1     C1
+
+```
+Two distinct paths with unique continuation. Double the content, but very satisfying narratively. The story is driven forward by real decision power of the player and the outcomes of those decisions are unique.
+
+**Pattern 2: Converging**
+```  
+       A1     B1
        \     /
-        END
+          C1
 ```
-Two paths that converge. Different journey, shared destination with different stat states. Easiest to author and test.
+Multiple paths converge. Different journey, shared destination.
+When using this, it needs to be made 100% sure that the shared destination node makes sense for all branches converging into it. This must be narratively very well done. It must be avoided, that the text in the converging node mentions both paths (e.g. "whether you chose to do A or B, now the result is C), because that feels cheap and the player doesn't get a sense of decision power and consequences resulting from the decisions. 
 
-**Pattern 2: Fork (Recommended for medium chains)**
-```
-        START
-       /          A1       B1
-     |         |
-     A2       B2
-     |         |
-    END_A    END_B
-```
-Two distinct paths with unique endings. Double the end content, but very satisfying narratively.
 
-**Pattern 3: Tree with Convergence (Recommended for large chains)**
+**Pattern 3: Linear**
 ```
-         START
-        /           A1       B1
-     / \       |
-   A2a  A2b   B2
-    |    |     |
-   A3   A3    B3
-     \  |    /
-      SHARED_END
+         A1
+         |
+         B1
 ```
-Multiple early branches that merge into shared later content. This is the Blackgeat pattern — it branches early but reuses war preparation and battle sequences regardless of which path the player took.
+A request continues linear with another request, independent of the option the player chose. This works if there is only one option to choose from, or if both options continue with the same follow-up-request. This pattern can be chosen to limit the amount of content, but must be used carefully. The two options of Request A1 can have different immediate stat changes, but the story is linear, so the player decision doesn't impact the story - only the stat changes are impacted by the player decision. This is ok from time to time, but narratively not as strong.
 
 #### Suspense Techniques
+The following techniques can be used in order to create suspense. Those techniques do not have to be used, but only when it makes sense to the narrative.
 
 1. **Delayed consequences.** Set `delayMinTicks: 3, delayMaxTicks: 5` so the player has time to worry. Other random events fill the gap, creating a sense of real time passing.
 
-2. **Escalating costs.** Each step in the chain should cost slightly more than the last (the Blackgeat tribute chain escalates from `-10 gold` to `-15 gold` with increasing satisfaction/authority costs).
+2. **Additive or escalating costs.** Each step in the chain costs more ressources (same amount or more than before), in order to create a suspense of additive resource drain. This allows the player to worry if the choice he made was correct or costs more than it will bring. The additive or escalating costs can be either rewarded at the end (= it was worth it) or not (= it was a wrong decision or a decision to avoid other negative consequences) 
 
-3. **The false choice.** One option appears "safe" but leads to worse outcomes 2–3 steps later. The "aggressive" option has immediate cost but leads to a better ending. This rewards engaged players.
+3. **The false choice.** One option appears "safe" but leads to worse outcomes 2–3 steps later. The other, "aggressive" option has immediate cost but leads to a better ending. This rewards engaged players.
 
-4. **The ticking clock.** Use `maxTriggers: 1` on members so they can only fire once, and use tight delays. The player feels urgency — this chain won't wait.
+4. **The ticking clock.** Use a linear pattern approach, where the linear requests are a reminder of a coming big event that the player has to prepare for. In that reminder-event, build suspense about timing, need of preparation and possible consequences.
 
-5. **The reveal.** Use a chain member with `advancesTick: false` as a pure narrative beat — a revelation or twist that changes the meaning of the choices that came before, displayed before the next real decision.
+5. **The reveal.** Use a chain member (if applicable with `advancesTick: false`) as a pure narrative beat — a revelation or twist that changes the meaning of the choices that came before, displayed before the next real decision.
 
 #### Satisfying Endings
 
 Every chain end should deliver on the **implicit promise** of the chain start. This promise must be conveyed **through the narrative itself** — through rising tension, character dialogue, and escalating stakes — never by explaining the stakes directly to the player in meta-language. The player should *feel* what the chain is about through the story, and the ending should reward that feeling.
+
+The following are examples only of implicit promises - there are endless such promises.
 
 | Chain Theme | Implicit Promise (felt by player, not stated) | End Should Deliver |
 |-------------|-----------------------------------------------|-------------------|
@@ -575,25 +579,27 @@ Every chain end should deliver on the **implicit promise** of the chain start. T
 | Economic crisis | "Can I afford this?" | Wealth gained or treasury depleted — shown in the text |
 | Community story | "Will my people be okay?" | Satisfaction/health changes that reflect the outcome |
 
-**The reward principle:** If the player made hard sacrifices during the chain, the ending must acknowledge and reward that sacrifice. Don't end a 6-event chain with `effects: {}`. The final effects should be the **largest in the chain**.
+**The reward principle:** If the player made hard sacrifices during the chain, the ending must acknowledge and reward that sacrifice. Don't end a long chain with `effects: {}`. The final effects in a chain have the most impact for the player's feeling of success or failure.
 
 ### 4.3 Writing Request Text
 
-- **Chain start text:** Set the scene and the stakes in 2–3 sentences. Introduce a character by name if possible. End with a question or tension.
-- **Chain member text:** Advance the story. Reference the player's previous choice if possible ("Since you agreed to pay..."). Build urgency.
-- **Chain end text:** Resolve the situation definitively. Use finality language ("The threat has passed", "The price was steep").
-- **Option text:** Short and punchy. Use CAPS for action verbs (matching existing style: `'PAY'`, `'REFUSE AND ARM'`, `'OFFER COMPROMISE'`).
+- **Chain start text:** Set the scene and the stakes in 1-2 sentences. Introduce a character by name if needed. End with a question or tension.
+- **Chain member text:** Advance the story. Reference the player's previous choice if possible. Build urgency, tension, or relief, depending on the narrative need.
+- **Chain end text:** Resolve the situation definitively. Use finality language. MAke clear to the player, that this is the end of it, without saying it explicitely.
+- **Option text:** Short and punchy. Must fit into the option button. If possible, 1-5 words. Use CAPS. The expressions can be slightly exxagerated (e.g. talking about farmes as "riffraff" if it's an option to punish them, or wordplay like: Option 1 - "Pay", Option 2: "Pay - him a visit". Thos are only examples, do not use them permanently.)
 
 ---
 
 ## 5. Putting It All Together — Step-by-Step Workflow
 
 ### Step 1: Concept
-- Define the theme, the central question, and the target chain size (small/medium/large).
+- Define the theme, the central question, and the target chain size.
 - Identify which resources are thematically relevant.
+- Identify which characters are relevant.
+- Identify the narrative promise to the player.
 
 ### Step 2: Branch Map
-- Draw the chain structure: start → members → end(s).
+- Draw the chain structure: start → members → ends.
 - Mark each node with its approximate effects and which portrait appears.
 - Count total requests. Stay within your size target.
 
@@ -601,13 +607,12 @@ Every chain end should deliver on the **implicit promise** of the chain start. T
 - Walk through every path and calculate cumulative stat changes.
 - Verify no path leads to unavoidable bankruptcy or unrecoverable state.
 - Verify both options at every node are meaningfully different.
-- Verify at least one option per request does not deduct `landForces`.
+- Verify that requests are no dead-ends with no possible option because of the player stats.
 
 ### Step 4: Write Requests
-- Start with the chain start, then ends, then fill in members.
 - For each request, write in this order: `id` → `portraitId` → `title` → `text` → `options` → `effects` → `followUps`.
-- Add `combat`, `authorityCheck`, or `followUpBoosts` only where the story demands them.
-- Ensure max 1 `authorityCheck` option and max 1 combat option per request.
+- Add `combat`, `authorityCheck`, or `followUpBoosts` where the story and narrative demands them.
+- Ensure max 1 `authorityCheck` option and max 1 combat option per request. However, it is possible to have both, 1 `authorityCheck` and 1 combat option, in one request.
 
 ### Step 5: Add to `requests.ts`
 - Add all chain requests to the `eventRequests` array.
@@ -629,7 +634,7 @@ Every chain end should deliver on the **implicit promise** of the chain start. T
 
 ## 6. Quick Reference Template
 
-Minimal small chain (4 requests) as a starting skeleton:
+Minimal small chain (4 requests), in this case with only one branch and then converging to the same end node - a narratively inferior approach, showcasing only possible structure and not a good narrative approach:
 
 ```typescript
 // =========================================================
@@ -731,7 +736,6 @@ Minimal small chain (4 requests) as a starting skeleton:
 },
 ```
 
-This gives you a diamond-shaped chain (start → two paths → shared end) with 4 requests, consistent portraits, safe effects, and proper chain metadata. Expand from here.
 
 ---
 
@@ -751,69 +755,48 @@ When a fire breaks out (via the outbreak formula in `state.ts`), the engine:
 Every fire chain is therefore:
 - **Slot-specific** — IDs encode the slot index: `FIREV4_S{n}_{VARIANT}_*`
 - **Automatically started** — never triggered by player action directly
-- **Resolution-guaranteed** — every branch must reach either `END_EXT` (extinguish) or `END_DEST` (destroy the building)
+- **Resolution-guaranteed** — every branch must reach either an extinguish end node or a destroy end node (via `fireChainOutcome` metadata)
 
 ### 9.2 Chain Structure
 
-The default/recommended fire chain shape uses **5 requests per slot** (START, STEP1, STEP1B, END_EXT, END_DEST), but variants may use any number of intermediate steps and any node naming, as long as all end nodes carry `fireChainOutcome: 'extinguish'` or `fireChainOutcome: 'destroy'`.
+Each fire chain variant is built like other request chains. By default, fire chains should be resolved quickly, so that the burning building doesn't hold up the negative consequences too long.
+There are two kinds of fire outbreaks:
+1. Natural outbreaks: attempted once per tick advance, based on the stat `fireRisk`
+2. Effect outbreaks: may be triggered by request effects.
 
-| Node      | ID pattern (recommended)            | Role     | Options | advancesTick |
-|-----------|-------------------------------------|----------|---------|--------------|
-| START     | `FIREV4_S{n}_{V}_START`             | start    | **2**   | false        |
-| (steps)   | Any name with `FIREV4_S{n}_` prefix | member   | 2       | false        |
-| End (ext) | Any name with `fireChainOutcome: 'extinguish'` | end | 2 | **true**     |
-| End (dest)| Any name with `fireChainOutcome: 'destroy'`    | end | 2 | **true**     |
+Mandatory fire-chain capabilities (must exist in the chain):
+  Each fire chain must include operations that can:
+      Extinguish assigned unit (on_fire → functional, clears assignment)
+      Destroy assigned unit (on_fire → destroyed)
+      Start a new outbreak (same logic as Section 5; can bypass cap via flag)
 
-The branching shape is always:
+Fire-chain resolution rule (must be true for every branch):
+  Every branch must lead to either:
+      1. An end node with `fireChainOutcome: 'extinguish'` at some point, OR
+      2. An end node with `fireChainOutcome: 'destroy'` at some point
 
-```
-START (2 options) ──► STEP1   (option 0 → extinguish or destroy)
-                  └──► STEP1B  (option 1 → extinguish or destroy)
-```
-
-Both STEP1 and STEP1B must offer at least one path to an extinguish end node and at least one path to a destroy end node.
+      If a destroy end node is reached while the chain is still active:
+          Later in the chain there must be a branch to either:
+              reconstruct (unit → functional), OR
+              end and leave destroyed (unit stays destroyed; chainActive=false)
 
 ### 9.3 The START Decision Rule
 
 > **Rule: Every fire START request must present an immediate player decision (2 options).**
 >
-> A fire START must never show a single "acknowledge" button. The player must face a meaningful
+> A fire START must never show a single option. The player must face a meaningful
 > choice from the very first moment the fire breaks out. Each option should lead to a distinctly
-> different STEP (STEP1 or STEP1B), with different characters, tone, risks, and rewards.
+> different branch, with different narrative progress, risks, and rewards.
 
 This rule is enforced by `validateRequests()` in `requests.ts`, which treats FIREV4 START requests
 like all other non-info requests (2 options required). Do not add FIREV4 START IDs to the
 single-option exemption list.
-
-**Good START options contrast meaningfully:**
-- Public response vs quiet cover-up
-- Fight the fire vs protect the perimeter
-- Save the people vs save the goods
-- Trust an expert vs act without them
-
-**Bad START options are synonyms:**
-- "Help the villagers" vs "Aid the settlers" ← these are the same choice
 
 ### 9.4 Building-Specific vs General Chains
 
 Each building type in the game can have:
 - **1 dedicated fire chain variant** — with content and characters specific to that building type
 - **General chains** — usable for all building types
-
-Current chain assignments (as of V4):
-
-| Variant | Name                  | Building restriction        |
-|---------|-----------------------|-----------------------------|
-| A       | Community Response    | All buildings (general)     |
-| B       | Raging Inferno        | All buildings (general)     |
-| D       | Night Watch Failure   | All buildings (general)     |
-| E       | Wandering Embers      | All buildings (general)     |
-| C       | Farmstead Emergency   | `farmstead` only            |
-| F       | Marketplace Blaze     | `marketplace` only          |
-| G       | Bakery Oven Disaster  | `bakery` only               |
-| H       | Brewery Explosion     | `brewery` only              |
-| I       | Firewood Depot Fire   | `firewood` only             |
-| J       | Well Fire             | `well` only                 |
 
 To restrict a chain to a specific building type, set `fireChainAllowedBuildingTypes` **only on the START request**:
 
@@ -842,13 +825,15 @@ effects: {
 ```
 
 **When to add fire spread:**
-- On options where the player makes an objectively bad or reckless decision (e.g., pouring water on a grease fire, abandoning a position while embers fly)
-- As a risk/reward trade-off for faster or cheaper solutions
-- Thematically: whenever the narrative reason for fire spreading exists (scattered embers, barrel explosions, uncontrolled abandonment)
+- On options where the player makes an objectively bad or reckless decision.
+- As a risk/reward trade-off
+- Thematically: whenever the narrative reason for fire spreading exists
 
-**When NOT to add fire spread:**
-- On the "correct" or careful option — fire spread should only reward recklessness
-- On END_EXT or END_DEST nodes — fire spread belongs on STEP nodes, where the player still has a choice to make
+**When to have only rarely fire spread:**
+- On the "correct" or careful option
+
+**When to never add fire spreads:**
+- On end nodes — fire spread belongs on STEP nodes, where the player still has a choice to make
 
 Use `fireOutbreakBypassCap: true` only when the fire spread is catastrophic (e.g., barrel explosions). Normal fire spread should leave `bypassCap: false`.
 
@@ -880,135 +865,32 @@ All fire chain requests (FIREV4 and REPAIRV4) must include:
 
 ### 9.7 Adding a New Fire Chain Variant
 
-Follow these steps to add a new fire chain variant (e.g., Variant `K`):
+Follow these steps to add a new fire chain variant:
 
-1. **Choose a theme and character** — The chain should have a memorable character who drives the narrative. Give them a name and a clear personality.
+1. **Choose a narrative** — The chain needs to have a memorable narrative.
 
 2. **Decide building restriction** — Is this general (all buildings) or specific to one building type? If specific, set `fireChainAllowedBuildingTypes` on the START.
 
 3. **Design the START decision** — Write two contrasting options that immediately branch the chain. Follow the START Decision Rule (Section 9.3).
 
-4. **Design STEP1 and STEP1B** — Each STEP is a consequential middle decision:
-   - One option leads to an extinguish end node
-   - One option leads to a destroy end node
-   - At least one option in the chain (STEP1 or STEP1B) should carry `triggerFireOutbreak: true` on a risky path
+4. **Design the branches and ends**
+   - Decide if the chain carries `triggerFireOutbreak: true` on a risky path as guaranteed option or as weighted option, or if the narrative doesn't make use of a fire spread.
 
-5. **Write your end nodes** — These are aftermath cards. The fire is already resolved. The options represent how the player responds to the outcome (rebuild, punish, compensate, etc.). Each end node must carry `fireChainOutcome: 'extinguish'` or `fireChainOutcome: 'destroy'`. You may name them anything — `_END_EXT` / `_END_DEST` are still fine and readable, but they are no longer required by the engine.
+5. **End nodes** — These are aftermath cards. The fire is already resolved. The options represent how the player responds to the outcome (rebuild, punish, compensate for big loss, etc.). Each end node must carry `fireChainOutcome: 'extinguish'` or `fireChainOutcome: 'destroy'`. You may name them anything — `_END_EXT` / `_END_DEST` are still fine and readable, but they are no longer required by the engine.
 
 6. **Add the variant inside `generateFireV4ChainRequests()`** — Add a new `{ }` block inside the `for (let n = 1; n <= 10; n++)` loop, following the same pattern as existing variants.
 
 7. **Validate** — Run the app in development mode (`npm run dev`) to trigger `validateRequests()`. Fix any reported errors.
 
-#### Minimal example — new general variant K
-
-```typescript
-// ── VARIANT K: Mill Fire (mill only) ────────────────────────────────────
-// Character: Miller Oskar — practical and calm under pressure
-{
-  const v = 'K';
-  const chainId = `FIREV4_S${n}_${v}`;
-
-  requests.push({
-    id: `FIREV4_S${n}_${v}_START`,
-    chainId,
-    chainRole: 'start',
-    canTriggerRandomly: false,
-    advancesTick: false,
-    portraitId: 'craftsman',
-    title: '🔥 The Mill is on Fire!',
-    text: 'Miller Oskar runs up: "The millstone cracked — the grain dust ignited! It can blow the whole floor!" Two options snap into your mind.',
-    options: [
-      { text: 'Seal the mill — prevent the dust from spreading!', effects: { gold: -5 } },
-      { text: 'Soak the floor with water — kill the dust before it explodes!', effects: {} },
-    ],
-    // fireChainAllowedBuildingTypes: ['mill'],   // uncomment if building-specific
-    followUps: [
-      { triggerOnOptionIndex: 0, delayMinTicks: 1, delayMaxTicks: 2, candidates: [{ requestId: `FIREV4_S${n}_${v}_STEP1`, weight: 1 }] },
-      { triggerOnOptionIndex: 1, delayMinTicks: 1, delayMaxTicks: 2, candidates: [{ requestId: `FIREV4_S${n}_${v}_STEP1B`, weight: 1 }] },
-    ],
-  });
-
-  requests.push({
-    id: `FIREV4_S${n}_${v}_STEP1`,
-    chainId,
-    chainRole: 'member',
-    canTriggerRandomly: false,
-    advancesTick: false,
-    portraitId: 'craftsman',
-    title: '🔥 Sealed but Burning',
-    text: 'The sealing holds — no explosion. But the fire inside still needs fighting.',
-    options: [
-      { text: 'Extinguish through the hatch — careful but slow', effects: { fireRisk: -8 } },
-      { text: 'Abandon the mill — it\'s too risky to enter', effects: { satisfaction: -4 } },
-    ],
-    followUps: [
-      { triggerOnOptionIndex: 0, delayMinTicks: 1, delayMaxTicks: 2, candidates: [{ requestId: `FIREV4_S${n}_${v}_END_EXT`, weight: 1 }] },
-      { triggerOnOptionIndex: 1, delayMinTicks: 1, delayMaxTicks: 2, candidates: [{ requestId: `FIREV4_S${n}_${v}_END_DEST`, weight: 1 }] },
-    ],
-  });
-
-  requests.push({
-    id: `FIREV4_S${n}_${v}_STEP1B`,
-    chainId,
-    chainRole: 'member',
-    canTriggerRandomly: false,
-    advancesTick: false,
-    portraitId: 'craftsman',
-    title: '🔥 Wet Floor, Rising Smoke',
-    text: 'The water quenches some of the dust — but the wooden beams are already burning. Oskar: "We can still get in there!"',
-    options: [
-      { text: 'Push in and fight the fire directly', effects: { satisfaction: -2, fireRisk: -6 } },
-      { text: 'Too dangerous — pull back before the beams go!', effects: { triggerFireOutbreak: true, fireOutbreakBypassCap: false } },
-    ],
-    followUps: [
-      { triggerOnOptionIndex: 0, delayMinTicks: 1, delayMaxTicks: 2, candidates: [{ requestId: `FIREV4_S${n}_${v}_END_EXT`, weight: 1 }] },
-      { triggerOnOptionIndex: 1, delayMinTicks: 1, delayMaxTicks: 2, candidates: [{ requestId: `FIREV4_S${n}_${v}_END_DEST`, weight: 1 }] },
-    ],
-  });
-
-  requests.push({
-    id: `FIREV4_S${n}_${v}_END_EXT`,
-    chainId,
-    chainRole: 'end',
-    canTriggerRandomly: false,
-    advancesTick: true,
-    portraitId: 'craftsman',
-    chainRestartCooldownTicks: 0,
-    title: '🔥 Mill Fire Contained',
-    text: 'The mill stands. Oskar is already planning which millstone to replace first.',
-    options: [
-      { text: 'Commission a safer milling setup', effects: { fireRisk: -8, gold: -15 } },
-      { text: 'Business as usual — Oskar will manage', effects: { satisfaction: 2 } },
-    ],
-  });
-
-  requests.push({
-    id: `FIREV4_S${n}_${v}_END_DEST`,
-    chainId,
-    chainRole: 'end',
-    canTriggerRandomly: false,
-    advancesTick: true,
-    portraitId: 'craftsman',
-    chainRestartCooldownTicks: 0,
-    title: '💥 Mill Destroyed',
-    text: 'The mill is gone. Grain will have to be ground by hand until it\'s rebuilt. Oskar stares at the ruins without a word.',
-    options: [
-      { text: 'Help Oskar rebuild as fast as possible', effects: { gold: -20, satisfaction: 3 } },
-      { text: 'Let Oskar handle reconstruction himself', effects: { satisfaction: -3 } },
-    ],
-  });
-}
-```
-
 ### 9.8 Repair Chains
 
-After a building is destroyed, a repair chain can be started from the Construction screen (when `chainActive=false`). Repair chains use the prefix `REPAIRV4_S{n}_*`. The reconstruct and leave outcomes are separate end nodes, each with 1 option and a `repairChainOutcome` field. Node naming and chain length are free-form.
+After a building is destroyed, players can start a repair chain from the Construction screen (when `chainActive=false`). Repair chains use the prefix `REPAIRV4_S{n}_*` and follow a simpler structure:
 
 ```
-REPAIRV4_S{n}_START              (start, 1 option, tickless, isSingleOptionChainNode: true, repairChainSlotIndex: n)
-REPAIRV4_S{n}_PROGRESS           (member, 2 options, tickless)
-REPAIRV4_S{n}_END_RECONSTRUCT    (end, 1 option, advances tick, repairChainOutcome: 'reconstruct', isSingleOptionChainNode: true)
-REPAIRV4_S{n}_END_LEAVE          (end, 1 option, advances tick, repairChainOutcome: 'leave', isSingleOptionChainNode: true)
+Start Node - always informational that the repair has begun: REPAIRV4_S{n}_START          (start, 1 option, tickless, isSingleOptionChainNode: true, repairChainSlotIndex: n)
+One or multiple member nodes, branching possible:           REPAIRV4_S{n}_PROGRESS        (member, 2 options, advances tick)
+End node - reconstruct the building:                        REPAIRV4_S{n}_END_RECONSTRUCT  (end, 1 option, advances tick, repairChainOutcome: 'reconstruct', isSingleOptionChainNode: true)
+End node - leave destroyed:                                 REPAIRV4_S{n}_END_LEAVE        (end, 1 option, advances tick, repairChainOutcome: 'leave', isSingleOptionChainNode: true)
 ```
 
-Repair START requests and single-option end nodes must set `isSingleOptionChainNode: true` so `validateRequests()` does not flag them. Repair START nodes must also set `repairChainSlotIndex: n` so the `START_REPAIR_CHAIN` action can find the correct start request via metadata. The START Decision Rule (Section 9.3) does not apply to repair chains.
+Repair START requests and single-option end nodes must set `isSingleOptionChainNode: true` so `validateRequests()` does not flag them. Repair START nodes must also set `repairChainSlotIndex: n` so the `START_REPAIR_CHAIN` action can find the correct start request via metadata. They are not fire START requests, so the START Decision Rule (Section 9.3) does not apply.
