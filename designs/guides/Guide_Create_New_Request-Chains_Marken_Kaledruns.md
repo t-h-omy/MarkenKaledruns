@@ -75,14 +75,14 @@ export interface Effect {
 
 ### 2.4 Follow-Ups
 
-Connects one request to the next in a chain.
+Connects one request to the next in a chain. A follow-up's `candidates` array can hold **one or multiple** possible next requests. This is a core design tool — not a special case.
 
 ```typescript
 export interface FollowUp {
   triggerOnOptionIndex: number;      // 0 or 1 — which option triggers this
   delayMinTicks: number;             // Minimum ticks before showing
   delayMaxTicks: number;             // Maximum ticks before showing
-  candidates: WeightedCandidate[];   // Which request(s) can appear
+  candidates: WeightedCandidate[];   // Which request(s) can appear — one OR multiple
 }
 
 export interface WeightedCandidate {
@@ -90,6 +90,28 @@ export interface WeightedCandidate {
   weight: number;      // Higher = more likely when multiple candidates exist
 }
 ```
+
+#### Single vs. Multiple Candidates — When to Use Which
+
+**Single candidate** (`candidates` has 1 entry): The player's choice leads to a **specific, deterministic** outcome. Use this when the story demands a clear cause-and-effect link between the player's decision and what happens next. This is the default for most story beats where the player's agency should feel direct.
+
+```typescript
+// Deterministic: the player sent scouts, so a scout report arrives.
+candidates: [{ requestId: 'CHAIN_X_SCOUT_REPORT', weight: 1 }],
+```
+
+**Multiple candidates** (`candidates` has 2+ entries): The player's choice sets a **direction**, but the exact outcome is uncertain — the world has its own variability. Use this when the narrative situation involves genuine uncertainty: negotiations that could go either way, messengers who might not arrive, characters whose reactions are unpredictable, or consequences that depend on forces beyond the player's control. The world feels less like a script and more like a living place.
+
+```typescript
+// Probabilistic: the player sent a diplomatic envoy, but the rival lord's
+// reaction is uncertain — most likely he negotiates, but he might refuse.
+candidates: [
+  { requestId: 'CHAIN_X_ENVOY_ACCEPTED', weight: 3 },
+  { requestId: 'CHAIN_X_ENVOY_REJECTED', weight: 1 },
+],
+```
+
+**Design principle:** Not every follow-up needs multiple candidates — forced randomness feels arbitrary. Use multiple candidates when uncertainty is **narratively motivated**: the player made a choice, but the outcome genuinely depends on other characters, timing, or luck. Use a single candidate when the outcome is a direct, logical consequence of the player's action. See §3.9 for weight tuning guidelines and §4.2 for the Probabilistic branch pattern.
 
 ### 2.5 Combat Specification
 
@@ -403,20 +425,38 @@ A chain can only be active **once** at any given time — never in parallel. The
 
 ### 3.9 Weighted Candidates
 
-When a follow-up has multiple candidates, use weights to control probability:
+When a follow-up has multiple candidates, use weights to control probability. See §2.4 for when to use single vs. multiple candidates.
 
 ```typescript
 candidates: [
   { requestId: 'CHAIN_X_OUTCOME1', weight: 3 },
   { requestId: 'CHAIN_X_OUTCOME2', weight: 1 },
 ]
-// 75% chance for Option1, 25% for Option2
+// 75% chance for Outcome1, 25% for Outcome2
 ```
 
-**Guidelines:**
-- Use `weight: 1` across all candidates for equal probability.
-- Use asymmetric weights (e.g. 3:1, 2:1) to make one path more likely.
+**Weight tuning guidelines:**
+- Use `weight: 1` across all candidates for equal probability (coin flip, dice roll situations).
+- Use asymmetric weights (e.g. 3:1, 2:1) to make one path more likely — this is the most common pattern: a "probable" outcome and a less likely alternative.
 - Authority follow-up boosts **add** to these weights, so start with lower base weights if you want authority investment to have a strong relative impact.
+
+**Narrative use cases for multiple candidates:**
+
+| Situation | Example | Suggested Weights |
+|-----------|---------|-------------------|
+| Character reaction is unpredictable | A confronted merchant might confess or flee | 2:1 (confess likely, flee possible) |
+| Negotiation / diplomacy outcome | An envoy might return with a deal or empty-handed | 3:1 (deal likely, rejection possible) |
+| Recovery / healing uncertainty | A sick villager might recover or worsen | 1:1 (genuine coin flip) |
+| Scouting / investigation results | Scouts might find the enemy camp or get lost | 3:1 (success likely, failure possible) |
+| Delayed consequences of a risky choice | A fire-prevention measure might hold or fail | 4:1 (holds likely, fails rare) |
+| World-state variability for replay | After a battle, reinforcements might arrive or not | 2:1 (arrival likely) |
+
+**When NOT to use multiple candidates:**
+- When the player's choice is the whole point — "you chose to exile him, so he's exiled." Randomizing a direct consequence of player agency undermines the feeling of control.
+- When the narrative has no genuine uncertainty — if there's no reason for the outcome to vary, a single candidate is cleaner and more honest.
+- On every follow-up indiscriminately — forced randomness feels arbitrary and makes the world feel chaotic rather than alive.
+
+**Target frequency:** A well-designed M-sized chain (10–35 requests) should typically have **1–3 follow-ups with multiple candidates** — enough to make the world feel uncertain in key moments, not so many that the player feels powerless. S-sized chains may have 0–1. L-sized chains may have 2–5. These are guidelines, not hard rules — the narrative determines the need.
 
 ### 3.10 Validation Checklist
 
@@ -436,6 +476,8 @@ Before adding a chain to `requests.ts`, verify:
 - [ ] `chainRestartCooldownTicks` is set on **every** end request (not on the start request)
 - [ ] The chain's start node is **not** referenced in any `followUps.candidates` list (chains are singletons — §3.8)
 - [ ] `portraitId` uses only one of the 30 defined character keys (see §4.1)
+- [ ] Follow-ups with multiple candidates have been considered where narratively appropriate (see §2.4, §3.9). Not every follow-up needs them — but chains with zero probabilistic follow-ups should be a conscious decision, not an oversight.
+- [ ] Every candidate in a multi-candidate pool leads to a complete, satisfying narrative path — no throwaway low-weight paths
 
 ---
 
@@ -553,6 +595,33 @@ When using this, it needs to be made 100% sure that the shared destination node 
 ```
 A request continues linear with another request, independent of the option the player chose. This works if there is only one option to choose from, or if both options continue with the same follow-up-request. This pattern can be chosen to limit the amount of content, but must be used carefully. The two options of Request A1 can have different immediate stat changes, but the story is linear, so the player decision doesn't impact the story - only the stat changes are impacted by the player decision. This is ok from time to time, but narratively not as strong.
 
+**Pattern 4: Probabilistic (Candidate Pool)**
+```
+          A1
+        /    \     ← not a player choice — the engine picks one
+      B1      C1      based on candidate weights
+```
+The player makes a choice at A1, but the specific follow-up is selected randomly from a **weighted candidate pool** rather than deterministically. The player's decision sets a direction, but the world introduces uncertainty. This pattern creates genuine suspense: the player chose to send an envoy, but will the rival lord accept or refuse? The player chose to treat the sick, but will the patient recover or worsen?
+
+Use this pattern when the narrative situation involves forces beyond the player's control — other characters' unpredictable reactions, luck, timing, or hidden information. Do **not** use it when the outcome should be a direct consequence of the player's agency (see §2.4 and §3.9 for guidelines).
+
+This pattern can be combined with **Authority Follow-Up Boosts** (§3.2B) — the player invests authority to shift the weights in their favor, creating a "political investment" mechanic where committing more authority makes the preferred outcome more likely but never certain.
+
+```typescript
+// The player chose to negotiate. The outcome is uncertain but can be influenced.
+followUps: [
+  {
+    triggerOnOptionIndex: 0,  // "SEND AN ENVOY"
+    delayMinTicks: 3,
+    delayMaxTicks: 5,
+    candidates: [
+      { requestId: 'CHAIN_X_DEAL_STRUCK', weight: 2 },
+      { requestId: 'CHAIN_X_TALKS_COLLAPSE', weight: 1 },
+    ],
+  },
+],
+```
+
 #### Suspense Techniques
 The following techniques can be used in order to create suspense. Those techniques do not have to be used, but only when it makes sense to the narrative.
 
@@ -565,6 +634,8 @@ The following techniques can be used in order to create suspense. Those techniqu
 4. **The ticking clock.** Use a linear pattern approach, where the linear requests are a reminder of a coming big event that the player has to prepare for. In that reminder-event, build suspense about timing, need of preparation and possible consequences.
 
 5. **The reveal.** Use a chain member (if applicable with `advancesTick: false`) as a pure narrative beat — a revelation or twist that changes the meaning of the choices that came before, displayed before the next real decision.
+
+6. **The uncertain world.** Use multiple candidates in a follow-up's candidate pool (Pattern 4, §4.2) so the player cannot fully predict what happens next. The player chose to send a messenger — but will he arrive safely? The player chose mercy — but will the pardoned man stay loyal? This creates genuine suspense because the player must wait for an outcome they influenced but do not control. Combine with longer delays (Medium or Long, §3.6) to stretch the uncertainty across several ticks. The player made their choice and now must live with the wait. See §3.9 for weight tuning and narrative use cases.
 
 #### Satisfying Endings
 
@@ -601,10 +672,12 @@ The following are examples only of implicit promises - there are endless such pr
 ### Step 2: Branch Map
 - Draw the chain structure: start → members → ends.
 - Mark each node with its approximate effects and which portrait appears.
+- **Identify which follow-ups should use multiple candidates** (Pattern 4, §4.2). Mark these on the branch map with a probability notation (e.g. `→ [3:1]` or `→ [2:1]`). Ask: "Is this outcome genuinely uncertain, or is it a direct consequence of the player's choice?" If uncertain — use a candidate pool. If direct — use a single candidate. Aim for 1–3 probabilistic follow-ups per M-sized chain (see §3.9 for target frequency by chain size).
 - Count total requests. Stay within your size target.
 
 ### Step 3: Stat Economy Pass
 - Walk through every path and calculate cumulative stat changes.
+- **For follow-ups with multiple candidates:** verify that all possible candidate paths lead to narratively satisfying outcomes. A low-weight candidate should not be a throwaway — it must be a real, complete narrative path with its own effects and resolution.
 - Verify no path leads to unavoidable bankruptcy or unrecoverable state.
 - Verify both options at every node are meaningfully different.
 - Verify that requests are no dead-ends with no possible option because of the player stats.
@@ -614,27 +687,9 @@ The following are examples only of implicit promises - there are endless such pr
 - Add `combat`, `authorityCheck`, or `followUpBoosts` where the story and narrative demands them.
 - Ensure max 1 `authorityCheck` option and max 1 combat option per request. However, it is possible to have both, 1 `authorityCheck` and 1 combat option, in one request.
 
-### Step 5: Add to `requests.ts`
-- Add all chain requests to the `eventRequests` array.
-- Add any authority feedback info requests to `authorityInfoRequests`.
-- Group chain requests together with a clear comment header:
-
-```typescript
-// =========================================================
-// CHAIN: MY_NEW_CHAIN – Short Description
-// =========================================================
-```
-
-### Step 6: Validate
-- Run the game in dev mode — `validateRequests()` will check for broken references.
-- Play through every path manually.
-- Run through the validation checklist in §3.9.
-
----
-
 ## 6. Quick Reference Template
 
-Minimal small chain (4 requests), in this case with only one branch and then converging to the same end node - a narratively inferior approach, showcasing only possible structure and not a good narrative approach:
+Minimal small chain (5 requests), demonstrating both **deterministic follow-ups** (single candidate) and **probabilistic follow-ups** (multiple candidates). Path A uses a deterministic fork — the player's choice leads directly to the end. Path B uses a candidate pool — the player sends an envoy, but the outcome is uncertain.
 
 ```typescript
 // =========================================================
@@ -653,16 +708,22 @@ Minimal small chain (4 requests), in this case with only one branch and then con
   ],
   followUps: [
     {
+      // Deterministic: one candidate — direct consequence of player choice
       triggerOnOptionIndex: 0,
       delayMinTicks: 2,
       delayMaxTicks: 4,
       candidates: [{ requestId: 'CHAIN_EXAMPLE_PATH_A', weight: 1 }],
     },
     {
+      // Probabilistic: multiple candidates — outcome is uncertain (see §2.4, §3.9)
+      // The player chose to negotiate, but the rival's reaction is unpredictable.
       triggerOnOptionIndex: 1,
-      delayMinTicks: 2,
-      delayMaxTicks: 4,
-      candidates: [{ requestId: 'CHAIN_EXAMPLE_PATH_B', weight: 1 }],
+      delayMinTicks: 3,
+      delayMaxTicks: 5,
+      candidates: [
+        { requestId: 'CHAIN_EXAMPLE_PATH_B_GOOD', weight: 2 },
+        { requestId: 'CHAIN_EXAMPLE_PATH_B_BAD', weight: 1 },
+      ],
     },
   ],
 },
@@ -694,16 +755,45 @@ Minimal small chain (4 requests), in this case with only one branch and then con
   ],
 },
 {
-  id: 'CHAIN_EXAMPLE_PATH_B',
+  // This is the more likely outcome of the probabilistic follow-up (weight: 2)
+  id: 'CHAIN_EXAMPLE_PATH_B_GOOD',
   chainId: 'EXAMPLE',
   chainRole: 'member',
   canTriggerRandomly: false,
-  title: 'Consequences of B',
-  text: 'A different path unfolds.',
+  title: 'The Negotiation Succeeds',
+  text: 'The envoy returns with good news. A deal has been struck.',
   portraitId: 'merchant',
   options: [
-    { text: 'ACCEPT', effects: { satisfaction: 1 } },
-    { text: 'RESIST', effects: { authority: 1, satisfaction: -1 } },
+    { text: 'ACCEPT THE TERMS', effects: { satisfaction: 2 } },
+    { text: 'PUSH FOR MORE', effects: { authority: 1, satisfaction: -1 } },
+  ],
+  followUps: [
+    {
+      triggerOnOptionIndex: 0,
+      delayMinTicks: 2,
+      delayMaxTicks: 4,
+      candidates: [{ requestId: 'CHAIN_EXAMPLE_END', weight: 1 }],
+    },
+    {
+      triggerOnOptionIndex: 1,
+      delayMinTicks: 2,
+      delayMaxTicks: 4,
+      candidates: [{ requestId: 'CHAIN_EXAMPLE_END', weight: 1 }],
+    },
+  ],
+},
+{
+  // This is the less likely outcome (weight: 1) — still a real path, not a throwaway
+  id: 'CHAIN_EXAMPLE_PATH_B_BAD',
+  chainId: 'EXAMPLE',
+  chainRole: 'member',
+  canTriggerRandomly: false,
+  title: 'The Negotiation Fails',
+  text: 'The envoy returns empty-handed. The rival refused.',
+  portraitId: 'merchant',
+  options: [
+    { text: 'ACCEPT THE LOSS', effects: { satisfaction: -2 } },
+    { text: 'TRY ANOTHER WAY', effects: { gold: -5, authority: 1 } },
   ],
   followUps: [
     {
