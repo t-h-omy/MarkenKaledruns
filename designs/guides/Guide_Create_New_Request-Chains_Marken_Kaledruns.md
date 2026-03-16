@@ -597,13 +597,13 @@ A request continues linear with another request, independent of the option the p
 
 **Pattern 4: Probabilistic (Candidate Pool)**
 ```
-          A1
-        /    \     ← not a player choice — the engine picks one
-      B1      C1      based on candidate weights
+          A1_
+        /  | \     ← Player choses option B or C — C1 or C2 are not a player choice — the engine picks one based on candidate weights
+      B1  C1  C2
 ```
-The player makes a choice at A1, but the specific follow-up is selected randomly from a **weighted candidate pool** rather than deterministically. The player's decision sets a direction, but the world introduces uncertainty. This pattern creates genuine suspense: the player chose to send an envoy, but will the rival lord accept or refuse? The player chose to treat the sick, but will the patient recover or worsen?
+The player makes a choice at A1 (in this example the player picks C), but the specific follow-up of C is selected randomly from a **weighted candidate pool** rather than deterministically (In this example C1 or C2). The player's decision sets a direction, but the world introduces uncertainty. This pattern creates genuine suspense.
 
-Use this pattern when the narrative situation involves forces beyond the player's control — other characters' unpredictable reactions, luck, timing, or hidden information. Do **not** use it when the outcome should be a direct consequence of the player's agency (see §2.4 and §3.9 for guidelines).
+Use this pattern when the narrative situation involves forces beyond the player's control — other characters' unpredictable reactions, luck, timing, or hidden information. Do **not** use it when the outcome should be a direct and 100% transparent consequence of the player's agency (see §2.4 and §3.9 for guidelines).
 
 This pattern can be combined with **Authority Follow-Up Boosts** (§3.2B) — the player invests authority to shift the weights in their favor, creating a "political investment" mechanic where committing more authority makes the preferred outcome more likely but never certain.
 
