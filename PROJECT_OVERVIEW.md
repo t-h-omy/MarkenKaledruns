@@ -31,7 +31,7 @@
 
 **Die Marken Kaledruns** is a turn-based village management strategy game built as a Progressive Web App (PWA). The player governs a settlement by responding to events (called "requests"), managing resources, constructing buildings, commanding military forces, and navigating political authority. The game ends when gold drops to **-50** (bankruptcy).
 
-- **Version**: 1.3.3
+- **Version**: 1.4.2
 - **Package name**: `pof-prototype`
 - **Repository**: `t-h-omy/MarkenKaledruns`
 
@@ -308,7 +308,7 @@ main.tsx (entry point)
 | **Satisfaction** | 60 | Morale. Affects gold income; crisis below 30. |
 | **Health** | 60 | Village health. Drives population growth; crisis below 30. |
 | **Fire Risk** | 20 | Fire danger. |
-| **Land Forces** | 5 | Military units for combat. |
+| **Land Forces** | 10 | Military units for combat. |
 | **Authority** | 20 | Political influence (0–999.999). |
 
 ### 6.2 Baseline Formulas (Applied Each Tick)

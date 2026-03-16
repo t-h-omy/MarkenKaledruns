@@ -266,7 +266,7 @@ export const initialState: GameState = {
     health: 60,
     fireRisk: 20,
     farmers: 20,
-    landForces: 5,
+    landForces: 10,
     authority: 20,
   },
   buildingTracking: createInitialBuildingTracking(),
