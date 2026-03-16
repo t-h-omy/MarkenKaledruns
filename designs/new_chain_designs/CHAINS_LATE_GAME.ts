@@ -1,0 +1,855 @@
+// =========================================================
+// FIVE S-SIZED REQUEST CHAINS — Later Game Progression
+//
+// Chain 1: TAVERN_BRAWL      (requires: building:tavern)
+//          8 requests: 1 start + 2 members + 4 ends + 1 info
+// Chain 2: GARRISON_DESERTER  (requires: building:garrison)
+//          6 requests: 1 start + 1 member + 4 ends
+// Chain 3: SHRINE_HERESY      (requires: building:shrine)
+//          8 requests: 1 start + 2 members + 4 ends + 1 info
+//          + 2 authority info requests
+// Chain 4: MARKET_SWINDLE     (requires: building:marketplace)
+//          6 requests: 1 start + 1 member + 4 ends
+// Chain 5: HEALERS_PLAGUE     (requires: building:healers_house)
+//          8 requests: 1 start + 2 members + 4 ends + 1 info
+//
+// EFFECT MAGNITUDE: scaled to mid/late-game resource levels
+//   (~100 ticks: Gold ~150, Farmers ~150, LandForces ~50, Authority ~80)
+// =========================================================
+
+
+// =========================================================
+// CHAIN 1: TAVERN_BRAWL – Factions at the Flagon
+// Size: S (8 requests: 1 start + 2 members + 4 ends + 1 info)
+//
+// Theme: A brawl in the tavern spirals into factional strife.
+// Two rival groups threaten to tear the village apart.
+// Mediate or let them fight it out?
+//
+// Narrative Promise: "Can you hold the village together when
+// your own people turn on each other?"
+//
+// Core Resources: Gold, Satisfaction, Authority
+//
+// Characters:
+//   Thornhild (merchant)        – the barkeep, sends for help
+//   Barnwulf (advisor)          – counsels mediation
+//   Feldric (military_advisor)  – offers martial law
+//   Aldhelm (council_member)    – faction leader A
+//   Grimwulf (antagonist_villager) – faction leader B
+//
+// Branch Map:
+//   START (merchant)
+//   ├── [0] MEDIATE AT ONCE → INFO_FACTION_INTEL (advisor, tickless)
+//   │   └── [auto] → MEMBER_MEDIATION (council_member)
+//   │       ├── [0] BACK ALDHELM → END_ALDHELM_WINS
+//   │       └── [1] BROKER NEUTRAL PEACE → END_COSTLY_PEACE
+//   └── [1] LET THEM SETTLE IT → MEMBER_ESCALATION (military_advisor)
+//       ├── [0] PAY TO CEASE → END_BOUGHT_PEACE
+//       └── [1] MARTIAL LAW → END_IRON_ORDER
+// =========================================================
+
+// --- Add to eventRequests ---
+
+{
+  id: 'CHAIN_TAVERN_BRAWL_START',
+  chainId: 'TAVERN_BRAWL',
+  chainRole: 'start',
+  title: 'Blood and Ale',
+  text: 'A roaring fight breaks out in the Crimson Flagon tavern. Thornhild the barkeep sends word frantically — it is not a drunken scuffle, but a clash between Aldhelm\'s townmaster supporters and Grimwulf\'s merchant guild rivals. Fists fly, tables splinter, and the violence threatens to spill into the streets. Both leaders demand you choose a side.',
+  portraitId: 'merchant',
+  requires: ['building:tavern'],
+  options: [
+    { text: 'MEDIATE AT ONCE', effects: { gold: -20, authority: 3 } },
+    { text: 'LET THEM SETTLE IT', effects: { satisfaction: -2, authority: -2 } },
+  ],
+  followUps: [
+    { triggerOnOptionIndex: 0, delayMinTicks: 0, delayMaxTicks: 0, candidates: [{ requestId: 'TAVERN_BRAWL_INFO_FACTIONS', weight: 1 }] },
+    { triggerOnOptionIndex: 1, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'TAVERN_BRAWL_MEMBER_ESCALATION', weight: 1 }] },
+  ],
+},
+
+{
+  id: 'TAVERN_BRAWL_INFO_FACTIONS',
+  chainId: 'TAVERN_BRAWL',
+  chainRole: 'member',
+  canTriggerRandomly: false,
+  advancesTick: false,
+  title: 'The Heart of the Dispute',
+  text: 'You arrive at the tavern with guards. Thornhild pulls you aside, breathless. Aldhelm claims Grimwulf has been undercutting prices and poisoning merchants\' reputations. Grimwulf counters that Aldhelm\'s cronies have been blocking his guild from accessing the marketplace. Neither will back down. Barnwulf appears at your shoulder: "A choice must be made, my lord. Neutrality will cost us dearly."',
+  portraitId: 'advisor',
+  options: [
+    { text: 'UNDERSTOOD', effects: {} },
+  ],
+  followUps: [
+    { triggerOnOptionIndex: 0, delayMinTicks: 0, delayMaxTicks: 0, candidates: [{ requestId: 'TAVERN_BRAWL_MEMBER_MEDIATION', weight: 1 }] },
+  ],
+},
+
+{
+  id: 'TAVERN_BRAWL_MEMBER_MEDIATION',
+  chainId: 'TAVERN_BRAWL',
+  chainRole: 'member',
+  canTriggerRandomly: false,
+  title: 'Between Two Fires',
+  text: 'You stand between the factions in the wreckage of the Flagon. Aldhelm demands Grimwulf\'s guild be barred from the market. Grimwulf demands Aldhelm step down. Both men are bloodied and furious. The crowd watches. You can back Aldhelm — the established order — and gain a powerful ally but a bitter enemy. Or you can broker a costly neutral peace that satisfies neither fully but spares the village further bloodshed.',
+  portraitId: 'council_member',
+  options: [
+    { text: 'BACK ALDHELM', effects: { gold: -30, authority: 2 } },
+    { text: 'BROKER NEUTRAL PEACE', effects: { gold: -80, satisfaction: 1 } },
+  ],
+  followUps: [
+    { triggerOnOptionIndex: 0, delayMinTicks: 1, delayMaxTicks: 3, candidates: [{ requestId: 'TAVERN_BRAWL_END_ALDHELM_WINS', weight: 1 }] },
+    { triggerOnOptionIndex: 1, delayMinTicks: 1, delayMaxTicks: 3, candidates: [{ requestId: 'TAVERN_BRAWL_END_COSTLY_PEACE', weight: 1 }] },
+  ],
+},
+
+{
+  id: 'TAVERN_BRAWL_MEMBER_ESCALATION',
+  chainId: 'TAVERN_BRAWL',
+  chainRole: 'member',
+  canTriggerRandomly: false,
+  title: 'The Fight Spreads',
+  text: 'You waited too long. By morning, the brawl has spread across the village. Aldhelm\'s supporters barricade the market district. Grimwulf\'s guild members overturn carts and torch a storehouse. Feldric rides in, grim-faced: "My lord, we have a choice — pay the factions to stand down, or crush them both with martial law."',
+  portraitId: 'military_advisor',
+  options: [
+    { text: 'PAY TO CEASE', effects: { gold: -80, satisfaction: 1, authority: -1 } },
+    { text: 'MARTIAL LAW', effects: { gold: -40, satisfaction: -3, authority: 4 } },
+  ],
+  followUps: [
+    { triggerOnOptionIndex: 0, delayMinTicks: 1, delayMaxTicks: 2, candidates: [{ requestId: 'TAVERN_BRAWL_END_BOUGHT_PEACE', weight: 1 }] },
+    { triggerOnOptionIndex: 1, delayMinTicks: 2, delayMaxTicks: 3, candidates: [{ requestId: 'TAVERN_BRAWL_END_IRON_ORDER', weight: 1 }] },
+  ],
+},
+
+{
+  id: 'TAVERN_BRAWL_END_ALDHELM_WINS',
+  chainId: 'TAVERN_BRAWL',
+  chainRole: 'end',
+  canTriggerRandomly: false,
+  chainRestartCooldownTicks: 30,
+  title: 'The Townmaster\'s Gratitude',
+  text: 'You back Aldhelm openly. Grimwulf\'s faction slinks away, their guild disciplined but not destroyed. Aldhelm enters your hall with wine and warm words — he swears the townmaster\'s house will remember your favor. The marketplace steadies. But whispers spread that you chose a side, and Grimwulf\'s people drink elsewhere now.',
+  portraitId: 'council_member',
+  options: [
+    { text: 'ACCEPT HIS THANKS', effects: { gold: 50, satisfaction: 1, authority: 2 } },
+    { text: 'WARN HIM TO BE FAIR', effects: { gold: 30, satisfaction: 2, authority: 1 } },
+  ],
+},
+
+{
+  id: 'TAVERN_BRAWL_END_COSTLY_PEACE',
+  chainId: 'TAVERN_BRAWL',
+  chainRole: 'end',
+  canTriggerRandomly: false,
+  chainRestartCooldownTicks: 30,
+  title: 'The Peacemaker\'s Price',
+  text: 'You broker a costly peace: subsidizing both factions, silencing their loudest voices with treasury gifts, and decreeing the Crimson Flagon neutral ground. The violence ceases. Aldhelm and Grimwulf both respect your authority, though they resent your impartiality. Thornhild thanks you profusely. The village is calm, but your treasury is lighter.',
+  portraitId: 'merchant',
+  options: [
+    { text: 'WORTH EVERY COIN', effects: { satisfaction: 3, authority: 3 } },
+    { text: 'NEVER AGAIN', effects: { satisfaction: 2, authority: 4 } },
+  ],
+},
+
+{
+  id: 'TAVERN_BRAWL_END_BOUGHT_PEACE',
+  chainId: 'TAVERN_BRAWL',
+  chainRole: 'end',
+  canTriggerRandomly: false,
+  chainRestartCooldownTicks: 30,
+  title: 'Order Restored by Coin',
+  text: 'Your gold stops the bloodshed. Aldhelm and Grimwulf accept your payment on the condition that you mediate future disputes. The village is quiet again, though many grumble that the factions bought their way out of real consequences. Thornhild reopens, nervous but hopeful. You have proven you can spend to achieve peace.',
+  portraitId: 'merchant',
+  options: [
+    { text: 'AN EXPENSIVE LESSON', effects: { satisfaction: 1, authority: 1 } },
+    { text: 'SET NEW TAVERN RULES', effects: { satisfaction: 2, gold: -10 } },
+  ],
+},
+
+{
+  id: 'TAVERN_BRAWL_END_IRON_ORDER',
+  chainId: 'TAVERN_BRAWL',
+  chainRole: 'end',
+  canTriggerRandomly: false,
+  chainRestartCooldownTicks: 30,
+  title: 'Order by the Blade',
+  text: 'Feldric\'s guards move swiftly. Aldhelm and Grimwulf are arrested for inciting riot. Their followers scatter. The village falls silent — cowed, not grateful. Thornhild reopens cautiously, noting that many patrons now fear the guards more than the factions. Your authority hardens into dread.',
+  portraitId: 'military_advisor',
+  options: [
+    { text: 'FEAR KEEPS ORDER', effects: { satisfaction: -2, authority: 3 } },
+    { text: 'RELEASE THEM SOON', effects: { satisfaction: -1, authority: 2 } },
+  ],
+},
+
+
+// =========================================================
+// CHAIN 2: GARRISON_DESERTER – The Soldier's Hunger
+// Size: S (6 requests: 1 start + 1 member + 4 ends)
+//
+// Theme: A garrison soldier deserts to feed his starving
+// family in a neighboring village. Hunt him or let him go?
+// Combat option if pursuing.
+//
+// Narrative Promise: "Is loyalty worth more than mercy?"
+//
+// Core Resources: Gold, Land Forces, Authority, Satisfaction
+//
+// Characters:
+//   Feldric (military_advisor) – reports the desertion
+//   Thornweard (scout)         – the deserter, tracked down
+//   Dunhild (healer)           – reports on the family
+//
+// Branch Map:
+//   START (military_advisor)
+//   ├── [0] HUNT THE DESERTER → MEMBER_FOUND (scout, combat)
+//   │   ├── win  → END_CAPTURED
+//   │   └── lose → END_ESCAPED
+//   └── [1] FORGIVE & HELP → END_COMPASSION
+//                          OR → END_DISCIPLINE_LOST (probabilistic 3:1)
+// =========================================================
+
+{
+  id: 'CHAIN_GARRISON_DESERTER_START',
+  chainId: 'GARRISON_DESERTER',
+  chainRole: 'start',
+  title: 'The Absent Guard',
+  text: 'Feldric approaches with grim news. Thornweard, one of your garrison soldiers, has abandoned his post. Scouts found his wife and children starving in the village of Brimford, three days\' ride northeast. Thornweard fled to find food for them. Feldric\'s jaw tightens: "He broke his oath, my lord. Desertion weakens the garrison and spreads discord. We can hunt him, or... we can let this pass."',
+  portraitId: 'military_advisor',
+  requires: ['building:garrison'],
+  options: [
+    { text: 'HUNT THE DESERTER', effects: { gold: -30, authority: 2 } },
+    { text: 'FORGIVE & HELP HIM', effects: { gold: -50, landForces: -1 } },
+  ],
+  followUps: [
+    { triggerOnOptionIndex: 0, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'GARRISON_DESERTER_MEMBER_FOUND', weight: 1 }] },
+    {
+      triggerOnOptionIndex: 1,
+      delayMinTicks: 2,
+      delayMaxTicks: 4,
+      // Probabilistic: showing mercy usually inspires loyalty, but some soldiers lose respect.
+      candidates: [
+        { requestId: 'GARRISON_DESERTER_END_COMPASSION', weight: 3 },
+        { requestId: 'GARRISON_DESERTER_END_DISCIPLINE_LOST', weight: 1 },
+      ],
+    },
+  ],
+},
+
+{
+  id: 'GARRISON_DESERTER_MEMBER_FOUND',
+  chainId: 'GARRISON_DESERTER',
+  chainRole: 'member',
+  canTriggerRandomly: false,
+  title: 'Thornweard Stands His Ground',
+  text: 'Your scouts track Thornweard to a farmstead near Brimford. Instead of fleeing, he draws his sword — not to attack, but to defend his family. His eyes are hollow, desperate. "Take me if you must, but my children will starve without me." Feldric awaits your command. You can fight and capture him, or relent and bring him home peacefully.',
+  portraitId: 'scout',
+  combat: {
+    enemyForces: 5,
+    prepDelayMinTicks: 0,
+    prepDelayMaxTicks: 2,
+    onWin: { authority: 3 },
+    onLose: { landForces: -3, authority: -2 },
+    followUpsOnWin: [
+      { triggerOnOptionIndex: 0, delayMinTicks: 1, delayMaxTicks: 2, candidates: [{ requestId: 'GARRISON_DESERTER_END_CAPTURED', weight: 1 }] },
+    ],
+    followUpsOnLose: [
+      { triggerOnOptionIndex: 0, delayMinTicks: 1, delayMaxTicks: 2, candidates: [{ requestId: 'GARRISON_DESERTER_END_ESCAPED', weight: 1 }] },
+    ],
+  },
+  options: [
+    { text: 'FIGHT & CAPTURE', effects: { health: -1 } },
+    { text: 'RELENT — BRING HIM HOME', effects: { gold: -40, satisfaction: 2 } },
+  ],
+  followUps: [
+    // Option 1 (relent) — no combat, go straight to compassion end
+    { triggerOnOptionIndex: 1, delayMinTicks: 2, delayMaxTicks: 3, candidates: [{ requestId: 'GARRISON_DESERTER_END_COMPASSION', weight: 1 }] },
+  ],
+},
+
+{
+  id: 'GARRISON_DESERTER_END_CAPTURED',
+  chainId: 'GARRISON_DESERTER',
+  chainRole: 'end',
+  canTriggerRandomly: false,
+  chainRestartCooldownTicks: 35,
+  title: 'The Price of Duty',
+  text: 'You bind Thornweard and bring him back to the garrison in chains. Feldric sentences him to a week of punishment. Word spreads — the lord does not forgive desertion, even for hunger. Morale in the garrison hardens, but fear grows. Some villagers speak quietly of injustice. Dunhild reports Thornweard\'s wife begging at the temple.',
+  portraitId: 'knight',
+  options: [
+    { text: 'DISCIPLINE HOLDS', effects: { authority: 4, satisfaction: -2 } },
+    { text: 'SEND FOOD TO HIS FAMILY', effects: { authority: 2, gold: -20, satisfaction: 1 } },
+  ],
+},
+
+{
+  id: 'GARRISON_DESERTER_END_ESCAPED',
+  chainId: 'GARRISON_DESERTER',
+  chainRole: 'end',
+  canTriggerRandomly: false,
+  chainRestartCooldownTicks: 35,
+  title: 'A Soldier Lost',
+  text: 'Thornweard overpowers your soldiers and vanishes into the forests with his family. Feldric returns bloodied and furious. You have lost a trained soldier who knows your tactics. But whispers in the taverns suggest sympathy — a man fighting for his family, not a traitor. Authority is questioned.',
+  portraitId: 'scout',
+  options: [
+    { text: 'WE WILL RECOVER', effects: { satisfaction: -1, authority: -2 } },
+    { text: 'STRENGTHEN THE GARRISON', effects: { gold: -30, landForces: 2 } },
+  ],
+},
+
+{
+  id: 'GARRISON_DESERTER_END_COMPASSION',
+  chainId: 'GARRISON_DESERTER',
+  chainRole: 'end',
+  canTriggerRandomly: false,
+  chainRestartCooldownTicks: 35,
+  title: 'Mercy Rewarded',
+  text: 'You send a purse of gold to Thornweard\'s family and grant him pardon on one condition: he enlists his son, when of age, to serve the garrison. Thornweard kneels before your hall, weeping with gratitude. Word spreads swiftly — the lord favors compassion over cruelty. Morale becomes complex: some soldiers resent leniency, but many are relieved. Dunhild smiles when you pass.',
+  portraitId: 'healer',
+  options: [
+    { text: 'MERCY IS STRENGTH', effects: { satisfaction: 4, authority: 1 } },
+    { text: 'BUT NEVER AGAIN', effects: { satisfaction: 3, authority: 2 } },
+  ],
+},
+
+{
+  id: 'GARRISON_DESERTER_END_DISCIPLINE_LOST',
+  chainId: 'GARRISON_DESERTER',
+  chainRole: 'end',
+  canTriggerRandomly: false,
+  chainRestartCooldownTicks: 35,
+  title: 'The Garrison Grumbles',
+  text: 'Your pardon of Thornweard spreads through the ranks like wildfire. Within a week, two more soldiers request leave to visit their families. Feldric is livid: "If desertion carries no cost, my lord, then oaths mean nothing." You have shown compassion, but discipline frays at the edges. The garrison serves, but with less conviction.',
+  portraitId: 'military_advisor',
+  options: [
+    { text: 'REASSERT DISCIPLINE', effects: { satisfaction: -1, authority: 2 } },
+    { text: 'ALLOW FAMILY VISITS', effects: { satisfaction: 2, landForces: -2 } },
+  ],
+},
+
+
+// =========================================================
+// CHAIN 3: SHRINE_HERESY – The Preacher's Words
+// Size: S (8 requests: 1 start + 2 members + 4 ends
+//        + 2 authority info requests)
+//
+// Theme: A traveling preacher at the shrine spreads teachings
+// that contradict Garthric. Suppress or allow debate?
+// Authority check to silence him.
+//
+// Narrative Promise: "Who controls the truth in your village?"
+//
+// Core Resources: Satisfaction, Authority, Health
+//
+// Characters:
+//   Garthric (village_priest)  – furious, demands action
+//   Aldwald (traveler)         – the heretic preacher
+//   Markweard (mage_advisor)   – observes neutrally
+//
+// Branch Map:
+//   START (village_priest)
+//   ├── [0] HEAR HIM OUT → MEMBER_DEBATE (traveler)
+//   │   ├── [0] SUPPORT GARTHRIC → END_ORTHODOXY
+//   │   └── [1] ALLOW BOTH FAITHS → END_TOLERANCE
+//   └── [1] SILENCE HIM (authority check) →
+//       success → INFO_SUCCESS → MEMBER_AFTERMATH →
+//       │   ├── [0] SHOW MERCY → END_EXILE
+//       │   └── [1] MAKE AN EXAMPLE → END_FEAR
+//       fail → INFO_FAILURE → END_HUMILIATION
+// =========================================================
+
+{
+  id: 'CHAIN_SHRINE_HERESY_START',
+  chainId: 'SHRINE_HERESY',
+  chainRole: 'start',
+  title: 'The Traveling Word',
+  text: 'A wandering preacher named Aldwald has set up at your shrine and drawn crowds with sermons that challenge Garthric\'s orthodox teachings. He claims the old gods still hold sway in the land, that magic is their gift, not a corruption. Garthric arrives at your hall, face flushed with fury: "This heretic poisons the faithful! Either cast him out or I will — and the people must choose which priest they follow."',
+  portraitId: 'village_priest',
+  requires: ['building:shrine'],
+  options: [
+    { text: 'HEAR HIM OUT', effects: { satisfaction: 1, authority: -1 } },
+    {
+      text: 'SILENCE THE HERETIC',
+      effects: { health: -1 },
+      authorityCheck: {
+        minCommit: 5,
+        maxCommit: 30,
+        minSuccessChance: 40,
+        maxSuccessChance: 85,
+        onSuccess: { authority: 3, satisfaction: 1 },
+        onFailure: { authority: -2, satisfaction: -2 },
+        successFeedbackRequestId: 'SHRINE_HERESY_AUTH_SUCCESS',
+        failureFeedbackRequestId: 'SHRINE_HERESY_AUTH_FAILURE',
+        refundOnSuccessPercent: 70,
+        extraLossOnFailure: 3,
+      },
+    },
+  ],
+  followUps: [
+    { triggerOnOptionIndex: 0, delayMinTicks: 1, delayMaxTicks: 3, candidates: [{ requestId: 'SHRINE_HERESY_MEMBER_DEBATE', weight: 1 }] },
+  ],
+},
+
+{
+  id: 'SHRINE_HERESY_MEMBER_DEBATE',
+  chainId: 'SHRINE_HERESY',
+  chainRole: 'member',
+  canTriggerRandomly: false,
+  title: 'Words at the Shrine',
+  text: 'You invite Aldwald and Garthric to speak before you in the shrine. Aldwald argues eloquently that the old spirits and new faith are not enemies but partners. Garthric trembles with rage, accusing Aldwald of seduction and blasphemy. The gathered townsfolk murmur uncertainly. Markweard, watching from the shadows, whispers: "Magic listens to all gods equally, my lord. But the people must choose their truth."',
+  portraitId: 'traveler',
+  options: [
+    { text: 'SUPPORT GARTHRIC', effects: { authority: 2, satisfaction: -1 } },
+    { text: 'ALLOW BOTH FAITHS', effects: { gold: -30, satisfaction: 2 } },
+  ],
+  followUps: [
+    { triggerOnOptionIndex: 0, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'SHRINE_HERESY_END_ORTHODOXY', weight: 1 }] },
+    { triggerOnOptionIndex: 1, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'SHRINE_HERESY_END_TOLERANCE', weight: 1 }] },
+  ],
+},
+
+{
+  id: 'SHRINE_HERESY_MEMBER_AFTERMATH',
+  chainId: 'SHRINE_HERESY',
+  chainRole: 'member',
+  canTriggerRandomly: false,
+  title: 'The Heretic in Chains',
+  text: 'Aldwald kneels before you, bound and silent. The crowd that gathered at his sermons has scattered. Garthric stands triumphant, but there is unease in the air. Some who listened to Aldwald\'s words still believe them. You have silenced the voice, but not the doubt. What becomes of the preacher now?',
+  portraitId: 'village_priest',
+  options: [
+    { text: 'EXILE HIM PEACEFULLY', effects: { satisfaction: 1, authority: 1 } },
+    { text: 'MAKE AN EXAMPLE', effects: { satisfaction: -2, authority: 4 } },
+  ],
+  followUps: [
+    { triggerOnOptionIndex: 0, delayMinTicks: 1, delayMaxTicks: 2, candidates: [{ requestId: 'SHRINE_HERESY_END_EXILE', weight: 1 }] },
+    { triggerOnOptionIndex: 1, delayMinTicks: 1, delayMaxTicks: 3, candidates: [{ requestId: 'SHRINE_HERESY_END_FEAR', weight: 1 }] },
+  ],
+},
+
+{
+  id: 'SHRINE_HERESY_END_ORTHODOXY',
+  chainId: 'SHRINE_HERESY',
+  chainRole: 'end',
+  canTriggerRandomly: false,
+  chainRestartCooldownTicks: 40,
+  title: 'Faith Restored',
+  text: 'You declare the old teachings heresy and forbid their speaking in your realm. Garthric becomes your instrument of religious authority. Aldwald is stripped of his audience and cast out. The shrine purifies itself. But some whispers persist — those who heard Aldwald\'s words wonder in private. Markweard observes dryly: "You have chosen one truth and silenced another."',
+  portraitId: 'village_priest',
+  options: [
+    { text: 'ONE FAITH, ONE VILLAGE', effects: { health: 2, authority: 3 } },
+    { text: 'WATCH FOR DISSENT', effects: { authority: 4, satisfaction: -1 } },
+  ],
+},
+
+{
+  id: 'SHRINE_HERESY_END_TOLERANCE',
+  chainId: 'SHRINE_HERESY',
+  chainRole: 'end',
+  canTriggerRandomly: false,
+  chainRestartCooldownTicks: 40,
+  title: 'A New Balance',
+  text: 'You proclaim that the old gods and new are not enemies, and establish space for both teachings. Garthric is devastated and questions your faith. Many are confused. But some — those hungry for change — thrive. Markweard nods approvingly: "You have embraced the complexity of belief." The future is uncertain, but the shrine is fuller than before.',
+  portraitId: 'mage_advisor',
+  options: [
+    { text: 'ALL ARE WELCOME', effects: { satisfaction: 3, authority: -2 } },
+    { text: 'REGULATE THE SERMONS', effects: { satisfaction: 2, authority: 1 } },
+  ],
+},
+
+{
+  id: 'SHRINE_HERESY_END_EXILE',
+  chainId: 'SHRINE_HERESY',
+  chainRole: 'end',
+  canTriggerRandomly: false,
+  chainRestartCooldownTicks: 35,
+  title: 'The Preacher Departs',
+  text: 'Aldwald accepts exile with dignity. At the gate, he turns: "I will carry your people\'s hunger for truth to other lands." Some villagers watch him go with silent longing. Garthric is satisfied but restless — he knows the seeds of doubt remain. The shrine stands firm, though its foundations feel a shade less certain.',
+  portraitId: 'traveler',
+  options: [
+    { text: 'THE MATTER IS CLOSED', effects: { satisfaction: 1, authority: 2 } },
+    { text: 'PRAY FOR GUIDANCE', effects: { satisfaction: 2, health: 1 } },
+  ],
+},
+
+{
+  id: 'SHRINE_HERESY_END_FEAR',
+  chainId: 'SHRINE_HERESY',
+  chainRole: 'end',
+  canTriggerRandomly: false,
+  chainRestartCooldownTicks: 40,
+  title: 'The Example Made',
+  text: 'Aldwald is publicly humiliated and driven from the village with stones and jeers. The message is clear — dissent against the faith will not be tolerated. Garthric leads the crowd in prayer. But in the silence that follows, you notice the children are afraid, and even some of the faithful look away. You have bought orthodoxy with fear.',
+  portraitId: 'village_priest',
+  options: [
+    { text: 'FEAR KEEPS ORDER', effects: { satisfaction: -3, authority: 5 } },
+    { text: 'SEND HIM SUPPLIES SECRETLY', effects: { satisfaction: -2, authority: 4, gold: -15 } },
+  ],
+},
+
+{
+  id: 'SHRINE_HERESY_END_HUMILIATION',
+  chainId: 'SHRINE_HERESY',
+  chainRole: 'end',
+  canTriggerRandomly: false,
+  chainRestartCooldownTicks: 35,
+  title: 'The Lord\'s Words Fall Flat',
+  text: 'Your attempt to silence Aldwald fails publicly. The crowd senses your hesitation and murmurs grow louder. Aldwald seizes the moment, preaching even more boldly. Garthric is livid. Your authority over matters of faith is openly questioned. Aldwald eventually leaves of his own accord, but the damage is done — you tried to command the sacred and were found wanting.',
+  portraitId: 'traveler',
+  options: [
+    { text: 'LEARN FROM THIS', effects: { satisfaction: -2, authority: -3 } },
+    { text: 'BLAME THE CROWD', effects: { satisfaction: -3, authority: -1 } },
+  ],
+},
+
+// --- Add to authorityInfoRequests ---
+
+{
+  id: 'SHRINE_HERESY_AUTH_SUCCESS',
+  chainId: 'SHRINE_HERESY',
+  chainRole: 'member',
+  canTriggerRandomly: false,
+  advancesTick: false,
+  title: 'The Crowd Obeys',
+  text: 'Your voice carries the weight of office and conviction. The crowd parts. Aldwald is seized by your guards before he can finish his sermon. Garthric nods with grim satisfaction. The shrine falls silent.',
+  portraitId: 'village_priest',
+  options: [
+    { text: 'PROCEED', effects: {} },
+  ],
+  followUps: [
+    { triggerOnOptionIndex: 0, delayMinTicks: 0, delayMaxTicks: 0, candidates: [{ requestId: 'SHRINE_HERESY_MEMBER_AFTERMATH', weight: 1 }] },
+  ],
+},
+
+{
+  id: 'SHRINE_HERESY_AUTH_FAILURE',
+  chainId: 'SHRINE_HERESY',
+  chainRole: 'member',
+  canTriggerRandomly: false,
+  advancesTick: false,
+  title: 'Words Without Weight',
+  text: 'You raise your hand to command silence, but the crowd does not obey. Aldwald\'s followers stand firm, and even some of your own people hesitate. The authority you wagered has been spent for nothing. Garthric\'s face darkens.',
+  portraitId: 'village_priest',
+  options: [
+    { text: 'PROCEED', effects: {} },
+  ],
+  followUps: [
+    { triggerOnOptionIndex: 0, delayMinTicks: 0, delayMaxTicks: 0, candidates: [{ requestId: 'SHRINE_HERESY_END_HUMILIATION', weight: 1 }] },
+  ],
+},
+
+
+// =========================================================
+// CHAIN 4: MARKET_SWINDLE – The Merchant's Deceit
+// Size: S (6 requests: 1 start + 1 member + 4 ends)
+//
+// Theme: A merchant at the marketplace sells counterfeit goods.
+// Confront publicly for justice, or exploit quietly for profit?
+//
+// Narrative Promise: "Is your justice for sale?"
+//
+// Core Resources: Gold, Satisfaction, Authority
+//
+// Characters:
+//   Brimwyn (merchant)         – the fraudster
+//   Feldric (military_advisor) – suggests exploitation
+//   Edwyn (council_member)     – demands public trial
+//
+// Branch Map:
+//   START (merchant)
+//   ├── [0] INVESTIGATE → MEMBER_FOUND (council_member)
+//   │   ├── [0] PUBLIC TRIAL → END_TRIAL
+//   │   └── [1] QUIET EXPLOITATION → END_EXPLOIT
+//   └── [1] LEAVE IT BE → END_REPUTATION (quick)
+//       OR → END_OPPORTUNIST (probabilistic 2:1)
+// =========================================================
+
+{
+  id: 'CHAIN_MARKET_SWINDLE_START',
+  chainId: 'MARKET_SWINDLE',
+  chainRole: 'start',
+  title: 'Counterfeit Cloth',
+  text: 'A merchant named Brimwyn has been selling "Dornisch wool" at marketplace prices, but a traveling trader exposed the fabric as cheap imitation. Brimwyn\'s stall has been swamped with angry customers demanding refunds. Feldric reports: "She\'s made a small fortune through fraud, my lord. We can investigate and punish — or we can look the other way and profit from her desperation."',
+  portraitId: 'merchant',
+  requires: ['building:marketplace'],
+  options: [
+    { text: 'INVESTIGATE FULLY', effects: { gold: -20, authority: 2 } },
+    { text: 'LOOK THE OTHER WAY', effects: { gold: 50, satisfaction: -3 } },
+  ],
+  followUps: [
+    { triggerOnOptionIndex: 0, delayMinTicks: 1, delayMaxTicks: 3, candidates: [{ requestId: 'MARKET_SWINDLE_MEMBER_FOUND', weight: 1 }] },
+    {
+      triggerOnOptionIndex: 1,
+      delayMinTicks: 3,
+      delayMaxTicks: 5,
+      // Probabilistic: ignoring fraud usually just hurts reputation, but sometimes attracts opportunists
+      candidates: [
+        { requestId: 'MARKET_SWINDLE_END_REPUTATION', weight: 2 },
+        { requestId: 'MARKET_SWINDLE_END_OPPORTUNIST', weight: 1 },
+      ],
+    },
+  ],
+},
+
+{
+  id: 'MARKET_SWINDLE_MEMBER_FOUND',
+  chainId: 'MARKET_SWINDLE',
+  chainRole: 'member',
+  canTriggerRandomly: false,
+  title: 'The Books Don\'t Lie',
+  text: 'Your investigators seize Brimwyn\'s ledgers. She has swindled customers of nearly 200 gold over three months, paying off a shipping master to deliver fakes. Her crime is clear. Edwyn demands a public trial to reassure the marketplace. Feldric leans close: "She fears ruin more than gold. We could tax her heavily and let her keep operating — under our watch."',
+  portraitId: 'council_member',
+  options: [
+    { text: 'PUBLIC TRIAL', effects: { authority: 3, satisfaction: 2 } },
+    { text: 'QUIET EXPLOITATION', effects: { gold: 80, satisfaction: -2 } },
+  ],
+  followUps: [
+    { triggerOnOptionIndex: 0, delayMinTicks: 1, delayMaxTicks: 2, candidates: [{ requestId: 'MARKET_SWINDLE_END_TRIAL', weight: 1 }] },
+    { triggerOnOptionIndex: 1, delayMinTicks: 2, delayMaxTicks: 3, candidates: [{ requestId: 'MARKET_SWINDLE_END_EXPLOIT', weight: 1 }] },
+  ],
+},
+
+{
+  id: 'MARKET_SWINDLE_END_TRIAL',
+  chainId: 'MARKET_SWINDLE',
+  chainRole: 'end',
+  canTriggerRandomly: false,
+  chainRestartCooldownTicks: 35,
+  title: 'Justice in the Square',
+  text: 'Brimwyn is tried publicly before the marketplace. She is found guilty and fined heavily, her stall shuttered for a season. The marketplace erupts in approval. Merchants trust the law again. Some whisper that you have made a powerful enemy in Brimwyn, but most praise your fairness.',
+  portraitId: 'merchant',
+  options: [
+    { text: 'JUSTICE IS SERVED', effects: { gold: 60, satisfaction: 3 } },
+    { text: 'REINVEST THE FINE', effects: { gold: 40, satisfaction: 2, authority: 1 } },
+  ],
+},
+
+{
+  id: 'MARKET_SWINDLE_END_EXPLOIT',
+  chainId: 'MARKET_SWINDLE',
+  chainRole: 'end',
+  canTriggerRandomly: false,
+  chainRestartCooldownTicks: 35,
+  title: 'The Unspoken Tax',
+  text: 'You quietly demand that Brimwyn pay you a "protection tax" equal to half her profits. She is trapped — exposing you means exposing herself. Word does not spread publicly, but merchants sense something is wrong. The marketplace becomes cynical. You gain gold but lose moral standing. Barnwulf watches you with new wariness.',
+  portraitId: 'antagonist_villager',
+  options: [
+    { text: 'PROFIT IS PROFIT', effects: { satisfaction: -3, authority: -1 } },
+    { text: 'END THIS QUIETLY LATER', effects: { satisfaction: -2, gold: -20 } },
+  ],
+},
+
+{
+  id: 'MARKET_SWINDLE_END_REPUTATION',
+  chainId: 'MARKET_SWINDLE',
+  chainRole: 'end',
+  canTriggerRandomly: false,
+  chainRestartCooldownTicks: 35,
+  title: 'The Marketplace Remembers',
+  text: 'You ignore Brimwyn\'s fraud. The marketplace loses faith in fair dealing. Merchants from other lands stop coming; traders trust you less. Brimwyn openly flaunts her success, and others grow bolder in cutting corners. Your treasury gains short-term gold, but long-term commerce suffers.',
+  portraitId: 'merchant',
+  options: [
+    { text: 'THE MARKET WILL RECOVER', effects: { gold: 30, satisfaction: -4 } },
+    { text: 'INVESTIGATE AFTER ALL', effects: { gold: -20, satisfaction: -2, authority: 1 } },
+  ],
+},
+
+{
+  id: 'MARKET_SWINDLE_END_OPPORTUNIST',
+  chainId: 'MARKET_SWINDLE',
+  chainRole: 'end',
+  canTriggerRandomly: false,
+  chainRestartCooldownTicks: 40,
+  title: 'Fraud Breeds Fraud',
+  text: 'Your inaction emboldens others. Within weeks, two more merchants are caught selling fakes. The marketplace descends into a crisis of trust. Customers refuse to buy, traders leave, and your market income plummets. Edwyn confronts you directly: "When the lord ignores theft, my lord, everyone becomes a thief." The damage will take months to undo.',
+  portraitId: 'council_member',
+  options: [
+    { text: 'CRACK DOWN NOW', effects: { gold: -40, satisfaction: -3, authority: 2 } },
+    { text: 'WEATHER THE STORM', effects: { satisfaction: -5, authority: -2 } },
+  ],
+},
+
+
+// =========================================================
+// CHAIN 5: HEALERS_PLAGUE – The Scarlet Rash
+// Size: S (8 requests: 1 start + 2 members + 4 ends + 1 info)
+//
+// Theme: A strange rash spreads among village children.
+// Quarantine the sick or let Dunhild try an experimental
+// cure? The stakes are children's lives.
+//
+// Narrative Promise: "Will you risk children's lives
+// for a chance at saving them all?"
+//
+// Core Resources: Health, Gold, Farmers, Satisfaction
+//
+// Characters:
+//   Dunhild (healer)          – proposes the cure
+//   Garthric (village_priest) – counsels caution
+//   Barnwulf (advisor)        – supports the player
+//
+// Branch Map:
+//   START (healer)
+//   ├── [0] QUARANTINE → MEMBER_QUARANTINE (healer)
+//   │   ├── [0] HOLD THE LINE → END_QUARANTINE_HOLDS
+//   │   └── [1] ALLOW VISITS → END_RASH_SPREADS
+//   └── [1] ATTEMPT HER CURE → INFO_TREATMENT (healer, tickless)
+//       └── MEMBER_EXPERIMENT (healer)
+//           ├── [0] CONTINUE THE CURE (probabilistic 3:2)
+//           │   → 60% END_CURE_SUCCESS / 40% END_CURE_FAILURE
+//           └── [1] STOP & COMFORT → END_CAUTION_PREVAILS
+// =========================================================
+
+{
+  id: 'CHAIN_HEALERS_PLAGUE_START',
+  chainId: 'HEALERS_PLAGUE',
+  chainRole: 'start',
+  title: 'The Scarlet Rash',
+  text: 'Dunhild arrives at your hall, deeply troubled. A strange rash has appeared on three children at the healers\' house — red, spreading, feverish. She has isolated them, but two more showed symptoms this morning. "It spreads quickly," she says grimly. "I can quarantine the sick and hope it runs its course. Or I have an old remedy, learned from Arkanat healers, that might cure it faster. But it is untested here, and the children will bear the risk."',
+  portraitId: 'healer',
+  requires: ['building:healers_house'],
+  options: [
+    { text: 'QUARANTINE STRICTLY', effects: { health: -1, farmers: -5, satisfaction: -1 } },
+    { text: 'ATTEMPT HER CURE', effects: { gold: -40 } },
+  ],
+  followUps: [
+    { triggerOnOptionIndex: 0, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'HEALERS_PLAGUE_MEMBER_QUARANTINE', weight: 1 }] },
+    { triggerOnOptionIndex: 1, delayMinTicks: 0, delayMaxTicks: 0, candidates: [{ requestId: 'HEALERS_PLAGUE_INFO_TREATMENT', weight: 1 }] },
+  ],
+},
+
+{
+  id: 'HEALERS_PLAGUE_INFO_TREATMENT',
+  chainId: 'HEALERS_PLAGUE',
+  chainRole: 'member',
+  canTriggerRandomly: false,
+  advancesTick: false,
+  title: 'The Old Remedy',
+  text: 'Dunhild prepares her potion — bitter herbs mixed with Arkanat oils that shimmer faintly in the firelight. Garthric watches with open suspicion. "This is not healing," he says. "This is sorcery." Dunhild ignores him. "It is knowledge, tested in elder times. I need your lord\'s trust, not his priest\'s permission."',
+  portraitId: 'healer',
+  options: [
+    { text: 'PROCEED', effects: {} },
+  ],
+  followUps: [
+    { triggerOnOptionIndex: 0, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'HEALERS_PLAGUE_MEMBER_EXPERIMENT', weight: 1 }] },
+  ],
+},
+
+{
+  id: 'HEALERS_PLAGUE_MEMBER_QUARANTINE',
+  chainId: 'HEALERS_PLAGUE',
+  chainRole: 'member',
+  canTriggerRandomly: false,
+  title: 'Walls and Worry',
+  text: 'A week passes. The quarantine holds, but families grow fearful. Seven children now show symptoms. Dunhild reports that the rash is severe but may fade on its own in two weeks. However, Garthric has forbidden families from visiting. Parents circle the building at night, weeping. "They need hope, my lord. Either we maintain strict isolation or relax it and accept the risk."',
+  portraitId: 'healer',
+  options: [
+    { text: 'HOLD THE LINE', effects: { satisfaction: -2, health: 1 } },
+    { text: 'ALLOW SUPERVISED VISITS', effects: { satisfaction: 2, health: -1 } },
+  ],
+  followUps: [
+    { triggerOnOptionIndex: 0, delayMinTicks: 3, delayMaxTicks: 5, candidates: [{ requestId: 'HEALERS_PLAGUE_END_QUARANTINE_HOLDS', weight: 1 }] },
+    { triggerOnOptionIndex: 1, delayMinTicks: 2, delayMaxTicks: 4, candidates: [{ requestId: 'HEALERS_PLAGUE_END_RASH_SPREADS', weight: 1 }] },
+  ],
+},
+
+{
+  id: 'HEALERS_PLAGUE_MEMBER_EXPERIMENT',
+  chainId: 'HEALERS_PLAGUE',
+  chainRole: 'member',
+  canTriggerRandomly: false,
+  title: 'The First Dose',
+  text: 'Dunhild administers her remedy to three of the sick children. They cry out, feverish and confused. For three days, nothing changes. Then, on the fourth day, one child\'s rash begins to fade. The other two remain unchanged, burning with fever. Dunhild works without rest, adjusting dosages. A crowd gathers outside. You can continue and hope the cure takes hold, or stop and let nature take its course.',
+  portraitId: 'healer',
+  options: [
+    { text: 'CONTINUE THE CURE', effects: { health: -1, gold: -30 } },
+    { text: 'STOP & COMFORT ONLY', effects: { health: -2, satisfaction: 1 } },
+  ],
+  followUps: [
+    {
+      triggerOnOptionIndex: 0,
+      delayMinTicks: 3,
+      delayMaxTicks: 5,
+      // Probabilistic: the cure is uncertain — more likely to work, but real chance of failure
+      candidates: [
+        { requestId: 'HEALERS_PLAGUE_END_CURE_SUCCESS', weight: 3 },
+        { requestId: 'HEALERS_PLAGUE_END_CURE_FAILURE', weight: 2 },
+      ],
+    },
+    { triggerOnOptionIndex: 1, delayMinTicks: 2, delayMaxTicks: 3, candidates: [{ requestId: 'HEALERS_PLAGUE_END_CAUTION_PREVAILS', weight: 1 }] },
+  ],
+},
+
+{
+  id: 'HEALERS_PLAGUE_END_QUARANTINE_HOLDS',
+  chainId: 'HEALERS_PLAGUE',
+  chainRole: 'end',
+  canTriggerRandomly: false,
+  chainRestartCooldownTicks: 30,
+  title: 'The Rash Fades',
+  text: 'Two weeks pass. The quarantine holds. One child dies despite care, but the others slowly recover as the rash fades naturally. Dunhild releases the survivors, and grieving parents collect their children. Garthric declares it a blessing of faith. You are praised for difficult choices made wisely. But one family mourns, and they remember your choice.',
+  portraitId: 'healer',
+  options: [
+    { text: 'WE DID WHAT WE COULD', effects: { health: 3, satisfaction: 1, farmers: 2 } },
+    { text: 'HONOR THE LOST CHILD', effects: { health: 3, satisfaction: 2 } },
+  ],
+},
+
+{
+  id: 'HEALERS_PLAGUE_END_RASH_SPREADS',
+  chainId: 'HEALERS_PLAGUE',
+  chainRole: 'end',
+  canTriggerRandomly: false,
+  chainRestartCooldownTicks: 30,
+  title: 'The Spread Accelerates',
+  text: 'Within days, the rash spreads to fifteen children. Dunhild is overwhelmed. The village is seized with panic. You enabled the spread. After two weeks, most recover naturally, but the chaos costs you dearly. People blame your leniency. Some children bear scars. Families that recovered speak gratefully; families that suffered speak bitterly.',
+  portraitId: 'healer',
+  options: [
+    { text: 'I SHOWED COMPASSION', effects: { health: -3, satisfaction: -2, farmers: -10 } },
+    { text: 'STRENGTHEN QUARANTINE RULES', effects: { health: -2, satisfaction: -1, authority: 1 } },
+  ],
+},
+
+{
+  id: 'HEALERS_PLAGUE_END_CURE_SUCCESS',
+  chainId: 'HEALERS_PLAGUE',
+  chainRole: 'end',
+  canTriggerRandomly: false,
+  chainRestartCooldownTicks: 30,
+  title: 'The Remedy Works',
+  text: 'Dunhild\'s cure succeeds. All sick children recover within days, their rashes fading completely. The village erupts in celebration. Dunhild is hailed as a healer of legend. Garthric grudgingly admits that "the old wisdom and new learning can serve together." Word spreads to neighboring villages. You are remembered as the lord who chose hope over fear.',
+  portraitId: 'healer',
+  options: [
+    { text: 'PRAISE DUNHILD', effects: { health: 5, satisfaction: 4, authority: 3 } },
+    { text: 'FUND MORE RESEARCH', effects: { health: 4, satisfaction: 3, gold: -30 } },
+  ],
+},
+
+{
+  id: 'HEALERS_PLAGUE_END_CURE_FAILURE',
+  chainId: 'HEALERS_PLAGUE',
+  chainRole: 'end',
+  canTriggerRandomly: false,
+  chainRestartCooldownTicks: 30,
+  title: 'The Remedy Fails',
+  text: 'The remedy does not work. Two children die despite Dunhild\'s desperate efforts. The deaths are laid at her feet. Garthric publicly denounces her experiments. Dunhild is devastated, questioning her own knowledge. The village is angry at you for allowing the experiment. You are seen as reckless, willing to sacrifice children for progress.',
+  portraitId: 'healer',
+  options: [
+    { text: 'I BEAR THE BLAME', effects: { health: -5, satisfaction: -4, authority: -2 } },
+    { text: 'DEFEND DUNHILD', effects: { health: -4, satisfaction: -3, authority: -1 } },
+  ],
+},
+
+{
+  id: 'HEALERS_PLAGUE_END_CAUTION_PREVAILS',
+  chainId: 'HEALERS_PLAGUE',
+  chainRole: 'end',
+  canTriggerRandomly: false,
+  chainRestartCooldownTicks: 30,
+  title: 'Caution Prevails',
+  text: 'You order Dunhild to halt the experiment. She does, though her eyes burn with doubt. The sick children receive comfort care only. Most recover naturally over three weeks; one dies. Garthric is satisfied that wisdom and faith triumph. Dunhild thanks you quietly, but you sense her wondering what might have been.',
+  portraitId: 'healer',
+  options: [
+    { text: 'SAFETY FIRST', effects: { health: -1, satisfaction: 1 } },
+    { text: 'LET DUNHILD TRY NEXT TIME', effects: { health: -1, satisfaction: 1, authority: 1 } },
+  ],
+},
