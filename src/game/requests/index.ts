@@ -40,6 +40,12 @@ import { militaryMobilizationChainDefs } from './chains/military_mobilization';
 import { militaryPoliticsChainDefs } from './chains/military_politics';
 import { faithPilgrimageChainDefs } from './chains/faith_pilgrimage';
 import { faithDoctrineChainDefs } from './chains/faith_doctrine';
+import { prodigalSonChainDefs } from './chains/prodigal_son';
+import { feverPilgrimChainDefs } from './chains/fever_pilgrim';
+import { earlyGameChainDefs } from './chains/early_game';
+import { lateGameChainDefs } from './chains/late_game';
+import { sBatchChainDefs } from './chains/s_batch';
+import { taintedGrainChainDefs } from './chains/tainted_grain';
 
 /** Info/System Requests */
 export const infoRequests: Request[] = [...infoRequestDefs];
@@ -76,6 +82,12 @@ export const eventRequests: Request[] = [
   ...militaryPoliticsChainDefs,
   ...faithPilgrimageChainDefs,
   ...faithDoctrineChainDefs,
+  ...prodigalSonChainDefs,
+  ...feverPilgrimChainDefs,
+  ...earlyGameChainDefs,
+  ...lateGameChainDefs,
+  ...sBatchChainDefs,
+  ...taintedGrainChainDefs,
 ];
 
 /** Authority Info Requests */

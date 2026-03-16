@@ -500,4 +500,272 @@ export const authorityInfoRequestDefs: Request[] = [
     portraitId: 'advisor',
     options: [{ text: 'ACCEPT IT', effects: {} }],
   },
+
+  // ── New chain authority info requests ──────────────────────────────
+
+  {
+    id: 'PRODIGAL_SON_AUTH_CONFRONT_SUCC',
+    title: 'The Mask Cracks',
+    text: 'Under the weight of your authority and the evidence against him, Wulfstan\'s composure crumbles. He sees that the game is up. "I\'ll tell you everything," he says, voice barely a whisper. "Just — let my sister hear it from me, not from the town crier."',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    isSingleOptionChainNode: true,
+    portraitId: 'traveler',
+    options: [{ text: 'CONTINUE', effects: {} }],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 0,
+        delayMaxTicks: 2,
+        candidates: [{ requestId: 'PRODIGAL_SON_CONFESSION', weight: 1 }],
+      },
+    ],
+  },
+
+  {
+    id: 'PRODIGAL_SON_AUTH_CONFRONT_FAIL',
+    title: 'A Step Too Slow',
+    text: 'Wulfstan reads the accusation in your eyes before you finish speaking. His mask doesn\'t crack — it simply falls away, replaced by the calculating gaze of a man who has talked his way out of tighter corners than this. "I think there has been a misunderstanding, my lord. One I will not stay to clarify." By the time Osric reaches the stable, the fine horse is gone.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    isSingleOptionChainNode: true,
+    portraitId: 'traveler',
+    options: [{ text: 'CONTINUE', effects: {} }],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 0,
+        delayMaxTicks: 2,
+        candidates: [{ requestId: 'PRODIGAL_SON_END_VANISHED', weight: 1 }],
+      },
+    ],
+  },
+
+  {
+    id: 'FEVER_PILGRIM_AUTH_ENFORCE_SUCC',
+    title: 'The Door Opens',
+    text: 'Garthric steps aside. Not willingly — the set of his jaw makes that clear — but when he meets your eyes, he sees something there that he has learned, over the years, not to argue with. He moves. Dunhild enters the fulling shed. The pilgrim watches from his cot, breathing hard, but does not resist. He reaches out and sets the urn on the floor in front of her. "If you must know what the shrine carries," he says quietly, "then look."',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    isSingleOptionChainNode: true,
+    portraitId: 'village_priest',
+    options: [{ text: 'CONTINUE', effects: {} }],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 0,
+        delayMaxTicks: 0,
+        candidates: [{ requestId: 'FEVER_PILGRIM_URN_EXAMINED', weight: 1 }],
+      },
+    ],
+  },
+
+  {
+    id: 'FEVER_PILGRIM_AUTH_ENFORCE_FAIL',
+    title: 'Garthric Holds the Line',
+    text: 'Garthric plants himself in the doorway and does not move. His voice is quiet but absolute. "You will open that urn over my body, my lord." For a long moment the village watches — and does not move to clear the priest from your path. They watch, and they wait. Your authority meets something older than authority, and falters. The moment passes. The door stays closed. The urn stays sealed.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    isSingleOptionChainNode: true,
+    portraitId: 'village_priest',
+    options: [{ text: 'STAND DOWN', effects: {} }],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 0,
+        delayMaxTicks: 2,
+        candidates: [{ requestId: 'FEVER_PILGRIM_END_FEVER_LOOSE', weight: 1 }],
+      },
+    ],
+  },
+
+  {
+    id: 'SACRED_OAK_AUTH_SUCCESS',
+    title: 'The Priest Falls Silent',
+    text: 'Garthric stares at you for a long moment, his staff still raised. Then, slowly, he lowers it. The crowd that had gathered to watch shuffles and looks away. Whatever protest had been forming in their hearts, it dies. Your authority has spoken — quietly but unmistakably. Garthric withdraws to his shrine without another word. The stump at the north edge stands in silence. Whatever the village thinks of the loss, no one says it to your face.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    isSingleOptionChainNode: true,
+    portraitId: 'village_priest',
+    options: [{ text: 'THE MATTER IS SETTLED', effects: {} }],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 0,
+        delayMaxTicks: 1,
+        candidates: [{ requestId: 'SACRED_OAK_END_LUMBER_GAINED', weight: 1 }],
+      },
+    ],
+  },
+
+  {
+    id: 'SACRED_OAK_AUTH_FAILURE',
+    title: 'The Sermon of the Stump',
+    text: 'Garthric\'s sermon the following morning draws the largest congregation in memory. He says nothing inflammatory — nothing you could punish. But the silence in the hall afterward is different. At the market, people speak more quietly when you pass. The oak may be timber now. But Garthric\'s silence has become louder than the tree ever was. You asserted your authority. He responded with his faith. The village chose its side.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    isSingleOptionChainNode: true,
+    portraitId: 'village_priest',
+    options: [{ text: 'NOTED', effects: {} }],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 0,
+        delayMaxTicks: 1,
+        candidates: [{ requestId: 'SACRED_OAK_END_LUMBER_GAINED', weight: 1 }],
+      },
+    ],
+  },
+
+  {
+    id: 'SHRINE_HERESY_AUTH_SUCCESS',
+    title: 'The Crowd Obeys',
+    text: 'Your voice carries the weight of office and conviction. The crowd parts. Aldwald is seized by your guards before he can finish his sermon. Garthric nods with grim satisfaction. The shrine falls silent.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    isSingleOptionChainNode: true,
+    portraitId: 'village_priest',
+    options: [{ text: 'PROCEED', effects: {} }],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 0,
+        delayMaxTicks: 0,
+        candidates: [{ requestId: 'SHRINE_HERESY_MEMBER_AFTERMATH', weight: 1 }],
+      },
+    ],
+  },
+
+  {
+    id: 'SHRINE_HERESY_AUTH_FAILURE',
+    title: 'Words Without Weight',
+    text: 'You raise your hand to command silence, but the crowd does not obey. Aldwald\'s followers stand firm, and even some of your own people hesitate. The authority you wagered has been spent for nothing. Garthric\'s face darkens.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    isSingleOptionChainNode: true,
+    portraitId: 'village_priest',
+    options: [{ text: 'PROCEED', effects: {} }],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 0,
+        delayMaxTicks: 0,
+        candidates: [{ requestId: 'SHRINE_HERESY_END_HUMILIATION', weight: 1 }],
+      },
+    ],
+  },
+
+  {
+    id: 'TAINTED_GRAIN_AUTH_TRUTH_SUCC',
+    title: 'The Merchant Breaks',
+    text: 'Your authority presses down on Aldric like a physical weight. He crumbles, pulling a crumpled letter from his coat with shaking hands. "I\'ll tell you everything — just don\'t destroy me."',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    isSingleOptionChainNode: true,
+    portraitId: 'merchant',
+    options: [{ text: 'CONTINUE', effects: {} }],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 0,
+        delayMaxTicks: 2,
+        candidates: [{ requestId: 'TAINTED_GRAIN_SUPPLIER_REVEALED', weight: 1 }],
+      },
+    ],
+  },
+
+  {
+    id: 'TAINTED_GRAIN_AUTH_TRUTH_FAIL',
+    title: 'The Merchant Panics',
+    text: 'Your pressure backfires. Aldric\'s eyes dart to the door, his composure cracking — not into honesty, but into fear. He sees not justice in your face but a threat to his life. Before your guards can react, he bolts.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    isSingleOptionChainNode: true,
+    portraitId: 'merchant',
+    options: [{ text: 'CONTINUE', effects: {} }],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 0,
+        delayMaxTicks: 2,
+        candidates: [{ requestId: 'TAINTED_GRAIN_ALDRIC_PANICS', weight: 1 }],
+      },
+    ],
+  },
+
+  {
+    id: 'TAINTED_GRAIN_AUTH_WULFRIC_SUCC',
+    title: 'A Lord Brought to Heel',
+    text: 'Your evidence and your resolve are undeniable. Lord Wulfric, confronted with proof of his poisoning scheme and the weight of your political will, has no choice but to answer for his crimes. Word reaches you that the Graf of Durnscir has agreed to hear the case.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    isSingleOptionChainNode: true,
+    portraitId: 'noble',
+    options: [{ text: 'CONTINUE', effects: {} }],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 3,
+        delayMaxTicks: 5,
+        candidates: [{ requestId: 'TAINTED_GRAIN_END_NOBLE_JUSTICE', weight: 1 }],
+      },
+    ],
+  },
+
+  {
+    id: 'TAINTED_GRAIN_AUTH_WULFRIC_FAIL',
+    title: 'A Lord\'s Fury',
+    text: 'Wulfric does not take kindly to your accusations. Without sufficient political weight behind your words, he treats them as an insult — one that demands an answer by force. His riders are already on the road.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    isSingleOptionChainNode: true,
+    portraitId: 'noble',
+    options: [{ text: 'CONTINUE', effects: {} }],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 2,
+        delayMaxTicks: 4,
+        candidates: [{ requestId: 'TAINTED_GRAIN_WULFRIC_RETALIATES', weight: 1 }],
+      },
+    ],
+  },
+
+  {
+    id: 'TAINTED_GRAIN_AUTH_NEGOTIATE_SUCC',
+    title: 'Terms Accepted',
+    text: 'Your words carry the weight of a ruler who will not be bullied. Lord Wulfric studies you for a long moment, then dismounts. "Very well. Let us talk — as equals." His men stand down. A trial will be held.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    isSingleOptionChainNode: true,
+    portraitId: 'noble',
+    options: [{ text: 'CONTINUE', effects: {} }],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 3,
+        delayMaxTicks: 5,
+        candidates: [{ requestId: 'TAINTED_GRAIN_END_FAIR_TRIAL', weight: 1 }],
+      },
+    ],
+  },
+
+  {
+    id: 'TAINTED_GRAIN_AUTH_NEGOTIATE_FAIL',
+    title: 'Terms Rejected',
+    text: 'Wulfric laughs — a cold, dismissive sound. "You hold my merchant and offer me words? I came with steel, not patience." He turns his horse and barks an order. His men surge forward. There is nothing left to negotiate.',
+    advancesTick: false,
+    canTriggerRandomly: false,
+    isSingleOptionChainNode: true,
+    portraitId: 'noble',
+    options: [{ text: 'CONTINUE', effects: {} }],
+    followUps: [
+      {
+        triggerOnOptionIndex: 0,
+        delayMinTicks: 0,
+        delayMaxTicks: 2,
+        candidates: [{ requestId: 'TAINTED_GRAIN_END_HUMILIATION', weight: 1 }],
+      },
+    ],
+  },
 ];
