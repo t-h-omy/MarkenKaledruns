@@ -842,6 +842,9 @@ function App() {
                 const commitRatio = config.maxCommit > 0 ? currentCommit / config.maxCommit : 0
                 const successChance = Math.floor(MIN_SUCCESS_CHANCE + commitRatio * (MAX_SUCCESS_CHANCE - MIN_SUCCESS_CHANCE))
                 
+                // Calculate authority at risk on failure
+                const authorityAtRisk = Math.floor(currentCommit * (config.lossOnFailurePercent ?? 50) / 100)
+                
                 // Calculate overall probability for follow-up boosts
                 let followUpProbability = 0
                 if (hasFollowUpBoosts && !hasImmediateEffects && currentRequest.followUps) {
@@ -896,6 +899,15 @@ function App() {
                             <span className="probability-amount">{successChance}%</span>
                           </div>
                       )}
+                      {hasImmediateEffects && currentCommit > 0 && (
+                        <div className="boost-authority-risk">
+                          <span className="impact-label">Authority at risk:</span>
+                          <span className="fork-effect negative">
+                            −{authorityAtRisk}
+                            {' '}({config.lossOnFailurePercent ?? 50}%)
+                          </span>
+                        </div>
+                      )}
                       {hasFollowUpBoosts && !hasImmediateEffects && (
                         <div className="commit-boost-info">
                           <div className="boost-impact">
@@ -911,7 +923,7 @@ function App() {
                             <div className="boost-authority-risk">
                               <span className="impact-label">Authority at risk:</span>
                               <span className="fork-effect negative">
-                                −{Math.floor(currentCommit * (config.lossOnFailurePercent ?? 50) / 100)}
+                                −{authorityAtRisk}
                                 {' '}({config.lossOnFailurePercent ?? 50}%)
                               </span>
                             </div>
@@ -974,8 +986,7 @@ function App() {
                               </span>
                             ))}
                             <span className="fork-effect negative">
-                              Authority Lost: {Math.floor(currentCommit * (config.lossOnFailurePercent ?? 50) / 100)}
-                              {' '}({config.lossOnFailurePercent ?? 50}%)
+                              Authority Lost: {authorityAtRisk}
                             </span>
                           </div>
                         </div>
