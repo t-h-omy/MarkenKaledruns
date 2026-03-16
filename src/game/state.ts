@@ -1205,7 +1205,7 @@ function resolveAuthorityCheck(check: PendingAuthorityCheck): AuthorityCheckResu
     const lossPercent = config.lossOnFailurePercent ?? 50;
     const totalLoss = Math.floor((committed * lossPercent) / 100);
     return {
-      success: true, // Not really applicable, but set to true for consistency
+      success: true, // Not a pass/fail check — commitment accepted, lossOnFailurePercent applied
       committed,
       refunded: committed - totalLoss, // Return the non-lost portion
       totalLoss,

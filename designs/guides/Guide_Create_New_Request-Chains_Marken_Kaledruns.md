@@ -244,7 +244,7 @@ Uses `onSuccess` / `onFailure` with `threshold`, `minSuccessChance`, `maxSuccess
 | `minSuccessChance` | 40–50 | 30–45 | 20–35 |
 | `maxSuccessChance` | max 90 | max 85 | max 80 |
 | `refundOnSuccessPercent` | 80–100 | 50–80 | 30–60 |
-| `lossOnFailurePercent` | 25–40% | 50% (default) | 60–100% |
+| `lossOnFailurePercent` | 25–40 | 50 (default) | 60–100 |
 
 **`lossOnFailurePercent` (default: 50%):** Controls how much of the committed authority is permanently lost on failure. The player loses exactly `floor(committed × lossOnFailurePercent / 100)` authority — the rest is returned. The modal shows this amount live as the slider moves (e.g. "Authority Lost: 8 (50%)"). Use higher values for high-stakes confrontations where failure should be severely punishing; use lower values for opportunistic checks where the attempt itself is low-risk. This is the **only** mechanism for tuning authority loss on failure — do not attempt to express additional flat loss via `onFailure: { authority: -N }` for this purpose, as that conflates failure effects with loss-of-commitment semantics.
 
