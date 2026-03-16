@@ -45,6 +45,7 @@ export const riverPiratesChainDefs: Request[] = [
         authorityCheck: {
           minCommit: 0,
           maxCommit: 25,
+          lossOnFailurePercent: 50,
           followUpBoosts: [
             { targetRequestId: 'CHAIN_RIVER_PIRATES_TRIBUTE_LEAVES', boostType: 'linear', boostValue: 4 },
           ],

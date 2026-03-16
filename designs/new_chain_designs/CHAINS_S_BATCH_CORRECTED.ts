@@ -596,7 +596,7 @@
         successFeedbackRequestId: 'SACRED_OAK_AUTH_SUCCESS',
         failureFeedbackRequestId: 'SACRED_OAK_AUTH_FAILURE',
         refundOnSuccessPercent: 60,
-        extraLossOnFailure: 3,
+        lossOnFailurePercent: 50,
       },
     },
     {

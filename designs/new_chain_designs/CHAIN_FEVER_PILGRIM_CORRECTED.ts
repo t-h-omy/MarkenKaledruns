@@ -145,7 +145,7 @@
         successFeedbackRequestId: 'FEVER_PILGRIM_AUTH_ENFORCE_SUCC',
         failureFeedbackRequestId: 'FEVER_PILGRIM_AUTH_ENFORCE_FAIL',
         refundOnSuccessPercent: 65,
-        extraLossOnFailure: 3,
+        lossOnFailurePercent: 50,
       },
     },
     {

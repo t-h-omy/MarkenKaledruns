@@ -202,7 +202,7 @@
         successFeedbackRequestId: 'TAINTED_GRAIN_AUTH_TRUTH_SUCC',
         failureFeedbackRequestId: 'TAINTED_GRAIN_AUTH_TRUTH_FAIL',
         refundOnSuccessPercent: 70,
-        extraLossOnFailure: 2,
+        lossOnFailurePercent: 50,
       },
     },
     {
@@ -242,7 +242,7 @@
         successFeedbackRequestId: 'TAINTED_GRAIN_AUTH_WULFRIC_SUCC',
         failureFeedbackRequestId: 'TAINTED_GRAIN_AUTH_WULFRIC_FAIL',
         refundOnSuccessPercent: 50,
-        extraLossOnFailure: 5,
+        lossOnFailurePercent: 50,
       },
     },
     {
@@ -443,7 +443,7 @@
         successFeedbackRequestId: 'TAINTED_GRAIN_AUTH_NEGOTIATE_SUCC',
         failureFeedbackRequestId: 'TAINTED_GRAIN_AUTH_NEGOTIATE_FAIL',
         refundOnSuccessPercent: 60,
-        extraLossOnFailure: 3,
+        lossOnFailurePercent: 50,
       },
     },
   ],

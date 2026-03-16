@@ -907,6 +907,15 @@ function App() {
                               {boost.description || `Affects follow-up: ${boost.targetRequestId}`}
                             </div>
                           ))}
+                          {currentCommit > 0 && (
+                            <div className="boost-authority-risk">
+                              <span className="impact-label">Authority at risk:</span>
+                              <span className="fork-effect negative">
+                                −{Math.floor(currentCommit * (config.lossOnFailurePercent ?? 50) / 100)}
+                                {' '}({config.lossOnFailurePercent ?? 50}%)
+                              </span>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -965,13 +974,9 @@ function App() {
                               </span>
                             ))}
                             <span className="fork-effect negative">
-                              Authority Lost: {currentCommit}
+                              Authority Lost: {Math.floor(currentCommit * (config.lossOnFailurePercent ?? 50) / 100)}
+                              {' '}({config.lossOnFailurePercent ?? 50}%)
                             </span>
-                            {config.extraLossOnFailure !== undefined && config.extraLossOnFailure > 0 && (
-                              <span className="fork-effect negative">
-                                Extra Loss: {config.extraLossOnFailure} authority
-                              </span>
-                            )}
                           </div>
                         </div>
                       </div>

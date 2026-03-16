@@ -731,12 +731,14 @@ interface AuthorityCheck {
   successFeedbackRequestId?: string;   // Info event on success
   failureFeedbackRequestId?: string;   // Info event on failure
   refundOnSuccessPercent?: number;     // % refunded on success (default: 100)
-  extraLossOnFailure?: number;         // Extra authority lost on failure
+  lossOnFailurePercent?: number;       // % of committed authority lost on failure (default: 50)
   followUpBoosts?: AuthorityFollowUpBoost[];  // Influence future event probabilities
   minSuccessChance?: number;           // Min success % (default: 50)
   maxSuccessChance?: number;           // Max success % (default: 50)
 }
 ```
+
+**Authority loss on failure:** On failure, the player loses `lossOnFailurePercent`% of the committed authority (default: 50%). The remaining `(100 - lossOnFailurePercent)`% is returned. On success, `refundOnSuccessPercent`% is returned (default: 100%). This applies to both immediate-outcome checks and follow-up-weight-only checks. Higher stakes checks should use a higher `lossOnFailurePercent` (e.g. 75–100%). The authority commitment modal always shows the player the exact authority amount and percentage at risk before they confirm.
 
 **Resolution**: Authority checks resolve on the **next tick** (delay = 1). Success/failure is probabilistic based on committed amount relative to threshold.
 

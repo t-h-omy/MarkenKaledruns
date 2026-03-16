@@ -381,7 +381,7 @@
         successFeedbackRequestId: 'SHRINE_HERESY_AUTH_SUCCESS',
         failureFeedbackRequestId: 'SHRINE_HERESY_AUTH_FAILURE',
         refundOnSuccessPercent: 70,
-        extraLossOnFailure: 3,
+        lossOnFailurePercent: 50,
       },
     },
   ],
