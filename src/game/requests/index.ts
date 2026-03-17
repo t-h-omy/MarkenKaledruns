@@ -46,6 +46,8 @@ import { earlyGameChainDefs } from './chains/early_game';
 import { lateGameChainDefs } from './chains/late_game';
 import { sBatchChainDefs } from './chains/s_batch';
 import { taintedGrainChainDefs } from './chains/tainted_grain';
+import { moralDilemmaChainDefs } from './chains/moral_dilemma';
+import { landforcesChainDefs } from './chains/landforces';
 
 /** Info/System Requests */
 export const infoRequests: Request[] = [...infoRequestDefs];
@@ -88,6 +90,8 @@ export const eventRequests: Request[] = [
   ...lateGameChainDefs,
   ...sBatchChainDefs,
   ...taintedGrainChainDefs,
+  ...moralDilemmaChainDefs,
+  ...landforcesChainDefs,
 ];
 
 /** Authority Info Requests */
