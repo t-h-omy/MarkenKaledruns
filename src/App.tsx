@@ -891,7 +891,7 @@ function App() {
                       <div className="commit-probability">
                         <span className="probability-label">Chance:</span>
                         <span className="probability-amount">
-                          {hasImmediateEffects ? successChance : followUpProbability.toFixed(0)}%
+                          {hasImmediateEffects ? successChance : Math.round(followUpProbability)}%
                         </span>
                       </div>
                     </div>
