@@ -1201,12 +1201,14 @@ function resolveAuthorityCheck(check: PendingAuthorityCheck): AuthorityCheckResu
   
   if (!hasImmediateEffects) {
     // No success/failure for follow-up-only boosts
-    // Do NOT refund authority - it will be refunded when the follow-up resolves
+    // Apply lossOnFailurePercent to determine permanent loss; return the rest to the player.
+    const lossPercent = config.lossOnFailurePercent ?? 50;
+    const totalLoss = Math.floor((committed * lossPercent) / 100);
     return {
-      success: true, // Not really applicable, but set to true for consistency
+      success: true, // Not a pass/fail check — commitment accepted, lossOnFailurePercent applied
       committed,
-      refunded: 0, // NO refund - authority stays committed until follow-up
-      totalLoss: 0, // Not a loss yet - authority is just held
+      refunded: committed - totalLoss, // Return the non-lost portion
+      totalLoss,
       appliedEffects: undefined,
       feedbackRequestId: undefined,
     };
@@ -1231,15 +1233,10 @@ function resolveAuthorityCheck(check: PendingAuthorityCheck): AuthorityCheckResu
   const refundPercent = success ? (config.refundOnSuccessPercent ?? 100) : 0;
   const refunded = Math.floor((committed * refundPercent) / 100);
   
-  let totalLoss = committed - refunded;
-  
-  // Apply extra loss on failure (deterministic whole number)
-  // On failure, apply the fixed extraLossOnFailure amount if specified.
-  // This is a flat penalty independent of the commitment amount.
-  if (!success) {
-    const extraLoss = config.extraLossOnFailure ?? 0;
-    totalLoss += extraLoss;
-  }
+  const lossPercent = success ? 0 : (config.lossOnFailurePercent ?? 50);
+  const totalLoss = success
+    ? committed - refunded                              // on success: non-refunded portion lost
+    : Math.floor((committed * lossPercent) / 100);     // on failure: % of committed lost
   
   // Determine which effects to apply
   const appliedEffects = success ? config.onSuccess : config.onFailure;

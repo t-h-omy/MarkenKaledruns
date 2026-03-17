@@ -842,6 +842,9 @@ function App() {
                 const commitRatio = config.maxCommit > 0 ? currentCommit / config.maxCommit : 0
                 const successChance = Math.floor(MIN_SUCCESS_CHANCE + commitRatio * (MAX_SUCCESS_CHANCE - MIN_SUCCESS_CHANCE))
                 
+                // Calculate authority at risk on failure
+                const authorityAtRisk = Math.floor(currentCommit * (config.lossOnFailurePercent ?? 50) / 100)
+                
                 // Calculate overall probability for follow-up boosts
                 let followUpProbability = 0
                 if (hasFollowUpBoosts && !hasImmediateEffects && currentRequest.followUps) {
@@ -878,11 +881,6 @@ function App() {
                         <span className="authority-icon">👑</span>
                         <span>Authority Commitment</span>
                       </div>
-                      {hasImmediateEffects && (
-                        <div className="authority-outcome uncertain">
-                          ✗ UNCERTAIN ({successChance}%)
-                        </div>
-                      )}
                     </div>
                     
                     <div className="authority-commit-display">
@@ -890,25 +888,12 @@ function App() {
                         <span className="commit-label">Committing:</span>
                         <span className="commit-amount">{currentCommit}</span>
                       </div>
-                      {hasImmediateEffects && (
-                          <div className="commit-probability uncertain">
-                            <span className="probability-label">Chance:</span>
-                            <span className="probability-amount">{successChance}%</span>
-                          </div>
-                      )}
-                      {hasFollowUpBoosts && !hasImmediateEffects && (
-                        <div className="commit-boost-info">
-                          <div className="boost-impact">
-                            <span className="impact-label">Outcome chance:</span>
-                            <span className="impact-amount">{followUpProbability.toFixed(0)}%</span>
-                          </div>
-                          {config.followUpBoosts?.map((boost) => (
-                            <div key={boost.targetRequestId} className="boost-description">
-                              {boost.description || `Affects follow-up: ${boost.targetRequestId}`}
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                      <div className="commit-probability">
+                        <span className="probability-label">Chance:</span>
+                        <span className="probability-amount">
+                          {hasImmediateEffects ? successChance : Math.round(followUpProbability)}%
+                        </span>
+                      </div>
                     </div>
                     
                     <input
@@ -917,7 +902,7 @@ function App() {
                       max={Math.min(config.maxCommit, maxCommittable)}
                       value={currentCommit}
                       onChange={(e) => setAuthorityCommit(Number(e.target.value))}
-                      className="authority-slider uncertain"
+                      className="authority-slider"
                     />
                     
                     <div className="authority-range-labels">
@@ -925,57 +910,76 @@ function App() {
                       <span>{Math.min(config.maxCommit, maxCommittable)} max</span>
                     </div>
                     
-                    {/* Fork Preview - only show when there are immediate effects */}
-                    {hasImmediateEffects && (
-                      <div className="authority-fork-preview">
-                        <div className="fork-section fork-success">
-                          <div className="fork-header">
-                            <span className="fork-icon">✓</span>
-                            <span className="fork-title">On Success:</span>
-                          </div>
-                          <div className="fork-effects">
-                            {option.effects && Object.keys(option.effects).length > 0 && (
-                              <span className="fork-effect">Base effects apply</span>
-                            )}
-                            {config.onSuccess && formatEffects(config.onSuccess).map((eff, i) => (
-                              <span key={i} className={`fork-effect ${eff.isPositive ? 'positive' : 'negative'}`}>
-                                {eff.label}: {typeof eff.value === 'number' ? (eff.value > 0 ? '+' : '') + eff.value : eff.value}
-                              </span>
-                            ))}
-                            {config.refundOnSuccessPercent !== undefined && config.refundOnSuccessPercent > 0 && (
-                              <span className="fork-effect positive">
-                                Refund: {config.refundOnSuccessPercent}% ({Math.floor(currentCommit * config.refundOnSuccessPercent / 100)} authority)
-                              </span>
-                            )}
-                          </div>
+                    <div className={`authority-at-risk-row${currentCommit === 0 ? ' dimmed' : ''}`}>
+                      <span className="authority-at-risk-label">Authority at risk:</span>
+                      <span className={`authority-at-risk-value${currentCommit === 0 ? ' dimmed' : ''}`}>
+                        −{authorityAtRisk}
+                        {' '}({config.lossOnFailurePercent ?? 50}%)
+                      </span>
+                    </div>
+                    
+                    {/* Fork Preview — always shown for both check types */}
+                    <div className="authority-fork-preview">
+                      <div className="fork-section fork-success">
+                        <div className="fork-header">
+                          <span className="fork-icon">✓</span>
+                          <span className="fork-title">On Success:</span>
                         </div>
-                        
-                        <div className="fork-section fork-failure">
-                          <div className="fork-header">
-                            <span className="fork-icon">✗</span>
-                            <span className="fork-title">On Failure:</span>
-                          </div>
-                          <div className="fork-effects">
-                            {option.effects && Object.keys(option.effects).length > 0 && (
-                              <span className="fork-effect">Base effects apply</span>
-                            )}
-                            {config.onFailure && formatEffects(config.onFailure).map((eff, i) => (
-                              <span key={i} className={`fork-effect ${eff.isPositive ? 'positive' : 'negative'}`}>
-                                {eff.label}: {typeof eff.value === 'number' ? (eff.value > 0 ? '+' : '') + eff.value : eff.value}
-                              </span>
-                            ))}
-                            <span className="fork-effect negative">
-                              Authority Lost: {currentCommit}
-                            </span>
-                            {config.extraLossOnFailure !== undefined && config.extraLossOnFailure > 0 && (
-                              <span className="fork-effect negative">
-                                Extra Loss: {config.extraLossOnFailure} authority
-                              </span>
-                            )}
-                          </div>
+                        <div className="fork-effects">
+                          {hasImmediateEffects ? (
+                            <>
+                              {option.effects && Object.keys(option.effects).length > 0 && (
+                                <span className="fork-effect">Base effects apply</span>
+                              )}
+                              {config.onSuccess && formatEffects(config.onSuccess).map((eff, i) => (
+                                <span key={i} className={`fork-effect ${eff.isPositive ? 'positive' : 'negative'}`}>
+                                  {eff.label}: {typeof eff.value === 'number' ? (eff.value > 0 ? '+' : '') + eff.value : eff.value}
+                                </span>
+                              ))}
+                              {config.refundOnSuccessPercent !== undefined && config.refundOnSuccessPercent > 0 && (
+                                <span className="fork-effect positive">
+                                  Refund: {config.refundOnSuccessPercent}% ({Math.floor(currentCommit * config.refundOnSuccessPercent / 100)} authority)
+                                </span>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              {config.followUpBoosts?.map((boost) => (
+                                <span key={boost.targetRequestId} className="fork-effect positive">
+                                  {boost.description || `Affects follow-up: ${boost.targetRequestId}`}
+                                </span>
+                              ))}
+                            </>
+                          )}
                         </div>
                       </div>
-                    )}
+                      
+                      <div className="fork-section fork-failure">
+                        <div className="fork-header">
+                          <span className="fork-icon">✗</span>
+                          <span className="fork-title">On Failure:</span>
+                        </div>
+                        <div className="fork-effects">
+                          {hasImmediateEffects && (
+                            <>
+                              {option.effects && Object.keys(option.effects).length > 0 && (
+                                <span className="fork-effect">Base effects apply</span>
+                              )}
+                              {config.onFailure && formatEffects(config.onFailure).map((eff, i) => (
+                                <span key={i} className={`fork-effect ${eff.isPositive ? 'positive' : 'negative'}`}>
+                                  {eff.label}: {typeof eff.value === 'number' ? (eff.value > 0 ? '+' : '') + eff.value : eff.value}
+                                </span>
+                              ))}
+                            </>
+                          )}
+                          {!hasImmediateEffects && (
+                            <span className="fork-effect negative">
+                              Worse outcome likely
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                     
                     <button 
                       className="confirm-button"

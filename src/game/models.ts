@@ -174,8 +174,13 @@ export interface AuthorityCheck {
   failureFeedbackRequestId?: string;
   /** Percentage of committed authority refunded on success (0-100, default: 100) */
   refundOnSuccessPercent?: number;
-  /** Extra authority loss on failure as a fixed whole number (default: 0) */
-  extraLossOnFailure?: number;
+  /**
+   * Percentage of committed authority lost on failure (0–100, default: 50).
+   * On failure, the player loses this percentage of the committed authority.
+   * Higher stakes checks should use higher values (e.g., 75–100%).
+   * Lower stakes checks may use lower values (e.g., 25–50%).
+   */
+  lossOnFailurePercent?: number;
   /** Follow-up probability boosts (influences future event probabilities) */
   followUpBoosts?: AuthorityFollowUpBoost[];
   /** Minimum success chance (0-100) for authority checks with direct win/loss effects. Required when onSuccess/onFailure are defined. Falls back to 50 if missing. */
@@ -194,7 +199,7 @@ export interface AuthorityCheckResult {
   committed: number;
   /** Amount of authority refunded (on success) */
   refunded: number;
-  /** Total authority loss (committed - refunded + extra loss on failure) */
+  /** Total authority loss (committed - refunded), calculated via lossOnFailurePercent on failure */
   totalLoss: number;
   /** Effects applied based on success/failure */
   appliedEffects?: Effect;

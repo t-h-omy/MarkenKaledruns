@@ -90,7 +90,7 @@ export const marketInspectionChainDefs: Request[] = [
           minSuccessChance: 35,
           maxSuccessChance: 80,
           refundOnSuccessPercent: 80,
-          extraLossOnFailure: 2,
+          lossOnFailurePercent: 50,
           successFeedbackRequestId: 'INFO_MI_TESTIMONY_SUCCESS',
           failureFeedbackRequestId: 'INFO_MI_TESTIMONY_FAILURE',
         },
@@ -327,6 +327,7 @@ export const marketInspectionChainDefs: Request[] = [
         authorityCheck: {
           minCommit: 0,
           maxCommit: 20,
+          lossOnFailurePercent: 50,
           followUpBoosts: [
             {
               targetRequestId: 'CHAIN_MI_C_STING',

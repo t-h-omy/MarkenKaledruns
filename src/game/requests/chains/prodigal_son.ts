@@ -124,7 +124,7 @@ export const prodigalSonChainDefs: Request[] = [
           successFeedbackRequestId: 'PRODIGAL_SON_AUTH_CONFRONT_SUCC',
           failureFeedbackRequestId: 'PRODIGAL_SON_AUTH_CONFRONT_FAIL',
           refundOnSuccessPercent: 75,
-          extraLossOnFailure: 2,
+          lossOnFailurePercent: 50,
         },
       },
       {

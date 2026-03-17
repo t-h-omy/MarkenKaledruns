@@ -45,8 +45,9 @@ export const riverPiratesChainDefs: Request[] = [
         authorityCheck: {
           minCommit: 0,
           maxCommit: 25,
+          lossOnFailurePercent: 50,
           followUpBoosts: [
-            { targetRequestId: 'CHAIN_RIVER_PIRATES_TRIBUTE_LEAVES', boostType: 'linear', boostValue: 4 },
+            { targetRequestId: 'CHAIN_RIVER_PIRATES_TRIBUTE_LEAVES', boostType: 'linear', boostValue: 4, description: 'Increases chance pirates accept tribute and leave' },
           ],
         },
       },

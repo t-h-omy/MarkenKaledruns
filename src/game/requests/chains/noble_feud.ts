@@ -22,6 +22,7 @@ export const nobleFeudChainDefs: Request[] = [
         authorityCheck: {
           minCommit: 5,
           maxCommit: 20,
+          lossOnFailurePercent: 50,
           followUpBoosts: [
             {
               targetRequestId: 'CHAIN_NOBLE_FEUD_DIPLOMACY',

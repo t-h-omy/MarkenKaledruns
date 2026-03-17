@@ -141,7 +141,7 @@ export interface AuthorityCheck {
   successFeedbackRequestId?: string;        // Info event shown on success (tick+1)
   failureFeedbackRequestId?: string;        // Info event shown on failure (tick+1)
   refundOnSuccessPercent?: number;          // % of committed authority refunded on success (0–100, default: 100)
-  extraLossOnFailure?: number;              // Extra authority lost on failure as fixed number (default: 0)
+  lossOnFailurePercent?: number;            // % of committed authority lost on failure (0–100, default: 50)
   followUpBoosts?: AuthorityFollowUpBoost[]; // Influence future event probabilities
 }
 ```
@@ -175,7 +175,7 @@ Request (REQUIRED: id, title, text, options, portraitId)
 │   └── authorityCheck? (max 1 per request)
 │       ├── minCommit, maxCommit, threshold
 │       ├── minSuccessChance, maxSuccessChance
-│       ├── refundOnSuccessPercent, extraLossOnFailure
+│       ├── refundOnSuccessPercent, lossOnFailurePercent
 │       ├── onSuccess?: Effect
 │       ├── onFailure?: Effect
 │       ├── successFeedbackRequestId?, failureFeedbackRequestId?
@@ -244,7 +244,9 @@ Uses `onSuccess` / `onFailure` with `threshold`, `minSuccessChance`, `maxSuccess
 | `minSuccessChance` | 40–50 | 30–45 | 20–35 |
 | `maxSuccessChance` | max 90 | max 85 | max 80 |
 | `refundOnSuccessPercent` | 80–100 | 50–80 | 30–60 |
-| `extraLossOnFailure` | 0–2 | 2–5 | 5–10 |
+| `lossOnFailurePercent` | 25–40 | 50 (default) | 60–100 |
+
+**`lossOnFailurePercent` (default: 50%):** Controls how much of the committed authority is permanently lost on failure. The player loses exactly `floor(committed × lossOnFailurePercent / 100)` authority — the rest is returned. The modal shows this amount live as the slider moves (e.g. "Authority Lost: 8 (50%)"). Use higher values for high-stakes confrontations where failure should be severely punishing; use lower values for opportunistic checks where the attempt itself is low-risk. This is the **only** mechanism for tuning authority loss on failure — do not attempt to express additional flat loss via `onFailure: { authority: -N }` for this purpose, as that conflates failure effects with loss-of-commitment semantics.
 
 **Design intent for min/max commit and success chance ranges:** The goal is that players do **not** always commit maximum authority. The spread between `minSuccessChance` and `maxSuccessChance` combined with the commit range should create a genuine risk/reward decision:
 
@@ -275,6 +277,8 @@ Uses `followUpBoosts` with `boostType` (`linear` / `threshold` / `stepped`).
 | `stepped` | Discrete tiers of influence — each step is noticeable. Should only be used if the player feedback in the UI is clear. | `steps: 3`, `boostValue: 1–2` per step |
 
 **Key design insight:** Follow-up boosts work by adding weight to specific candidates in the `followUps.candidates` array. If a candidate has base `weight: 1` and you boost it by `+3`, it becomes effectively `weight: 4` — dramatically more likely but never certain.
+
+**Authority loss on undesired outcomes:** Even in follow-up boost checks (no `onSuccess`/`onFailure`), the player loses `lossOnFailurePercent`% (default: 50%) of committed authority when the check resolves. The modal shows this as "Authority at risk: −X (Y%)" so the player can make an informed decision.
 
 ### 3.3 Combat — Meaningful Use of `prepDelay` and Force Commitment
 
@@ -478,6 +482,8 @@ Before adding a chain to `requests.ts`, verify:
 - [ ] `portraitId` uses only one of the 30 defined character keys (see §4.1)
 - [ ] Follow-ups with multiple candidates have been considered where narratively appropriate (see §2.4, §3.9). Not every follow-up needs them — but chains with zero probabilistic follow-ups should be a conscious decision, not an oversight.
 - [ ] Every candidate in a multi-candidate pool leads to a complete, satisfying narrative path — no throwaway low-weight paths
+- [ ] Every `authorityCheck` specifies `lossOnFailurePercent` explicitly (or intentionally relies on the 50% default)
+- [ ] No `authorityCheck` uses `extraLossOnFailure` — this field has been removed
 
 ---
 
