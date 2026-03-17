@@ -894,15 +894,6 @@ function App() {
                           {hasImmediateEffects ? successChance : followUpProbability.toFixed(0)}%
                         </span>
                       </div>
-                      {currentCommit > 0 && (
-                        <div className="boost-authority-risk">
-                          <span className="impact-label">Authority at risk:</span>
-                          <span className="fork-effect negative">
-                            −{authorityAtRisk}
-                            {' '}({config.lossOnFailurePercent ?? 50}%)
-                          </span>
-                        </div>
-                      )}
                     </div>
                     
                     <input
@@ -917,6 +908,14 @@ function App() {
                     <div className="authority-range-labels">
                       <span>{config.minCommit} min</span>
                       <span>{Math.min(config.maxCommit, maxCommittable)} max</span>
+                    </div>
+                    
+                    <div className={`authority-at-risk-row${currentCommit === 0 ? ' dimmed' : ''}`}>
+                      <span className="authority-at-risk-label">Authority at risk:</span>
+                      <span className={`authority-at-risk-value${currentCommit === 0 ? ' dimmed' : ''}`}>
+                        −{authorityAtRisk}
+                        {' '}({config.lossOnFailurePercent ?? 50}%)
+                      </span>
                     </div>
                     
                     {/* Fork Preview — always shown for both check types */}
@@ -950,9 +949,6 @@ function App() {
                                   {boost.description || `Affects follow-up: ${boost.targetRequestId}`}
                                 </span>
                               ))}
-                              <span className="fork-effect positive">
-                                Outcome chance: {followUpProbability.toFixed(0)}%
-                              </span>
                             </>
                           )}
                         </div>
@@ -976,9 +972,11 @@ function App() {
                               ))}
                             </>
                           )}
-                          <span className="fork-effect negative">
-                            Authority Lost: {authorityAtRisk}
-                          </span>
+                          {!hasImmediateEffects && (
+                            <span className="fork-effect negative">
+                              Worse outcome likely
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>

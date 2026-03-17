@@ -24,7 +24,7 @@ export const arkanatInspectorChainDefs: Request[] = [
           maxCommit: 25,
           lossOnFailurePercent: 50,
           followUpBoosts: [
-            { targetRequestId: 'CHAIN_ARKANAT_BACKS_DOWN', boostType: 'stepped', boostValue: 2, steps: 3 },
+            { targetRequestId: 'CHAIN_ARKANAT_BACKS_DOWN', boostType: 'stepped', boostValue: 2, steps: 3, description: 'Increases chance the inspector backs down' },
           ],
         },
       },
