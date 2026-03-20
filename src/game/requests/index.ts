@@ -48,6 +48,7 @@ import { sBatchChainDefs } from './chains/s_batch';
 import { taintedGrainChainDefs } from './chains/tainted_grain';
 import { moralDilemmaChainDefs } from './chains/moral_dilemma';
 import { landforcesChainDefs } from './chains/landforces';
+import { wulfmorPactChainDefs } from './chains/wulfmor_pact';
 
 /** Info/System Requests */
 export const infoRequests: Request[] = [...infoRequestDefs];
@@ -92,6 +93,7 @@ export const eventRequests: Request[] = [
   ...taintedGrainChainDefs,
   ...moralDilemmaChainDefs,
   ...landforcesChainDefs,
+  ...wulfmorPactChainDefs,
 ];
 
 /** Authority Info Requests */
