@@ -49,6 +49,9 @@ import { taintedGrainChainDefs } from './chains/tainted_grain';
 import { moralDilemmaChainDefs } from './chains/moral_dilemma';
 import { landforcesChainDefs } from './chains/landforces';
 import { wulfmorPactChainDefs } from './chains/wulfmor_pact';
+import { fordOathChainDefs } from './chains/ford_oath';
+import { lastVerseChainDefs } from './chains/last_verse';
+import { ironWaterChainDefs } from './chains/iron_water';
 
 /** Info/System Requests */
 export const infoRequests: Request[] = [...infoRequestDefs];
@@ -94,6 +97,9 @@ export const eventRequests: Request[] = [
   ...moralDilemmaChainDefs,
   ...landforcesChainDefs,
   ...wulfmorPactChainDefs,
+  ...fordOathChainDefs,
+  ...lastVerseChainDefs,
+  ...ironWaterChainDefs,
 ];
 
 /** Authority Info Requests */
